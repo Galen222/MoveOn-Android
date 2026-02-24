@@ -9,12 +9,12 @@ Android usando Java desarrollado en Android Studio y Base de Datos SQLite.
 
 2. Frontend (Android Studio). Abre Android Studio, selecciona Open, navega hasta MoveOn-Android/ y abre esa carpeta.
 
-  Configuración del JDK: Si sale un aviso de JDK, ve a File > Settings > Build, Execution, Deployment > Build Tools > Gradle y asegúrate de que el Gradle JDK sea el JDK 25.
+    Configuración del JDK: Si sale un aviso de JDK, ve a File > Settings > Build, Execution, Deployment > Build Tools > Gradle y asegúrate de que el Gradle JDK sea el JDK 25.
 
 3. Flujo de trabajo (Git). Para evitar conflictos, sigue siempre este orden:
 
-  PULL: Antes de empezar, descarga los cambios de tus compañeros (Flecha azul en Android Studio / git pull en terminal).
+    PULL: Antes de empezar, descarga los cambios de tus compañeros (Flecha azul en Android Studio / git pull en terminal).
 
-  COMMIT: Cuando termines un cambio, guarda tus avances con un mensaje descriptivo (Check verde en Android Studio / Icono de Source Control en VS Code).
+    COMMIT: Cuando termines un cambio, guarda tus avances con un mensaje descriptivo (Check verde en Android Studio / Icono de Source Control en VS Code).
 
-  PUSH: Envía tus cambios a GitHub (Flecha verde en Android Studio / git push en terminal).
+    PUSH: Envía tus cambios a GitHub (Flecha verde en Android Studio / git push en terminal).
