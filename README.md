@@ -13,8 +13,8 @@ Android usando Java desarrollado en Android Studio y Base de Datos SQLite.
 
 3. Flujo de trabajo (Git). Para evitar conflictos, sigue siempre este orden:
 
-    PULL: Antes de empezar, descarga los cambios de tus compañeros (Flecha azul en Android Studio / git pull en terminal).
+    PULL: Antes de empezar, descarga los cambios de tus compañeros.
 
-    COMMIT: Cuando termines un cambio, guarda tus avances con un mensaje descriptivo (Check verde en Android Studio / Icono de Source Control en VS Code).
+    COMMIT: Cuando termines un cambio, guarda tus avances con un mensaje descriptivo.
 
-    PUSH: Envía tus cambios a GitHub (Flecha verde en Android Studio / git push en terminal).
+    PUSH: Envía tus cambios a GitHub.
