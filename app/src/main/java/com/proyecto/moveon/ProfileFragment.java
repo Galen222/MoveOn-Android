@@ -1,8 +1,6 @@
 package com.proyecto.moveon;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,10 +9,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatDelegate;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
@@ -38,25 +38,39 @@ public class ProfileFragment extends Fragment {
     private LinearLayout itemRanking;
     private LinearLayout itemShareRoutes;
     private SwitchMaterial switchPublicProfile;
-    private SwitchMaterial switchDarkTheme;
     private SwitchMaterial switchNotifications;
+
+    // NUEVO: selector de tema (3 estados)
+    private MaterialButtonToggleGroup toggleThemeMode;
 
     // Logout
     private MaterialButton btnLogout;
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public ProfileFragment() {
+        // Constructor vacío requerido
+    }
 
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         initializeViews(view);
+        bindUserData();
         setupListeners();
+        syncThemeToggleWithSavedMode();
 
         return view;
     }
 
-    private void initializeViews(View view) {
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Por si cambiaste el tema desde otra pantalla
+        syncThemeToggleWithSavedMode();
+    }
+
+    private void initializeViews(@NonNull View view) {
         // Header
         ivProfilePicture = view.findViewById(R.id.iv_profile_picture);
         tvUserName = view.findViewById(R.id.tv_user_name);
@@ -75,38 +89,132 @@ public class ProfileFragment extends Fragment {
         itemRanking = view.findViewById(R.id.item_ranking);
         itemShareRoutes = view.findViewById(R.id.item_share_routes);
         switchPublicProfile = view.findViewById(R.id.switch_public_profile);
-        switchDarkTheme = view.findViewById(R.id.switch_dark_theme);
+
+        // OJO: este switch de tema ya NO se usa si migras a 3 estados
+        // switchDarkTheme = view.findViewById(R.id.switch_dark_theme);
+
         switchNotifications = view.findViewById(R.id.switch_notifications);
+
+        // NUEVO: toggle de tema
+        toggleThemeMode = view.findViewById(R.id.toggle_theme_mode);
 
         // Logout
         btnLogout = view.findViewById(R.id.btn_logout);
     }
 
+    private void bindUserData() {
+        SessionManager sessionManager = new SessionManager(requireContext());
+
+        String username = sessionManager.getUsername();
+        if (username == null || username.trim().isEmpty()) {
+            username = "Usuario";
+        }
+
+        // Como SessionManager actual no guarda email, usamos placeholder
+        // (puedes cambiar esto cuando guardes el correo en sesión)
+        String email = "Sin correo disponible";
+
+        tvUserName.setText(username);
+        tvUserEmail.setText(email);
+
+        // Si quieres, también puedes reflejarlo en la card personal:
+        tvFullName.setText(username);
+        tvEmail.setText(email);
+
+        // Placeholders mientras no venga de API/BD
+        if (tvBirthdate.getText() == null || tvBirthdate.getText().toString().trim().isEmpty()) {
+            tvBirthdate.setText("No indicada");
+        }
+        if (tvCity.getText() == null || tvCity.getText().toString().trim().isEmpty()) {
+            tvCity.setText("No indicada");
+        }
+    }
+
     private void setupListeners() {
-        SharedPreferences prefs = requireContext().getSharedPreferences("AppSettings", Context.MODE_PRIVATE);
-        boolean isDarkMode = prefs.getBoolean("dark_mode", true); // true = oscuro
+        // Listener del selector de tema (Claro / Oscuro / Sistema)
+        if (toggleThemeMode != null) {
+            toggleThemeMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+                if (!isChecked) return;
 
-        // Estado inicial del switch (sin disparar listener)
-        switchDarkTheme.setOnCheckedChangeListener(null);
-        switchDarkTheme.setChecked(isDarkMode);
+                String newMode;
+                if (checkedId == R.id.btn_theme_light) {
+                    newMode = ThemeManager.MODE_LIGHT;
+                } else if (checkedId == R.id.btn_theme_dark) {
+                    newMode = ThemeManager.MODE_DARK;
+                } else if (checkedId == R.id.btn_theme_system) {
+                    newMode = ThemeManager.MODE_SYSTEM;
+                } else {
+                    return;
+                }
 
-        // ✅ Arreglado: dark_mode=true -> MODE_NIGHT_YES
-        switchDarkTheme.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            prefs.edit().putBoolean("dark_mode", isChecked).apply();
+                // Evita trabajo/recreate innecesario si ya está en ese modo
+                String currentMode = ThemeManager.getSavedMode(requireContext());
+                if (newMode.equals(currentMode)) return;
 
-            if (isChecked) {
-                // ON = oscuro
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-            } else {
-                // OFF = claro
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                ThemeManager.saveAndApply(requireContext(), newMode);
+                requireActivity().recreate();
+            });
+        }
+
+        // Botón editar perfil (placeholder)
+        if (btnEditProfile != null) {
+            btnEditProfile.setOnClickListener(v -> {
+                // TODO: Abrir pantalla de edición
+                // Ejemplo:
+                // startActivity(new Intent(requireContext(), EditProfileActivity.class));
+            });
+        }
+
+        // Items de configuración (placeholders)
+        if (itemRanking != null) {
+            itemRanking.setOnClickListener(v -> {
+                // TODO: abrir ranking
+            });
+        }
+
+        if (itemShareRoutes != null) {
+            itemShareRoutes.setOnClickListener(v -> {
+                // TODO: abrir compartir rutas
+            });
+        }
+
+        // Si quieres persistir estos switches después, te puedo pasar el código con SharedPreferences
+        if (switchPublicProfile != null) {
+            switchPublicProfile.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                // TODO: guardar preferencia / enviar a backend
+            });
+        }
+
+        if (switchNotifications != null) {
+            switchNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                // TODO: guardar preferencia / pedir permisos/notificaciones
+            });
+        }
+
+        // Logout
+        if (btnLogout != null) {
+            btnLogout.setOnClickListener(v -> logout());
+        }
+    }
+
+    private void syncThemeToggleWithSavedMode() {
+        if (toggleThemeMode == null) return;
+
+        String mode = ThemeManager.getSavedMode(requireContext());
+
+        if (ThemeManager.MODE_LIGHT.equals(mode)) {
+            if (toggleThemeMode.getCheckedButtonId() != R.id.btn_theme_light) {
+                toggleThemeMode.check(R.id.btn_theme_light);
             }
-
-            requireActivity().recreate();
-        });
-
-        // Conectar botón logout
-        btnLogout.setOnClickListener(v -> logout());
+        } else if (ThemeManager.MODE_DARK.equals(mode)) {
+            if (toggleThemeMode.getCheckedButtonId() != R.id.btn_theme_dark) {
+                toggleThemeMode.check(R.id.btn_theme_dark);
+            }
+        } else {
+            if (toggleThemeMode.getCheckedButtonId() != R.id.btn_theme_system) {
+                toggleThemeMode.check(R.id.btn_theme_system);
+            }
+        }
     }
 
     private void logout() {

@@ -1,12 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Colores dinámicos CLAROS -->
-    <color name="cardBackground">#F3F4F6</color>
-    <color name="surfaceBackground">#FFFFFF</color>
-    <color name="dividerColor">#E5E7EB</color>
 
-    <!-- Textos para modo CLARO -->
-    <color name="textPrimary">#000000</color>
-    <color name="textSecondary">#4B5563</color>
-    <color name="textTertiary">#9CA3AF</color>
+    <!-- Colores principales -->
+    <color name="greenPrimary">#5EFC8D</color>
+    <color name="greenPrimaryVariant">#4CD279</color>
+    <color name="greenDark">#3AB368</color>
+
+    <!-- Fondos OSCUROS -->
+    <color name="darkBackground">#1A2028</color>
+    <color name="darkSurface">#242B36</color>
+
+    <!-- Surface variations OSCURAS -->
+    <color name="surfaceContainer">#2A323E</color>
+    <color name="surfaceContainerHigh">#323A47</color>
+    <color name="surfaceContainerLow">#1F252E</color>
+    <color name="surfaceContainerLowest">#151920</color>
+    <color name="surfaceContainerHighest">#3A424F</color>
+
+    <!-- Colores dinámicos OSCUROS -->
+    <color name="cardBackground">#2A323E</color>
+    <color name="surfaceBackground">#242B36</color>
+    <color name="dividerColor">#374151</color>
+
+    <!-- Texto OSCURO -->
+    <color name="textPrimary">#FFFFFF</color>
+    <color name="textSecondary">#9CA3AF</color>
+    <color name="textTertiary">#6B7280</color>
+    <color name="textOnGreen">#1A2028</color>
+
+    <!-- Outline OSCURO -->
+    <color name="outline">#4B5563</color>
+    <color name="outlineVariant">#374151</color>
+
+    <!-- Acentos y estados -->
+    <color name="disabled">#4B5563</color>
+    <color name="error">#EF4444</color>
+
+    <!-- Transparencias -->
+    <color name="scrim">#80000000</color>
+    <color name="transparent">#00000000</color>
+
 </resources>
