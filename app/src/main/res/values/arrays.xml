@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="provincias">
+        <item>No indicar</item>
+
+        <item>Almería</item>
+        <item>Cádiz</item>
+        <item>Córdoba</item>
+        <item>Granada</item>
+        <item>Huelva</item>
+        <item>Jaén</item>
+        <item>Málaga</item>
+        <item>Sevilla</item>
+
+        <item>Huesca</item>
+        <item>Teruel</item>
+        <item>Zaragoza</item>
+
+        <item>Asturias</item>
+
+        <item>Islas Baleares</item>
+
+        <item>Las Palmas</item>
+        <item>Santa Cruz de Tenerife</item>
+
+        <item>Cantabria</item>
+
+        <item>Albacete</item>
+        <item>Ciudad Real</item>
+        <item>Cuenca</item>
+        <item>Guadalajara</item>
+        <item>Toledo</item>
+
+        <item>Ávila</item>
+        <item>Burgos</item>
+        <item>León</item>
+        <item>Palencia</item>
+        <item>Salamanca</item>
+        <item>Segovia</item>
+        <item>Soria</item>
+        <item>Valladolid</item>
+        <item>Zamora</item>
+
+        <item>Barcelona</item>
+        <item>Girona</item>
+        <item>Lleida</item>
+        <item>Tarragona</item>
+
+        <item>Badajoz</item>
+        <item>Cáceres</item>
+
+        <item>A Coruña</item>
+        <item>Lugo</item>
+        <item>Ourense</item>
+        <item>Pontevedra</item>
+
+        <item>Madrid</item>
+
+        <item>Murcia</item>
+
+        <item>Navarra</item>
+
+        <item>Álava</item>
+        <item>Guipúzcoa</item>
+        <item>Vizcaya</item>
+
+        <item>La Rioja</item>
+
+        <item>Alicante</item>
+        <item>Castellón</item>
+        <item>Valencia</item>
+
+        <item>Ceuta</item>
+        <item>Melilla</item>
+    </string-array>
+</resources>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.MoveOn" parent="Theme.Material3.Dark.NoActionBar">
+
+        <!-- COLORES PRINCIPALES -->
+
+        <item name="colorPrimary">@color/greenPrimary</item>
+        <item name="colorPrimaryVariant">@color/greenPrimaryVariant</item>
+        <item name="colorOnPrimary">@color/textOnGreen</item>
+        <item name="colorSecondary">@color/greenDark</item>
+        <item name="colorOnSecondary">@color/textPrimary</item>
+
+        <!-- SUPERFICIES Y FONDOS (MODO OSCURO) -->
+
+        <item name="colorSurface">@color/darkSurface</item>
+        <item name="colorOnSurface">@color/textPrimary</item>
+        <item name="colorOnSurfaceVariant">@color/textSecondary</item>
+        <item name="android:colorBackground">@color/darkBackground</item>
+        <item name="colorOnBackground">@color/textPrimary</item>
+
+        <!-- Surface containers -->
+        <item name="colorSurfaceContainer">@color/surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerLow">@color/surfaceContainerLow</item>
+        <item name="colorSurfaceContainerLowest">@color/surfaceContainerLowest</item>
+        <item name="colorSurfaceContainerHighest">@color/surfaceContainerHighest</item>
+
+
+        <!-- OUTLINE -->
+        <item name="colorOutline">@color/outline</item>
+        <item name="colorOutlineVariant">@color/outlineVariant</item>
+
+
+        <!-- ERROR -->
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/textPrimary</item>
+        <item name="colorErrorContainer">@color/error</item>
+        <item name="colorOnErrorContainer">@color/textPrimary</item>
+
+
+        <!-- STATUS BAR Y NAVIGATION BAR (MODO OSCURO) -->
+        <item name="android:statusBarColor">@color/darkBackground</item>
+        <item name="android:navigationBarColor">@color/darkBackground</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+
+
+        <!-- WIDGETS -->
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigationView</item>
+    </style>
+
+    <style name="Theme.MoveOn" parent="Base.Theme.MoveOn" />
+
+</resources>

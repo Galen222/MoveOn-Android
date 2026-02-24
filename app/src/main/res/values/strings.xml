@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">MoveOn</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="inicio">INICIO</string>
+    <string name="Inicio_fragment_incio_xml">INICIO</string>
+
+    <!-- Login (Se usarán ) -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">Welcome!</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">Login failed</string>
+
+</resources>

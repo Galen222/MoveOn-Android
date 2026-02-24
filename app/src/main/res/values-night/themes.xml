@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.MoveOn" parent="Theme.Material3.Light.NoActionBar">
+
+        <!-- COLORES PRINCIPALES -->
+        <item name="colorPrimary">@color/greenPrimary</item>
+        <item name="colorPrimaryVariant">@color/greenPrimaryVariant</item>
+        <item name="colorOnPrimary">@color/textOnGreen</item>
+        <item name="colorSecondary">@color/greenDark</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+
+
+        <!-- SUPERFICIES Y FONDOS (MODO CLARO) -->
+
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorOnSurface">#000000</item>
+        <item name="colorOnSurfaceVariant">#4B5563</item>
+        <item name="android:colorBackground">#F9FAFB</item>
+        <item name="colorOnBackground">#000000</item>
+
+        <!-- Surface containers (MODO CLARO) -->
+        <item name="colorSurfaceContainer">#F3F4F6</item>
+        <item name="colorSurfaceContainerHigh">#E5E7EB</item>
+        <item name="colorSurfaceContainerLow">#F9FAFB</item>
+        <item name="colorSurfaceContainerLowest">#FFFFFF</item>
+        <item name="colorSurfaceContainerHighest">#D1D5DB</item>
+
+
+        <!-- OUTLINE -->
+        <item name="colorOutline">#9CA3AF</item>
+        <item name="colorOutlineVariant">#D1D5DB</item>
+
+
+        <!-- ERROR -->
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">#FFFFFF</item>
+        <item name="colorErrorContainer">@color/error</item>
+        <item name="colorOnErrorContainer">#FFFFFF</item>
+
+
+        <!-- STATUS BAR Y NAVIGATION BAR (MODO CLARO) -->
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+
+
+        <!-- WIDGETS -->
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigationView</item>
+    </style>
+
+    <style name="Theme.MoveOn" parent="Base.Theme.MoveOn" />
+
+</resources>

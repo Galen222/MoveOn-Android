@@ -1,0 +1,51 @@
+# --- BUILD Y GRADLE (Archivos autogenerados) ---
+*.apk
+*.aab
+*.ap_
+*.aars
+*.dex
+*.class
+bin/
+gen/
+out/
+.gradle/
+build/
+/*/build/
+/*/out/
+
+# --- CONFIGURACIÓN LOCAL (¡Muy importante no subir esto!) ---
+# Contiene la ruta de tu SDK local y, a veces, contraseñas
+local.properties
+/*/local.properties
+
+# --- ANDROID STUDIO / INTELLIJ IDEA ---
+# Archivos de configuración del IDE
+.idea/
+*.iml
+*.iws
+.navigation/
+captures/
+.cxx/
+.externalNativeBuild/
+
+# --- SEGURIDAD Y CLAVES ---
+# NUNCA subas tus archivos de firma de la app a GitHub
+*.jks
+*.keystore
+*.p12
+*.key
+*.pem
+
+# --- LOGS Y CACHÉ ---
+*.log
+/captures/
+.hprof
+
+# --- SISTEMA OPERATIVO ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
