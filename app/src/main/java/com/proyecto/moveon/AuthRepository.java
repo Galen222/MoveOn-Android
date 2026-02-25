@@ -21,7 +21,7 @@ import java.util.concurrent.Executors;
 public class AuthRepository {
 
     private static final String BASE_URL = BuildConfig.BASE_URL;
-    private static final String APP_ID_SECRET = BuildConfig.APP_ID_SECRET;
+    private static final String APP_ID = BuildConfig.APP_ID;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -103,15 +103,15 @@ public class AuthRepository {
             throw new Exception("BASE_URL no está configurada. Revisa BuildConfig.BASE_URL.");
         }
 
-        if (APP_ID_SECRET == null || APP_ID_SECRET.trim().isEmpty()) {
-            throw new Exception("APP_ID_SECRET está vacío. Revisa local.properties (APP_ID_SECRET) y recompila la app.");
+        if (APP_ID == null || APP_ID.trim().isEmpty()) {
+            throw new Exception("APP_ID está vacío. Revisa local.properties (APP_ID) y recompila la app.");
         }
     }
 
     private String handshake() throws Exception {
         validateClientConfig();
 
-        JSONObject resp = request("GET", "/handshake", null, null, APP_ID_SECRET);
+        JSONObject resp = request("GET", "/handshake", null, null, APP_ID);
         String appSession = resp.optString("app_session_token", null);
 
         if (appSession == null || appSession.isEmpty()) {

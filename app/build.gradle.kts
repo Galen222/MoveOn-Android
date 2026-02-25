@@ -33,10 +33,10 @@ val moveonBaseUrl = when (moveonBackend) {
 }
 
 /**
- * APP_ID_SECRET para handshake del backend
+ * APP_ID para handshake del backend
  * (lo sacamos de local.properties para no hardcodearlo en el código Java)
  */
-val appIdSecret = localProp("APP_ID_SECRET", "")
+val appId = localProp("APP_ID", "")
 
 android {
     namespace = "com.proyecto.moveon"
@@ -55,10 +55,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // ✅ Variables accesibles desde Java: BuildConfig.BASE_URL, BuildConfig.MOVEON_BACKEND, BuildConfig.APP_ID_SECRET
+        // ✅ Variables accesibles desde Java: BuildConfig.BASE_URL, BuildConfig.MOVEON_BACKEND, BuildConfig.APP_ID
         buildConfigField("String", "BASE_URL", "\"$moveonBaseUrl\"")
         buildConfigField("String", "MOVEON_BACKEND", "\"$moveonBackend\"")
-        buildConfigField("String", "APP_ID_SECRET", "\"$appIdSecret\"")
+        buildConfigField("String", "APP_ID", "\"$appId\"")
     }
 
     buildTypes {
