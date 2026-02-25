@@ -1,4 +1,4 @@
-package com.proyecto.moveon;
+package com.proyecto.moveon.ui.home;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -11,6 +11,7 @@ import android.widget.TextView;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.proyecto.moveon.R;
 
 public class InicioFragment extends Fragment {
 

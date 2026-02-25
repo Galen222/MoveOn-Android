@@ -1,4 +1,4 @@
-package com.proyecto.moveon;
+package com.proyecto.moveon.core.theme;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -18,16 +18,6 @@ public final class ThemeManager {
 
     public static void applySavedTheme(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-
-        // Migración opcional desde tu booleano antiguo dark_mode
-        if (!prefs.contains(KEY_THEME_MODE) && prefs.contains("dark_mode")) {
-            boolean oldDark = prefs.getBoolean("dark_mode", true);
-            prefs.edit()
-                    .putString(KEY_THEME_MODE, oldDark ? MODE_DARK : MODE_LIGHT)
-                    .remove("dark_mode")
-                    .apply();
-        }
-
         String mode = prefs.getString(KEY_THEME_MODE, MODE_SYSTEM);
         applyMode(mode);
     }

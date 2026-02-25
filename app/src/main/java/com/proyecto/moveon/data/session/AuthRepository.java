@@ -1,7 +1,9 @@
-package com.proyecto.moveon;
+package com.proyecto.moveon.data.session;
 
 import android.os.Handler;
 import android.os.Looper;
+
+import com.proyecto.moveon.BuildConfig;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -34,10 +36,12 @@ public class AuthRepository {
     public static class LoginResult {
         public final String nombreUsuario;
         public final String tokenAcceso;
+        public final String refreshToken;
 
-        public LoginResult(String nombreUsuario, String tokenAcceso) {
+        public LoginResult(String nombreUsuario, String tokenAcceso, String refreshToken) {
             this.nombreUsuario = nombreUsuario;
             this.tokenAcceso = tokenAcceso;
+            this.refreshToken = refreshToken;
         }
     }
 
@@ -50,8 +54,6 @@ public class AuthRepository {
         public String provincia;       // opcional, exacta al backend o null
     }
 
-
-
     public void login(String identificador, String password, Callback<LoginResult> callback) {
         executor.execute(() -> {
             try {
@@ -61,14 +63,14 @@ public class AuthRepository {
                 body.put("identificador", identificador);
                 body.put("contraseña", password);
 
-                JSONObject resp = request("POST", "/login", body, appSession, null);
+                JSONObject resp = request("POST", "/login", body, appSession, null, null);
 
-                String nombreUsuario = resp.optString("nombre_usuario");
-                String token = resp.optString("token_acceso");
-
-                mainHandler.post(() -> callback.onSuccess(new LoginResult(nombreUsuario, token)));
+                LoginResult result = parseLoginLikeResponse(resp);
+                mainHandler.post(() -> callback.onSuccess(result));
             } catch (Exception e) {
-                mainHandler.post(() -> callback.onError(e.getMessage() != null ? e.getMessage() : "Error de login"));
+                mainHandler.post(() -> callback.onError(
+                        e.getMessage() != null ? e.getMessage() : "Error de login"
+                ));
             }
         });
     }
@@ -88,14 +90,82 @@ public class AuthRepository {
                     body.put("provincia", req.provincia.trim());
                 }
 
-                JSONObject resp = request("POST", "/registro", body, appSession, null);
+                JSONObject resp = request("POST", "/registro", body, appSession, null, null);
                 String msg = resp.optString("mensaje", "Cuenta creada correctamente");
 
                 mainHandler.post(() -> callback.onSuccess(msg));
             } catch (Exception e) {
-                mainHandler.post(() -> callback.onError(e.getMessage() != null ? e.getMessage() : "Error de registro"));
+                mainHandler.post(() -> callback.onError(
+                        e.getMessage() != null ? e.getMessage() : "Error de registro"
+                ));
             }
         });
+    }
+
+    public void refreshSession(String refreshToken, Callback<LoginResult> callback) {
+        executor.execute(() -> {
+            try {
+                if (refreshToken == null || refreshToken.trim().isEmpty()) {
+                    throw new Exception("No hay refresh token");
+                }
+
+                String appSession = handshake();
+
+                JSONObject body = new JSONObject();
+                body.put("refresh_token", refreshToken);
+
+                JSONObject resp = request("POST", "/token/refresh", body, appSession, null, null);
+
+                LoginResult result = parseLoginLikeResponse(resp);
+                mainHandler.post(() -> callback.onSuccess(result));
+            } catch (Exception e) {
+                mainHandler.post(() -> callback.onError(
+                        e.getMessage() != null ? e.getMessage() : "No se pudo renovar la sesión"
+                ));
+            }
+        });
+    }
+
+    public void logout(String refreshToken, Callback<String> callback) {
+        executor.execute(() -> {
+            try {
+                if (refreshToken == null || refreshToken.trim().isEmpty()) {
+                    // Logout local igualmente válido
+                    mainHandler.post(() -> callback.onSuccess("Sesión cerrada"));
+                    return;
+                }
+
+                String appSession = handshake();
+
+                JSONObject body = new JSONObject();
+                body.put("refresh_token", refreshToken);
+
+                JSONObject resp = request("POST", "/logout", body, appSession, null, null);
+                String msg = resp.optString("mensaje", "Sesión cerrada");
+
+                mainHandler.post(() -> callback.onSuccess(msg));
+            } catch (Exception e) {
+                // En logout interesa seguir: devolvemos error para que la UI decida "best effort"
+                mainHandler.post(() -> callback.onError(
+                        e.getMessage() != null ? e.getMessage() : "No se pudo cerrar sesión en el servidor"
+                ));
+            }
+        });
+    }
+
+    private LoginResult parseLoginLikeResponse(JSONObject resp) throws Exception {
+        String nombreUsuario = resp.optString("nombre_usuario", "");
+        String tokenAcceso = resp.optString("token_acceso", "");
+        String refreshToken = resp.optString("refresh_token", "");
+
+        if (tokenAcceso.isEmpty()) {
+            throw new Exception("No se recibió token_acceso");
+        }
+        if (refreshToken.isEmpty()) {
+            throw new Exception("No se recibió refresh_token");
+        }
+
+        return new LoginResult(nombreUsuario, tokenAcceso, refreshToken);
     }
 
     private void validateClientConfig() throws Exception {
@@ -111,7 +181,7 @@ public class AuthRepository {
     private String handshake() throws Exception {
         validateClientConfig();
 
-        JSONObject resp = request("GET", "/handshake", null, null, APP_ID);
+        JSONObject resp = request("GET", "/handshake", null, null, APP_ID, null);
         String appSession = resp.optString("app_session_token", null);
 
         if (appSession == null || appSession.isEmpty()) {
@@ -125,7 +195,8 @@ public class AuthRepository {
                                String path,
                                JSONObject body,
                                String xAppSession,
-                               String xAppId) throws Exception {
+                               String xAppId,
+                               String bearerAccessToken) throws Exception {
 
         URL url = new URL(BASE_URL + path);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -136,6 +207,9 @@ public class AuthRepository {
 
         if (xAppId != null) conn.setRequestProperty("x-app-id", xAppId);
         if (xAppSession != null) conn.setRequestProperty("x-app-session", xAppSession);
+        if (bearerAccessToken != null && !bearerAccessToken.trim().isEmpty()) {
+            conn.setRequestProperty("Authorization", "Bearer " + bearerAccessToken);
+        }
 
         if (body != null) {
             conn.setDoOutput(true);
@@ -153,6 +227,10 @@ public class AuthRepository {
 
         if (code < 200 || code >= 300) {
             throw new Exception(parseApiError(responseText, code));
+        }
+
+        if (responseText == null || responseText.trim().isEmpty()) {
+            return new JSONObject();
         }
 
         return new JSONObject(responseText);

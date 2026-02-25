@@ -1,4 +1,4 @@
-package com.proyecto.moveon;
+package com.proyecto.moveon.ui.auth;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -8,20 +8,25 @@ import android.widget.Toast;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.proyecto.moveon.data.session.AuthRepository;
+import com.proyecto.moveon.ui.main.MainActivity;
+import com.proyecto.moveon.R;
+import com.proyecto.moveon.data.session.SecureSessionManager;
+import com.proyecto.moveon.core.theme.ThemeManager;
 
 public class LoginActivity extends AppCompatActivity {
 
     private TextInputEditText etCorreo, etPassword;
     private MaterialButton btnLogin, btnRegistrar;
     private AuthRepository authRepository;
-    private SessionManager sessionManager;
+    private SecureSessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ThemeManager.applySavedTheme(this);
         super.onCreate(savedInstanceState);
 
-        sessionManager = new SessionManager(this);
+        sessionManager = new SecureSessionManager(this);
         if (sessionManager.isLoggedIn()) {
             goToMain();
             return;
@@ -65,7 +70,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onSuccess(AuthRepository.LoginResult result) {
                 setLoading(false);
-                sessionManager.saveLogin(result.nombreUsuario, result.tokenAcceso);
+                sessionManager.saveLogin(result.nombreUsuario, result.tokenAcceso, result.refreshToken);
                 Toast.makeText(LoginActivity.this, "Bienvenido " + result.nombreUsuario, Toast.LENGTH_SHORT).show();
                 goToMain();
             }

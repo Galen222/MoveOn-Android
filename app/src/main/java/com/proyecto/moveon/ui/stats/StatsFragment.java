@@ -1,4 +1,4 @@
-package com.proyecto.moveon;
+package com.proyecto.moveon.ui.stats;
 
 import android.os.Bundle;
 
@@ -11,9 +11,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
-import java.text.SimpleDateFormat; // estos 3 imports será para calcular los dias de la semana y trabajar en funcion a ello
-import java.util.Calendar; // estos 3 imports será para calcular los dias de la semana y trabajar en funcion a ello
-import java.util.Locale; // estos 3 imports será para calcular los dias de la semana y trabajar en funcion a ello
+import com.proyecto.moveon.R;
+
 
 public class StatsFragment extends Fragment {
     // DECLARACIÓN DE VARIABLES UI

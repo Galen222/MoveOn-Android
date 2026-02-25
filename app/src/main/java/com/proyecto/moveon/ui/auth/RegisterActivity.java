@@ -1,4 +1,4 @@
-package com.proyecto.moveon;
+package com.proyecto.moveon.ui.auth;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -11,13 +11,18 @@ import android.widget.Toast;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputEditText;
+import com.proyecto.moveon.data.session.AuthRepository;
+import com.proyecto.moveon.ui.main.MainActivity;
+import com.proyecto.moveon.R;
+import com.proyecto.moveon.data.session.SecureSessionManager;
+import com.proyecto.moveon.core.theme.ThemeManager;
 
 import java.util.Calendar;
 import java.util.Locale;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private SessionManager sessionManager;
+    private SecureSessionManager sessionManager;
     // Debe coincidir con el primer item de arrays.xml
     private static final String PROVINCIA_NO_INDICAR = "No indicar";
 
@@ -38,7 +43,7 @@ public class RegisterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_register);
 
         authRepository = new AuthRepository();
-        sessionManager = new SessionManager(this);
+        sessionManager = new SecureSessionManager(this);
 
         initViews();
         setupProvinciaDropdown();
@@ -202,7 +207,7 @@ public class RegisterActivity extends AppCompatActivity {
                     public void onSuccess(AuthRepository.LoginResult loginResult) {
                         setLoading(false);
 
-                        sessionManager.saveLogin(loginResult.nombreUsuario, loginResult.tokenAcceso);
+                        sessionManager.saveLogin(loginResult.nombreUsuario, loginResult.tokenAcceso, loginResult.refreshToken);
 
                         Toast.makeText(
                                 RegisterActivity.this,
