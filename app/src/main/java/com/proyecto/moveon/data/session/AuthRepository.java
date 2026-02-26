@@ -1,32 +1,43 @@
 package com.proyecto.moveon.data.session;
 
-import android.os.Handler;
-import android.os.Looper;
+import android.content.Context;
 
-import com.proyecto.moveon.BuildConfig;
+import com.proyecto.moveon.data.remote.retrofit.RetrofitProvider;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Response;
 
 public class AuthRepository {
 
-    private static final String BASE_URL = BuildConfig.BASE_URL;
-    private static final String APP_ID = BuildConfig.APP_ID;
+    private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Context appContext;
+
+    // 2.a: tracking de llamadas en vuelo (para poder cancelar en onCleared del VM)
+    private final List<Call<?>> inFlight = new CopyOnWriteArrayList<>();
+
+    public AuthRepository(Context context) {
+        this.appContext = context.getApplicationContext();
+    }
+
+    // 2.a: cancelar todas las llamadas pendientes
+    public void cancelAll() {
+        for (Call<?> c : inFlight) {
+            if (c != null && !c.isCanceled()) {
+                c.cancel();
+            }
+        }
+        inFlight.clear();
+    }
 
     public interface Callback<T> {
         void onSuccess(T result);
@@ -50,221 +61,212 @@ public class AuthRepository {
         public String email;
         public String password;
         public String fechaNacimiento; // yyyy-MM-dd
-        // ciudad NO se envía porque backend espera "provincia" enum
-        public String provincia;       // opcional, exacta al backend o null
+        public String provincia;       // opcional
     }
 
     public void login(String identificador, String password, Callback<LoginResult> callback) {
-        executor.execute(() -> {
-            try {
-                String appSession = handshake();
+        try {
+            JSONObject body = new JSONObject();
+            body.put("identificador", identificador);
+            body.put("contraseña", password);
 
-                JSONObject body = new JSONObject();
-                body.put("identificador", identificador);
-                body.put("contraseña", password);
+            RequestBody rb = RequestBody.create(body.toString(), JSON);
 
-                JSONObject resp = request("POST", "/login", body, appSession, null, null);
+            // 2.b: guardar call + remove al terminar
+            Call<ResponseBody> call = RetrofitProvider.authApi(appContext).login(rb);
+            inFlight.add(call);
 
-                LoginResult result = parseLoginLikeResponse(resp);
-                mainHandler.post(() -> callback.onSuccess(result));
-            } catch (Exception e) {
-                mainHandler.post(() -> callback.onError(
-                        e.getMessage() != null ? e.getMessage() : "Error de login"
-                ));
-            }
-        });
+            call.enqueue(new retrofit2.Callback<ResponseBody>() {
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    inFlight.remove(call);
+                    handleLoginLikeResponse(response, callback);
+                }
+
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    inFlight.remove(call);
+                    if (call.isCanceled()) return; // cancelado por onCleared, no tocar UI
+                    callback.onError(t.getMessage() != null ? t.getMessage() : "Error de conexión");
+                }
+            });
+
+        } catch (Exception e) {
+            callback.onError(e.getMessage() != null ? e.getMessage() : "Error de login");
+        }
     }
 
     public void register(RegisterRequest req, Callback<String> callback) {
-        executor.execute(() -> {
-            try {
-                String appSession = handshake();
+        try {
+            JSONObject body = new JSONObject();
+            body.put("nombre_usuario", req.nombreUsuario);
+            body.put("email", req.email);
+            body.put("contraseña", req.password);
+            body.put("fecha_nacimiento", req.fechaNacimiento);
 
-                JSONObject body = new JSONObject();
-                body.put("nombre_usuario", req.nombreUsuario);
-                body.put("email", req.email);
-                body.put("contraseña", req.password);
-                body.put("fecha_nacimiento", req.fechaNacimiento);
+            if (req.provincia != null && !req.provincia.trim().isEmpty()) {
+                body.put("provincia", req.provincia.trim());
+            }
 
-                if (req.provincia != null && !req.provincia.trim().isEmpty()) {
-                    body.put("provincia", req.provincia.trim());
+            RequestBody rb = RequestBody.create(body.toString(), JSON);
+
+            Call<ResponseBody> call = RetrofitProvider.authApi(appContext).register(rb);
+            inFlight.add(call);
+
+            call.enqueue(new retrofit2.Callback<ResponseBody>() {
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    inFlight.remove(call);
+
+                    if (!response.isSuccessful()) {
+                        callback.onError(parseApiError(response));
+                        return;
+                    }
+
+                    try {
+                        String text = response.body() != null ? response.body().string() : "{}";
+                        JSONObject json = new JSONObject(text);
+                        String msg = json.optString("mensaje", "Cuenta creada correctamente");
+                        callback.onSuccess(msg);
+                    } catch (Exception e) {
+                        callback.onError("Respuesta inválida del servidor");
+                    }
                 }
 
-                JSONObject resp = request("POST", "/registro", body, appSession, null, null);
-                String msg = resp.optString("mensaje", "Cuenta creada correctamente");
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    inFlight.remove(call);
+                    if (call.isCanceled()) return;
+                    callback.onError(t.getMessage() != null ? t.getMessage() : "Error de conexión");
+                }
+            });
 
-                mainHandler.post(() -> callback.onSuccess(msg));
-            } catch (Exception e) {
-                mainHandler.post(() -> callback.onError(
-                        e.getMessage() != null ? e.getMessage() : "Error de registro"
-                ));
-            }
-        });
+        } catch (Exception e) {
+            callback.onError(e.getMessage() != null ? e.getMessage() : "Error de registro");
+        }
     }
 
     public void refreshSession(String refreshToken, Callback<LoginResult> callback) {
-        executor.execute(() -> {
-            try {
-                if (refreshToken == null || refreshToken.trim().isEmpty()) {
-                    throw new Exception("No hay refresh token");
+        try {
+            JSONObject body = new JSONObject();
+            body.put("refresh_token", refreshToken);
+
+            RequestBody rb = RequestBody.create(body.toString(), JSON);
+
+            Call<ResponseBody> call = RetrofitProvider.authApi(appContext).refresh(rb);
+            inFlight.add(call);
+
+            call.enqueue(new retrofit2.Callback<ResponseBody>() {
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    inFlight.remove(call);
+                    handleLoginLikeResponse(response, callback);
                 }
 
-                String appSession = handshake();
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    inFlight.remove(call);
+                    if (call.isCanceled()) return;
+                    callback.onError(t.getMessage() != null ? t.getMessage() : "Error de conexión");
+                }
+            });
 
-                JSONObject body = new JSONObject();
-                body.put("refresh_token", refreshToken);
-
-                JSONObject resp = request("POST", "/token/refresh", body, appSession, null, null);
-
-                LoginResult result = parseLoginLikeResponse(resp);
-                mainHandler.post(() -> callback.onSuccess(result));
-            } catch (Exception e) {
-                mainHandler.post(() -> callback.onError(
-                        e.getMessage() != null ? e.getMessage() : "No se pudo renovar la sesión"
-                ));
-            }
-        });
+        } catch (Exception e) {
+            callback.onError(e.getMessage() != null ? e.getMessage() : "No se pudo renovar la sesión");
+        }
     }
 
     public void logout(String refreshToken, Callback<String> callback) {
-        executor.execute(() -> {
-            try {
-                if (refreshToken == null || refreshToken.trim().isEmpty()) {
-                    // Logout local igualmente válido
-                    mainHandler.post(() -> callback.onSuccess("Sesión cerrada"));
-                    return;
+        try {
+            JSONObject body = new JSONObject();
+            body.put("refresh_token", refreshToken);
+
+            RequestBody rb = RequestBody.create(body.toString(), JSON);
+
+            Call<ResponseBody> call = RetrofitProvider.authApi(appContext).logout(rb);
+            inFlight.add(call);
+
+            call.enqueue(new retrofit2.Callback<ResponseBody>() {
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    inFlight.remove(call);
+
+                    // logout best-effort: si falla, devolvemos error (la UI igual puede limpiar local)
+                    if (!response.isSuccessful()) {
+                        callback.onError(parseApiError(response));
+                        return;
+                    }
+
+                    try {
+                        String text = response.body() != null ? response.body().string() : "{}";
+                        JSONObject json = new JSONObject(text);
+                        callback.onSuccess(json.optString("mensaje", "Sesión cerrada"));
+                    } catch (Exception e) {
+                        callback.onSuccess("Sesión cerrada");
+                    }
                 }
 
-                String appSession = handshake();
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    inFlight.remove(call);
+                    if (call.isCanceled()) return;
+                    callback.onError(t.getMessage() != null ? t.getMessage() : "Error de conexión");
+                }
+            });
 
-                JSONObject body = new JSONObject();
-                body.put("refresh_token", refreshToken);
-
-                JSONObject resp = request("POST", "/logout", body, appSession, null, null);
-                String msg = resp.optString("mensaje", "Sesión cerrada");
-
-                mainHandler.post(() -> callback.onSuccess(msg));
-            } catch (Exception e) {
-                // En logout interesa seguir: devolvemos error para que la UI decida "best effort"
-                mainHandler.post(() -> callback.onError(
-                        e.getMessage() != null ? e.getMessage() : "No se pudo cerrar sesión en el servidor"
-                ));
-            }
-        });
-    }
-
-    private LoginResult parseLoginLikeResponse(JSONObject resp) throws Exception {
-        String nombreUsuario = resp.optString("nombre_usuario", "");
-        String tokenAcceso = resp.optString("token_acceso", "");
-        String refreshToken = resp.optString("refresh_token", "");
-
-        if (tokenAcceso.isEmpty()) {
-            throw new Exception("No se recibió token_acceso");
-        }
-        if (refreshToken.isEmpty()) {
-            throw new Exception("No se recibió refresh_token");
-        }
-
-        return new LoginResult(nombreUsuario, tokenAcceso, refreshToken);
-    }
-
-    private void validateClientConfig() throws Exception {
-        if (BASE_URL == null || BASE_URL.trim().isEmpty()) {
-            throw new Exception("BASE_URL no está configurada. Revisa BuildConfig.BASE_URL.");
-        }
-
-        if (APP_ID == null || APP_ID.trim().isEmpty()) {
-            throw new Exception("APP_ID está vacío. Revisa local.properties (APP_ID) y recompila la app.");
+        } catch (Exception e) {
+            callback.onError(e.getMessage() != null ? e.getMessage() : "No se pudo cerrar sesión");
         }
     }
 
-    private String handshake() throws Exception {
-        validateClientConfig();
-
-        JSONObject resp = request("GET", "/handshake", null, null, APP_ID, null);
-        String appSession = resp.optString("app_session_token", null);
-
-        if (appSession == null || appSession.isEmpty()) {
-            throw new Exception("No se recibió app_session_token");
+    private void handleLoginLikeResponse(Response<ResponseBody> response, Callback<LoginResult> callback) {
+        if (!response.isSuccessful()) {
+            callback.onError(parseApiError(response));
+            return;
         }
 
-        return appSession;
-    }
-
-    private JSONObject request(String method,
-                               String path,
-                               JSONObject body,
-                               String xAppSession,
-                               String xAppId,
-                               String bearerAccessToken) throws Exception {
-
-        URL url = new URL(BASE_URL + path);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod(method);
-        conn.setConnectTimeout(10000);
-        conn.setReadTimeout(15000);
-        conn.setRequestProperty("Accept", "application/json");
-
-        if (xAppId != null) conn.setRequestProperty("x-app-id", xAppId);
-        if (xAppSession != null) conn.setRequestProperty("x-app-session", xAppSession);
-        if (bearerAccessToken != null && !bearerAccessToken.trim().isEmpty()) {
-            conn.setRequestProperty("Authorization", "Bearer " + bearerAccessToken);
-        }
-
-        if (body != null) {
-            conn.setDoOutput(true);
-            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            try (OutputStream os = conn.getOutputStream();
-                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8))) {
-                writer.write(body.toString());
-                writer.flush();
-            }
-        }
-
-        int code = conn.getResponseCode();
-        InputStream is = (code >= 200 && code < 300) ? conn.getInputStream() : conn.getErrorStream();
-        String responseText = readAll(is);
-
-        if (code < 200 || code >= 300) {
-            throw new Exception(parseApiError(responseText, code));
-        }
-
-        if (responseText == null || responseText.trim().isEmpty()) {
-            return new JSONObject();
-        }
-
-        return new JSONObject(responseText);
-    }
-
-    private String readAll(InputStream is) throws Exception {
-        if (is == null) return "";
-        StringBuilder sb = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = br.readLine()) != null) sb.append(line);
-        }
-        return sb.toString();
-    }
-
-    private String parseApiError(String body, int statusCode) {
         try {
+            String text = response.body() != null ? response.body().string() : "{}";
+            JSONObject json = new JSONObject(text);
+
+            String nombreUsuario = json.optString("nombre_usuario", "");
+            String tokenAcceso = json.optString("token_acceso", "");
+            String refreshToken = json.optString("refresh_token", "");
+
+            if (tokenAcceso.trim().isEmpty()) throw new Exception("No se recibió token_acceso");
+            if (refreshToken.trim().isEmpty()) throw new Exception("No se recibió refresh_token");
+
+            callback.onSuccess(new LoginResult(nombreUsuario, tokenAcceso, refreshToken));
+
+        } catch (Exception e) {
+            callback.onError("Respuesta inválida del servidor");
+        }
+    }
+
+    private String parseApiError(Response<ResponseBody> response) {
+        try {
+            String body = response.errorBody() != null ? response.errorBody().string() : "";
             JSONObject obj = new JSONObject(body);
+
             if (obj.has("detail")) {
                 Object detail = obj.get("detail");
 
+                // detail puede ser lista [{"columna":..., "mensaje":...}]
                 if (detail instanceof JSONArray) {
                     JSONArray arr = (JSONArray) detail;
                     if (arr.length() > 0) {
                         JSONObject first = arr.optJSONObject(0);
                         if (first != null) {
-                            String mensaje = first.optString("mensaje", null);
-                            if (mensaje != null && !mensaje.isEmpty()) return mensaje;
+                            String msg = first.optString("mensaje", null);
+                            if (msg != null && !msg.isEmpty()) return msg;
                         }
                     }
                 }
+
                 return String.valueOf(detail);
             }
         } catch (Exception ignored) { }
-        return "Error HTTP " + statusCode;
+
+        return "Error HTTP " + response.code();
     }
 }

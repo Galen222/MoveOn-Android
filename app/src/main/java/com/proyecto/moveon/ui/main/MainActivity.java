@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
             return; // no hay refresh, no intentamos nada
         }
 
-        AuthRepository authRepository = new AuthRepository();
+        AuthRepository authRepository = new AuthRepository(this);
         authRepository.refreshSession(refreshToken, new AuthRepository.Callback<AuthRepository.LoginResult>() {
             @Override
             public void onSuccess(AuthRepository.LoginResult result) {

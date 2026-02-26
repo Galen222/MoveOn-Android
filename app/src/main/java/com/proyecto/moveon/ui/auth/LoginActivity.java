@@ -1,6 +1,7 @@
 package com.proyecto.moveon.ui.auth;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,17 +9,18 @@ import android.widget.Toast;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
-import com.proyecto.moveon.data.session.AuthRepository;
-import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.R;
-import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
+import com.proyecto.moveon.data.session.SecureSessionManager;
+import com.proyecto.moveon.ui.common.UiState;
+import com.proyecto.moveon.ui.main.MainActivity;
 
 public class LoginActivity extends AppCompatActivity {
 
     private TextInputEditText etCorreo, etPassword;
     private MaterialButton btnLogin, btnRegistrar;
-    private AuthRepository authRepository;
+
+    private AuthViewModel viewModel;
     private SecureSessionManager sessionManager;
 
     @Override
@@ -34,18 +36,34 @@ public class LoginActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_login);
 
-        authRepository = new AuthRepository();
+        viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
 
         etCorreo = findViewById(R.id.etUsuario_Correo);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
         btnRegistrar = findViewById(R.id.btnRegistrar);
 
-        btnRegistrar.setOnClickListener(v -> {
-            startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
-        });
+        btnRegistrar.setOnClickListener(v ->
+                startActivity(new Intent(LoginActivity.this, RegisterActivity.class))
+        );
 
         btnLogin.setOnClickListener(v -> attemptLogin());
+
+        // Observa el estado del login
+        viewModel.getLoginState().observe(this, state -> {
+            if (state == null) return;
+
+            setLoading(state.loading);
+
+            if (state.error != null) {
+                Toast.makeText(this, state.error, Toast.LENGTH_LONG).show();
+            }
+
+            if (state.data != null) {
+                Toast.makeText(this, "Bienvenido " + state.data.nombreUsuario, Toast.LENGTH_SHORT).show();
+                goToMain();
+            }
+        });
     }
 
     private void attemptLogin() {
@@ -64,23 +82,7 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        setLoading(true);
-
-        authRepository.login(identificador, password, new AuthRepository.Callback<AuthRepository.LoginResult>() {
-            @Override
-            public void onSuccess(AuthRepository.LoginResult result) {
-                setLoading(false);
-                sessionManager.saveLogin(result.nombreUsuario, result.tokenAcceso, result.refreshToken);
-                Toast.makeText(LoginActivity.this, "Bienvenido " + result.nombreUsuario, Toast.LENGTH_SHORT).show();
-                goToMain();
-            }
-
-            @Override
-            public void onError(String error) {
-                setLoading(false);
-                Toast.makeText(LoginActivity.this, error, Toast.LENGTH_LONG).show();
-            }
-        });
+        viewModel.login(identificador, password);
     }
 
     private void setLoading(boolean loading) {

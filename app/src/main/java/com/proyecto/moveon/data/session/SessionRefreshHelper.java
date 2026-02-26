@@ -33,7 +33,7 @@ public class SessionRefreshHelper {
     public SessionRefreshHelper(@NonNull Context context) {
         this.appContext = context.getApplicationContext();
         this.sessionManager = new SecureSessionManager(appContext);
-        this.authRepository = new AuthRepository();
+        this.authRepository = new AuthRepository(appContext);
     }
 
     /**

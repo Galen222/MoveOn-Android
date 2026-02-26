@@ -237,7 +237,7 @@ public class ProfileFragment extends Fragment {
             btnLogout.setText("Saliendo...");
         }
 
-        AuthRepository authRepository = new AuthRepository();
+        AuthRepository authRepository = new AuthRepository(requireContext());
         authRepository.logout(refreshToken, new AuthRepository.Callback<String>() {
             @Override
             public void onSuccess(String result) {

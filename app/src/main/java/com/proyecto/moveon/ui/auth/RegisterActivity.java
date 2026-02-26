@@ -1,6 +1,7 @@
 package com.proyecto.moveon.ui.auth;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.app.DatePickerDialog;
 import android.content.Intent;
@@ -11,18 +12,16 @@ import android.widget.Toast;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputEditText;
+import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.data.session.AuthRepository;
 import com.proyecto.moveon.ui.main.MainActivity;
-import com.proyecto.moveon.R;
-import com.proyecto.moveon.data.session.SecureSessionManager;
-import com.proyecto.moveon.core.theme.ThemeManager;
 
 import java.util.Calendar;
 import java.util.Locale;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private SecureSessionManager sessionManager;
     // Debe coincidir con el primer item de arrays.xml
     private static final String PROVINCIA_NO_INDICAR = "No indicar";
 
@@ -34,7 +33,7 @@ public class RegisterActivity extends AppCompatActivity {
     private TextInputEditText etConfirmarPassword;
     private MaterialButton btnCrearCuenta;
 
-    private AuthRepository authRepository;
+    private AuthViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,20 +41,46 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        authRepository = new AuthRepository();
-        sessionManager = new SecureSessionManager(this);
+        viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
 
         initViews();
         setupProvinciaDropdown();
         setupListeners();
+
+        // Observa estado de registro
+        viewModel.getRegisterState().observe(this, state -> {
+            if (state == null) return;
+
+            setLoading(state.loading);
+
+            if (state.error != null) {
+                Toast.makeText(this, state.error, Toast.LENGTH_LONG).show();
+            }
+
+            if (state.data != null) {
+                // El ViewModel hace autologin y guarda sesión.
+                // Aquí solo mostramos mensaje (si quieres) y navegamos (lo haremos con loginState también).
+                Toast.makeText(this, state.data, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Observa loginState para navegar cuando el autologin termine
+        viewModel.getLoginState().observe(this, state -> {
+            if (state == null) return;
+
+            if (state.data != null) {
+                Intent i = new Intent(RegisterActivity.this, MainActivity.class);
+                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(i);
+                finish();
+            }
+        });
     }
 
     private void initViews() {
-        // Estos dos requieren que hayas cambiado el XML
         etNombreUsuario = findViewById(R.id.etUsuario);
         etProvincia = findViewById(R.id.etProvincia);
 
-        // Estos ya los tenías
         etCorreo = findViewById(R.id.etUsuario_Correo);
         etFechaNacimiento = findViewById(R.id.etFechaNacimiento);
         etPassword = findViewById(R.id.etPassword);
@@ -109,9 +134,7 @@ public class RegisterActivity extends AppCompatActivity {
                 year, month, day
         );
 
-        // Opcional: impedir elegir fechas futuras
         dialog.getDatePicker().setMaxDate(System.currentTimeMillis());
-
         dialog.show();
     }
 
@@ -125,7 +148,6 @@ public class RegisterActivity extends AppCompatActivity {
         String password = textOf(etPassword);
         String confirmarPassword = textOf(etConfirmarPassword);
 
-        // Validaciones básicas cliente (el backend seguirá validando)
         if (nombreUsuario.isEmpty()) {
             etNombreUsuario.setError("El nombre de usuario es obligatorio");
             etNombreUsuario.requestFocus();
@@ -138,7 +160,6 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        // Backend: alfanumérico sin espacios
         if (!nombreUsuario.matches("^[a-zA-Z0-9]+$")) {
             etNombreUsuario.setError("Solo letras y números (sin espacios)");
             etNombreUsuario.requestFocus();
@@ -182,70 +203,14 @@ public class RegisterActivity extends AppCompatActivity {
             provincia = provinciaSeleccionada;
         }
 
-        // Request al backend
         AuthRepository.RegisterRequest req = new AuthRepository.RegisterRequest();
         req.nombreUsuario = nombreUsuario;
         req.email = correo;
         req.password = password;
         req.fechaNacimiento = fechaNacimiento;
-        req.provincia = provincia; // opcional
+        req.provincia = provincia;
 
-        setLoading(true);
-
-        authRepository.register(req, new AuthRepository.Callback<String>() {
-            @Override
-            public void onSuccess(String result) {
-                // Opcional: feedback
-                Toast.makeText(RegisterActivity.this, result, Toast.LENGTH_SHORT).show();
-
-                // Mantener loading mientras hacemos autologin
-                btnCrearCuenta.setText("Entrando...");
-
-                // Autologin con el correo (también podrías usar nombreUsuario)
-                authRepository.login(correo, password, new AuthRepository.Callback<AuthRepository.LoginResult>() {
-                    @Override
-                    public void onSuccess(AuthRepository.LoginResult loginResult) {
-                        setLoading(false);
-
-                        sessionManager.saveLogin(loginResult.nombreUsuario, loginResult.tokenAcceso, loginResult.refreshToken);
-
-                        Toast.makeText(
-                                RegisterActivity.this,
-                                "Bienvenido " + loginResult.nombreUsuario,
-                                Toast.LENGTH_SHORT
-                        ).show();
-
-                        Intent i = new Intent(RegisterActivity.this, MainActivity.class);
-                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(i);
-                        finish();
-                    }
-
-                    @Override
-                    public void onError(String error) {
-                        setLoading(false);
-
-                        // Cuenta creada pero no se pudo iniciar sesión automático
-                        Toast.makeText(
-                                RegisterActivity.this,
-                                "Cuenta creada, pero no se pudo iniciar sesión automáticamente: " + error,
-                                Toast.LENGTH_LONG
-                        ).show();
-
-                        Intent i = new Intent(RegisterActivity.this, LoginActivity.class);
-                        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                        startActivity(i);
-                        finish();
-                    }
-                });
-            }
-
-            @Override
-            public void onError(String error) {
-                setLoading(false);
-                Toast.makeText(RegisterActivity.this, error, Toast.LENGTH_LONG).show();
-            }
-        });
+        viewModel.registerAndAutoLogin(req);
     }
 
     private void setLoading(boolean loading) {

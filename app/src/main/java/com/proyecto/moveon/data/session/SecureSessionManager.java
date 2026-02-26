@@ -69,26 +69,6 @@ public class SecureSessionManager {
         }
     }
 
-    /**
-     * Compatibilidad temporal con instalaciones viejas / código legado.
-     * Mejor usar saveLogin(username, accessToken, refreshToken).
-     */
-    @Deprecated
-    public void saveLogin(String username, String accessToken) {
-        saveLogin(username, accessToken, "");
-    }
-
-    public void updateAccessToken(String accessToken) {
-        if (accessToken == null) accessToken = "";
-        try {
-            SharedPreferences.Editor editor = prefs.edit();
-            putEncrypted(editor, KEY_ACCESS_TOKEN_CT, KEY_ACCESS_TOKEN_IV, accessToken);
-            editor.apply();
-        } catch (Exception e) {
-            throw new RuntimeException("Error actualizando access token", e);
-        }
-    }
-
     public void updateTokens(String accessToken, String refreshToken) {
         String username = getUsername();
         if (username == null) username = "";
