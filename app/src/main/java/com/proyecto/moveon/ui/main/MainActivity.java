@@ -12,10 +12,10 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.data.session.SecureSessionManager;
+import com.proyecto.moveon.databinding.ActivityMainBinding;
 import com.proyecto.moveon.ui.auth.LoginActivity;
 import com.proyecto.moveon.ui.common.SessionUiHelper;
 import com.proyecto.moveon.ui.home.InicioFragment;
@@ -25,12 +25,12 @@ import com.proyecto.moveon.ui.stats.StatsFragment;
 public class MainActivity extends AppCompatActivity {
 
     private static final String KEY_SELECTED_ITEM = "selected_item";
-
     private static final String TAG_INICIO  = "tab_inicio";
     private static final String TAG_STATS   = "tab_stats";
     private static final String TAG_PROFILE = "tab_profile";
 
-    private BottomNavigationView bottomNavigationView;
+    // 1. Declaramos el binding y eliminamos la variable de BottomNavigationView
+    private ActivityMainBinding binding;
     private FragmentManager fragmentManager;
 
     private InicioFragment inicioFragment;
@@ -54,9 +54,10 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        setContentView(R.layout.activity_main);
+        // 2. Inflamos la vista con ViewBinding
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        bottomNavigationView = findViewById(R.id.bottom_navigation);
         fragmentManager = getSupportFragmentManager();
 
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
@@ -78,7 +79,6 @@ public class MainActivity extends AppCompatActivity {
             if (fInicio instanceof InicioFragment) inicioFragment = (InicioFragment) fInicio;
             if (fStats instanceof StatsFragment) statsFragment = (StatsFragment) fStats;
             if (fProfile instanceof ProfileFragment) profileFragment = (ProfileFragment) fProfile;
-
         } else {
             // Pre-creas y dejas listos los 3 tabs, PERO con commitNow para que estén realmente añadidos
             inicioFragment = new InicioFragment();
@@ -96,12 +96,14 @@ public class MainActivity extends AppCompatActivity {
             selectedItemId = R.id.nav_inicio;
         }
 
-        // 1) Marca la pestaña (sin listener aún)
-        bottomNavigationView.setSelectedItemId(selectedItemId);
-        // 2) Muestra el fragment correcto UNA sola vez
+        // 3. Reemplazamos bottomNavigationView por binding.bottomNavigation
+        binding.bottomNavigation.setSelectedItemId(selectedItemId);
+
+        // Muestra el fragment correcto UNA sola vez
         switchTo(selectedItemId);
-        // 3) Ahora sí, listener (evita doble switchTo en el arranque)
-        bottomNavigationView.setOnItemSelectedListener(item -> {
+
+        // Ahora sí, listener (evita doble switchTo en el arranque)
+        binding.bottomNavigation.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == selectedItemId) return true;
             switchTo(id);
@@ -115,8 +117,8 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (bottomNavigationView.getSelectedItemId() != R.id.nav_inicio) {
-                    bottomNavigationView.setSelectedItemId(R.id.nav_inicio);
+                if (binding.bottomNavigation.getSelectedItemId() != R.id.nav_inicio) {
+                    binding.bottomNavigation.setSelectedItemId(R.id.nav_inicio);
                 } else {
                     setEnabled(false);
                     getOnBackPressedDispatcher().onBackPressed();
@@ -134,14 +136,12 @@ public class MainActivity extends AppCompatActivity {
                 inicioFragment = (f instanceof InicioFragment) ? (InicioFragment) f : new InicioFragment();
             }
             target = inicioFragment;
-
         } else if (itemId == R.id.nav_stats) {
             if (statsFragment == null) {
                 Fragment f = fragmentManager.findFragmentByTag(TAG_STATS);
                 statsFragment = (f instanceof StatsFragment) ? (StatsFragment) f : new StatsFragment();
             }
             target = statsFragment;
-
         } else { // R.id.nav_profile
             if (profileFragment == null) {
                 Fragment f = fragmentManager.findFragmentByTag(TAG_PROFILE);
@@ -185,5 +185,12 @@ public class MainActivity extends AppCompatActivity {
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(i);
         finish();
+    }
+
+    // 4. Liberamos memoria destruyendo el binding, buena práctica siempre
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        binding = null;
     }
 }
