@@ -74,6 +74,7 @@ android {
     // Asegura generación de BuildConfig
     buildFeatures {
         buildConfig = true
+        viewBinding = true
     }
 
     compileOptions {

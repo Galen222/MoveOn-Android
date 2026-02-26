@@ -1,5 +1,8 @@
 package com.proyecto.moveon.ui.main;
 
+import android.content.Intent;
+import android.os.Bundle;
+
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -8,9 +11,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
-
-import android.content.Intent;
-import android.os.Bundle;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.proyecto.moveon.R;
@@ -60,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
         fragmentManager = getSupportFragmentManager();
 
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
-
         viewModel.getSessionExpiredEvent().observe(this, ev -> {
             if (ev == null) return;
             String msg = ev.getContentIfNotHandled();
@@ -81,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
             if (fProfile instanceof ProfileFragment) profileFragment = (ProfileFragment) fProfile;
 
         } else {
+            // Pre-creas y dejas listos los 3 tabs, PERO con commitNow para que estén realmente añadidos
             inicioFragment = new InicioFragment();
             statsFragment = new StatsFragment();
             profileFragment = new ProfileFragment();
@@ -92,18 +92,21 @@ public class MainActivity extends AppCompatActivity {
             tx.add(R.id.frame_layout, statsFragment, TAG_STATS).hide(statsFragment);
             tx.add(R.id.frame_layout, profileFragment, TAG_PROFILE).hide(profileFragment);
 
-            tx.commit();
+            tx.commitNow(); // <- CLAVE (evita tocar fragments antes de que estén añadidos)
             selectedItemId = R.id.nav_inicio;
         }
 
+        // 1) Marca la pestaña (sin listener aún)
+        bottomNavigationView.setSelectedItemId(selectedItemId);
+        // 2) Muestra el fragment correcto UNA sola vez
+        switchTo(selectedItemId);
+        // 3) Ahora sí, listener (evita doble switchTo en el arranque)
         bottomNavigationView.setOnItemSelectedListener(item -> {
-            switchTo(item.getItemId());
+            int id = item.getItemId();
+            if (id == selectedItemId) return true;
+            switchTo(id);
             return true;
         });
-
-        // fuerza la pestaña correcta y muestra el fragment correcto (sin recrearlo)
-        bottomNavigationView.setSelectedItemId(selectedItemId);
-        switchTo(selectedItemId);
 
         // Refresh silencioso lifecycle-safe
         viewModel.trySilentRefreshAtStartup();
@@ -123,27 +126,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void switchTo(int itemId) {
+        Fragment target;
+
         if (itemId == R.id.nav_inicio) {
             if (inicioFragment == null) {
                 Fragment f = fragmentManager.findFragmentByTag(TAG_INICIO);
                 inicioFragment = (f instanceof InicioFragment) ? (InicioFragment) f : new InicioFragment();
             }
+            target = inicioFragment;
+
         } else if (itemId == R.id.nav_stats) {
             if (statsFragment == null) {
                 Fragment f = fragmentManager.findFragmentByTag(TAG_STATS);
                 statsFragment = (f instanceof StatsFragment) ? (StatsFragment) f : new StatsFragment();
             }
-        } else if (itemId == R.id.nav_profile) {
+            target = statsFragment;
+
+        } else { // R.id.nav_profile
             if (profileFragment == null) {
                 Fragment f = fragmentManager.findFragmentByTag(TAG_PROFILE);
                 profileFragment = (f instanceof ProfileFragment) ? (ProfileFragment) f : new ProfileFragment();
             }
+            target = profileFragment;
         }
-
-        Fragment target;
-        if (itemId == R.id.nav_inicio) target = inicioFragment;
-        else if (itemId == R.id.nav_stats) target = statsFragment;
-        else target = profileFragment;
 
         FragmentTransaction tx = fragmentManager.beginTransaction();
         tx.setReorderingAllowed(true);
@@ -164,8 +169,15 @@ public class MainActivity extends AppCompatActivity {
 
     private void ensureAdded(@NonNull FragmentTransaction tx, Fragment f, String tag) {
         if (f == null) return;
-        if (f.isAdded()) return;
-        tx.add(R.id.frame_layout, f, tag).hide(f);
+        if (!f.isAdded()) {
+            tx.add(R.id.frame_layout, f, tag).hide(f);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(KEY_SELECTED_ITEM, selectedItemId);
     }
 
     private void goToLoginAndFinish() {
@@ -173,11 +185,5 @@ public class MainActivity extends AppCompatActivity {
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(i);
         finish();
-    }
-
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putInt(KEY_SELECTED_ITEM, bottomNavigationView.getSelectedItemId());
     }
 }
