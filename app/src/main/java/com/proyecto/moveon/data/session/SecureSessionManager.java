@@ -102,7 +102,14 @@ public class SecureSessionManager {
     }
 
     public void logout() {
-        prefs.edit().clear().apply();
+        prefs.edit()
+                .remove(KEY_USERNAME_CT)
+                .remove(KEY_USERNAME_IV)
+                .remove(KEY_ACCESS_TOKEN_CT)
+                .remove(KEY_ACCESS_TOKEN_IV)
+                .remove(KEY_REFRESH_TOKEN_CT)
+                .remove(KEY_REFRESH_TOKEN_IV)
+                .apply();
     }
 
     public void saveRememberedIdentifier(@Nullable String identifier) {
