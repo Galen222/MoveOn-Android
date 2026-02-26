@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -11,16 +11,16 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="32dp"
+        android:paddingBottom="@dimen/auth_section_spacing"
         tools:context=".ui.auth.RegisterActivity">
 
         <!-- Logo -->
         <ImageView
             android:id="@+id/ivMoveOn"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_marginTop="32dp"
-            android:contentDescription="@string/app_name"
+            android:layout_width="@dimen/auth_logo_size_register"
+            android:layout_height="@dimen/auth_logo_size_register"
+            android:layout_marginTop="@dimen/auth_logo_margin_top_register"
+            android:contentDescription="@string/registro_logo_desc"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -31,10 +31,10 @@
             android:id="@+id/tvCrearCuenta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Crear cuenta"
+            android:layout_marginTop="@dimen/auth_title_margin_top"
+            android:text="@string/registro_titulo"
             android:textColor="@color/textPrimary"
-            android:textSize="24sp"
+            android:textSize="@dimen/auth_title_size"
             android:fontFamily="sans-serif-medium"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -45,10 +45,10 @@
             android:id="@+id/tvSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Únete a MoveOn hoy"
+            android:layout_marginTop="@dimen/auth_subtitle_margin_top"
+            android:text="@string/registro_subtitulo"
             android:textColor="@color/textSecondary"
-            android:textSize="14sp"
+            android:textSize="@dimen/auth_subtitle_size"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvCrearCuenta" />
@@ -59,11 +59,10 @@
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
-            android:layout_marginTop="24dp"
-            android:layout_marginEnd="32dp"
-            android:hint="Usuario"
-            android:textColorHint="@color/textSecondary"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginTop="@dimen/auth_first_field_margin_top"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:hint="@string/registro_hint_usuario"
             app:boxStrokeColor="@color/greenPrimary"
             app:hintTextColor="@color/greenPrimary"
             app:startIconTint="@color/textSecondary"
@@ -76,21 +75,19 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textNoSuggestions"
-                android:textColor="@color/textPrimary"
-                android:textColorHint="@color/textTertiary" />
+                android:textColor="@color/textPrimary" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Campo Correo Electrónico -->
+        <!-- Campo Correo -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilUsuario_Correo"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="32dp"
-            android:hint="Correo electrónico"
-            android:textColorHint="@color/textSecondary"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginTop="@dimen/auth_field_spacing"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:hint="@string/registro_hint_correo"
             app:boxStrokeColor="@color/greenPrimary"
             app:hintTextColor="@color/greenPrimary"
             app:startIconTint="@color/textSecondary"
@@ -103,55 +100,25 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textEmailAddress"
-                android:textColor="@color/textPrimary"
-                android:textColorHint="@color/textTertiary" />
+                android:textColor="@color/textPrimary" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Campo Provincia -->
+        <!-- Campo Fecha Nacimiento -->
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilProvincia"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-            app:endIconMode="dropdown_menu"
+            android:id="@+id/tilFechaNacimiento"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="32dp"
-            android:hint="Provincia"
-            android:textColorHint="@color/textSecondary"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginTop="@dimen/auth_field_spacing"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:hint="@string/registro_hint_fecha"
             app:boxStrokeColor="@color/greenPrimary"
             app:hintTextColor="@color/greenPrimary"
             app:startIconTint="@color/textSecondary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tilUsuario_Correo">
-
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/etProvincia"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="none"
-                android:textColor="@color/textPrimary"
-                android:textColorHint="@color/textTertiary" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Campo Fecha de Nacimiento -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilFechaNacimiento"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="32dp"
-            android:hint="Fecha de nacimiento"
-            android:textColorHint="@color/textSecondary"
-            app:boxStrokeColor="@color/greenPrimary"
-            app:hintTextColor="@color/greenPrimary"
-            app:startIconTint="@color/textSecondary"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tilProvincia">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etFechaNacimiento"
@@ -160,8 +127,7 @@
                 android:inputType="none"
                 android:focusable="false"
                 android:clickable="true"
-                android:textColor="@color/textPrimary"
-                android:textColorHint="@color/textTertiary" />
+                android:textColor="@color/textPrimary" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Campo Contraseña -->
@@ -170,11 +136,10 @@
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="32dp"
-            android:hint="Contraseña"
-            android:textColorHint="@color/textSecondary"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginTop="@dimen/auth_field_spacing"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:hint="@string/registro_hint_password"
             app:boxStrokeColor="@color/greenPrimary"
             app:hintTextColor="@color/greenPrimary"
             app:endIconMode="password_toggle"
@@ -189,8 +154,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPassword"
-                android:textColor="@color/textPrimary"
-                android:textColorHint="@color/textTertiary" />
+                android:textColor="@color/textPrimary" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Campo Confirmar Contraseña -->
@@ -199,11 +163,10 @@
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="32dp"
-            android:hint="Confirmar contraseña"
-            android:textColorHint="@color/textSecondary"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginTop="@dimen/auth_field_spacing"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:hint="@string/registro_hint_confirmar_password"
             app:boxStrokeColor="@color/greenPrimary"
             app:hintTextColor="@color/greenPrimary"
             app:endIconMode="password_toggle"
@@ -218,35 +181,35 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPassword"
-                android:textColor="@color/textPrimary"
-                android:textColorHint="@color/textTertiary" />
+                android:textColor="@color/textPrimary" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Botón Crear Cuenta -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCrearCuenta"
             android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_marginStart="32dp"
-            android:layout_marginTop="24dp"
-            android:layout_marginEnd="32dp"
-            android:text="Crear cuenta"
-            android:textSize="16sp"
+            android:layout_height="@dimen/auth_button_height"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:text="@string/registro_btn_crear"
+            android:contentDescription="@string/registro_btn_crear_desc"
+            android:textSize="@dimen/auth_button_text_size"
             android:fontFamily="sans-serif-medium"
-            app:cornerRadius="12dp"
+            app:cornerRadius="@dimen/auth_button_radius"
             app:backgroundTint="@color/greenPrimary"
             android:textColor="@color/textOnGreen"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tilConfirmarPassword" />
 
-        <!-- Texto "Ya tienes cuenta" -->
+        <!-- ¿Ya tienes cuenta? -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="@dimen/auth_field_spacing"
             android:orientation="horizontal"
-            android:gravity="center"
+            android:gravity="center_vertical"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/btnCrearCuenta">
@@ -254,23 +217,23 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="¿Ya tienes cuenta? "
+                android:text="@string/registro_ya_tienes_cuenta"
                 android:textColor="@color/textSecondary"
-                android:textSize="14sp" />
+                android:textSize="@dimen/auth_link_text_size"
+                android:importantForAccessibility="no" />
 
-            <TextView
-                android:id="@+id/tvIniciarSesion"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnIniciarSesion"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Iniciar sesión"
+                android:text="@string/registro_iniciar_sesion"
+                android:contentDescription="@string/registro_iniciar_sesion_desc"
                 android:textColor="@color/greenPrimary"
-                android:textSize="14sp"
-                android:fontFamily="sans-serif-medium"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackground"
-                android:padding="4dp" />
+                android:textSize="@dimen/auth_link_text_size"
+                android:fontFamily="sans-serif-medium" />
+
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-</ScrollView>
+</androidx.core.widget.NestedScrollView>

@@ -2,12 +2,11 @@
 <resources>
 
     <!-- Colores principales (base / claro) -->
-    <color name="greenPrimary">#22C55E</color>
-    <color name="greenPrimaryVariant">#16A34A</color>
-    <color name="greenDark">#15803D</color>
+    <color name="greenPrimary">#15803D</color>
+    <color name="greenPrimaryVariant">#166534</color>
+    <color name="greenDark">#14532D</color>
 
     <!-- Fondos (base / claro) -->
-    <!-- OJO: aunque el nombre diga "darkBackground", aquí debe existir igualmente -->
     <color name="darkBackground">#F8FAFC</color>
     <color name="darkSurface">#FFFFFF</color>
 
@@ -24,9 +23,10 @@
     <color name="dividerColor">#E5E7EB</color>
 
     <!-- Textos para modo CLARO -->
-    <color name="textPrimary">#000000</color>
-    <color name="textSecondary">#4B5563</color>
-    <color name="textTertiary">#9CA3AF</color>
+    <color name="textPrimary">#111827</color>
+    <color name="textSecondary">#374151</color>
+    <!-- textTertiary: #4B5563 da ratio 6.7:1 sobre blanco, pasa WCAG AA -->
+    <color name="textTertiary">#4B5563</color>
     <color name="textOnGreen">#FFFFFF</color>
 
     <!-- Outline / estados -->

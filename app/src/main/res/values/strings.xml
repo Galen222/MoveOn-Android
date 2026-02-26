@@ -4,14 +4,64 @@
     <string name="inicio">INICIO</string>
     <string name="Inicio_fragment_incio_xml">INICIO</string>
 
-    <!-- Login (Se usarán ) -->
-    <string name="prompt_email">Email</string>
-    <string name="prompt_password">Password</string>
-    <string name="action_sign_in">Sign in</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="welcome">Welcome!</string>
-    <string name="invalid_username">Not a valid username</string>
-    <string name="invalid_password">Password must be >5 characters</string>
-    <string name="login_failed">Login failed</string>
+    <!-- Navegación -->
+    <string name="nav_inicio">Inicio</string>
+    <string name="nav_stats">Stats</string>
+    <string name="nav_perfil">Perfil</string>
+
+    <!-- Login - Textos UI -->
+    <string name="login_titulo">Bienvenido a MoveOn</string>
+    <string name="login_subtitulo">Inicia sesión para continuar</string>
+    <string name="login_hint_usuario_correo">Usuario o Correo Electrónico</string>
+    <string name="login_hint_password">Contraseña</string>
+    <string name="login_btn_entrar">Iniciar sesión</string>
+    <string name="login_btn_entrando">Entrando…</string>
+    <string name="login_btn_registrar">Crear cuenta</string>
+    <string name="login_olvidaste_password">¿Olvidaste tu contraseña?</string>
+    <string name="login_divisor">O</string>
+    <string name="login_bienvenido">Bienvenido, %1$s</string>
+
+    <!-- Login - Errores -->
+    <string name="login_error_identificador_vacio">Introduce tu correo o usuario</string>
+    <string name="login_error_password_vacio">Introduce tu contraseña</string>
+
+    <!-- Login - Recordar cuenta -->
+    <string name="login_recordar_cuenta">Recordar cuenta</string>
+
+    <!-- Login - ContentDescriptions -->
+    <string name="login_logo_desc">Logo de MoveOn</string>
+    <string name="login_btn_entrar_desc">Botón para iniciar sesión</string>
+    <string name="login_btn_registrar_desc">Botón para ir a la pantalla de registro</string>
+    <string name="login_olvidaste_desc">Enlace para recuperar tu contraseña</string>
+
+    <!-- Registro - Textos UI -->
+    <string name="registro_titulo">Crear cuenta</string>
+    <string name="registro_subtitulo">Únete a MoveOn hoy</string>
+    <string name="registro_hint_usuario">Usuario</string>
+    <string name="registro_hint_correo">Correo electrónico</string>
+    <string name="registro_hint_fecha">Fecha de nacimiento</string>
+    <string name="registro_hint_password">Contraseña</string>
+    <string name="registro_hint_confirmar_password">Confirmar contraseña</string>
+    <string name="registro_btn_crear">Crear cuenta</string>
+    <string name="registro_btn_creando">Creando…</string>
+    <string name="registro_ya_tienes_cuenta">¿Ya tienes cuenta?</string>
+    <string name="registro_iniciar_sesion">Iniciar sesión</string>
+
+    <!-- Registro - Errores -->
+    <string name="registro_error_usuario_vacio">El nombre de usuario es obligatorio</string>
+    <string name="registro_error_usuario_corto">Mínimo 5 caracteres</string>
+    <string name="registro_error_usuario_formato">Solo letras y números, sin espacios</string>
+    <string name="registro_error_correo_vacio">El correo es obligatorio</string>
+    <string name="registro_error_correo_formato">Introduce un correo válido</string>
+    <string name="registro_error_fecha_vacia">La fecha de nacimiento es obligatoria</string>
+    <string name="registro_error_password_vacio">La contraseña es obligatoria</string>
+    <string name="registro_error_password_corta">La contraseña debe tener al menos 8 caracteres</string>
+    <string name="registro_error_confirmar_vacio">Confirma tu contraseña</string>
+    <string name="registro_error_passwords_distintas">Las contraseñas no coinciden</string>
+
+    <!-- Registro - ContentDescriptions -->
+    <string name="registro_logo_desc">Logo de MoveOn</string>
+    <string name="registro_btn_crear_desc">Botón para crear una cuenta nueva</string>
+    <string name="registro_iniciar_sesion_desc">Enlace para ir a iniciar sesión</string>
 
 </resources>

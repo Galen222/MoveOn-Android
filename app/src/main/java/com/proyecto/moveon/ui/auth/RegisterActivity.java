@@ -6,15 +6,13 @@ import androidx.lifecycle.ViewModelProvider;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
+import android.util.Patterns;
 import android.widget.Toast;
 
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.textfield.MaterialAutoCompleteTextView;
-import com.google.android.material.textfield.TextInputEditText;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.data.session.AuthRepository;
+import com.proyecto.moveon.databinding.ActivityRegisterBinding;
 import com.proyecto.moveon.ui.main.MainActivity;
 
 import java.util.Calendar;
@@ -22,52 +20,52 @@ import java.util.Locale;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    // Debe coincidir con el primer item de arrays.xml
-    private static final String PROVINCIA_NO_INDICAR = "No indicar";
-
-    private TextInputEditText etNombreUsuario;
-    private TextInputEditText etCorreo;
-    private MaterialAutoCompleteTextView etProvincia;
-    private TextInputEditText etFechaNacimiento;
-    private TextInputEditText etPassword;
-    private TextInputEditText etConfirmarPassword;
-    private MaterialButton btnCrearCuenta;
-
+    private ActivityRegisterBinding binding;
     private AuthViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ThemeManager.applySavedTheme(this);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register);
+
+        binding = ActivityRegisterBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
 
-        initViews();
-        setupProvinciaDropdown();
         setupListeners();
+        observeViewModel();
+    }
 
-        // Observa estado de registro
+    private void setupListeners() {
+        // Volver a Login
+        binding.btnIniciarSesion.setOnClickListener(v -> finish());
+
+        // Fecha de nacimiento — abre el DatePicker
+        binding.etFechaNacimiento.setOnClickListener(v -> showDatePicker());
+
+        // Botón registrar
+        binding.btnCrearCuenta.setOnClickListener(v -> attemptRegister());
+
+        // Limpiar errores al volver a escribir
+        binding.etUsuario.setOnFocusChangeListener((v, f) -> { if (f) binding.tilUsuario.setError(null); });
+        binding.etUsuarioCorreo.setOnFocusChangeListener((v, f) -> { if (f) binding.tilUsuarioCorreo.setError(null); });
+        binding.etFechaNacimiento.setOnFocusChangeListener((v, f) -> { if (f) binding.tilFechaNacimiento.setError(null); });
+        binding.etPassword.setOnFocusChangeListener((v, f) -> { if (f) binding.tilPassword.setError(null); });
+        binding.etConfirmarPassword.setOnFocusChangeListener((v, f) -> { if (f) binding.tilConfirmarPassword.setError(null); });
+    }
+
+    private void observeViewModel() {
         viewModel.getRegisterState().observe(this, state -> {
             if (state == null) return;
-
             setLoading(state.loading);
-
             if (state.error != null) {
                 Toast.makeText(this, state.error, Toast.LENGTH_LONG).show();
             }
-
-            if (state.data != null) {
-                // El ViewModel hace autologin y guarda sesión.
-                // Aquí solo mostramos mensaje (si quieres) y navegamos (lo haremos con loginState también).
-                Toast.makeText(this, state.data, Toast.LENGTH_SHORT).show();
-            }
         });
 
-        // Observa loginState para navegar cuando el autologin termine
         viewModel.getLoginState().observe(this, state -> {
             if (state == null) return;
-
             if (state.data != null) {
                 Intent i = new Intent(RegisterActivity.this, MainActivity.class);
                 i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -77,63 +75,23 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
-    private void initViews() {
-        etNombreUsuario = findViewById(R.id.etUsuario);
-        etProvincia = findViewById(R.id.etProvincia);
-
-        etCorreo = findViewById(R.id.etUsuario_Correo);
-        etFechaNacimiento = findViewById(R.id.etFechaNacimiento);
-        etPassword = findViewById(R.id.etPassword);
-        etConfirmarPassword = findViewById(R.id.etConfirmarPassword);
-        btnCrearCuenta = findViewById(R.id.btnCrearCuenta);
-    }
-
-    private void setupListeners() {
-        // Volver a Login
-        findViewById(R.id.tvIniciarSesion).setOnClickListener(v -> finish());
-
-        // Fecha de nacimiento
-        etFechaNacimiento.setOnClickListener(v -> showDatePicker());
-
-        // Registrar
-        btnCrearCuenta.setOnClickListener(v -> attemptRegister());
-    }
-
-    private void setupProvinciaDropdown() {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_list_item_1,
-                getResources().getStringArray(R.array.provincias)
-        );
-
-        etProvincia.setAdapter(adapter);
-
-        // Valor por defecto (opcional)
-        etProvincia.setText(PROVINCIA_NO_INDICAR, false);
-
-        etProvincia.setOnClickListener(v -> etProvincia.showDropDown());
-        etProvincia.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) etProvincia.showDropDown();
-        });
-    }
-
     private void showDatePicker() {
         Calendar c = Calendar.getInstance();
-
-        // Sugerencia inicial: 18 años
-        int year = c.get(Calendar.YEAR) - 18;
+        int year  = c.get(Calendar.YEAR) - 10;
         int month = c.get(Calendar.MONTH);
-        int day = c.get(Calendar.DAY_OF_MONTH);
+        int day   = c.get(Calendar.DAY_OF_MONTH);
 
         DatePickerDialog dialog = new DatePickerDialog(
                 this,
                 (view, y, m, d) -> {
                     String fecha = String.format(Locale.getDefault(), "%04d-%02d-%02d", y, m + 1, d);
-                    etFechaNacimiento.setText(fecha);
+                    binding.etFechaNacimiento.setText(fecha);
+                    binding.tilFechaNacimiento.setError(null);
                 },
                 year, month, day
         );
 
+        // No se permiten fechas futuras
         dialog.getDatePicker().setMaxDate(System.currentTimeMillis());
         dialog.show();
     }
@@ -141,103 +99,99 @@ public class RegisterActivity extends AppCompatActivity {
     private void attemptRegister() {
         clearErrors();
 
-        String nombreUsuario = textOf(etNombreUsuario);
-        String correo = textOf(etCorreo);
-        String provinciaSeleccionada = textOfAuto(etProvincia);
-        String fechaNacimiento = textOf(etFechaNacimiento);
-        String password = textOf(etPassword);
-        String confirmarPassword = textOf(etConfirmarPassword);
+        String nombreUsuario     = textOf(binding.etUsuario.getText());
+        String correo            = textOf(binding.etUsuarioCorreo.getText());
+        String fechaNacimiento   = textOf(binding.etFechaNacimiento.getText());
+        String password          = textOf(binding.etPassword.getText());
+        String confirmarPassword = textOf(binding.etConfirmarPassword.getText());
 
+        boolean valid = true;
+
+        // Validar usuario
         if (nombreUsuario.isEmpty()) {
-            etNombreUsuario.setError("El nombre de usuario es obligatorio");
-            etNombreUsuario.requestFocus();
-            return;
+            binding.tilUsuario.setError(getString(R.string.registro_error_usuario_vacio));
+            valid = false;
+        } else if (nombreUsuario.length() < 5) {
+            binding.tilUsuario.setError(getString(R.string.registro_error_usuario_corto));
+            valid = false;
+        } else if (!nombreUsuario.matches("^[a-zA-Z0-9]+$")) {
+            binding.tilUsuario.setError(getString(R.string.registro_error_usuario_formato));
+            valid = false;
         }
 
-        if (nombreUsuario.length() < 5) {
-            etNombreUsuario.setError("Mínimo 5 caracteres");
-            etNombreUsuario.requestFocus();
-            return;
-        }
-
-        if (!nombreUsuario.matches("^[a-zA-Z0-9]+$")) {
-            etNombreUsuario.setError("Solo letras y números (sin espacios)");
-            etNombreUsuario.requestFocus();
-            return;
-        }
-
+        // Validar correo
         if (correo.isEmpty()) {
-            etCorreo.setError("El correo es obligatorio");
-            etCorreo.requestFocus();
-            return;
+            binding.tilUsuarioCorreo.setError(getString(R.string.registro_error_correo_vacio));
+            valid = false;
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(correo).matches()) {
+            binding.tilUsuarioCorreo.setError(getString(R.string.registro_error_correo_formato));
+            valid = false;
         }
 
+        // Validar fecha de nacimiento
         if (fechaNacimiento.isEmpty()) {
-            etFechaNacimiento.setError("La fecha de nacimiento es obligatoria");
-            etFechaNacimiento.requestFocus();
-            return;
+            binding.tilFechaNacimiento.setError(getString(R.string.registro_error_fecha_vacia));
+            valid = false;
         }
 
+        // Validar contraseña
         if (password.isEmpty()) {
-            etPassword.setError("La contraseña es obligatoria");
-            etPassword.requestFocus();
-            return;
+            binding.tilPassword.setError(getString(R.string.registro_error_password_vacio));
+            valid = false;
+        } else if (password.length() < 8) {
+            binding.tilPassword.setError(getString(R.string.registro_error_password_corta));
+            valid = false;
         }
 
+        // Validar confirmar contraseña
         if (confirmarPassword.isEmpty()) {
-            etConfirmarPassword.setError("Confirma tu contraseña");
-            etConfirmarPassword.requestFocus();
-            return;
+            binding.tilConfirmarPassword.setError(getString(R.string.registro_error_confirmar_vacio));
+            valid = false;
+        } else if (!password.equals(confirmarPassword)) {
+            binding.tilConfirmarPassword.setError(getString(R.string.registro_error_passwords_distintas));
+            valid = false;
         }
 
-        if (!password.equals(confirmarPassword)) {
-            etConfirmarPassword.setError("Las contraseñas no coinciden");
-            etConfirmarPassword.requestFocus();
-            return;
-        }
-
-        // Provincia opcional -> null si "No indicar"
-        String provincia = null;
-        if (!provinciaSeleccionada.isEmpty()
-                && !PROVINCIA_NO_INDICAR.equals(provinciaSeleccionada)) {
-            provincia = provinciaSeleccionada;
-        }
+        if (!valid) return;
 
         AuthRepository.RegisterRequest req = new AuthRepository.RegisterRequest();
-        req.nombreUsuario = nombreUsuario;
-        req.email = correo;
-        req.password = password;
+        req.nombreUsuario   = nombreUsuario;
+        req.email           = correo;
+        req.password        = password;
         req.fechaNacimiento = fechaNacimiento;
-        req.provincia = provincia;
+        req.provincia       = null; // Se configura desde el perfil
 
         viewModel.registerAndAutoLogin(req);
     }
 
     private void setLoading(boolean loading) {
-        btnCrearCuenta.setEnabled(!loading);
-        btnCrearCuenta.setText(loading ? "Creando..." : "Crear cuenta");
-
-        etNombreUsuario.setEnabled(!loading);
-        etCorreo.setEnabled(!loading);
-        etProvincia.setEnabled(!loading);
-        etFechaNacimiento.setEnabled(!loading);
-        etPassword.setEnabled(!loading);
-        etConfirmarPassword.setEnabled(!loading);
+        binding.btnCrearCuenta.setEnabled(!loading);
+        binding.btnIniciarSesion.setEnabled(!loading);
+        binding.etUsuario.setEnabled(!loading);
+        binding.etUsuarioCorreo.setEnabled(!loading);
+        binding.etFechaNacimiento.setEnabled(!loading);
+        binding.etPassword.setEnabled(!loading);
+        binding.etConfirmarPassword.setEnabled(!loading);
+        binding.btnCrearCuenta.setText(loading
+                ? getString(R.string.registro_btn_creando)
+                : getString(R.string.registro_btn_crear));
     }
 
     private void clearErrors() {
-        etNombreUsuario.setError(null);
-        etCorreo.setError(null);
-        etFechaNacimiento.setError(null);
-        etPassword.setError(null);
-        etConfirmarPassword.setError(null);
+        binding.tilUsuario.setError(null);
+        binding.tilUsuarioCorreo.setError(null);
+        binding.tilFechaNacimiento.setError(null);
+        binding.tilPassword.setError(null);
+        binding.tilConfirmarPassword.setError(null);
     }
 
-    private String textOf(TextInputEditText et) {
-        return et.getText() == null ? "" : et.getText().toString().trim();
+    private String textOf(CharSequence text) {
+        return text == null ? "" : text.toString().trim();
     }
 
-    private String textOfAuto(MaterialAutoCompleteTextView et) {
-        return et.getText() == null ? "" : et.getText().toString().trim();
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        binding = null;
     }
 }

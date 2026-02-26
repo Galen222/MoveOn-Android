@@ -1,199 +1,218 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/surfaceBackground"
-    tools:context=".ui.auth.LoginActivity">
+    android:fillViewport="true">
 
-    <!-- Logo -->
-    <ImageView
-        android:id="@+id/ivMoveOn"
-        android:layout_width="140dp"
-        android:layout_height="140dp"
-        android:layout_marginTop="80dp"
-        android:contentDescription="@string/app_name"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/moveon" />
-
-    <!-- Título -->
-    <TextView
-        android:id="@+id/tvWelcome"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Bienvenido a MoveOn"
-        android:textColor="@color/textPrimary"
-        android:textSize="24sp"
-        android:fontFamily="sans-serif-medium"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ivMoveOn" />
+        android:paddingBottom="@dimen/auth_section_spacing"
+        tools:context=".ui.auth.LoginActivity">
 
-    <!-- Subtítulo -->
-    <TextView
-        android:id="@+id/tvSubtitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Inicia sesión para continuar"
-        android:textColor="@color/textSecondary"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvWelcome" />
+        <!-- Logo -->
+        <ImageView
+            android:id="@+id/ivMoveOn"
+            android:layout_width="@dimen/auth_logo_size_login"
+            android:layout_height="@dimen/auth_logo_size_login"
+            android:layout_marginTop="@dimen/auth_logo_margin_top_login"
+            android:contentDescription="@string/login_logo_desc"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/moveon" />
 
-    <!-- Campo Usuario/Correo -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilUsuario_Correo"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="40dp"
-        android:layout_marginEnd="32dp"
-        android:hint="Usuario o Correo Electrónico"
-        android:textColorHint="@color/textSecondary"
-        app:boxStrokeColor="@color/greenPrimary"
-        app:hintTextColor="@color/greenPrimary"
-        app:startIconDrawable="@drawable/email_icon"
-        app:startIconTint="@color/textSecondary"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvSubtitle">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etUsuario_Correo"
-            android:layout_width="match_parent"
+        <!-- Título -->
+        <TextView
+            android:id="@+id/tvWelcome"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="textNoSuggestions"
+            android:layout_marginTop="@dimen/auth_title_margin_top"
+            android:text="@string/login_titulo"
             android:textColor="@color/textPrimary"
-            android:textColorHint="@color/textTertiary" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:textSize="@dimen/auth_title_size"
+            android:fontFamily="sans-serif-medium"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ivMoveOn" />
 
-    <!-- Campo Contraseña -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilPassword"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="32dp"
-        android:hint="Contraseña"
-        android:textColorHint="@color/textSecondary"
-        app:boxStrokeColor="@color/greenPrimary"
-        app:hintTextColor="@color/greenPrimary"
-        app:endIconMode="password_toggle"
-        app:endIconTint="@color/textSecondary"
-        app:startIconDrawable="@drawable/lock_icon"
-        app:startIconTint="@color/textSecondary"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tilUsuario_Correo">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etPassword"
-            android:layout_width="match_parent"
+        <!-- Subtítulo -->
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="textPassword"
-            android:textColor="@color/textPrimary"
-            android:textColorHint="@color/textTertiary" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="@dimen/auth_subtitle_margin_top"
+            android:text="@string/login_subtitulo"
+            android:textColor="@color/textSecondary"
+            android:textSize="@dimen/auth_subtitle_size"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvWelcome" />
 
-    <!-- ¿Olvidaste tu contraseña? -->
-    <TextView
-        android:id="@+id/tvOlvidarContraseña"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="32dp"
-        android:text="¿Olvidaste tu contraseña?"
-        android:textColor="@color/greenPrimary"
-        android:textSize="12sp"
-        android:clickable="true"
-        android:focusable="true"
-        android:background="?attr/selectableItemBackground"
-        android:padding="4dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tilPassword" />
+        <!-- Campo Usuario/Correo -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilUsuario_Correo"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:hint="@string/login_hint_usuario_correo"
+            app:boxStrokeColor="@color/greenPrimary"
+            app:hintTextColor="@color/greenPrimary"
+            app:startIconDrawable="@drawable/email_icon"
+            app:startIconTint="@color/textSecondary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvSubtitle">
 
-    <!-- Botón Iniciar Sesión -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnLogin"
-        android:layout_width="0dp"
-        android:layout_height="56dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="32dp"
-        android:layout_marginEnd="32dp"
-        android:text="Iniciar sesión"
-        android:textSize="16sp"
-        android:fontFamily="sans-serif-medium"
-        app:cornerRadius="12dp"
-        app:backgroundTint="@color/greenPrimary"
-        android:textColor="@color/textOnGreen"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvOlvidarContraseña" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etUsuario_Correo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textNoSuggestions"
+                android:textColor="@color/textPrimary" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Divisor con "O" -->
-    <View
-        android:id="@+id/divider1"
-        android:layout_width="0dp"
-        android:layout_height="1dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="8dp"
-        android:background="@color/dividerColor"
-        app:layout_constraintEnd_toStartOf="@+id/tvOr"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnLogin" />
+        <!-- Campo Contraseña -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilPassword"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginTop="@dimen/auth_field_spacing"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:hint="@string/login_hint_password"
+            app:boxStrokeColor="@color/greenPrimary"
+            app:hintTextColor="@color/greenPrimary"
+            app:endIconMode="password_toggle"
+            app:endIconTint="@color/textSecondary"
+            app:startIconDrawable="@drawable/lock_icon"
+            app:startIconTint="@color/textSecondary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tilUsuario_Correo">
 
-    <TextView
-        android:id="@+id/tvOr"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="O"
-        android:textColor="@color/textSecondary"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnLogin" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:textColor="@color/textPrimary" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-    <View
-        android:id="@+id/divider2"
-        android:layout_width="0dp"
-        android:layout_height="1dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="32dp"
-        android:background="@color/dividerColor"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/tvOr"
-        app:layout_constraintTop_toBottomOf="@+id/btnLogin" />
+        <!-- Fila: Recordar cuenta + ¿Olvidaste contraseña? -->
+        <CheckBox
+            android:id="@+id/cbRecordarCuenta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginTop="4dp"
+            android:text="@string/login_recordar_cuenta"
+            android:textColor="@color/textSecondary"
+            android:textSize="@dimen/auth_forgot_text_size"
+            android:buttonTint="@color/greenPrimary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tilPassword"
+            app:layout_constraintBottom_toBottomOf="@+id/btnOlvidarPassword" />
 
-    <!-- Botón Registrar -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnRegistrar"
-        style="@style/Widget.Material3.Button.OutlinedButton"
-        android:layout_width="0dp"
-        android:layout_height="56dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="32dp"
-        android:text="Crear cuenta"
-        android:textSize="16sp"
-        android:fontFamily="sans-serif-medium"
-        android:textColor="@color/greenPrimary"
-        app:cornerRadius="12dp"
-        app:strokeColor="@color/greenPrimary"
-        app:strokeWidth="2dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvOr" />
+        <!-- ¿Olvidaste tu contraseña? -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOlvidarPassword"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:text="@string/login_olvidaste_password"
+            android:contentDescription="@string/login_olvidaste_desc"
+            android:textColor="@color/greenPrimary"
+            android:textSize="@dimen/auth_forgot_text_size"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tilPassword" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Botón Iniciar Sesión -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLogin"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/auth_button_height"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:text="@string/login_btn_entrar"
+            android:contentDescription="@string/login_btn_entrar_desc"
+            android:textSize="@dimen/auth_button_text_size"
+            android:fontFamily="sans-serif-medium"
+            app:cornerRadius="@dimen/auth_button_radius"
+            app:backgroundTint="@color/greenPrimary"
+            android:textColor="@color/textOnGreen"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnOlvidarPassword" />
+
+        <!-- Divisor con "O" -->
+        <View
+            android:id="@+id/divider1"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginEnd="@dimen/auth_divider_margin_side"
+            android:background="@color/dividerColor"
+            app:layout_constraintEnd_toStartOf="@+id/tvOr"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/tvOr"
+            app:layout_constraintTop_toBottomOf="@+id/btnLogin"
+            app:layout_constraintVertical_bias="0.5" />
+
+        <TextView
+            android:id="@+id/tvOr"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:text="@string/login_divisor"
+            android:textColor="@color/textSecondary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnLogin" />
+
+        <View
+            android:id="@+id/divider2"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginStart="@dimen/auth_divider_margin_side"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:background="@color/dividerColor"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/tvOr"
+            app:layout_constraintBottom_toBottomOf="@+id/tvOr"
+            app:layout_constraintTop_toBottomOf="@+id/btnLogin"
+            app:layout_constraintVertical_bias="0.5" />
+
+        <!-- Botón Registrar -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRegistrar"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/auth_button_height"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:text="@string/login_btn_registrar"
+            android:contentDescription="@string/login_btn_registrar_desc"
+            android:textSize="@dimen/auth_button_text_size"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@color/greenPrimary"
+            app:cornerRadius="@dimen/auth_button_radius"
+            app:strokeColor="@color/greenPrimary"
+            app:strokeWidth="2dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvOr" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>
