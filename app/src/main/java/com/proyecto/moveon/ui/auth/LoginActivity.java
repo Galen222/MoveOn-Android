@@ -17,10 +17,6 @@ import com.proyecto.moveon.ui.main.MainActivity;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final String PREFS_REMEMBER = "prefs_remember";
-    private static final String KEY_REMEMBER    = "remember_enabled";
-    private static final String KEY_IDENTIFIER  = "saved_identifier";
-
     private ActivityLoginBinding binding;
     private AuthViewModel viewModel;
 
@@ -45,11 +41,13 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void loadRememberedAccount() {
-        SharedPreferences prefs = rememberPrefs();
-        boolean remember = prefs.getBoolean(KEY_REMEMBER, false);
+        SecureSessionManager sessionManager = new SecureSessionManager(this);
+        String saved = sessionManager.getRememberedIdentifier();
+
+        boolean remember = (saved != null && !saved.isEmpty());
         binding.cbRecordarCuenta.setChecked(remember);
+
         if (remember) {
-            String saved = prefs.getString(KEY_IDENTIFIER, "");
             binding.etUsuarioCorreo.setText(saved);
             binding.etUsuarioCorreo.setSelection(saved.length());
         }
@@ -117,15 +115,14 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        SharedPreferences.Editor editor = rememberPrefs().edit();
+        SecureSessionManager sessionManager = new SecureSessionManager(this);
         if (binding.cbRecordarCuenta.isChecked()) {
-            editor.putBoolean(KEY_REMEMBER, true);
-            editor.putString(KEY_IDENTIFIER, identificador);
+            // Guardamos el usuario de forma encriptada
+            sessionManager.saveRememberedIdentifier(identificador);
         } else {
-            editor.putBoolean(KEY_REMEMBER, false);
-            editor.remove(KEY_IDENTIFIER);
+            // Si la casilla no está marcada, borramos el rastro seguro
+            sessionManager.saveRememberedIdentifier(null);
         }
-        editor.apply();
 
         viewModel.login(identificador, password);
     }
@@ -154,10 +151,6 @@ public class LoginActivity extends AppCompatActivity {
 
     private String textOf(CharSequence text) {
         return text == null ? "" : text.toString().trim();
-    }
-
-    private SharedPreferences rememberPrefs() {
-        return getSharedPreferences(PREFS_REMEMBER, Context.MODE_PRIVATE);
     }
 
     @Override

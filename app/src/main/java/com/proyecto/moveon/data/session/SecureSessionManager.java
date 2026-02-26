@@ -34,6 +34,8 @@ public class SecureSessionManager {
 
     private static final String KEY_USERNAME_CT = "username_ct";
     private static final String KEY_USERNAME_IV = "username_iv";
+    private static final String KEY_REMEMBERED_ID_CT = "remembered_id_ct";
+    private static final String KEY_REMEMBERED_ID_IV = "remembered_id_iv";
 
     // AES/GCM
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
@@ -103,6 +105,27 @@ public class SecureSessionManager {
         prefs.edit().clear().apply();
     }
 
+    public void saveRememberedIdentifier(@Nullable String identifier) {
+        try {
+            SharedPreferences.Editor editor = prefs.edit();
+            if (identifier == null || identifier.trim().isEmpty()) {
+                // Si desmarca la casilla, borramos el rastro
+                editor.remove(KEY_REMEMBERED_ID_CT);
+                editor.remove(KEY_REMEMBERED_ID_IV);
+            } else {
+                // Si la marca, lo guardamos cifrado
+                putEncrypted(editor, KEY_REMEMBERED_ID_CT, KEY_REMEMBERED_ID_IV, identifier);
+            }
+            editor.apply();
+        } catch (Exception e) {
+            throw new RuntimeException("Error guardando identificador recordado", e);
+        }
+    }
+
+    @Nullable
+    public String getRememberedIdentifier() {
+        return getDecryptedValue(KEY_REMEMBERED_ID_CT, KEY_REMEMBERED_ID_IV);
+    }
     private boolean hasText(@Nullable String value) {
         return value != null && !value.trim().isEmpty();
     }
