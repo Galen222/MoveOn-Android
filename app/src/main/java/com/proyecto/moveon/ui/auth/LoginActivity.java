@@ -3,15 +3,12 @@ package com.proyecto.moveon.ui.auth;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Toast;
 
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.theme.ThemeManager;
-import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.databinding.ActivityLoginBinding;
 import com.proyecto.moveon.ui.main.MainActivity;
 
@@ -25,7 +22,11 @@ public class LoginActivity extends AppCompatActivity {
         ThemeManager.applySavedTheme(this);
         super.onCreate(savedInstanceState);
 
-        if (new SecureSessionManager(this).isLoggedIn()) {
+        // 1. Inicializamos el ViewModel PRIMERO
+        viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
+
+        // 2. Le preguntamos al ViewModel si hay sesión
+        if (viewModel.isLoggedIn()) {
             goToMain();
             return;
         }
@@ -33,20 +34,17 @@ public class LoginActivity extends AppCompatActivity {
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
-
         loadRememberedAccount();
         setupListeners();
         observeViewModel();
     }
 
     private void loadRememberedAccount() {
-        SecureSessionManager sessionManager = new SecureSessionManager(this);
-        String saved = sessionManager.getRememberedIdentifier();
+        // Pedimos el dato al ViewModel, cero rastros de SecureSessionManager
+        String saved = viewModel.getRememberedIdentifier();
 
         boolean remember = (saved != null && !saved.isEmpty());
         binding.cbRecordarCuenta.setChecked(remember);
-
         if (remember) {
             binding.etUsuarioCorreo.setText(saved);
             binding.etUsuarioCorreo.setSelection(saved.length());
@@ -65,7 +63,6 @@ public class LoginActivity extends AppCompatActivity {
         binding.etPassword.setOnFocusChangeListener((v, f) -> {
             if (f) binding.tilPassword.setError(null);
         });
-
         binding.btnOlvidarPassword.setOnClickListener(v ->
                 Toast.makeText(this, "Próximamente", Toast.LENGTH_SHORT).show()
         );
@@ -115,14 +112,8 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        SecureSessionManager sessionManager = new SecureSessionManager(this);
-        if (binding.cbRecordarCuenta.isChecked()) {
-            // Guardamos el usuario de forma encriptada
-            sessionManager.saveRememberedIdentifier(identificador);
-        } else {
-            // Si la casilla no está marcada, borramos el rastro seguro
-            sessionManager.saveRememberedIdentifier(null);
-        }
+        // Le delegamos al ViewModel el guardado (o borrado) del identificador
+        viewModel.saveRememberedIdentifier(identificador, binding.cbRecordarCuenta.isChecked());
 
         viewModel.login(identificador, password);
     }

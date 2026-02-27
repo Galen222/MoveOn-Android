@@ -14,7 +14,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.theme.ThemeManager;
-import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.databinding.ActivityMainBinding;
 import com.proyecto.moveon.ui.auth.LoginActivity;
 import com.proyecto.moveon.ui.common.SessionUiHelper;
@@ -47,9 +46,11 @@ public class MainActivity extends AppCompatActivity {
         ThemeManager.applySavedTheme(this);
         super.onCreate(savedInstanceState);
 
-        // Guard de sesión antes de inflar layout
-        SecureSessionManager sessionManager = new SecureSessionManager(this);
-        if (!sessionManager.isLoggedIn()) {
+        // Inicializamos el ViewModel lo primero
+        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
+
+        // Guard de sesión consultando al ViewModel
+        if (!viewModel.isLoggedIn()) {
             goToLoginAndFinish();
             return;
         }
@@ -60,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
 
         fragmentManager = getSupportFragmentManager();
 
-        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
         viewModel.getSessionExpiredEvent().observe(this, ev -> {
             if (ev == null) return;
             String msg = ev.getContentIfNotHandled();
@@ -71,7 +71,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState != null) {
             selectedItemId = savedInstanceState.getInt(KEY_SELECTED_ITEM, R.id.nav_inicio);
-
             Fragment fInicio = fragmentManager.findFragmentByTag(TAG_INICIO);
             Fragment fStats = fragmentManager.findFragmentByTag(TAG_STATS);
             Fragment fProfile = fragmentManager.findFragmentByTag(TAG_PROFILE);
@@ -98,10 +97,8 @@ public class MainActivity extends AppCompatActivity {
 
         // 3. Reemplazamos bottomNavigationView por binding.bottomNavigation
         binding.bottomNavigation.setSelectedItemId(selectedItemId);
-
         // Muestra el fragment correcto UNA sola vez
         switchTo(selectedItemId);
-
         // Ahora sí, listener (evita doble switchTo en el arranque)
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
@@ -163,7 +160,6 @@ public class MainActivity extends AppCompatActivity {
 
         tx.show(target);
         tx.commit();
-
         selectedItemId = itemId;
     }
 

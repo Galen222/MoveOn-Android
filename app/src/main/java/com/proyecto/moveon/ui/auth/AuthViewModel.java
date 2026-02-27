@@ -28,6 +28,22 @@ public class AuthViewModel extends AndroidViewModel {
     public LiveData<UiState<AuthRepository.LoginResult>> getLoginState() { return loginState; }
     public LiveData<UiState<String>> getRegisterState() { return registerState; }
 
+    public boolean isLoggedIn() {
+        return sessionManager.isLoggedIn();
+    }
+
+    public String getRememberedIdentifier() {
+        return sessionManager.getRememberedIdentifier();
+    }
+
+    public void saveRememberedIdentifier(String identifier, boolean remember) {
+        if (remember) {
+            sessionManager.saveRememberedIdentifier(identifier);
+        } else {
+            sessionManager.saveRememberedIdentifier(null);
+        }
+    }
+
     public void login(String identificador, String password) {
         loginState.setValue(UiState.loading());
 

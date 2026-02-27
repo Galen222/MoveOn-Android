@@ -21,7 +21,6 @@ public class MainViewModel extends AndroidViewModel {
 
     private final MutableLiveData<UiState<Void>> silentRefreshState = new MutableLiveData<>();
     private final MutableLiveData<Event<String>> sessionExpiredEvent = new MutableLiveData<>();
-
     private boolean silentRefreshAttempted = false;
 
     public MainViewModel(@NonNull Application application) {
@@ -38,6 +37,12 @@ public class MainViewModel extends AndroidViewModel {
         return sessionExpiredEvent;
     }
 
+    // --- ESTE ES EL MÉTODO QUE FALTABA ---
+    public boolean isLoggedIn() {
+        return sessionManager.isLoggedIn();
+    }
+    // -------------------------------------
+
     public void trySilentRefreshAtStartup() {
         if (silentRefreshAttempted) return;
         silentRefreshAttempted = true;
@@ -46,7 +51,6 @@ public class MainViewModel extends AndroidViewModel {
         if (!hasText(refreshToken)) return;
 
         silentRefreshState.setValue(UiState.loading());
-
         authRepository.refreshSession(refreshToken, new AuthRepository.Callback<AuthRepository.LoginResult>() {
             @Override
             public void onSuccess(AuthRepository.LoginResult result) {
@@ -75,7 +79,6 @@ public class MainViewModel extends AndroidViewModel {
 
     private boolean looksLikeInvalidRefresh(String error) {
         String e = error.toLowerCase(Locale.ROOT);
-
         return e.contains("refresh token inválido")
                 || e.contains("refresh token invalido")
                 || e.contains("refresh token expirado")
