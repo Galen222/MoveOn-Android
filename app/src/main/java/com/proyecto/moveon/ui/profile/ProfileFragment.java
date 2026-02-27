@@ -10,17 +10,17 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.theme.ThemeManager;
-import com.proyecto.moveon.data.session.AuthRepository;
-import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.databinding.FragmentProfileBinding;
 import com.proyecto.moveon.ui.auth.LoginActivity;
 
 public class ProfileFragment extends Fragment {
 
     private FragmentProfileBinding binding;
+    private ProfileViewModel viewModel;
 
     public ProfileFragment() {
         // Constructor vacío requerido
@@ -31,8 +31,12 @@ public class ProfileFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentProfileBinding.inflate(inflater, container, false);
 
+        // Inicializamos el ViewModel
+        viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
+
         bindUserData();
         setupListeners();
+        observeViewModel();
         syncThemeToggleWithSavedMode();
 
         return binding.getRoot();
@@ -51,36 +55,29 @@ public class ProfileFragment extends Fragment {
     }
 
     private void bindUserData() {
-        if (binding == null) return;
-
-        SecureSessionManager sessionManager = new SecureSessionManager(requireContext());
-
-        String username = sessionManager.getUsername();
-        if (username == null || username.trim().isEmpty()) {
-            username = "Usuario";
+        // Pedimos los datos al ViewModel y usamos strings.xml
+        String username = viewModel.getUsername();
+        if (username == null) {
+            username = getString(R.string.profile_default_username);
         }
 
-        // Placeholder hasta que guardes email real en sesión o lo traigas de API
-        String email = "Sin correo disponible";
+        String email = getString(R.string.profile_default_email);
+        String notIndicated = getString(R.string.profile_not_indicated);
 
         binding.tvUserName.setText(username);
         binding.tvUserEmail.setText(email);
-
         binding.tvFullName.setText(username);
         binding.tvEmail.setText(email);
 
         if (binding.tvBirthdate.getText() == null || binding.tvBirthdate.getText().toString().trim().isEmpty()) {
-            binding.tvBirthdate.setText("No indicada");
+            binding.tvBirthdate.setText(notIndicated);
         }
         if (binding.tvCity.getText() == null || binding.tvCity.getText().toString().trim().isEmpty()) {
-            binding.tvCity.setText("No indicada");
+            binding.tvCity.setText(notIndicated);
         }
     }
 
     private void setupListeners() {
-        if (binding == null) return;
-
-        // Tema (Claro / Oscuro / Sistema)
         binding.toggleThemeMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
 
@@ -102,37 +99,44 @@ public class ProfileFragment extends Fragment {
             requireActivity().recreate();
         });
 
-        // Edit profile (placeholder)
-        binding.btnEditProfile.setOnClickListener(v -> {
-            // TODO: Abrir pantalla edición
-        });
+        // Placeholders de los botones
+        binding.btnEditProfile.setOnClickListener(v -> {});
+        binding.itemRanking.setOnClickListener(v -> {});
+        binding.itemShareRoutes.setOnClickListener(v -> {});
+        binding.switchPublicProfile.setOnCheckedChangeListener((buttonView, isChecked) -> {});
+        binding.switchNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> {});
 
-        // Items (placeholders)
-        binding.itemRanking.setOnClickListener(v -> {
-            // TODO: abrir ranking
-        });
+        // Delegamos el evento al ViewModel
+        binding.btnLogout.setOnClickListener(v -> viewModel.logout());
+    }
 
-        binding.itemShareRoutes.setOnClickListener(v -> {
-            // TODO: abrir compartir rutas
-        });
+    private void observeViewModel() {
+        // Observamos el UiState exactamente igual que en el Login
+        viewModel.getLogoutState().observe(getViewLifecycleOwner(), state -> {
+            if (state == null) return;
 
-        binding.switchPublicProfile.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // TODO: guardar preferencia / enviar a backend
-        });
+            // Bloqueamos el botón y cambiamos el texto usando strings.xml
+            binding.btnLogout.setEnabled(!state.loading);
+            binding.btnLogout.setText(state.loading
+                    ? getString(R.string.profile_btn_logging_out)
+                    : getString(R.string.profile_btn_logout));
 
-        binding.switchNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // TODO: guardar preferencia / pedir permisos/notificaciones
-        });
+            // Si falla la red, el ViewModel ya borró la sesión local.
+            // Solo avisamos al usuario y le mandamos al Login.
+            if (state.error != null) {
+                Toast.makeText(requireContext(), getString(R.string.profile_error_logout_server), Toast.LENGTH_SHORT).show();
+                goToLogin();
+            }
 
-        // Logout
-        binding.btnLogout.setOnClickListener(v -> logout());
+            // Si el servidor responde OK, vamos al Login.
+            if (state.data != null) {
+                goToLogin();
+            }
+        });
     }
 
     private void syncThemeToggleWithSavedMode() {
-        if (binding == null) return;
-
         String mode = ThemeManager.getSavedMode(requireContext());
-
         if (ThemeManager.MODE_LIGHT.equals(mode)) {
             if (binding.toggleThemeMode.getCheckedButtonId() != R.id.btn_theme_light) {
                 binding.toggleThemeMode.check(R.id.btn_theme_light);
@@ -148,45 +152,8 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    private void logout() {
-        SecureSessionManager sessionManager = new SecureSessionManager(requireContext());
-        String refreshToken = sessionManager.getRefreshToken();
-
-        // Si no hay refresh token, logout local directo
-        if (refreshToken == null || refreshToken.trim().isEmpty()) {
-            finishLocalLogout(sessionManager);
-            return;
-        }
-
-        if (binding != null) {
-            binding.btnLogout.setEnabled(false);
-            binding.btnLogout.setText("Saliendo...");
-        }
-
-        AuthRepository authRepository = new AuthRepository(requireContext());
-        authRepository.logout(refreshToken, new AuthRepository.Callback<String>() {
-            @Override
-            public void onSuccess(String result) {
-                finishLocalLogout(sessionManager);
-            }
-
-            @Override
-            public void onError(String error) {
-                if (isAdded()) {
-                    Toast.makeText(requireContext(),
-                            "No se pudo cerrar sesión en servidor, pero se cerrará en la app",
-                            Toast.LENGTH_SHORT).show();
-                }
-                finishLocalLogout(sessionManager);
-            }
-        });
-    }
-
-    private void finishLocalLogout(SecureSessionManager sessionManager) {
-        sessionManager.logout();
-
+    private void goToLogin() {
         if (!isAdded()) return;
-
         Intent intent = new Intent(requireActivity(), LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

@@ -2,6 +2,7 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
@@ -12,7 +13,6 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- FOTO DE PERFIL, NOMBRE Y CORREO -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -34,7 +34,7 @@
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
                     android:src="@drawable/default_profile"
-                    android:contentDescription="Foto de perfil" />
+                    android:contentDescription="@string/profile_desc_picture" />
 
             </com.google.android.material.card.MaterialCardView>
 
@@ -42,7 +42,7 @@
                 android:id="@+id/tv_user_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Álvaro Portillo"
+                tools:text="Álvaro Portillo"
                 android:textSize="22sp"
                 android:textColor="@color/textPrimary"
                 android:fontFamily="sans-serif-medium"
@@ -52,14 +52,13 @@
                 android:id="@+id/tv_user_email"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="alvaroportillo@gmail.com"
+                tools:text="alvaroportillo@gmail.com"
                 android:textSize="14sp"
                 android:textColor="@color/textSecondary"
                 android:layout_marginTop="4dp" />
 
         </LinearLayout>
 
-        <!-- CARD: Información Personal -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_personal_info"
             android:layout_width="match_parent"
@@ -89,7 +88,7 @@
                     app:iconPadding="0dp"
                     app:backgroundTint="@color/surfaceBackground"
                     app:iconTint="@color/textPrimary"
-                    android:contentDescription="Editar perfil" />
+                    android:contentDescription="@string/profile_desc_edit" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -107,7 +106,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Nombre completo"
+                            android:text="@string/profile_label_fullname"
                             android:textSize="12sp"
                             android:textColor="@color/textTertiary" />
 
@@ -115,7 +114,7 @@
                             android:id="@+id/tv_full_name"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Álvaro Portillo Rendón"
+                            tools:text="Álvaro Portillo Rendón"
                             android:textSize="15sp"
                             android:textColor="@color/textPrimary"
                             android:layout_marginTop="4dp" />
@@ -137,7 +136,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Correo electrónico"
+                            android:text="@string/profile_label_email"
                             android:textSize="12sp"
                             android:textColor="@color/textTertiary" />
 
@@ -145,7 +144,7 @@
                             android:id="@+id/tv_email"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="alvaroportillo@gmail.com"
+                            tools:text="alvaroportillo@gmail.com"
                             android:textSize="15sp"
                             android:textColor="@color/textPrimary"
                             android:layout_marginTop="4dp" />
@@ -167,7 +166,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Fecha de nacimiento"
+                            android:text="@string/profile_label_birthdate"
                             android:textSize="12sp"
                             android:textColor="@color/textTertiary" />
 
@@ -175,7 +174,7 @@
                             android:id="@+id/tv_birthdate"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="14 / 11 / 1996"
+                            tools:text="14 / 11 / 1996"
                             android:textSize="15sp"
                             android:textColor="@color/textPrimary"
                             android:layout_marginTop="4dp" />
@@ -197,7 +196,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Ciudad"
+                            android:text="@string/profile_label_city"
                             android:textSize="12sp"
                             android:textColor="@color/textTertiary" />
 
@@ -205,7 +204,7 @@
                             android:id="@+id/tv_city"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Cádiz"
+                            tools:text="Cádiz"
                             android:textSize="15sp"
                             android:textColor="@color/textPrimary"
                             android:layout_marginTop="4dp" />
@@ -218,7 +217,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- CARD: Configuración -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_settings"
             android:layout_width="match_parent"
@@ -249,7 +247,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Ranking"
+                        android:text="@string/profile_item_ranking"
                         android:textSize="15sp"
                         android:textColor="@color/textPrimary" />
 
@@ -258,7 +256,7 @@
                         android:layout_height="20dp"
                         android:src="@drawable/arrow_icon"
                         app:tint="@color/textSecondary"
-                        android:contentDescription="Ir a ranking" />
+                        android:contentDescription="@string/profile_desc_ranking" />
 
                 </LinearLayout>
 
@@ -282,7 +280,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Compartir rutas"
+                        android:text="@string/profile_item_share_routes"
                         android:textSize="15sp"
                         android:textColor="@color/textPrimary" />
 
@@ -291,7 +289,7 @@
                         android:layout_height="20dp"
                         android:src="@drawable/arrow_icon"
                         app:tint="@color/textSecondary"
-                        android:contentDescription="Compartir rutas" />
+                        android:contentDescription="@string/profile_desc_share_routes" />
 
                 </LinearLayout>
 
@@ -311,7 +309,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Perfil público"
+                        android:text="@string/profile_item_public_profile"
                         android:textSize="15sp"
                         android:textColor="@color/textPrimary" />
 
@@ -341,7 +339,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Notificaciones"
+                        android:text="@string/profile_item_notifications"
                         android:textSize="15sp"
                         android:textColor="@color/textPrimary" />
 
@@ -369,7 +367,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Tema"
+                        android:text="@string/profile_item_theme"
                         android:textSize="15sp"
                         android:textColor="@color/textPrimary" />
 
@@ -387,7 +385,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Claro"
+                            android:text="@string/profile_theme_light"
                             android:textAllCaps="false"
                             app:backgroundTint="@color/theme_mode_button_bg"
                             android:textColor="@color/theme_mode_button_text"
@@ -400,7 +398,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Oscuro"
+                            android:text="@string/profile_theme_dark"
                             android:textAllCaps="false"
                             app:backgroundTint="@color/theme_mode_button_bg"
                             android:textColor="@color/theme_mode_button_text"
@@ -413,7 +411,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Auto"
+                            android:text="@string/profile_theme_auto"
                             android:textAllCaps="false"
                             app:backgroundTint="@color/theme_mode_button_bg"
                             android:textColor="@color/theme_mode_button_text"
@@ -428,12 +426,11 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- BOTÓN CERRAR SESIÓN -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_logout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Cerrar sesión"
+            android:text="@string/profile_btn_logout"
             android:textColor="@color/error"
             android:textSize="16sp"
             android:fontFamily="sans-serif-medium"

@@ -2,7 +2,6 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
@@ -12,7 +11,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif-medium"
-        android:text="@string/Inicio_fragment_incio_xml"
+        android:text="@string/Inicio_fragment_inicio_xml"
         android:textColor="@color/textPrimary"
         android:textSize="28sp"
         app:layout_constraintEnd_toStartOf="@id/btn_add"
@@ -25,7 +24,7 @@
         android:layout_height="60dp"
         android:src="@drawable/add_icon"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Añadir"
+        android:contentDescription="@string/inicio_desc_add"
         app:tint="@color/textPrimary"
         app:layout_constraintTop_toTopOf="@id/tv_title"
         app:layout_constraintBottom_toBottomOf="@id/tv_title"
@@ -54,7 +53,7 @@
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
                 android:src="@drawable/google_maps"
-                android:contentDescription="Mapa" />
+                android:contentDescription="@string/inicio_desc_map" />
 
             <View
                 android:layout_width="match_parent"
@@ -70,7 +69,7 @@
                 android:layout_margin="16dp"
                 android:src="@drawable/location_icon"
                 app:tint="@color/greenPrimary"
-                android:contentDescription="Ubicación actual" />
+                android:contentDescription="@string/inicio_desc_location" />
         </FrameLayout>
 
     </com.google.android.material.card.MaterialCardView>
@@ -116,7 +115,7 @@
                         android:id="@+id/tv_walking"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Andando"
+                        android:text="@string/inicio_walking"
                         android:textSize="13sp"
                         android:textColor="@color/textOnGreen"
                         android:fontFamily="sans-serif-medium" />
@@ -128,7 +127,7 @@
                         android:layout_marginStart="6dp"
                         android:src="@drawable/walk_icon"
                         app:tint="@color/textOnGreen"
-                        android:contentDescription="Andando" />
+                        android:contentDescription="@string/inicio_desc_walking" />
 
                 </LinearLayout>
 
@@ -151,7 +150,7 @@
                         android:id="@+id/tv_running"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Corriendo"
+                        android:text="@string/inicio_running"
                         android:textSize="13sp"
                         android:textColor="@color/textSecondary"
                         android:fontFamily="sans-serif-medium" />
@@ -163,7 +162,7 @@
                         android:layout_marginStart="6dp"
                         android:src="@drawable/run_icon"
                         app:tint="@color/textSecondary"
-                        android:contentDescription="Corriendo" />
+                        android:contentDescription="@string/inicio_desc_running" />
 
                 </LinearLayout>
 
@@ -189,7 +188,7 @@
                     app:cornerRadius="32dp"
                     app:backgroundTint="@color/cardBackground"
                     app:iconTint="@color/textPrimary"
-                    android:contentDescription="Detener" />
+                    android:contentDescription="@string/inicio_desc_stop" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_play"
@@ -206,7 +205,7 @@
                     app:cornerRadius="40dp"
                     app:backgroundTint="@color/greenPrimary"
                     app:iconTint="@color/textOnGreen"
-                    android:contentDescription="Iniciar" />
+                    android:contentDescription="@string/inicio_desc_play" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_reset"
@@ -221,7 +220,7 @@
                     app:cornerRadius="32dp"
                     app:backgroundTint="@color/cardBackground"
                     app:iconTint="@color/textPrimary"
-                    android:contentDescription="Reiniciar" />
+                    android:contentDescription="@string/inicio_desc_reset" />
 
             </LinearLayout>
 

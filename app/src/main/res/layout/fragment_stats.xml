@@ -2,6 +2,7 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
@@ -16,7 +17,7 @@
             android:id="@+id/tv_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Estadísticas"
+            android:text="@string/stats_title"
             android:textSize="28sp"
             android:textColor="@color/textPrimary"
             android:fontFamily="sans-serif-medium"
@@ -47,7 +48,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Distancia"
+                        android:text="@string/stats_label_distance"
                         android:textSize="12sp"
                         android:textColor="@color/textTertiary" />
 
@@ -55,12 +56,11 @@
                         android:id="@+id/tv_distance"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="38.6 km"
+                        tools:text="38.6 km"
                         android:textSize="20sp"
                         android:textColor="@color/textPrimary"
                         android:fontFamily="sans-serif-medium"
                         android:layout_marginTop="4dp" />
-
                 </LinearLayout>
 
                 <View
@@ -79,7 +79,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Tiempo"
+                        android:text="@string/stats_label_time"
                         android:textSize="12sp"
                         android:textColor="@color/textTertiary" />
 
@@ -87,12 +87,11 @@
                         android:id="@+id/tv_time"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="5h 42m"
+                        tools:text="5h 42m"
                         android:textSize="20sp"
                         android:textColor="@color/textPrimary"
                         android:fontFamily="sans-serif-medium"
                         android:layout_marginTop="4dp" />
-
                 </LinearLayout>
 
                 <View
@@ -111,7 +110,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Racha"
+                        android:text="@string/stats_label_streak"
                         android:textSize="12sp"
                         android:textColor="@color/textTertiary" />
 
@@ -119,16 +118,14 @@
                         android:id="@+id/tv_streak"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="7 días"
+                        tools:text="7 días"
                         android:textSize="20sp"
                         android:textColor="@color/textPrimary"
                         android:fontFamily="sans-serif-medium"
                         android:layout_marginTop="4dp" />
-
                 </LinearLayout>
 
             </LinearLayout>
-
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
@@ -149,7 +146,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Gráfico Semanal"
+                    android:text="@string/stats_section_chart"
                     android:textSize="16sp"
                     android:textColor="@color/textPrimary"
                     android:fontFamily="sans-serif-medium"
@@ -161,10 +158,9 @@
                     android:layout_height="180dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/grafico"
-                    android:contentDescription="Gráfico semanal" />
+                    android:contentDescription="@string/stats_desc_chart" />
 
             </LinearLayout>
-
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
@@ -185,7 +181,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Objetivo Semanal"
+                    android:text="@string/stats_section_goal"
                     android:textSize="16sp"
                     android:textColor="@color/textPrimary"
                     android:fontFamily="sans-serif-medium"
@@ -195,7 +191,7 @@
                     android:id="@+id/tv_goal_remaining"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Falta 3.2 km"
+                    tools:text="Falta 3.2 km"
                     android:textSize="14sp"
                     android:textColor="@color/textSecondary"
                     android:layout_marginBottom="12dp" />
@@ -208,7 +204,7 @@
                     app:trackColor="@color/surfaceContainerLow"
                     app:trackCornerRadius="6dp"
                     app:trackThickness="12dp"
-                    android:progress="78"
+                    tools:progress="78"
                     android:max="100" />
 
                 <LinearLayout
@@ -222,7 +218,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="38.6 km"
+                        tools:text="38.6 km"
                         android:textSize="12sp"
                         android:textColor="@color/textTertiary" />
 
@@ -230,14 +226,12 @@
                         android:id="@+id/tv_goal_target"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="50 km"
+                        tools:text="50 km"
                         android:textSize="12sp"
                         android:textColor="@color/textTertiary" />
 
                 </LinearLayout>
-
             </LinearLayout>
-
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
@@ -258,7 +252,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Actividad Reciente"
+                    android:text="@string/stats_section_recent"
                     android:textSize="16sp"
                     android:textColor="@color/textPrimary"
                     android:fontFamily="sans-serif-medium"
@@ -275,7 +269,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Hoy"
+                        android:text="@string/stats_period_today"
                         android:textSize="14sp"
                         android:textColor="@color/textPrimary" />
 
@@ -283,11 +277,10 @@
                         android:id="@+id/tv_today_distance"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="2.3 km"
+                        tools:text="2.3 km"
                         android:textSize="14sp"
                         android:textColor="@color/greenPrimary"
                         android:fontFamily="sans-serif-medium" />
-
                 </LinearLayout>
 
                 <LinearLayout
@@ -301,7 +294,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Ayer"
+                        android:text="@string/stats_period_yesterday"
                         android:textSize="14sp"
                         android:textColor="@color/textSecondary" />
 
@@ -309,11 +302,10 @@
                         android:id="@+id/tv_yesterday_distance"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="1.5 km"
+                        tools:text="1.5 km"
                         android:textSize="14sp"
                         android:textColor="@color/textSecondary"
                         android:fontFamily="sans-serif-medium" />
-
                 </LinearLayout>
 
                 <LinearLayout
@@ -326,7 +318,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Hace dos días"
+                        android:text="@string/stats_period_two_days_ago"
                         android:textSize="14sp"
                         android:textColor="@color/textSecondary" />
 
@@ -334,15 +326,13 @@
                         android:id="@+id/tv_day2_distance"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="3.8 km"
+                        tools:text="3.8 km"
                         android:textSize="14sp"
                         android:textColor="@color/textSecondary"
                         android:fontFamily="sans-serif-medium" />
-
                 </LinearLayout>
 
             </LinearLayout>
-
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
@@ -360,30 +350,17 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <LinearLayout
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="16dp">
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/stats_icon"
-                        app:tint="@color/greenPrimary"
-                        android:contentDescription="Comparación" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="8dp"
-                        android:text="Comparación este mes - anterior"
-                        android:textSize="13sp"
-                        android:textColor="@color/textSecondary" />
-
-                </LinearLayout>
+                    android:text="@string/stats_section_comparison"
+                    android:textSize="13sp"
+                    android:textColor="@color/textSecondary"
+                    app:drawableStartCompat="@drawable/stats_icon"
+                    app:drawableTint="@color/greenPrimary"
+                    android:drawablePadding="8dp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -399,7 +376,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Este mes"
+                            android:text="@string/stats_period_this_month"
                             android:textSize="12sp"
                             android:textColor="@color/textTertiary" />
 
@@ -407,7 +384,7 @@
                             android:id="@+id/tv_current_month"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="38.6 km"
+                            tools:text="38.6 km"
                             android:textSize="20sp"
                             android:textColor="@color/textPrimary"
                             android:fontFamily="sans-serif-medium"
@@ -430,7 +407,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Anterior"
+                            android:text="@string/stats_period_prev_month"
                             android:textSize="12sp"
                             android:textColor="@color/textTertiary" />
 
@@ -438,7 +415,7 @@
                             android:id="@+id/tv_previous_month"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="32.7 km"
+                            tools:text="32.7 km"
                             android:textSize="20sp"
                             android:textColor="@color/textPrimary"
                             android:fontFamily="sans-serif-medium"
