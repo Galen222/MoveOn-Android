@@ -1,17 +1,13 @@
 package com.proyecto.moveon.data.remote;
 
 import android.content.Context;
-
 import androidx.annotation.Nullable;
-
 import com.proyecto.moveon.data.remote.retrofit.RetrofitProvider;
 import com.proyecto.moveon.data.session.SessionRefreshHelper;
-
+import com.proyecto.moveon.utils.StringUtils;
 import org.json.JSONObject;
-
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
@@ -23,7 +19,6 @@ public class AuthenticatedApiClient {
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private final Context appContext;
     private final SessionRefreshHelper refreshHelper;
-
     // Lista segura para hilos que rastrea las llamadas en vuelo
     private final List<Call<?>> inFlight = new CopyOnWriteArrayList<>();
 
@@ -42,13 +37,8 @@ public class AuthenticatedApiClient {
         this.refreshHelper = new SessionRefreshHelper(appContext);
     }
 
-    // Método para cancelar todas las llamadas pendientes
     public void cancelAll() {
-        for (Call<?> c : inFlight) {
-            if (c != null && !c.isCanceled()) {
-                c.cancel();
-            }
-        }
+        for (Call<?> c : inFlight) { if (c != null && !c.isCanceled()) c.cancel(); }
         inFlight.clear();
     }
 
@@ -76,12 +66,7 @@ public class AuthenticatedApiClient {
         request(method, path, body, json -> json, callback);
     }
 
-    public <T> void request(String method,
-                            String path,
-                            @Nullable JSONObject body,
-                            JsonMapper<T> mapper,
-                            Callback<T> callback) {
-
+    public <T> void request(String method, String path, @Nullable JSONObject body, JsonMapper<T> mapper, Callback<T> callback) {
         Call<ResponseBody> call = buildCall(method, path, body);
         enqueueWithRefresh(call, mapper, callback, true);
     }
@@ -95,22 +80,12 @@ public class AuthenticatedApiClient {
     }
 
     private Call<ResponseBody> buildCall(String method, String path, @Nullable JSONObject body) {
-        String url = path.startsWith("http") ? path : path;
-
         switch (method) {
-            case "GET":
-                return RetrofitProvider.protectedApi(appContext).get(url);
-            case "DELETE":
-                return RetrofitProvider.protectedApi(appContext).delete(url);
-            case "POST":
-                return RetrofitProvider.protectedApi(appContext).post(url, toBody(body));
-            case "PUT":
-                return RetrofitProvider.protectedApi(appContext).put(url, toBody(body));
-            case "PATCH":
-                return RetrofitProvider.protectedApi(appContext).patch(url, toBody(body));
-            default:
-                // fallback
-                return RetrofitProvider.protectedApi(appContext).get(url);
+            case "DELETE": return RetrofitProvider.protectedApi(appContext).delete(path);
+            case "POST":   return RetrofitProvider.protectedApi(appContext).post(path, toBody(body));
+            case "PUT":    return RetrofitProvider.protectedApi(appContext).put(path, toBody(body));
+            case "PATCH":  return RetrofitProvider.protectedApi(appContext).patch(path, toBody(body));
+            default:       return RetrofitProvider.protectedApi(appContext).get(path);
         }
     }
 
@@ -119,38 +94,21 @@ public class AuthenticatedApiClient {
         return RequestBody.create(text, JSON);
     }
 
-    private <T> void enqueueWithRefresh(Call<ResponseBody> call,
-                                        JsonMapper<T> mapper,
-                                        Callback<T> callback,
-                                        boolean allowRefreshRetry) {
-
+    private <T> void enqueueWithRefresh(Call<ResponseBody> call, JsonMapper<T> mapper, Callback<T> callback, boolean allowRefreshRetry) {
         // Registramos la llamada antes de enviarla
         inFlight.add(call);
-
         call.enqueue(new retrofit2.Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> c, Response<ResponseBody> response) {
                 // La quitamos de la lista porque ya terminó
                 inFlight.remove(call);
-
                 try {
                     if (response.code() == 401 && allowRefreshRetry) {
                         // refresh + retry una vez
                         refreshHelper.refreshIfNeeded(new SessionRefreshHelper.Callback() {
-                            @Override
-                            public void onSuccess() {
-                                enqueueWithRefresh(call.clone(), mapper, callback, false);
-                            }
-
-                            @Override
-                            public void onSessionExpired(String message) {
-                                callback.onSessionExpired(message);
-                            }
-
-                            @Override
-                            public void onError(String message) {
-                                callback.onError(message);
-                            }
+                            @Override public void onSuccess() { enqueueWithRefresh(call.clone(), mapper, callback, false); }
+                            @Override public void onSessionExpired(String msg) { callback.onSessionExpired(msg); }
+                            @Override public void onError(String msg) { callback.onError(msg); }
                         });
                         return;
                     }
@@ -161,11 +119,10 @@ public class AuthenticatedApiClient {
                     }
 
                     String text = response.body() != null ? response.body().string() : "{}";
-                    JSONObject json = new JSONObject(text);
-                    callback.onSuccess(mapper.map(json));
+                    callback.onSuccess(mapper.map(new JSONObject(text)));
 
                 } catch (Exception e) {
-                    callback.onError(e.getMessage() != null ? e.getMessage() : "Respuesta inválida");
+                    callback.onError(StringUtils.hasText(e.getMessage()) ? e.getMessage() : "Respuesta inválida");
                 }
             }
 
@@ -173,11 +130,9 @@ public class AuthenticatedApiClient {
             public void onFailure(Call<ResponseBody> c, Throwable t) {
                 // La quitamos de la lista
                 inFlight.remove(call);
-
                 // Si la llamada fue cancelada intencionalmente, no hacemos nada para evitar crashear la UI
                 if (call.isCanceled()) return;
-
-                callback.onError(t.getMessage() != null ? t.getMessage() : "Error de conexión");
+                callback.onError(StringUtils.hasText(t.getMessage()) ? t.getMessage() : "Error de conexión");
             }
         });
     }

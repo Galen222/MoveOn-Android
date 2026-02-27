@@ -4,16 +4,12 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import com.proyecto.moveon.utils.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Helper para centralizar refresh token:
- * - deduplica refresh concurrentes (si 5 peticiones fallan a la vez con 401, hace 1 solo refresh)
- * - actualiza SecureSessionManager
- * - clasifica "sesión expirada" vs "error temporal"
- */
 public class SessionRefreshHelper {
 
     public interface Callback {
@@ -36,31 +32,23 @@ public class SessionRefreshHelper {
         this.authRepository = new AuthRepository(appContext);
     }
 
-    /**
-     * Fuerza renovación usando refresh token guardado.
-     */
     public void refreshIfNeeded(@NonNull Callback callback) {
         final String refreshToken = sessionManager.getRefreshToken();
-
-        if (refreshToken == null || refreshToken.trim().isEmpty()) {
+        if (!StringUtils.hasText(refreshToken)) {
             callback.onSessionExpired("No hay refresh token. Inicia sesión de nuevo.");
             return;
         }
 
         boolean shouldStartRefresh = false;
-
         synchronized (REFRESH_LOCK) {
             pendingCallbacks.add(callback);
-
             if (!refreshInProgress) {
                 refreshInProgress = true;
                 shouldStartRefresh = true;
             }
         }
 
-        if (!shouldStartRefresh) {
-            return; // ya hay un refresh en curso; este callback quedará en cola
-        }
+        if (!shouldStartRefresh) return;  // ya hay un refresh en curso; este callback quedará en cola
 
         authRepository.refreshSession(refreshToken, new AuthRepository.Callback<AuthRepository.LoginResult>() {
             @Override
@@ -72,9 +60,7 @@ public class SessionRefreshHelper {
 
             @Override
             public void onError(String error) {
-                String safeError = (error == null || error.trim().isEmpty())
-                        ? "No se pudo renovar la sesión"
-                        : error;
+                String safeError = !StringUtils.hasText(error) ? "No se pudo renovar la sesión" : error;
 
                 if (isRefreshTokenInvalidOrExpired(safeError)) {
                     // Seguridad: si el refresh ya no es válido, limpiamos sesión local
@@ -89,7 +75,6 @@ public class SessionRefreshHelper {
 
     private boolean isRefreshTokenInvalidOrExpired(String error) {
         String e = error.toLowerCase(Locale.ROOT);
-
         // Basado en mensajes actuales de tu backend:
         // inválido / inválido o reutilizado / reutilizado / expirado / etc.
         return e.contains("refresh token inválido")
@@ -106,10 +91,7 @@ public class SessionRefreshHelper {
             callbacks = new ArrayList<>(pendingCallbacks);
             pendingCallbacks.clear();
         }
-
-        for (Callback cb : callbacks) {
-            cb.onSuccess();
-        }
+        for (Callback cb : callbacks) cb.onSuccess();
     }
 
     private void dispatchSessionExpired(String message) {
@@ -119,10 +101,7 @@ public class SessionRefreshHelper {
             callbacks = new ArrayList<>(pendingCallbacks);
             pendingCallbacks.clear();
         }
-
-        for (Callback cb : callbacks) {
-            cb.onSessionExpired(message);
-        }
+        for (Callback cb : callbacks) cb.onSessionExpired(message);
     }
 
     private void dispatchError(String message) {
@@ -132,9 +111,6 @@ public class SessionRefreshHelper {
             callbacks = new ArrayList<>(pendingCallbacks);
             pendingCallbacks.clear();
         }
-
-        for (Callback cb : callbacks) {
-            cb.onError(message);
-        }
+        for (Callback cb : callbacks) cb.onError(message);
     }
 }

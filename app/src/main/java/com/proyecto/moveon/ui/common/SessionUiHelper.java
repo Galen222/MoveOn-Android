@@ -1,14 +1,13 @@
 package com.proyecto.moveon.ui.common;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-
 import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.ui.auth.LoginActivity;
+import com.proyecto.moveon.utils.NavigationUtils;
+import com.proyecto.moveon.utils.StringUtils;
 
 public final class SessionUiHelper {
 
@@ -19,16 +18,10 @@ public final class SessionUiHelper {
             new SecureSessionManager(activity).logout();
         } catch (Exception ignored) {}
 
-        if (message != null && !message.trim().isEmpty()) {
-            Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
-        } else {
-            Toast.makeText(activity, "Tu sesión ha expirado. Inicia sesión de nuevo.", Toast.LENGTH_LONG).show();
-        }
+        String toastMsg = StringUtils.hasText(message) ? message : "Tu sesión ha expirado. Inicia sesión de nuevo.";
+        Toast.makeText(activity, toastMsg, Toast.LENGTH_LONG).show();
 
-        Intent i = new Intent(activity, LoginActivity.class);
-        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        activity.startActivity(i);
-        activity.finish();
+        NavigationUtils.goToActivityAndClearTask(activity, LoginActivity.class);
     }
 
     public static void handleSessionExpired(@NonNull Fragment fragment, String message) {

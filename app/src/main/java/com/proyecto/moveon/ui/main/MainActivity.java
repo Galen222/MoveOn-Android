@@ -1,6 +1,5 @@
 package com.proyecto.moveon.ui.main;
 
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
@@ -10,6 +9,7 @@ import androidx.core.splashscreen.SplashScreen;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.proyecto.moveon.R;
@@ -20,6 +20,7 @@ import com.proyecto.moveon.ui.common.SessionUiHelper;
 import com.proyecto.moveon.ui.home.InicioFragment;
 import com.proyecto.moveon.ui.profile.ProfileFragment;
 import com.proyecto.moveon.ui.stats.StatsFragment;
+import com.proyecto.moveon.utils.NavigationUtils;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,16 +47,14 @@ public class MainActivity extends AppCompatActivity {
         ThemeManager.applySavedTheme(this);
         super.onCreate(savedInstanceState);
 
-        // Inicializamos el ViewModel lo primero
+        // ViewModel primero + guard de sesión
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
-
-        // Guard de sesión consultando al ViewModel
         if (!viewModel.isLoggedIn()) {
             goToLoginAndFinish();
             return;
         }
 
-        // 2. Inflamos la vista con ViewBinding
+        // 2. ViewBinding
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
@@ -78,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
             if (fInicio instanceof InicioFragment) inicioFragment = (InicioFragment) fInicio;
             if (fStats instanceof StatsFragment) statsFragment = (StatsFragment) fStats;
             if (fProfile instanceof ProfileFragment) profileFragment = (ProfileFragment) fProfile;
+
         } else {
             // Pre-creas y dejas listos los 3 tabs, PERO con commitNow para que estén realmente añadidos
             inicioFragment = new InicioFragment();
@@ -91,7 +91,12 @@ public class MainActivity extends AppCompatActivity {
             tx.add(R.id.frame_layout, statsFragment, TAG_STATS).hide(statsFragment);
             tx.add(R.id.frame_layout, profileFragment, TAG_PROFILE).hide(profileFragment);
 
-            tx.commitNow(); // <- CLAVE (evita tocar fragments antes de que estén añadidos)
+            // Importante para Maps/rutas: los ocultos a STARTED, el visible a RESUMED
+            tx.setMaxLifecycle(inicioFragment, Lifecycle.State.RESUMED);
+            tx.setMaxLifecycle(statsFragment, Lifecycle.State.STARTED);
+            tx.setMaxLifecycle(profileFragment, Lifecycle.State.STARTED);
+
+            tx.commitNow();
             selectedItemId = R.id.nav_inicio;
         }
 
@@ -99,7 +104,8 @@ public class MainActivity extends AppCompatActivity {
         binding.bottomNavigation.setSelectedItemId(selectedItemId);
         // Muestra el fragment correcto UNA sola vez
         switchTo(selectedItemId);
-        // Ahora sí, listener (evita doble switchTo en el arranque)
+
+        // Listener (evita doble switchTo en el arranque)
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == selectedItemId) return true;
@@ -107,18 +113,19 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        // Refresh silencioso lifecycle-safe
+        // Refresh silencioso
         viewModel.trySilentRefreshAtStartup();
 
         // Back: si no estás en Inicio, vuelve a Inicio
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (binding.bottomNavigation.getSelectedItemId() != R.id.nav_inicio) {
+                if (selectedItemId != R.id.nav_inicio) {
                     binding.bottomNavigation.setSelectedItemId(R.id.nav_inicio);
                 } else {
                     setEnabled(false);
                     getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
                 }
             }
         });
@@ -133,12 +140,14 @@ public class MainActivity extends AppCompatActivity {
                 inicioFragment = (f instanceof InicioFragment) ? (InicioFragment) f : new InicioFragment();
             }
             target = inicioFragment;
+
         } else if (itemId == R.id.nav_stats) {
             if (statsFragment == null) {
                 Fragment f = fragmentManager.findFragmentByTag(TAG_STATS);
                 statsFragment = (f instanceof StatsFragment) ? (StatsFragment) f : new StatsFragment();
             }
             target = statsFragment;
+
         } else { // R.id.nav_profile
             if (profileFragment == null) {
                 Fragment f = fragmentManager.findFragmentByTag(TAG_PROFILE);
@@ -154,11 +163,26 @@ public class MainActivity extends AppCompatActivity {
         ensureAdded(tx, statsFragment, TAG_STATS);
         ensureAdded(tx, profileFragment, TAG_PROFILE);
 
-        if (inicioFragment != null) tx.hide(inicioFragment);
-        if (statsFragment != null) tx.hide(statsFragment);
-        if (profileFragment != null) tx.hide(profileFragment);
+        // Ocultamos y bajamos lifecycle (clave para Maps/rutas)
+        if (inicioFragment != null && inicioFragment != target) {
+            tx.hide(inicioFragment);
+            tx.setMaxLifecycle(inicioFragment, Lifecycle.State.STARTED);
+        }
+        if (statsFragment != null && statsFragment != target) {
+            tx.hide(statsFragment);
+            tx.setMaxLifecycle(statsFragment, Lifecycle.State.STARTED);
+        }
+        if (profileFragment != null && profileFragment != target) {
+            tx.hide(profileFragment);
+            tx.setMaxLifecycle(profileFragment, Lifecycle.State.STARTED);
+        }
 
-        tx.show(target);
+        // Mostramos y subimos lifecycle del target
+        if (target != null) {
+            tx.show(target);
+            tx.setMaxLifecycle(target, Lifecycle.State.RESUMED);
+        }
+
         tx.commit();
         selectedItemId = itemId;
     }
@@ -167,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
         if (f == null) return;
         if (!f.isAdded()) {
             tx.add(R.id.frame_layout, f, tag).hide(f);
+            tx.setMaxLifecycle(f, Lifecycle.State.STARTED);
         }
     }
 
@@ -177,13 +202,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void goToLoginAndFinish() {
-        Intent i = new Intent(this, LoginActivity.class);
-        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(i);
-        finish();
+        NavigationUtils.goToActivityAndClearTask(this, LoginActivity.class);
     }
 
-    // 4. Liberamos memoria destruyendo el binding, buena práctica siempre
     @Override
     protected void onDestroy() {
         super.onDestroy();

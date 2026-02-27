@@ -3,6 +3,7 @@ package com.proyecto.moveon.data.remote.retrofit;
 import android.content.Context;
 
 import com.proyecto.moveon.data.session.SecureSessionManager;
+import com.proyecto.moveon.utils.StringUtils;
 
 import java.io.IOException;
 
@@ -30,14 +31,13 @@ public final class AuthHeaderInterceptor implements Interceptor {
         }
 
         String access = sessionManager.getAccessToken();
-        if (access == null || access.trim().isEmpty()) {
+        if (!StringUtils.hasText(access)) {
             return chain.proceed(original);
         }
 
         Request withAuth = original.newBuilder()
                 .header("Authorization", "Bearer " + access)
                 .build();
-
         return chain.proceed(withAuth);
     }
 }

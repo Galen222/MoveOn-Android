@@ -1,6 +1,5 @@
 package com.proyecto.moveon.ui.profile;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +15,8 @@ import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.FragmentProfileBinding;
 import com.proyecto.moveon.ui.auth.LoginActivity;
+import com.proyecto.moveon.utils.NavigationUtils;
+import com.proyecto.moveon.utils.StringUtils;
 
 public class ProfileFragment extends Fragment {
 
@@ -30,7 +31,6 @@ public class ProfileFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentProfileBinding.inflate(inflater, container, false);
-
         // Inicializamos el ViewModel
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
 
@@ -57,7 +57,7 @@ public class ProfileFragment extends Fragment {
     private void bindUserData() {
         // Pedimos los datos al ViewModel y usamos strings.xml
         String username = viewModel.getUsername();
-        if (username == null) {
+        if (!StringUtils.hasText(username)) {
             username = getString(R.string.profile_default_username);
         }
 
@@ -69,10 +69,11 @@ public class ProfileFragment extends Fragment {
         binding.tvFullName.setText(username);
         binding.tvEmail.setText(email);
 
-        if (binding.tvBirthdate.getText() == null || binding.tvBirthdate.getText().toString().trim().isEmpty()) {
+        // Si no hay datos, mostramos "No indicado"
+        if (!StringUtils.hasText(binding.tvBirthdate.getText())) {
             binding.tvBirthdate.setText(notIndicated);
         }
-        if (binding.tvCity.getText() == null || binding.tvCity.getText().toString().trim().isEmpty()) {
+        if (!StringUtils.hasText(binding.tvCity.getText())) {
             binding.tvCity.setText(notIndicated);
         }
     }
@@ -112,13 +113,13 @@ public class ProfileFragment extends Fragment {
 
     private void observeViewModel() {
         viewModel.getLogoutState().observe(getViewLifecycleOwner(), state -> {
-            if (state == null) return;
+            if (state == null || binding == null) return;
 
             // 1. Si está cargando, ponemos "Saliendo..." y bloqueamos el botón.
-            // porque la pantalla se va a destruir al navegar al Login.
             if (state.loading) {
                 binding.btnLogout.setEnabled(false);
                 binding.btnLogout.setText(getString(R.string.profile_btn_logging_out));
+                return;
             }
 
             // 2. Manejamos el final de la petición (Error o Éxito)
@@ -133,27 +134,27 @@ public class ProfileFragment extends Fragment {
     }
 
     private void syncThemeToggleWithSavedMode() {
+        if (binding == null) return;
+
         String mode = ThemeManager.getSavedMode(requireContext());
+
+        int checkedId;
         if (ThemeManager.MODE_LIGHT.equals(mode)) {
-            if (binding.toggleThemeMode.getCheckedButtonId() != R.id.btn_theme_light) {
-                binding.toggleThemeMode.check(R.id.btn_theme_light);
-            }
+            checkedId = R.id.btn_theme_light;
         } else if (ThemeManager.MODE_DARK.equals(mode)) {
-            if (binding.toggleThemeMode.getCheckedButtonId() != R.id.btn_theme_dark) {
-                binding.toggleThemeMode.check(R.id.btn_theme_dark);
-            }
+            checkedId = R.id.btn_theme_dark;
         } else {
-            if (binding.toggleThemeMode.getCheckedButtonId() != R.id.btn_theme_system) {
-                binding.toggleThemeMode.check(R.id.btn_theme_system);
-            }
+            checkedId = R.id.btn_theme_system;
+        }
+
+        // Evita disparar listener si ya está marcado
+        if (binding.toggleThemeMode.getCheckedButtonId() != checkedId) {
+            binding.toggleThemeMode.check(checkedId);
         }
     }
 
     private void goToLogin() {
         if (!isAdded()) return;
-        Intent intent = new Intent(requireActivity(), LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        requireActivity().finish();
+        NavigationUtils.goToActivityAndClearTask(requireActivity(), LoginActivity.class);
     }
 }

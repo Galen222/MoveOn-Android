@@ -11,6 +11,7 @@ import com.proyecto.moveon.data.session.AuthRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.ui.common.Event;
 import com.proyecto.moveon.ui.common.UiState;
+import com.proyecto.moveon.utils.StringUtils;
 
 import java.util.Locale;
 
@@ -37,26 +38,25 @@ public class MainViewModel extends AndroidViewModel {
         return sessionExpiredEvent;
     }
 
-    // --- ESTE ES EL MÉTODO QUE FALTABA ---
     public boolean isLoggedIn() {
         return sessionManager.isLoggedIn();
     }
-    // -------------------------------------
 
     public void trySilentRefreshAtStartup() {
         if (silentRefreshAttempted) return;
         silentRefreshAttempted = true;
 
         String refreshToken = sessionManager.getRefreshToken();
-        if (!hasText(refreshToken)) return;
+        if (!StringUtils.hasText(refreshToken)) return;
 
         silentRefreshState.setValue(UiState.loading());
         authRepository.refreshSession(refreshToken, new AuthRepository.Callback<AuthRepository.LoginResult>() {
             @Override
             public void onSuccess(AuthRepository.LoginResult result) {
-                String username = result.nombreUsuario;
-                if (!hasText(username)) username = sessionManager.getUsername();
-                if (username == null) username = "";
+                // REFACCIÓN: Simplificación con StringUtils
+                String username = StringUtils.hasText(result.nombreUsuario)
+                        ? result.nombreUsuario
+                        : StringUtils.textOf(sessionManager.getUsername());
 
                 sessionManager.saveLogin(username, result.tokenAcceso, result.refreshToken);
                 silentRefreshState.postValue(UiState.success(null));
@@ -64,7 +64,7 @@ public class MainViewModel extends AndroidViewModel {
 
             @Override
             public void onError(String error) {
-                String msg = (error == null || error.trim().isEmpty()) ? "No se pudo renovar la sesión" : error;
+                String msg = !StringUtils.hasText(error) ? "No se pudo renovar la sesión" : error;
 
                 // Offline-first: si es red/timeout, NO expulsamos
                 if (looksLikeInvalidRefresh(msg)) {
@@ -86,10 +86,6 @@ public class MainViewModel extends AndroidViewModel {
                 || e.contains("no hay refresh token")
                 || e.contains("error http 401")
                 || e.contains("401");
-    }
-
-    private boolean hasText(String s) {
-        return s != null && !s.trim().isEmpty();
     }
 
     @Override

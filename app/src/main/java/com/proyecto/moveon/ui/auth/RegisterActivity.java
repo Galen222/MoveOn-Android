@@ -4,7 +4,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.app.DatePickerDialog;
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Patterns;
 import android.widget.Toast;
@@ -14,6 +13,8 @@ import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.data.session.AuthRepository;
 import com.proyecto.moveon.databinding.ActivityRegisterBinding;
 import com.proyecto.moveon.ui.main.MainActivity;
+import com.proyecto.moveon.utils.NavigationUtils;
+import com.proyecto.moveon.utils.StringUtils;
 
 import java.util.Calendar;
 import java.util.Locale;
@@ -27,7 +28,6 @@ public class RegisterActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         ThemeManager.applySavedTheme(this);
         super.onCreate(savedInstanceState);
-
         binding = ActivityRegisterBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
@@ -67,10 +67,8 @@ public class RegisterActivity extends AppCompatActivity {
         viewModel.getLoginState().observe(this, state -> {
             if (state == null) return;
             if (state.data != null) {
-                Intent i = new Intent(RegisterActivity.this, MainActivity.class);
-                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(i);
-                finish();
+                // REFACTOR: Usamos NavigationUtils en lugar de crear el Intent manual
+                NavigationUtils.goToActivityAndClearTask(this, MainActivity.class);
             }
         });
     }
@@ -90,8 +88,6 @@ public class RegisterActivity extends AppCompatActivity {
                 },
                 year, month, day
         );
-
-        // No se permiten fechas futuras
         dialog.getDatePicker().setMaxDate(System.currentTimeMillis());
         dialog.show();
     }
@@ -99,11 +95,12 @@ public class RegisterActivity extends AppCompatActivity {
     private void attemptRegister() {
         clearErrors();
 
-        String nombreUsuario     = textOf(binding.etUsuario.getText());
-        String correo            = textOf(binding.etUsuarioCorreo.getText());
-        String fechaNacimiento   = textOf(binding.etFechaNacimiento.getText());
-        String password          = textOf(binding.etPassword.getText());
-        String confirmarPassword = textOf(binding.etConfirmarPassword.getText());
+        // Uso de utilidades para normalizar entrada
+        String nombreUsuario     = StringUtils.textOf(binding.etUsuario.getText());
+        String correo            = StringUtils.textOf(binding.etUsuarioCorreo.getText());
+        String fechaNacimiento   = StringUtils.textOf(binding.etFechaNacimiento.getText());
+        String password          = StringUtils.textOf(binding.etPassword.getText());
+        String confirmarPassword = StringUtils.textOf(binding.etConfirmarPassword.getText());
 
         boolean valid = true;
 
@@ -159,7 +156,6 @@ public class RegisterActivity extends AppCompatActivity {
         req.email           = correo;
         req.password        = password;
         req.fechaNacimiento = fechaNacimiento;
-        req.provincia       = null; // Se configura desde el perfil
 
         viewModel.registerAndAutoLogin(req);
     }
@@ -183,10 +179,6 @@ public class RegisterActivity extends AppCompatActivity {
         binding.tilFechaNacimiento.setError(null);
         binding.tilPassword.setError(null);
         binding.tilConfirmarPassword.setError(null);
-    }
-
-    private String textOf(CharSequence text) {
-        return text == null ? "" : text.toString().trim();
     }
 
     @Override
