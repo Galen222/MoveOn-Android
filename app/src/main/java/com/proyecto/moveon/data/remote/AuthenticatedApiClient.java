@@ -9,6 +9,9 @@ import com.proyecto.moveon.data.session.SessionRefreshHelper;
 
 import org.json.JSONObject;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
@@ -18,9 +21,11 @@ import retrofit2.Response;
 public class AuthenticatedApiClient {
 
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
-
     private final Context appContext;
     private final SessionRefreshHelper refreshHelper;
+
+    // Lista segura para hilos que rastrea las llamadas en vuelo
+    private final List<Call<?>> inFlight = new CopyOnWriteArrayList<>();
 
     public interface Callback<T> {
         void onSuccess(T result);
@@ -35,6 +40,16 @@ public class AuthenticatedApiClient {
     public AuthenticatedApiClient(Context context) {
         this.appContext = context.getApplicationContext();
         this.refreshHelper = new SessionRefreshHelper(appContext);
+    }
+
+    // Método para cancelar todas las llamadas pendientes
+    public void cancelAll() {
+        for (Call<?> c : inFlight) {
+            if (c != null && !c.isCanceled()) {
+                c.cancel();
+            }
+        }
+        inFlight.clear();
     }
 
     public void getJson(String path, Callback<JSONObject> callback) {
@@ -68,7 +83,6 @@ public class AuthenticatedApiClient {
                             Callback<T> callback) {
 
         Call<ResponseBody> call = buildCall(method, path, body);
-
         enqueueWithRefresh(call, mapper, callback, true);
     }
 
@@ -110,9 +124,15 @@ public class AuthenticatedApiClient {
                                         Callback<T> callback,
                                         boolean allowRefreshRetry) {
 
+        // Registramos la llamada antes de enviarla
+        inFlight.add(call);
+
         call.enqueue(new retrofit2.Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> c, Response<ResponseBody> response) {
+                // La quitamos de la lista porque ya terminó
+                inFlight.remove(call);
+
                 try {
                     if (response.code() == 401 && allowRefreshRetry) {
                         // refresh + retry una vez
@@ -151,6 +171,12 @@ public class AuthenticatedApiClient {
 
             @Override
             public void onFailure(Call<ResponseBody> c, Throwable t) {
+                // La quitamos de la lista
+                inFlight.remove(call);
+
+                // Si la llamada fue cancelada intencionalmente, no hacemos nada para evitar crashear la UI
+                if (call.isCanceled()) return;
+
                 callback.onError(t.getMessage() != null ? t.getMessage() : "Error de conexión");
             }
         });

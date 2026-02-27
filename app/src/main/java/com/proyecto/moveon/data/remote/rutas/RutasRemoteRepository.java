@@ -63,4 +63,9 @@ public class RutasRemoteRepository {
             }
         });
     }
+
+    // Añade esto a RutasRemoteRepository.java
+    public void cancelAll() {
+        api.cancelAll();
+    }
 }
