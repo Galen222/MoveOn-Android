@@ -111,25 +111,22 @@ public class ProfileFragment extends Fragment {
     }
 
     private void observeViewModel() {
-        // Observamos el UiState exactamente igual que en el Login
         viewModel.getLogoutState().observe(getViewLifecycleOwner(), state -> {
             if (state == null) return;
 
-            // Bloqueamos el botón y cambiamos el texto usando strings.xml
-            binding.btnLogout.setEnabled(!state.loading);
-            binding.btnLogout.setText(state.loading
-                    ? getString(R.string.profile_btn_logging_out)
-                    : getString(R.string.profile_btn_logout));
+            // 1. Si está cargando, ponemos "Saliendo..." y bloqueamos el botón.
+            // porque la pantalla se va a destruir al navegar al Login.
+            if (state.loading) {
+                binding.btnLogout.setEnabled(false);
+                binding.btnLogout.setText(getString(R.string.profile_btn_logging_out));
+            }
 
-            // Si falla la red, el ViewModel ya borró la sesión local.
-            // Solo avisamos al usuario y le mandamos al Login.
+            // 2. Manejamos el final de la petición (Error o Éxito)
             if (state.error != null) {
                 Toast.makeText(requireContext(), getString(R.string.profile_error_logout_server), Toast.LENGTH_SHORT).show();
                 goToLogin();
-            }
-
-            // Si el servidor responde OK, vamos al Login.
-            if (state.data != null) {
+            } else if (state.data != null) {
+                // Si el servidor responde OK, vamos al Login.
                 goToLogin();
             }
         });
