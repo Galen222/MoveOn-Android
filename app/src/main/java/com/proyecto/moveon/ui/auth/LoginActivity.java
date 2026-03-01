@@ -2,9 +2,12 @@ package com.proyecto.moveon.ui.auth;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
+
 import android.os.Bundle;
 import android.widget.Toast;
+
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityLoginBinding;
 import com.proyecto.moveon.ui.main.MainActivity;
@@ -21,9 +24,7 @@ public class LoginActivity extends AppCompatActivity {
         ThemeManager.applySavedTheme(this);
         super.onCreate(savedInstanceState);
 
-        // 1. Inicializamos el ViewModel PRIMERO
         viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
-        // 2. Le preguntamos al ViewModel si hay sesión
         if (viewModel.isLoggedIn()) {
             goToMain();
             return;
@@ -38,7 +39,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void loadRememberedAccount() {
-        // Pedimos el dato al ViewModel, cero rastros de SecureSessionManager
         String saved = viewModel.getRememberedIdentifier();
         boolean hasSaved = StringUtils.hasText(saved);
         binding.cbRecordarCuenta.setChecked(hasSaved);
@@ -57,20 +57,51 @@ public class LoginActivity extends AppCompatActivity {
         binding.etUsuarioCorreo.setOnFocusChangeListener((v, f) -> { if (f) binding.tilUsuarioCorreo.setError(null); });
         binding.etPassword.setOnFocusChangeListener((v, f) -> { if (f) binding.tilPassword.setError(null); });
         binding.btnOlvidarPassword.setOnClickListener(v ->
-                Toast.makeText(this, "Próximamente", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.common_proximamente), Toast.LENGTH_SHORT).show()
         );
     }
 
     private void observeViewModel() {
         viewModel.getLoginState().observe(this, state -> {
             if (state == null) return;
-            setLoading(state.loading);
-            if (state.error != null) Toast.makeText(this, state.error, Toast.LENGTH_LONG).show();
+
+            // 1. Si empieza a cargar, bloqueamos y ponemos "Entrando..."
+            if (state.loading) {
+                setLoading(true);
+            }
+
+            // 2. Si hay ERROR, restauramos el botón y mostramos el fallo
+            if (state.error != null) {
+                setLoading(false); // <-- Solo vuelve a la normalidad si falla
+
+                applyBackendErrors(state.error);
+
+                if (!state.error.hasFieldErrors()) {
+                    Toast.makeText(this, state.error.getMessage(), Toast.LENGTH_LONG).show();
+                }
+
+                viewModel.resetLoginState();
+            }
+
+            // 3. Si hay ÉXITO, NO quitamos el loading. Dejamos que la pantalla cambie suavemente.
             if (state.data != null) {
-                Toast.makeText(this, getString(R.string.login_bienvenido, state.data.nombreUsuario), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,
+                        getString(R.string.login_bienvenido, state.data.nombreUsuario),
+                        Toast.LENGTH_SHORT).show();
+
+                viewModel.resetLoginState();
                 goToMain();
             }
         });
+    }
+
+    private void applyBackendErrors(ApiError err) {
+        // Tu backend suele devolver columna="identificador" o "password"
+        String idMsg = err.firstFieldMessage("identificador", "email", "nombre_usuario", "usuario");
+        String pwMsg = err.firstFieldMessage("password");
+
+        if (StringUtils.hasText(idMsg)) binding.tilUsuarioCorreo.setError(idMsg);
+        if (StringUtils.hasText(pwMsg)) binding.tilPassword.setError(pwMsg);
     }
 
     private void attemptLogin() {
@@ -94,7 +125,6 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Le delegamos al ViewModel el guardado (o borrado) del identificador
         viewModel.saveRememberedIdentifier(identificador, binding.cbRecordarCuenta.isChecked());
         viewModel.login(identificador, password);
     }

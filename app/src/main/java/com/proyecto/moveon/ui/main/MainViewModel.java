@@ -7,20 +7,21 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.api.ApiError;
+import com.proyecto.moveon.core.api.ApiErrorType;
+import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.data.session.AuthRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
+import com.proyecto.moveon.domain.auth.LoginSession;
 import com.proyecto.moveon.ui.common.Event;
-import com.proyecto.moveon.ui.common.UiState;
 import com.proyecto.moveon.utils.StringUtils;
-
-import java.util.Locale;
 
 public class MainViewModel extends AndroidViewModel {
 
     private final AuthRepository authRepository;
     private final SecureSessionManager sessionManager;
 
-    private final MutableLiveData<UiState<Void>> silentRefreshState = new MutableLiveData<>();
     private final MutableLiveData<Event<String>> sessionExpiredEvent = new MutableLiveData<>();
     private boolean silentRefreshAttempted = false;
 
@@ -30,17 +31,9 @@ public class MainViewModel extends AndroidViewModel {
         sessionManager = new SecureSessionManager(application);
     }
 
-    public LiveData<UiState<Void>> getSilentRefreshState() {
-        return silentRefreshState;
-    }
+    public LiveData<Event<String>> getSessionExpiredEvent() { return sessionExpiredEvent; }
 
-    public LiveData<Event<String>> getSessionExpiredEvent() {
-        return sessionExpiredEvent;
-    }
-
-    public boolean isLoggedIn() {
-        return sessionManager.isLoggedIn();
-    }
+    public boolean isLoggedIn() { return sessionManager.isLoggedIn(); }
 
     public void trySilentRefreshAtStartup() {
         if (silentRefreshAttempted) return;
@@ -49,48 +42,28 @@ public class MainViewModel extends AndroidViewModel {
         String refreshToken = sessionManager.getRefreshToken();
         if (!StringUtils.hasText(refreshToken)) return;
 
-        silentRefreshState.setValue(UiState.loading());
-        authRepository.refreshSession(refreshToken, new AuthRepository.Callback<AuthRepository.LoginResult>() {
+        authRepository.refreshSession(refreshToken, new AuthRepository.Callback<LoginSession>() {
             @Override
-            public void onSuccess(AuthRepository.LoginResult result) {
-                // REFACCIÓN: Simplificación con StringUtils
-                String username = StringUtils.hasText(result.nombreUsuario)
-                        ? result.nombreUsuario
-                        : StringUtils.textOf(sessionManager.getUsername());
+            public void onResult(ApiResult<LoginSession> result) {
+                if (result.isSuccess()) {
+                    LoginSession s = result.data;
+                    if (s == null) return;
 
-                sessionManager.saveLogin(username, result.tokenAcceso, result.refreshToken);
-                silentRefreshState.postValue(UiState.success(null));
-            }
+                    String username = StringUtils.hasText(s.nombreUsuario)
+                            ? s.nombreUsuario
+                            : StringUtils.textOf(sessionManager.getUsername());
 
-            @Override
-            public void onError(String error) {
-                String msg = !StringUtils.hasText(error) ? "No se pudo renovar la sesión" : error;
-
-                // Offline-first: si es red/timeout, NO expulsamos
-                if (looksLikeInvalidRefresh(msg)) {
-                    sessionExpiredEvent.postValue(new Event<>(msg));
+                    sessionManager.saveLogin(username, s.tokenAcceso, s.refreshToken);
                     return;
                 }
 
-                silentRefreshState.postValue(UiState.error(msg));
+                ApiError error = result.error != null ? result.error : ApiError.local(getApplication().getString(R.string.vm_error_generico));
+
+                // Offline-first: si es red/timeout => NO expulses
+                if (error.getType() == ApiErrorType.UNAUTHORIZED) {
+                    sessionExpiredEvent.postValue(new Event<>(error.getMessage()));
+                }
             }
         });
-    }
-
-    private boolean looksLikeInvalidRefresh(String error) {
-        String e = error.toLowerCase(Locale.ROOT);
-        return e.contains("refresh token inválido")
-                || e.contains("refresh token invalido")
-                || e.contains("refresh token expirado")
-                || e.contains("refresh token reutilizado")
-                || e.contains("no hay refresh token")
-                || e.contains("error http 401")
-                || e.contains("401");
-    }
-
-    @Override
-    protected void onCleared() {
-        authRepository.cancelAll();
-        super.onCleared();
     }
 }

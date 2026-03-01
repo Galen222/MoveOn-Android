@@ -16,6 +16,7 @@ import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityMainBinding;
 import com.proyecto.moveon.ui.auth.LoginActivity;
+import com.proyecto.moveon.core.auth.GlobalAuthManager;
 import com.proyecto.moveon.ui.common.SessionUiHelper;
 import com.proyecto.moveon.ui.home.InicioFragment;
 import com.proyecto.moveon.ui.profile.ProfileFragment;
@@ -29,7 +30,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG_STATS   = "tab_stats";
     private static final String TAG_PROFILE = "tab_profile";
 
-    // 1. Declaramos el binding y eliminamos la variable de BottomNavigationView
     private ActivityMainBinding binding;
     private FragmentManager fragmentManager;
 
@@ -38,7 +38,6 @@ public class MainActivity extends AppCompatActivity {
     private ProfileFragment profileFragment;
 
     private int selectedItemId = R.id.nav_inicio;
-
     private MainViewModel viewModel;
 
     @Override
@@ -47,24 +46,32 @@ public class MainActivity extends AppCompatActivity {
         ThemeManager.applySavedTheme(this);
         super.onCreate(savedInstanceState);
 
-        // ViewModel primero + guard de sesión
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
+
         if (!viewModel.isLoggedIn()) {
             goToLoginAndFinish();
             return;
         }
 
-        // 2. ViewBinding
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         fragmentManager = getSupportFragmentManager();
 
+        // 1. Manejador de sesión de arranque (Silent Refresh)
         viewModel.getSessionExpiredEvent().observe(this, ev -> {
             if (ev == null) return;
             String msg = ev.getContentIfNotHandled();
             if (msg != null) {
                 SessionUiHelper.handleSessionExpired(this, msg);
+            }
+        });
+
+        // 2. NUEVO: Escuchador GLOBAL para cualquier petición fallida en cualquier momento
+        GlobalAuthManager.getInstance().getSessionExpiredEvent().observe(this, expired -> {
+            if (Boolean.TRUE.equals(expired)) {
+                GlobalAuthManager.getInstance().resetEvent(); // Limpiar bandera
+                SessionUiHelper.handleSessionExpired(this, getString(R.string.auth_sesion_expirada));
             }
         });
 
@@ -77,9 +84,7 @@ public class MainActivity extends AppCompatActivity {
             if (fInicio instanceof InicioFragment) inicioFragment = (InicioFragment) fInicio;
             if (fStats instanceof StatsFragment) statsFragment = (StatsFragment) fStats;
             if (fProfile instanceof ProfileFragment) profileFragment = (ProfileFragment) fProfile;
-
         } else {
-            // Pre-creas y dejas listos los 3 tabs, PERO con commitNow para que estén realmente añadidos
             inicioFragment = new InicioFragment();
             statsFragment = new StatsFragment();
             profileFragment = new ProfileFragment();
@@ -91,7 +96,6 @@ public class MainActivity extends AppCompatActivity {
             tx.add(R.id.frame_layout, statsFragment, TAG_STATS).hide(statsFragment);
             tx.add(R.id.frame_layout, profileFragment, TAG_PROFILE).hide(profileFragment);
 
-            // Importante para Maps/rutas: los ocultos a STARTED, el visible a RESUMED
             tx.setMaxLifecycle(inicioFragment, Lifecycle.State.RESUMED);
             tx.setMaxLifecycle(statsFragment, Lifecycle.State.STARTED);
             tx.setMaxLifecycle(profileFragment, Lifecycle.State.STARTED);
@@ -100,12 +104,9 @@ public class MainActivity extends AppCompatActivity {
             selectedItemId = R.id.nav_inicio;
         }
 
-        // 3. Reemplazamos bottomNavigationView por binding.bottomNavigation
         binding.bottomNavigation.setSelectedItemId(selectedItemId);
-        // Muestra el fragment correcto UNA sola vez
         switchTo(selectedItemId);
 
-        // Listener (evita doble switchTo en el arranque)
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == selectedItemId) return true;
@@ -113,10 +114,8 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        // Refresh silencioso
         viewModel.trySilentRefreshAtStartup();
 
-        // Back: si no estás en Inicio, vuelve a Inicio
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -140,15 +139,13 @@ public class MainActivity extends AppCompatActivity {
                 inicioFragment = (f instanceof InicioFragment) ? (InicioFragment) f : new InicioFragment();
             }
             target = inicioFragment;
-
         } else if (itemId == R.id.nav_stats) {
             if (statsFragment == null) {
                 Fragment f = fragmentManager.findFragmentByTag(TAG_STATS);
                 statsFragment = (f instanceof StatsFragment) ? (StatsFragment) f : new StatsFragment();
             }
             target = statsFragment;
-
-        } else { // R.id.nav_profile
+        } else {
             if (profileFragment == null) {
                 Fragment f = fragmentManager.findFragmentByTag(TAG_PROFILE);
                 profileFragment = (f instanceof ProfileFragment) ? (ProfileFragment) f : new ProfileFragment();
@@ -163,7 +160,6 @@ public class MainActivity extends AppCompatActivity {
         ensureAdded(tx, statsFragment, TAG_STATS);
         ensureAdded(tx, profileFragment, TAG_PROFILE);
 
-        // Ocultamos y bajamos lifecycle (clave para Maps/rutas)
         if (inicioFragment != null && inicioFragment != target) {
             tx.hide(inicioFragment);
             tx.setMaxLifecycle(inicioFragment, Lifecycle.State.STARTED);
@@ -177,7 +173,6 @@ public class MainActivity extends AppCompatActivity {
             tx.setMaxLifecycle(profileFragment, Lifecycle.State.STARTED);
         }
 
-        // Mostramos y subimos lifecycle del target
         if (target != null) {
             tx.show(target);
             tx.setMaxLifecycle(target, Lifecycle.State.RESUMED);
@@ -192,6 +187,15 @@ public class MainActivity extends AppCompatActivity {
         if (!f.isAdded()) {
             tx.add(R.id.frame_layout, f, tag).hide(f);
             tx.setMaxLifecycle(f, Lifecycle.State.STARTED);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Si el usuario vuelve a la app desde el fondo y la sesión ha muerto, lo expulsamos
+        if (!viewModel.isLoggedIn()) {
+            goToLoginAndFinish();
         }
     }
 

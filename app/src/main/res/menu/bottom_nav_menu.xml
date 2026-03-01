@@ -4,19 +4,19 @@
     <item
         android:id="@+id/nav_inicio"
         android:icon="@drawable/map_icon"
-        android:title="Inicio"
+        android:title="@string/nav_inicio"
         android:enabled="true"/>
 
     <item
         android:id="@+id/nav_stats"
         android:icon="@drawable/stats_icon"
-        android:title="Stats"
+        android:title="@string/nav_stats"
         android:enabled="true"/>
 
     <item
         android:id="@+id/nav_profile"
         android:icon="@drawable/profile_icon"
-        android:title="Perfil"
+        android:title="@string/nav_perfil"
         android:enabled="true"/>
 
 </menu>

@@ -7,8 +7,13 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.api.ApiError;
+import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.data.session.AuthRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
+import com.proyecto.moveon.domain.auth.LoginSession;
+import com.proyecto.moveon.domain.auth.RegisterInput;
 import com.proyecto.moveon.ui.common.UiState;
 
 public class AuthViewModel extends AndroidViewModel {
@@ -16,7 +21,7 @@ public class AuthViewModel extends AndroidViewModel {
     private final AuthRepository authRepository;
     private final SecureSessionManager sessionManager;
 
-    private final MutableLiveData<UiState<AuthRepository.LoginResult>> loginState = new MutableLiveData<>();
+    private final MutableLiveData<UiState<LoginSession>> loginState = new MutableLiveData<>();
     private final MutableLiveData<UiState<String>> registerState = new MutableLiveData<>();
 
     public AuthViewModel(@NonNull Application app) {
@@ -25,76 +30,79 @@ public class AuthViewModel extends AndroidViewModel {
         sessionManager = new SecureSessionManager(app);
     }
 
-    public LiveData<UiState<AuthRepository.LoginResult>> getLoginState() { return loginState; }
+    public LiveData<UiState<LoginSession>> getLoginState() { return loginState; }
     public LiveData<UiState<String>> getRegisterState() { return registerState; }
 
-    public boolean isLoggedIn() {
-        return sessionManager.isLoggedIn();
-    }
+    public void resetLoginState() { loginState.setValue(null); }
 
-    public String getRememberedIdentifier() {
-        return sessionManager.getRememberedIdentifier();
-    }
+    public void resetRegisterState() { registerState.setValue(null); }
+
+    public boolean isLoggedIn() { return sessionManager.isLoggedIn(); }
+
+    public String getRememberedIdentifier() { return sessionManager.getRememberedIdentifier(); }
 
     public void saveRememberedIdentifier(String identifier, boolean remember) {
-        if (remember) {
-            sessionManager.saveRememberedIdentifier(identifier);
-        } else {
-            sessionManager.saveRememberedIdentifier(null);
-        }
+        if (remember) sessionManager.saveRememberedIdentifier(identifier);
+        else sessionManager.saveRememberedIdentifier(null);
     }
 
     public void login(String identificador, String password) {
         loginState.setValue(UiState.loading());
 
-        authRepository.login(identificador, password, new AuthRepository.Callback<AuthRepository.LoginResult>() {
+        authRepository.login(identificador, password, new AuthRepository.Callback<LoginSession>() {
             @Override
-            public void onSuccess(AuthRepository.LoginResult result) {
-                // guarda sesión aquí, no en Activity
-                sessionManager.saveLogin(result.nombreUsuario, result.tokenAcceso, result.refreshToken);
-                loginState.postValue(UiState.success(result));
-            }
-
-            @Override
-            public void onError(String error) {
-                loginState.postValue(UiState.error(error));
+            public void onResult(ApiResult<LoginSession> result) {
+                if (result.isSuccess()) {
+                    LoginSession s = result.data;
+                    if (s != null) {
+                        sessionManager.saveLogin(s.nombreUsuario, s.tokenAcceso, s.refreshToken);
+                        loginState.postValue(UiState.success(s));
+                    } else {
+                        loginState.postValue(UiState.error(ApiError.local(getApplication().getString(R.string.vm_error_respuesta_invalida))));
+                    }
+                } else {
+                    loginState.postValue(UiState.error(result.error != null ? result.error : ApiError.local(getApplication().getString(R.string.vm_error_generico))));
+                }
             }
         });
     }
 
-    public void registerAndAutoLogin(AuthRepository.RegisterRequest req) {
+    public void registerAndAutoLogin(RegisterInput input) {
         registerState.setValue(UiState.loading());
 
-        authRepository.register(req, new AuthRepository.Callback<String>() {
+        authRepository.register(input, new AuthRepository.Callback<String>() {
             @Override
-            public void onSuccess(String msg) {
-                // Registro OK -> autologin
-                authRepository.login(req.email, req.password, new AuthRepository.Callback<AuthRepository.LoginResult>() {
-                    @Override
-                    public void onSuccess(AuthRepository.LoginResult result) {
-                        sessionManager.saveLogin(result.nombreUsuario, result.tokenAcceso, result.refreshToken);
-                        registerState.postValue(UiState.success(msg));
-                        // también puedes postear loginState si quieres
-                        loginState.postValue(UiState.success(result));
-                    }
+            public void onResult(ApiResult<String> regResult) {
+                if (!regResult.isSuccess()) {
+                    registerState.postValue(UiState.error(regResult.error != null ? regResult.error : ApiError.local(getApplication().getString(R.string.vm_error_generico))));
+                    return;
+                }
 
+                String msg = regResult.data != null ? regResult.data : getApplication().getString(R.string.vm_registro_completado);
+
+                // Registro OK -> autologin
+                authRepository.login(input.email, input.password, new AuthRepository.Callback<LoginSession>() {
                     @Override
-                    public void onError(String error) {
-                        registerState.postValue(UiState.error("Cuenta creada, pero no se pudo iniciar sesión: " + error));
+                    public void onResult(ApiResult<LoginSession> loginResult) {
+                        if (loginResult.isSuccess() && loginResult.data != null) {
+                            LoginSession s = loginResult.data;
+                            sessionManager.saveLogin(s.nombreUsuario, s.tokenAcceso, s.refreshToken);
+                            registerState.postValue(UiState.success(msg));
+                            loginState.postValue(UiState.success(s));
+                        } else {
+                            ApiError err = loginResult.error != null ? loginResult.error : ApiError.local(getApplication().getString(R.string.vm_error_generico));
+                            registerState.postValue(UiState.error(ApiError.local(
+                                    getApplication().getString(R.string.vm_error_login_post_registro, err.getMessage())
+                            )));
+                        }
                     }
                 });
-            }
-
-            @Override
-            public void onError(String error) {
-                registerState.postValue(UiState.error(error));
             }
         });
     }
 
     @Override
     protected void onCleared() {
-        // Cancela llamadas en curso al destruirse el VM
         authRepository.cancelAll();
         super.onCleared();
     }

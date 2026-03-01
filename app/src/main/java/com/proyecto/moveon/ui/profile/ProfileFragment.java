@@ -124,10 +124,11 @@ public class ProfileFragment extends Fragment {
 
             // 2. Manejamos el final de la petición (Error o Éxito)
             if (state.error != null) {
-                Toast.makeText(requireContext(), getString(R.string.profile_error_logout_server), Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(),
+                        getString(R.string.profile_error_logout_server),
+                        Toast.LENGTH_SHORT).show();
                 goToLogin();
             } else if (state.data != null) {
-                // Si el servidor responde OK, vamos al Login.
                 goToLogin();
             }
         });

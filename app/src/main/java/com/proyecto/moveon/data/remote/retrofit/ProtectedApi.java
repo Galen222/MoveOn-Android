@@ -1,24 +1,24 @@
 package com.proyecto.moveon.data.remote.retrofit;
 
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
+import com.google.gson.JsonElement;
+
 import retrofit2.Call;
 import retrofit2.http.*;
 
 public interface ProtectedApi {
 
     @GET
-    Call<ResponseBody> get(@Url String url);
+    Call<JsonElement> get(@Url String url);
 
     @HTTP(method = "DELETE")
-    Call<ResponseBody> delete(@Url String url);
+    Call<JsonElement> delete(@Url String url);
 
     @POST
-    Call<ResponseBody> post(@Url String url, @Body RequestBody body);
+    Call<JsonElement> post(@Url String url, @Body JsonElement body);
 
     @PUT
-    Call<ResponseBody> put(@Url String url, @Body RequestBody body);
+    Call<JsonElement> put(@Url String url, @Body JsonElement body);
 
     @PATCH
-    Call<ResponseBody> patch(@Url String url, @Body RequestBody body);
+    Call<JsonElement> patch(@Url String url, @Body JsonElement body);
 }

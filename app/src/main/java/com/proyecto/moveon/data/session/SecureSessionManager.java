@@ -134,8 +134,8 @@ public class SecureSessionManager {
         try {
             return decrypt(ctBase64, ivBase64);
         } catch (Exception e) {
-            // Si falla (clave invalidada, datos corruptos, etc.), limpiamos sesión para evitar estados raros
-            logout();
+            // AUTOCURACIÓN: Si la clave está corrupta, borramos la basura para mantener la consistencia
+            prefs.edit().remove(ctKey).remove(ivKey).apply();
             return null;
         }
     }

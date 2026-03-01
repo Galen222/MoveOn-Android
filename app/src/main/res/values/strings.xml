@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">MoveOn</string>
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="inicio">INICIO</string>
     <string name="Inicio_fragment_inicio_xml">Inicio</string>
 
@@ -56,8 +55,9 @@
     <string name="registro_error_fecha_vacia">La fecha de nacimiento es obligatoria</string>
     <string name="registro_error_password_vacio">La contraseña es obligatoria</string>
     <string name="registro_error_password_corta">La contraseña debe tener al menos 8 caracteres</string>
-    <string name="registro_error_confirmar_vacio">Confirma tu contraseña</string>
     <string name="registro_error_passwords_distintas">Las contraseñas no coinciden</string>
+    <!-- no se esta usando -->
+    <string name="registro_error_confirmar_vacio">Confirma tu contraseña</string>
 
     <!-- Registro - ContentDescriptions -->
     <string name="registro_logo_desc">Logo de MoveOn</string>
@@ -91,6 +91,7 @@
     <string name="stats_period_this_month">Este mes</string>
     <string name="stats_period_prev_month">Anterior</string>
     <string name="stats_desc_chart">Gráfico semanal</string>
+    <!-- no se esta usando -->
     <string name="stats_desc_compare_icon">Icono comparación</string>
 
     <!-- Preferencias - Textos UI -->
@@ -118,5 +119,32 @@
 
     <!-- Preferencias - Errores -->
     <string name="profile_error_logout_server">No se pudo cerrar sesión en servidor, pero se cerrará localmente.</string>
+
+    <!-- API de Comunicación - Errores -->
+    <string name="api_error_http">Error HTTP %1$d</string>
+    <string name="api_error_validacion_invalida">Validación inválida</string>
+    <string name="api_error_respuesta_invalida">Respuesta de error inválida</string>
+    <string name="api_error_rate_limit_retry">Demasiadas peticiones. Inténtalo de nuevo en %1$s s.</string>
+    <string name="api_error_rate_limit">Demasiadas peticiones. Inténtalo más tarde.</string>
+    <string name="api_error_cancelado">Cancelado</string>
+    <string name="api_error_timeout">Timeout de conexión</string>
+    <string name="api_error_conexion">Error de conexión</string>
+    <string name="api_error_inesperado">Error inesperado</string>
+    <string name="api_error_payload_too_large">El archivo o los datos son demasiado grandes</string>
+    <string name="api_error_url_invalida">URL inválida (no se permiten rutas absolutas)</string>
+    <string name="api_error_refresh_invalido">Petición de renovación inválida</string>
+
+    <!-- Autentificación -->
+    <string name="repo_registro_completado">Registro completado</string>
+    <string name="repo_logout_ok">OK</string>
+
+    <string name="common_proximamente">Próximamente</string>
+
+    <string name="auth_sesion_expirada">Tu sesión ha expirado. Inicia sesión de nuevo.</string>
+
+    <string name="vm_error_generico">Error</string>
+    <string name="vm_error_respuesta_invalida">Respuesta inválida</string>
+    <string name="vm_registro_completado">Registro completado</string>
+    <string name="vm_error_login_post_registro">Cuenta creada, pero no se pudo iniciar sesión: %1$s</string>
 
 </resources>

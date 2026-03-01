@@ -94,6 +94,7 @@ dependencies {
     implementation(libs.logging.interceptor)
     implementation(libs.lifecycle.livedata)
     implementation(libs.lifecycle.viewmodel)
+    implementation(libs.converter.gson)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

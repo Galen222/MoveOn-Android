@@ -2,12 +2,14 @@ package com.proyecto.moveon.ui.common;
 
 import androidx.annotation.Nullable;
 
+import com.proyecto.moveon.core.api.ApiError;
+
 public class UiState<T> {
     public final boolean loading;
     @Nullable public final T data;
-    @Nullable public final String error;
+    @Nullable public final ApiError error;
 
-    private UiState(boolean loading, @Nullable T data, @Nullable String error) {
+    private UiState(boolean loading, @Nullable T data, @Nullable ApiError error) {
         this.loading = loading;
         this.data = data;
         this.error = error;
@@ -15,5 +17,5 @@ public class UiState<T> {
 
     public static <T> UiState<T> loading() { return new UiState<>(true, null, null); }
     public static <T> UiState<T> success(T data) { return new UiState<>(false, data, null); }
-    public static <T> UiState<T> error(String msg) { return new UiState<>(false, null, msg); }
+    public static <T> UiState<T> error(ApiError err) { return new UiState<>(false, null, err); }
 }
