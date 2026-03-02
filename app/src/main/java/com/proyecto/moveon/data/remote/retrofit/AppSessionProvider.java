@@ -16,7 +16,7 @@ public final class AppSessionProvider {
 
     private static volatile String cachedSession = null;
     private static long lastFetchTime = 0;
-    private static final long CACHE_TTL_MS = 4 * 60 * 1000;
+    private static final long CACHE_TTL_MS = BuildConfig.APP_SESSION_CACHE_TTL_MS;
     private static volatile HandshakeApi handshakeApi;
 
     private static final Object LOCK = new Object();

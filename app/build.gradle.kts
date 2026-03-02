@@ -38,6 +38,12 @@ val moveonBaseUrl = when (moveonBackend) {
  */
 val appId = localProp("APP_ID", "")
 
+/**
+ * TTL de caché para app-session (ms)
+ * (lo sacamos de local.properties para poder ajustarlo sin tocar Java)
+ */
+val appSessionCacheTtlMs = localProp("APP_SESSION_CACHE_TTL_MS", "240000").trim()
+
 android {
     namespace = "com.proyecto.moveon"
     compileSdk {
@@ -59,6 +65,7 @@ android {
         buildConfigField("String", "BASE_URL", "\"$moveonBaseUrl\"")
         buildConfigField("String", "MOVEON_BACKEND", "\"$moveonBackend\"")
         buildConfigField("String", "APP_ID", "\"$appId\"")
+        buildConfigField("long", "APP_SESSION_CACHE_TTL_MS", "${appSessionCacheTtlMs}L")
     }
 
     buildTypes {
