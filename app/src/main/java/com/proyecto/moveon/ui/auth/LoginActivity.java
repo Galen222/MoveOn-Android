@@ -56,8 +56,10 @@ public class LoginActivity extends AppCompatActivity {
 
         binding.etUsuarioCorreo.setOnFocusChangeListener((v, f) -> { if (f) binding.tilUsuarioCorreo.setError(null); });
         binding.etPassword.setOnFocusChangeListener((v, f) -> { if (f) binding.tilPassword.setError(null); });
+
+        // Navega a ForgotPasswordActivity (antes era un Toast provisional)
         binding.btnOlvidarPassword.setOnClickListener(v ->
-                Toast.makeText(this, getString(R.string.common_proximamente), Toast.LENGTH_SHORT).show()
+                NavigationUtils.goToActivity(this, ForgotPasswordActivity.class)
         );
     }
 
@@ -72,7 +74,7 @@ public class LoginActivity extends AppCompatActivity {
 
             // 2. Si hay ERROR, restauramos el botón y mostramos el fallo
             if (state.error != null) {
-                setLoading(false); // <-- Solo vuelve a la normalidad si falla
+                setLoading(false);
 
                 applyBackendErrors(state.error);
 
@@ -96,7 +98,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void applyBackendErrors(ApiError err) {
-        // Tu backend suele devolver columna="identificador" o "password"
         String idMsg = err.firstFieldMessage("identificador", "email", "nombre_usuario", "usuario");
         String pwMsg = err.firstFieldMessage("password");
 

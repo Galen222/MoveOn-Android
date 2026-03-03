@@ -147,4 +147,39 @@
     <string name="vm_registro_completado">Registro completado</string>
     <string name="vm_error_login_post_registro">Cuenta creada, pero no se pudo iniciar sesión: %1$s</string>
 
+    <!-- Recuperar contraseña - Textos UI -->
+    <string name="forgot_title">Recuperar contraseña</string>
+    <string name="forgot_description_step1">Introduce tu correo y te enviaremos un código de verificación.</string>
+    <string name="forgot_description_step2">Introduce el código que recibiste y tu nueva contraseña.</string>
+    <string name="forgot_hint_email">Correo electrónico</string>
+    <string name="forgot_hint_codigo">Código de verificación</string>
+    <string name="forgot_hint_password_nueva">Nueva contraseña</string>
+    <string name="forgot_hint_password_confirmar">Confirmar nueva contraseña</string>
+
+    <!-- Recuperar contraseña - Botones -->
+    <string name="forgot_btn_enviar_codigo">Enviar código</string>
+    <string name="forgot_btn_enviando_codigo">Enviando…</string>
+    <string name="forgot_btn_cambiar_password">Cambiar contraseña</string>
+    <string name="forgot_btn_cambiando_password">Cambiando…</string>
+    <string name="forgot_btn_volver_login">Volver al inicio de sesión</string>
+
+    <!-- Recuperar contraseña - Errores -->
+    <string name="forgot_error_email_vacio">Introduce tu correo electrónico.</string>
+    <string name="forgot_error_email_formato">El correo no tiene un formato válido.</string>
+    <string name="forgot_error_codigo_vacio">Introduce el código de verificación.</string>
+    <string name="forgot_error_password_vacia">Introduce la nueva contraseña.</string>
+    <string name="forgot_error_password_corta">La contraseña debe tener al menos 8 caracteres.</string>
+    <string name="forgot_error_passwords_distintas">Las contraseñas no coinciden.</string>
+
+    <!-- Recuperar contraseña - Toasts -->
+    <string name="forgot_toast_codigo_enviado">Código enviado. Revisa tu correo.</string>
+    <string name="forgot_toast_password_cambiada">Contraseña cambiada. Ya puedes iniciar sesión.</string>
+
+    <!-- Recuperar contraseña - ContentDescriptions -->
+    <string name="forgot_logo_desc">Logo MoveOn</string>
+
+    <!-- Repositorio - Recuperar contraseña -->
+    <string name="repo_recuperacion_enviada">Código de recuperación enviado.</string>
+    <string name="repo_password_reseteada">Contraseña actualizada correctamente.</string>
+
 </resources>
