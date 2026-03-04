@@ -31,4 +31,10 @@
 
     <!-- Divisor -->
     <dimen name="auth_divider_margin_side">8dp</dimen>
+
+    <!-- Registro - EULA -->
+    <dimen name="registro_eula_text_margin_start">8dp</dimen>
+    <dimen name="registro_eula_text_size">13sp</dimen>
+    <dimen name="registro_eula_error_margin_top">4dp</dimen>
+    <dimen name="registro_eula_error_text_size">12sp</dimen>
 </resources>

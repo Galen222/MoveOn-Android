@@ -16,7 +16,15 @@ public final class AuthMapper {
     }
 
     public static RegisterRequestDto toRegisterRequest(RegisterInput input) {
-        return new RegisterRequestDto(input.nombreUsuario, input.email, input.password, input.fechaNacimiento);
+        return new RegisterRequestDto(
+                input.nombreUsuario,
+                input.email,
+                input.password,
+                input.fechaNacimiento,
+                input.aceptaTerminos,
+                input.fechaAceptacionTerminos,
+                input.versionTerminos
+        );
     }
 
     public static LoginSession toDomain(LoginResponseDto dto) {

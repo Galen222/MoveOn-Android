@@ -69,9 +69,10 @@ public class SecureSessionManager {
         return StringUtils.hasText(getRefreshToken()) || StringUtils.hasText(getAccessToken());
     }
 
-    public boolean hasRefreshSession() {
+    /** No se usa
+     * public boolean hasRefreshSession() {
         return StringUtils.hasText(getRefreshToken());
-    }
+    }*/
 
     @Nullable
     public String getAccessToken() {

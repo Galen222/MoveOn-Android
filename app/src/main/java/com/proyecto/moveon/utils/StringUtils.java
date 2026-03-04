@@ -19,7 +19,7 @@ public final class StringUtils {
     }
 
     /**
-     * true si el texto no es null y, tras hacer trim(), no queda vacío.
+     * Poner true si el texto no es null y, tras hacer trim(), no queda vacío.
      */
     public static boolean hasText(@Nullable String text) {
         return text != null && !text.trim().isEmpty();

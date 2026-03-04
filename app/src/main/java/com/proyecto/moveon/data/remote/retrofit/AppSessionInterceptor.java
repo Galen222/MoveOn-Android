@@ -1,5 +1,7 @@
 package com.proyecto.moveon.data.remote.retrofit;
 
+import androidx.annotation.NonNull;
+
 import java.io.IOException;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -13,6 +15,7 @@ public final class AppSessionInterceptor implements Interceptor {
     private static final String TARGET_HOST = TARGET_URL.host();
     private static final int TARGET_PORT = TARGET_URL.port();
 
+    @NonNull
     @Override
     public Response intercept(Chain chain) throws IOException {
         Request original = chain.request();
@@ -24,7 +27,7 @@ public final class AppSessionInterceptor implements Interceptor {
 
         java.util.List<String> segments = original.url().pathSegments();
 
-        // Obtenemos el último segmento REAL (ignorando la barra final '/' si la hubiera)
+        // Obtenemos el último segmento REAL (ignorando la barra final '/' si la hubiera
         String lastSegment = "";
         if (!segments.isEmpty()) {
             lastSegment = segments.get(segments.size() - 1);

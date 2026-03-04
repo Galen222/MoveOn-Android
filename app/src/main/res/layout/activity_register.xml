@@ -32,10 +32,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/auth_title_margin_top"
+            android:fontFamily="sans-serif-medium"
             android:text="@string/registro_titulo"
             android:textColor="@color/textPrimary"
             android:textSize="@dimen/auth_title_size"
-            android:fontFamily="sans-serif-medium"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/ivMoveOn" />
@@ -80,7 +80,7 @@
 
         <!-- Campo Correo -->
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilUsuario_Correo"
+            android:id="@+id/tilUsuarioCorreo"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -96,7 +96,7 @@
             app:layout_constraintTop_toBottomOf="@+id/tilUsuario">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etUsuario_Correo"
+                android:id="@+id/etUsuarioCorreo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textEmailAddress"
@@ -118,15 +118,15 @@
             app:startIconTint="@color/textSecondary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tilUsuario_Correo">
+            app:layout_constraintTop_toBottomOf="@+id/tilUsuarioCorreo">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etFechaNacimiento"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="none"
-                android:focusable="false"
                 android:clickable="true"
+                android:focusable="false"
+                android:inputType="none"
                 android:textColor="@color/textPrimary" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -141,9 +141,9 @@
             android:layout_marginEnd="@dimen/auth_margin_horizontal"
             android:hint="@string/registro_hint_password"
             app:boxStrokeColor="@color/greenPrimary"
-            app:hintTextColor="@color/greenPrimary"
             app:endIconMode="password_toggle"
             app:endIconTint="@color/textSecondary"
+            app:hintTextColor="@color/greenPrimary"
             app:startIconTint="@color/textSecondary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -168,9 +168,9 @@
             android:layout_marginEnd="@dimen/auth_margin_horizontal"
             android:hint="@string/registro_hint_confirmar_password"
             app:boxStrokeColor="@color/greenPrimary"
-            app:hintTextColor="@color/greenPrimary"
             app:endIconMode="password_toggle"
             app:endIconTint="@color/textSecondary"
+            app:hintTextColor="@color/greenPrimary"
             app:startIconTint="@color/textSecondary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -184,6 +184,51 @@
                 android:textColor="@color/textPrimary" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Checkbox EULA -->
+        <CheckBox
+            android:id="@+id/cbEula"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:buttonTint="@color/greenPrimary"
+            android:contentDescription="@string/registro_eula_desc"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tilConfirmarPassword" />
+
+        <!-- Texto EULA con links -->
+        <TextView
+            android:id="@+id/tvEulaText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/registro_eula_text_margin_start"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:lineSpacingMultiplier="1.3"
+            android:textColor="@color/textSecondary"
+            android:textSize="@dimen/registro_eula_text_size"
+            app:layout_constraintBottom_toBottomOf="@+id/cbEula"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/cbEula"
+            app:layout_constraintTop_toTopOf="@+id/cbEula"
+            tools:text="He leído y acepto los Términos y condiciones y la Política de privacidad" />
+
+        <!-- Error EULA -->
+        <TextView
+            android:id="@+id/tvEulaError"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginTop="@dimen/registro_eula_error_margin_top"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:text="@string/registro_error_eula_no_aceptado"
+            android:textColor="@color/error"
+            android:textSize="@dimen/registro_eula_error_text_size"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cbEula" />
+
         <!-- Botón Crear Cuenta -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCrearCuenta"
@@ -192,24 +237,24 @@
             android:layout_marginStart="@dimen/auth_margin_horizontal"
             android:layout_marginTop="@dimen/auth_section_spacing"
             android:layout_marginEnd="@dimen/auth_margin_horizontal"
-            android:text="@string/registro_btn_crear"
             android:contentDescription="@string/registro_btn_crear_desc"
-            android:textSize="@dimen/auth_button_text_size"
             android:fontFamily="sans-serif-medium"
-            app:cornerRadius="@dimen/auth_button_radius"
-            app:backgroundTint="@color/greenPrimary"
+            android:text="@string/registro_btn_crear"
             android:textColor="@color/textOnGreen"
+            android:textSize="@dimen/auth_button_text_size"
+            app:backgroundTint="@color/greenPrimary"
+            app:cornerRadius="@dimen/auth_button_radius"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tilConfirmarPassword" />
+            app:layout_constraintTop_toBottomOf="@+id/tvEulaError" />
 
         <!-- ¿Ya tienes cuenta? -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/auth_field_spacing"
-            android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/btnCrearCuenta">
@@ -217,21 +262,21 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:importantForAccessibility="no"
                 android:text="@string/registro_ya_tienes_cuenta"
                 android:textColor="@color/textSecondary"
-                android:textSize="@dimen/auth_link_text_size"
-                android:importantForAccessibility="no" />
+                android:textSize="@dimen/auth_link_text_size" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnIniciarSesion"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/registro_iniciar_sesion"
                 android:contentDescription="@string/registro_iniciar_sesion_desc"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/registro_iniciar_sesion"
                 android:textColor="@color/greenPrimary"
-                android:textSize="@dimen/auth_link_text_size"
-                android:fontFamily="sans-serif-medium" />
+                android:textSize="@dimen/auth_link_text_size" />
 
         </LinearLayout>
 

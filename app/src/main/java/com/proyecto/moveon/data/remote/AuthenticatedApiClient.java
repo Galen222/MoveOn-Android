@@ -37,7 +37,7 @@ public final class AuthenticatedApiClient extends BaseRepository {
         if (url == null || url.trim().isEmpty()) return true;
         String clean = url.trim().toLowerCase();
 
-        // Regex: Empieza por letra, seguido de letras/números/+/-/., y luego "://"
+        // Regex: Empieza por letra, seguido de letras/números/+/-/. , y luego"://"
         return clean.matches("^[a-z][a-z0-9+.-]*://.*") || clean.startsWith("//");
     }
 

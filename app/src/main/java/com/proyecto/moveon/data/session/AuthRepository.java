@@ -187,7 +187,7 @@ public class AuthRepository extends BaseRepository {
 
     // -------------------------------------------------------------------------
     // Recuperación de contraseña — Paso 1
-    // POST /password/solicitar  →  body: { email }
+    // POST /password/solicitar → body: { email }
     // -------------------------------------------------------------------------
 
     public void solicitarRecuperacion(String email, Callback<String> callback) {

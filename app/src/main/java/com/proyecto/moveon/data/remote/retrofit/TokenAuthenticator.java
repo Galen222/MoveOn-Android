@@ -81,7 +81,7 @@ public class TokenAuthenticator implements Authenticator {
                 String newAccess = refreshResp.body().tokenAcceso;
                 String newRefresh = refreshResp.body().refreshToken;
 
-                // HARDENING: Si el servidor devuelve un 200 pero sin tokens válidos, la sesión está corrupta
+                // HARDENING: Si el servidor devuelve un 200, pero sin tokens válidos, la sesión está corrupta
                 if (!StringUtils.hasText(newAccess) || !StringUtils.hasText(newRefresh)) {
                     logout();
                     return null;
