@@ -248,4 +248,42 @@
     <string name="profile_error_birthdate_min_age">Debes ser mayor de 18 años</string>
     <string name="profile_error_photo_format">Solo se aceptan imágenes JPG o PNG</string>
 
+    <!-- Tracking — Notificación primer plano -->
+    <string name="tracking_notification_channel_name">Tracking activo</string>
+    <string name="tracking_notification_channel_desc">Muestra el estado del tracking mientras la app está en segundo plano</string>
+    <string name="tracking_notification_title">MoveOn — Actividad en curso</string>
+
+    <!-- Tracking — Diálogo Stop -->
+    <string name="tracking_dialog_stop_title">Finalizar actividad</string>
+    <string name="tracking_dialog_stop_message">¿Quieres finalizar y guardar la actividad?</string>
+    <string name="tracking_dialog_stop_confirm">Guardar</string>
+    <string name="tracking_dialog_stop_cancel">Cancelar</string>
+
+    <!-- Tracking — Diálogo Reset -->
+    <string name="tracking_dialog_reset_title">Descartar actividad</string>
+    <string name="tracking_dialog_reset_message">¿Estás seguro de que quieres descartar la actividad en curso? Los datos se perderán.</string>
+    <string name="tracking_dialog_reset_confirm">Descartar</string>
+    <string name="tracking_dialog_reset_cancel">Cancelar</string>
+
+    <!-- Tracking — Diálogo nueva actividad (btn_add con tracking activo) -->
+    <string name="tracking_dialog_new_activity_title">Nueva actividad</string>
+    <string name="tracking_dialog_new_activity_message">Hay una actividad en curso. ¿Quieres descartarla e iniciar una nueva?</string>
+    <string name="tracking_dialog_new_activity_confirm">Iniciar nueva</string>
+    <string name="tracking_dialog_new_activity_cancel">Cancelar</string>
+
+    <!-- Tracking — Feedback -->
+    <string name="tracking_activity_saved_ok">¡Actividad guardada correctamente!</string>
+    <string name="tracking_permission_denied">Se necesita permiso de ubicación para registrar la actividad.</string>
+
+    <!-- Tracking — Métricas por defecto -->
+    <string name="tracking_default_time">00:00</string>
+    <string name="tracking_default_distance">0 m</string>
+    <string name="tracking_default_calories">0 kcal</string>
+
+    <!-- Tracking — Formatos de métricas -->
+    <string name="tracking_calories_format">%1$d kcal</string>
+    <string name="tracking_distance_m_format">%1$d m</string>
+    <string name="tracking_distance_km_format">%1$.2f km</string>
+
+
 </resources>

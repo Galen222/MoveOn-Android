@@ -1,5 +1,6 @@
 package com.proyecto.moveon.ui.home.tracking;
 
+import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.ComponentName;
 import android.content.Context;
@@ -27,7 +28,6 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * ViewModel del módulo de tracking.
- *
  * Responsabilidades:
  * - Bind/Unbind con TrackingService
  * - Exponer TrackingState como LiveData al Fragment
@@ -69,6 +69,7 @@ public final class TrackingViewModel extends AndroidViewModel {
     // Conexión al servicio
     // -------------------------------------------------------------------------
 
+    @SuppressLint("StaticFieldLeak")
     @Nullable private TrackingService service;
     private boolean bound = false;
 
@@ -82,7 +83,7 @@ public final class TrackingViewModel extends AndroidViewModel {
             // Conectar el LiveData del servicio al MediatorLiveData
             trackingState.addSource(
                     service.getStateLiveData(),
-                    state -> trackingState.setValue(state));
+                    trackingState::setValue);
         }
 
         @Override
@@ -141,7 +142,7 @@ public final class TrackingViewModel extends AndroidViewModel {
 
     /**
      * Finaliza la grabación y guarda la actividad en el backend.
-     * Si no hay distancia o duración registrada, descarta sin llamar al API.
+     * Si no hay distancia o duración registrada, descarta sin llamar a la API.
      */
     public void stopAndSave() {
         if (service == null) return;

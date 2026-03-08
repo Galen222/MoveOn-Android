@@ -171,7 +171,7 @@ public final class TrackingService extends Service implements SensorEventListene
         return START_STICKY;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public IBinder onBind(@NonNull Intent intent) {
         return binder;
@@ -335,7 +335,7 @@ public final class TrackingService extends Service implements SensorEventListene
 
     private void startTimer() {
         stopTimer();
-        timerFuture = scheduler.scheduleAtFixedRate(() -> {
+        timerFuture = scheduler.scheduleWithFixedDelay(() -> {
             elapsedSeconds++;
             publishState();
         }, 1L, 1L, TimeUnit.SECONDS);

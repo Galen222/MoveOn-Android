@@ -63,7 +63,7 @@ public final class ActivityRepository {
                     if (json == null || !json.isJsonObject()) return null;
                     return gson.fromJson(json, GuardarActividadResponseDto.class);
                 },
-                result -> callback.onResult(result)
+                callback::onResult
         );
     }
 
@@ -85,7 +85,7 @@ public final class ActivityRepository {
                     if (json == null || !json.isJsonObject()) return null;
                     return gson.fromJson(json, ProfileInfoDto.class);
                 },
-                result -> callback.onResult(result)
+                callback::onResult
         );
     }
 

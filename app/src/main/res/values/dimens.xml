@@ -46,4 +46,7 @@
     <dimen name="registro_eula_text_size">13sp</dimen>
     <dimen name="registro_eula_error_margin_top">8dp</dimen>
     <dimen name="registro_eula_error_text_size">12sp</dimen>
+
+    <!-- Tracking — grosor de la polilínea de ruta en el mapa -->
+    <dimen name="tracking_polyline_width">8dp</dimen>
 </resources>

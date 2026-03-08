@@ -12,6 +12,7 @@ import com.google.gson.annotations.SerializedName;
  * los puntos totales actualizados del usuario.
  */
 @Keep
+@SuppressWarnings("unused")
 public final class GuardarActividadResponseDto {
 
     @SerializedName("id")

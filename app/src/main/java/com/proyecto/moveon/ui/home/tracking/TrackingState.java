@@ -4,17 +4,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.android.gms.maps.model.LatLng;
-
+import androidx.annotation.Keep;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * Estado inmutable del módulo de tracking.
- *
+
  * Para modificar el estado se usa el {@link Builder}.
- *
+
  * Ciclo de vida: IDLE → RUNNING → PAUSED → RUNNING → FINISHED
  */
+@Keep
+@SuppressWarnings("unused")
 public final class TrackingState {
 
     // -------------------------------------------------------------------------
