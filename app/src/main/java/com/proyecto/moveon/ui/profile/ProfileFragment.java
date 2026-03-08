@@ -1,43 +1,85 @@
 package com.proyecto.moveon.ui.profile;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.material.datepicker.CalendarConstraints;
+import com.google.android.material.datepicker.DateValidatorPointBackward;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.theme.ThemeManager;
+import com.proyecto.moveon.data.profile.dto.UpdateProfileRequestDto;
+import com.proyecto.moveon.databinding.DialogEditFieldBinding;
+import com.proyecto.moveon.databinding.DialogEditNumberBinding;
+import com.proyecto.moveon.databinding.DialogEditProvinciaBinding;
 import com.proyecto.moveon.databinding.FragmentProfileBinding;
+import com.proyecto.moveon.domain.profile.PerfilUsuario;
 import com.proyecto.moveon.ui.auth.LoginActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Calendar;
+import java.util.Locale;
+
 public class ProfileFragment extends Fragment {
 
     private FragmentProfileBinding binding;
-    private ProfileViewModel viewModel;
+    private ProfileViewModel        viewModel;
 
-    public ProfileFragment() {
-        // Constructor vacío requerido
-    }
+    // Estado actual del perfil cargado, para pre-rellenar diálogos
+    @Nullable private PerfilUsuario perfilActual;
+
+    // Lanzador de galería — abre el explorador de archivos del sistema
+    private final ActivityResultLauncher<Intent> pickImageLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) return;
+                Uri uri = result.getData().getData();
+                if (uri == null) return;
+
+                File file = uriToFile(uri);
+                if (file == null) {
+                    Toast.makeText(requireContext(),
+                            getString(R.string.profile_error_photo_read), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                viewModel.uploadPhoto(file);
+            });
+
+    public ProfileFragment() {}
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        binding = FragmentProfileBinding.inflate(inflater, container, false);
-        // Inicializamos el ViewModel
+        binding   = FragmentProfileBinding.inflate(inflater, container, false);
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
 
-        bindUserData();
+        bindLocalData();
         setupListeners();
         observeViewModel();
         syncThemeToggleWithSavedMode();
+        viewModel.loadPerfil();
 
         return binding.getRoot();
     }
@@ -54,101 +96,459 @@ public class ProfileFragment extends Fragment {
         binding = null;
     }
 
-    private void bindUserData() {
-        // Pedimos los datos al ViewModel y usamos strings.xml
+    // Datos locales (antes de que cargue el servidor)
+
+    private void bindLocalData() {
         String username = viewModel.getUsername();
         if (!StringUtils.hasText(username)) {
             username = getString(R.string.profile_default_username);
         }
+        binding.tvUserName.setText(username);
+        binding.switchNotifications.setChecked(viewModel.areNotificationsEnabled());
+    }
 
-        String email = getString(R.string.profile_default_email);
+    // ── Bind datos de perfil ──────────────────────────────────────────────────
+
+    private void bindPerfilData(@NonNull PerfilUsuario perfil) {
+        if (binding == null) return;
+        perfilActual = perfil;
+
         String notIndicated = getString(R.string.profile_not_indicated);
 
-        binding.tvUserName.setText(username);
-        binding.tvUserEmail.setText(email);
-        binding.tvFullName.setText(username);
-        binding.tvEmail.setText(email);
+        binding.tvUserName.setText(perfil.nombreUsuario);
+        binding.tvUserEmail.setText(perfil.email);
+        binding.tvUserPoints.setText(
+                getString(R.string.profile_puntos_formato, perfil.totalPuntos));
 
-        // Si no hay datos, mostramos "No indicado"
-        if (!StringUtils.hasText(binding.tvBirthdate.getText())) {
-            binding.tvBirthdate.setText(notIndicated);
-        }
-        if (!StringUtils.hasText(binding.tvCity.getText())) {
-            binding.tvCity.setText(notIndicated);
+        binding.tvFullName.setText(
+                StringUtils.hasText(perfil.nombreReal) ? perfil.nombreReal : notIndicated);
+        binding.tvEmail.setText(perfil.email);
+        binding.tvBirthdate.setText(
+                StringUtils.hasText(perfil.fechaNacimiento)
+                        ? formatFecha(perfil.fechaNacimiento) : notIndicated);
+        binding.tvProvincia.setText(
+                StringUtils.hasText(perfil.provincia) ? perfil.provincia : notIndicated);
+        binding.tvGenero.setText(
+                StringUtils.hasText(perfil.genero) ? perfil.genero : notIndicated);
+        binding.tvAltura.setText(
+                perfil.altura != null
+                        ? getString(R.string.profile_altura_formato, perfil.altura)
+                        : notIndicated);
+        binding.tvPeso.setText(
+                perfil.peso != null
+                        ? getString(R.string.profile_peso_formato, perfil.peso)
+                        : notIndicated);
+
+        // Switch perfil público — sin disparar listener
+        binding.switchPublicProfile.setOnCheckedChangeListener(null);
+        binding.switchPublicProfile.setChecked(perfil.perfilVisible);
+        binding.switchPublicProfile.setOnCheckedChangeListener((btn, isChecked) -> {
+            if (!btn.isPressed()) return;
+            UpdateProfileRequestDto dto = new UpdateProfileRequestDto.Builder()
+                    .perfilVisible(isChecked)
+                    .build();
+            viewModel.updatePerfil(dto);
+        });
+
+        // Foto de perfil con Glide
+        if (StringUtils.hasText(perfil.fotoPerfil)) {
+            Glide.with(this)
+                    .load(perfil.fotoPerfil)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .placeholder(R.drawable.default_profile)
+                    .error(R.drawable.default_profile)
+                    .circleCrop()
+                    .into(binding.ivProfilePicture);
         }
     }
 
+    @NonNull
+    private String formatFecha(@NonNull String fecha) {
+        String[] partes = fecha.split("-");
+        if (partes.length == 3) {
+            return partes[2] + "-" + partes[1] + "-" + partes[0];
+        }
+        return fecha;
+    }
+
+    // ── Listeners ─────────────────────────────────────────────────────────────
+
     private void setupListeners() {
+        // Tema
         binding.toggleThemeMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
-
             String newMode;
-            if (checkedId == R.id.btn_theme_light) {
-                newMode = ThemeManager.MODE_LIGHT;
-            } else if (checkedId == R.id.btn_theme_dark) {
-                newMode = ThemeManager.MODE_DARK;
-            } else if (checkedId == R.id.btn_theme_system) {
-                newMode = ThemeManager.MODE_SYSTEM;
-            } else {
-                return;
-            }
+            if      (checkedId == R.id.btn_theme_light)  newMode = ThemeManager.MODE_LIGHT;
+            else if (checkedId == R.id.btn_theme_dark)   newMode = ThemeManager.MODE_DARK;
+            else if (checkedId == R.id.btn_theme_system) newMode = ThemeManager.MODE_SYSTEM;
+            else return;
 
             String currentMode = ThemeManager.getSavedMode(requireContext());
             if (newMode.equals(currentMode)) return;
-
             ThemeManager.saveAndApply(requireContext(), newMode);
             requireActivity().recreate();
         });
 
-        // Placeholders de los botones
-        binding.btnEditProfile.setOnClickListener(v -> {});
-        binding.itemRanking.setOnClickListener(v -> {});
-        binding.itemShareRoutes.setOnClickListener(v -> {});
-        binding.switchPublicProfile.setOnCheckedChangeListener((buttonView, isChecked) -> {});
-        binding.switchNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> {});
+        // Comunidad (próximamente)
+        binding.itemRanking.setOnClickListener(v ->
+                Toast.makeText(requireContext(), R.string.common_proximamente, Toast.LENGTH_SHORT).show());
+        binding.itemShareRoutes.setOnClickListener(v ->
+                Toast.makeText(requireContext(), R.string.common_proximamente, Toast.LENGTH_SHORT).show());
 
-        // Delegamos el evento al ViewModel
+        // Notificaciones
+        binding.switchNotifications.setOnCheckedChangeListener((btn, isChecked) -> {
+            if (btn.isPressed()) {
+                viewModel.setNotificationsEnabled(isChecked);
+            }
+        });
+
+        // Foto de perfil
+        binding.fabChangePhoto.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.setType("image/*");
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            pickImageLauncher.launch(intent);
+        });
+
+        // Logout
         binding.btnLogout.setOnClickListener(v -> viewModel.logout());
+
+        // Edición de campos personales
+        binding.itemFullName.setOnClickListener(v -> showEditTextDialog(
+                getString(R.string.profile_label_fullname),
+                perfilActual != null ? perfilActual.nombreReal : null,
+                android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS,
+                value -> viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
+                        .nombreReal(value.isEmpty() ? null : value)
+                        .build())
+        ));
+
+        binding.itemEmail.setOnClickListener(v -> showEditTextDialog(
+                getString(R.string.profile_label_email),
+                perfilActual != null ? perfilActual.email : null,
+                android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,
+                value -> viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
+                        .email(value.isEmpty() ? null : value)
+                        .build())
+        ));
+
+        binding.itemBirthdate.setOnClickListener(v -> showBirthdatePicker());
+
+        binding.itemProvincia.setOnClickListener(v -> showEditProvinciaDialog());
+
+        binding.itemGenero.setOnClickListener(v -> showGeneroDialog());
+
+        binding.itemAltura.setOnClickListener(v -> showEditNumberDialog(
+                getString(R.string.profile_label_altura),
+                perfilActual != null && perfilActual.altura != null
+                        ? String.valueOf(perfilActual.altura) : null,
+                true,
+                value -> {
+                    try {
+                        int altura = Integer.parseInt(value);
+                        viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
+                                .altura(altura)
+                                .build());
+                    } catch (NumberFormatException e) {
+                        Toast.makeText(requireContext(),
+                                R.string.dialog_error_invalid_number, Toast.LENGTH_SHORT).show();
+                    }
+                }
+        ));
+
+        binding.itemPeso.setOnClickListener(v -> showEditNumberDialog(
+                getString(R.string.profile_label_peso),
+                perfilActual != null && perfilActual.peso != null
+                        ? String.valueOf(perfilActual.peso) : null,
+                false,
+                value -> {
+                    try {
+                        double peso = Double.parseDouble(value);
+                        viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
+                                .peso(peso)
+                                .build());
+                    } catch (NumberFormatException e) {
+                        Toast.makeText(requireContext(),
+                                R.string.dialog_error_invalid_number, Toast.LENGTH_SHORT).show();
+                    }
+                }
+        ));
     }
 
+    // ── Diálogos de edición ───────────────────────────────────────────────────
+
+    private void showEditTextDialog(@NonNull String label,
+                                    @Nullable String currentValue,
+                                    int inputType,
+                                    @NonNull OnValueSavedListener listener) {
+        DialogEditFieldBinding dialogBinding =
+                DialogEditFieldBinding.inflate(LayoutInflater.from(requireContext()));
+
+        dialogBinding.tilField.setHint(label);
+        if (StringUtils.hasText(currentValue)) {
+            dialogBinding.etField.setText(currentValue);
+            dialogBinding.etField.setSelection(currentValue.length());
+        }
+        dialogBinding.etField.setInputType(inputType);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(label)
+                .setView(dialogBinding.getRoot())
+                .setPositiveButton(R.string.dialog_btn_save, null)
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .create();
+
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String value = dialogBinding.etField.getText() != null
+                    ? dialogBinding.etField.getText().toString().trim() : "";
+            dialogBinding.tilField.setError(null);
+            listener.onSaved(value);
+            dialog.dismiss();
+        }));
+
+        dialog.show();
+    }
+
+    private void showEditNumberDialog(@NonNull String label,
+                                      @Nullable String currentValue,
+                                      boolean isInteger,
+                                      @NonNull OnValueSavedListener listener) {
+        DialogEditNumberBinding dialogBinding =
+                DialogEditNumberBinding.inflate(LayoutInflater.from(requireContext()));
+
+        dialogBinding.tilNumber.setHint(label);
+        if (StringUtils.hasText(currentValue)) {
+            dialogBinding.etNumber.setText(currentValue);
+            dialogBinding.etNumber.setSelection(currentValue.length());
+        }
+        dialogBinding.etNumber.setInputType(isInteger
+                ? android.text.InputType.TYPE_CLASS_NUMBER
+                : android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(label)
+                .setView(dialogBinding.getRoot())
+                .setPositiveButton(R.string.dialog_btn_save, null)
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .create();
+
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String value = dialogBinding.etNumber.getText() != null
+                    ? dialogBinding.etNumber.getText().toString().trim() : "";
+            if (value.isEmpty()) {
+                dialogBinding.tilNumber.setError(getString(R.string.dialog_error_required));
+                return;
+            }
+            dialogBinding.tilNumber.setError(null);
+            listener.onSaved(value);
+            dialog.dismiss();
+        }));
+
+        dialog.show();
+    }
+
+    private void showBirthdatePicker() {
+        // Límite máximo: hoy menos 18 años (el usuario debe ser mayor de edad)
+        Calendar maxDate = Calendar.getInstance();
+        maxDate.add(Calendar.YEAR, -18);
+
+        CalendarConstraints constraints = new CalendarConstraints.Builder()
+                .setEnd(maxDate.getTimeInMillis())
+                .setValidator(DateValidatorPointBackward.before(maxDate.getTimeInMillis()))
+                .build();
+
+        // Selección inicial: fecha actual del perfil o el límite máximo si no hay
+        long initialSelection;
+        if (perfilActual != null && StringUtils.hasText(perfilActual.fechaNacimiento)) {
+            try {
+                String[] parts = perfilActual.fechaNacimiento.split("-");
+                Calendar cal = Calendar.getInstance();
+                cal.set(Integer.parseInt(parts[0]),
+                        Integer.parseInt(parts[1]) - 1,
+                        Integer.parseInt(parts[2]));
+                initialSelection = cal.getTimeInMillis();
+            } catch (Exception e) {
+                initialSelection = maxDate.getTimeInMillis();
+            }
+        } else {
+            initialSelection = maxDate.getTimeInMillis();
+        }
+
+        MaterialDatePicker<Long> picker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText(R.string.profile_label_birthdate)
+                .setInputMode(MaterialDatePicker.INPUT_MODE_CALENDAR)
+                .setCalendarConstraints(constraints)
+                .setSelection(initialSelection)
+                .build();
+
+        picker.addOnPositiveButtonClickListener(selection -> {
+            Calendar selected = Calendar.getInstance();
+            selected.setTimeInMillis(selection);
+
+            // Doble check +18 en cliente
+            Calendar minRequired = Calendar.getInstance();
+            minRequired.add(Calendar.YEAR, -18);
+            if (selected.after(minRequired)) {
+                Toast.makeText(requireContext(),
+                        R.string.profile_error_birthdate_min_age, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String fecha = String.format(Locale.getDefault(), "%04d-%02d-%02d",
+                    selected.get(Calendar.YEAR),
+                    selected.get(Calendar.MONTH) + 1,
+                    selected.get(Calendar.DAY_OF_MONTH));
+
+            viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
+                    .fechaNacimiento(fecha)
+                    .build());
+        });
+
+        picker.show(getParentFragmentManager(), "birthdate_picker");
+    }
+
+    private void showEditProvinciaDialog() {
+        DialogEditProvinciaBinding dialogBinding =
+                DialogEditProvinciaBinding.inflate(LayoutInflater.from(requireContext()));
+
+        String[] provincias = getResources().getStringArray(R.array.provincias);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                requireContext(), android.R.layout.simple_dropdown_item_1line, provincias);
+        dialogBinding.actvProvincia.setAdapter(adapter);
+        dialogBinding.tilProvincia.setHint(getString(R.string.profile_label_provincia));
+
+        if (perfilActual != null && StringUtils.hasText(perfilActual.provincia)) {
+            dialogBinding.actvProvincia.setText(perfilActual.provincia, false);
+        }
+
+        // Mostrar dropdown al ganar foco o al hacer clic
+        dialogBinding.actvProvincia.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) dialogBinding.actvProvincia.showDropDown();
+        });
+        dialogBinding.actvProvincia.setOnClickListener(v ->
+                dialogBinding.actvProvincia.showDropDown());
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.profile_label_provincia)
+                .setView(dialogBinding.getRoot())
+                .setPositiveButton(R.string.dialog_btn_save, null)
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .create();
+
+        // Forzar dropdown al mostrarse el diálogo
+        dialog.setOnShowListener(d -> {
+            dialogBinding.actvProvincia.post(() -> {
+                dialogBinding.actvProvincia.requestFocus();
+                dialogBinding.actvProvincia.showDropDown();
+            });
+
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                String value = dialogBinding.actvProvincia.getText() != null
+                        ? dialogBinding.actvProvincia.getText().toString().trim() : "";
+                if (value.isEmpty()) {
+                    dialogBinding.tilProvincia.setError(getString(R.string.dialog_error_required));
+                    return;
+                }
+                dialogBinding.tilProvincia.setError(null);
+                // "No indicar" → enviar null para limpiar el campo en el servidor
+                String provinciaValue = getString(R.string.profile_provincia_no_indicar).equals(value)
+                        ? null : value;
+                viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
+                        .provincia(provinciaValue)
+                        .build());
+                dialog.dismiss();
+            });
+        });
+
+        dialog.show();
+    }
+
+    private void showGeneroDialog() {
+        String[] opciones = getResources().getStringArray(R.array.generos);
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.profile_label_genero)
+                .setItems(opciones, (d, which) ->
+                        viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
+                                .genero(opciones[which])
+                                .build()))
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .show();
+    }
+
+    // ── Observadores ─────────────────────────────────────────────────────────
+
     private void observeViewModel() {
+        viewModel.getPerfilState().observe(getViewLifecycleOwner(), state -> {
+            if (state == null || binding == null) return;
+            showOverlay(state.loading);
+            if (state.data != null) {
+                bindPerfilData(state.data);
+            } else if (state.error != null) {
+                Toast.makeText(requireContext(),
+                        state.error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewModel.getUpdateState().observe(getViewLifecycleOwner(), state -> {
+            if (state == null || binding == null) return;
+            showOverlay(state.loading);
+            if (state.data != null) {
+                Toast.makeText(requireContext(),
+                        R.string.profile_update_ok, Toast.LENGTH_SHORT).show();
+                viewModel.resetUpdateState();
+                viewModel.loadPerfil();
+            } else if (state.error != null) {
+                Toast.makeText(requireContext(),
+                        state.error.getMessage(), Toast.LENGTH_SHORT).show();
+                viewModel.resetUpdateState();
+            }
+        });
+
+        viewModel.getPhotoState().observe(getViewLifecycleOwner(), state -> {
+            if (state == null || binding == null) return;
+            showOverlay(state.loading);
+            if (state.data != null) {
+                Toast.makeText(requireContext(),
+                        R.string.profile_photo_ok, Toast.LENGTH_SHORT).show();
+                viewModel.resetPhotoState();
+                viewModel.loadPerfil();
+            } else if (state.error != null) {
+                Toast.makeText(requireContext(),
+                        state.error.getMessage(), Toast.LENGTH_SHORT).show();
+                viewModel.resetPhotoState();
+            }
+        });
+
         viewModel.getLogoutState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
-
-            // 1. Si está cargando, ponemos "Saliendo..." y bloqueamos el botón.
             if (state.loading) {
                 binding.btnLogout.setEnabled(false);
                 binding.btnLogout.setText(getString(R.string.profile_btn_logging_out));
                 return;
             }
-
-            // 2. Manejamos el final de la petición (Error o Éxito)
             if (state.error != null) {
                 Toast.makeText(requireContext(),
                         getString(R.string.profile_error_logout_server),
                         Toast.LENGTH_SHORT).show();
-                goToLogin();
-            } else if (state.data != null) {
-                goToLogin();
             }
+            goToLogin();
         });
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private void showOverlay(boolean show) {
+        if (binding == null) return;
+        binding.loadingOverlay.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
     private void syncThemeToggleWithSavedMode() {
         if (binding == null) return;
-
         String mode = ThemeManager.getSavedMode(requireContext());
-
         int checkedId;
-        if (ThemeManager.MODE_LIGHT.equals(mode)) {
-            checkedId = R.id.btn_theme_light;
-        } else if (ThemeManager.MODE_DARK.equals(mode)) {
-            checkedId = R.id.btn_theme_dark;
-        } else {
-            checkedId = R.id.btn_theme_system;
-        }
-
-        // Evita disparar listener si ya está marcado
+        if      (ThemeManager.MODE_LIGHT.equals(mode))  checkedId = R.id.btn_theme_light;
+        else if (ThemeManager.MODE_DARK.equals(mode))   checkedId = R.id.btn_theme_dark;
+        else                                            checkedId = R.id.btn_theme_system;
         if (binding.toggleThemeMode.getCheckedButtonId() != checkedId) {
             binding.toggleThemeMode.check(checkedId);
         }
@@ -157,5 +557,31 @@ public class ProfileFragment extends Fragment {
     private void goToLogin() {
         if (!isAdded()) return;
         NavigationUtils.goToActivityAndClearTask(requireActivity(), LoginActivity.class);
+    }
+
+    @Nullable
+    private File uriToFile(@NonNull Uri uri) {
+        try {
+            InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
+            if (inputStream == null) return null;
+            File tempFile = File.createTempFile("photo_", ".jpg", requireContext().getCacheDir());
+            try (FileOutputStream out = new FileOutputStream(tempFile)) {
+                byte[] buffer = new byte[4096];
+                int read;
+                while ((read = inputStream.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+            }
+            inputStream.close();
+            return tempFile;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    // ── Interfaz callback ─────────────────────────────────────────────────────
+
+    private interface OnValueSavedListener {
+        void onSaved(@NonNull String value);
     }
 }

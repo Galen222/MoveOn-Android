@@ -227,7 +227,7 @@
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cbEula" />
+            app:layout_constraintTop_toBottomOf="@+id/tvEulaText" />
 
         <!-- Botón Crear Cuenta -->
         <com.google.android.material.button.MaterialButton

@@ -1,16 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="120dp"
-    android:height="120dp"
-    android:viewportWidth="120"
-    android:viewportHeight="120">
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
 
     <!-- Fondo circular -->
     <path
-        android:fillColor="@color/darkSurface"
-        android:pathData="M60,60m-60,0a60,60 0,1 1,120 0a60,60 0,1 1,-120 0"/>
+        android:fillColor="#E5E7EB"
+        android:pathData="M48,48m-48,0a48,48 0,1 1,96 0a48,48 0,1 1,-96 0" />
 
-    <!-- Icono de persona -->
+    <!-- Cabeza -->
     <path
-        android:fillColor="@color/textSecondary"
-        android:pathData="M60,30c8.28,0 15,6.72 15,15s-6.72,15 -15,15 -15,-6.72 -15,-15 6.72,-15 15,-15zM60,65c-16.67,0 -30,8.34 -30,15v10h60v-10c0,-6.66 -13.33,-15 -30,-15z"/>
+        android:fillColor="#9CA3AF"
+        android:pathData="M48,44m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0" />
+
+    <!-- Cuerpo / hombros -->
+    <path
+        android:fillColor="#9CA3AF"
+        android:pathData="M48,60C34,60 22,67 18,78C24,85 35,90 48,90C61,90 72,85 78,78C74,67 62,60 48,60Z" />
+
 </vector>

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MoveOn</string>
     <string name="inicio">INICIO</string>
@@ -108,31 +109,67 @@
     <!-- no se esta usando -->
     <string name="stats_desc_compare_icon">Icono comparación</string>
 
-    <!-- Preferencias - Textos UI -->
+    <!-- Perfil — cabecera -->
     <string name="profile_default_username">Usuario</string>
     <string name="profile_default_email">Sin correo disponible</string>
     <string name="profile_not_indicated">No indicada</string>
+    <string name="profile_points_format">%1$d puntos</string>
+
+    <!-- Perfil — labels campos -->
     <string name="profile_label_fullname">Nombre completo</string>
     <string name="profile_label_email">Correo electrónico</string>
     <string name="profile_label_birthdate">Fecha de nacimiento</string>
-    <string name="profile_label_city">Ciudad</string>
+    <string name="profile_label_provincia">Provincia</string>
+    <string name="profile_label_genero">Género</string>
+    <string name="profile_label_altura">Altura</string>
+    <string name="profile_label_peso">Peso</string>
+
+    <!-- Perfil — formatos de valor -->
+    <string name="profile_altura_format">%1$d cm</string>
+    <string name="profile_peso_format">%1$.1f kg</string>
+
+    <!-- Perfil — hints diálogos de número -->
+    <string name="profile_altura_hint">Altura en cm (ej: 175)</string>
+    <string name="profile_peso_hint">Peso en kg (ej: 70.5)</string>
+
+    <!-- Perfil — secciones tarjetas -->
+    <string name="profile_section_personal">Información personal</string>
+    <string name="profile_section_community">Comunidad</string>
+    <string name="profile_section_preferences">Privacidad y apariencia</string>
+
+    <!-- Perfil — ítems comunidad -->
     <string name="profile_item_ranking">Ranking</string>
     <string name="profile_item_share_routes">Compartir rutas</string>
-    <string name="profile_item_public_profile">Perfil público</string>
     <string name="profile_item_notifications">Notificaciones</string>
+
+    <!-- Perfil — ítems preferencias -->
+    <string name="profile_item_public_profile">Perfil público</string>
     <string name="profile_item_theme">Tema</string>
     <string name="profile_theme_light">Claro</string>
     <string name="profile_theme_dark">Oscuro</string>
     <string name="profile_theme_auto">Auto</string>
+
+    <!-- Perfil — botones -->
     <string name="profile_btn_logout">Cerrar sesión</string>
     <string name="profile_btn_logging_out">Saliendo…</string>
-    <string name="profile_desc_picture">Foto de perfil</string>
-    <string name="profile_desc_edit">Editar perfil</string>
-    <string name="profile_desc_ranking">Ir a ranking</string>
-    <string name="profile_desc_share_routes">Compartir rutas</string>
 
-    <!-- Preferencias - Errores -->
+    <!-- Perfil — foto -->
+    <string name="profile_desc_picture">Foto de perfil</string>
+    <string name="profile_desc_change_photo">Cambiar foto de perfil</string>
+    <string name="profile_photo_ok">Foto actualizada correctamente</string>
+    <string name="profile_error_photo_read">No se pudo leer la imagen seleccionada</string>
+
+    <!-- Perfil — actualización -->
+    <string name="profile_update_ok">Perfil actualizado</string>
+
+    <!-- Perfil — errores -->
     <string name="profile_error_logout_server">No se pudo cerrar sesión en servidor, pero se cerrará localmente.</string>
+
+    <!-- Diálogos genéricos -->
+    <string name="dialog_btn_save">Guardar</string>
+    <string name="dialog_btn_cancel">Cancelar</string>
+    <string name="dialog_error_required">Este campo no puede estar vacío</string>
+    <string name="dialog_error_invalid_number">Introduce un número válido</string>
 
     <!-- API de Comunicación - Errores -->
     <string name="api_error_http">Error HTTP %1$d</string>
@@ -148,14 +185,15 @@
     <string name="api_error_url_invalida">URL inválida (no se permiten rutas absolutas)</string>
     <string name="api_error_refresh_invalido">Petición de renovación inválida</string>
 
-    <!-- Autentificación -->
+    <!-- Autenticación -->
     <string name="repo_registro_completado">Registro completado</string>
     <string name="repo_logout_ok">OK</string>
-
-    <string name="common_proximamente">Próximamente</string>
-
     <string name="auth_sesion_expirada">Tu sesión ha expirado. Inicia sesión de nuevo.</string>
 
+    <!-- Común -->
+    <string name="common_proximamente">Próximamente</string>
+
+    <!-- ViewModel - Errores -->
     <string name="vm_error_generico">Error</string>
     <string name="vm_error_respuesta_invalida">Respuesta inválida</string>
     <string name="vm_registro_completado">Registro completado</string>
@@ -195,5 +233,19 @@
     <!-- Repositorio - Recuperar contraseña -->
     <string name="repo_recuperacion_enviada">Código de recuperación enviado.</string>
     <string name="repo_password_reseteada">Contraseña actualizada correctamente.</string>
+
+    <!-- Perfil — provincia opción vacía -->
+    <string name="profile_provincia_no_indicar">No indicar</string>
+
+    <!-- Perfil — alias de formato usados en ProfileFragment -->
+    <string name="profile_puntos_formato">%1$d puntos</string>
+    <string name="profile_altura_formato">%1$d cm</string>
+    <string name="profile_peso_formato">%.1f kg</string>
+    <!-- Perfil — hint fecha con formato visible -->
+    <string name="profile_label_birthdate_hint">Fecha de nacimiento (AAAA-MM-DD)</string>
+
+    <!-- Perfil — DatePicker -->
+    <string name="profile_error_birthdate_min_age">Debes ser mayor de 18 años</string>
+    <string name="profile_error_photo_format">Solo se aceptan imágenes JPG o PNG</string>
 
 </resources>

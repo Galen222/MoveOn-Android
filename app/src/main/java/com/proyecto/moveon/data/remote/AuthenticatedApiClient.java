@@ -13,6 +13,7 @@ import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.data.common.BaseRepository;
 import com.proyecto.moveon.data.remote.retrofit.RetrofitProvider;
 
+import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.Response;
 
@@ -73,6 +74,14 @@ public final class AuthenticatedApiClient extends BaseRepository {
             return;
         }
         enqueueCall(RetrofitProvider.protectedApi(appContext).patch(sanitizeUrl(url), body), mapper, callback);
+    }
+
+    public <T> void postMultipart(String url, MultipartBody.Part file, Mapper<JsonElement, T> mapper, Callback<T> callback) {
+        if (isInvalidUrl(url)) {
+            callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida))));
+            return;
+        }
+        enqueueCall(RetrofitProvider.protectedApi(appContext).postMultipart(sanitizeUrl(url), file), mapper, callback);
     }
 
     private <T> void enqueueCall(Call<JsonElement> call,

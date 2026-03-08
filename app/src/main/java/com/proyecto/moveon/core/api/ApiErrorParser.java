@@ -25,7 +25,13 @@ public final class ApiErrorParser {
     private ApiErrorParser() {}
 
     /**
-     * Parsea una respuesta de error de Retrofit (códigos HTTP 4xx o 5xx)
+     * Parsea una respuesta de error de Retrofit (códigos HTTP 4xx o 5xx).
+     *
+     * Prioridad de mensaje para el usuario:
+     *   1. Primer mensaje específico del array "detail" (FastAPI/Pydantic) — MAYOR prioridad
+     *   2. Mensajes de "errores_campos"
+     *   3. Campo "mensaje" / "message" / "error" genérico del backend
+     *   4. Fallback genérico por código HTTP
      */
     @NonNull
     public static ApiError fromHttp(@NonNull Context context, @NonNull Response<?> response) {
@@ -37,7 +43,7 @@ public final class ApiErrorParser {
                 raw = eb.string();
             } catch (Exception ignored) {
             } finally {
-                eb.close(); // CIERRE EXPLÍCITO
+                eb.close();
             }
         }
 
@@ -46,7 +52,6 @@ public final class ApiErrorParser {
         boolean hasCustomMsg = false;
         Map<String, List<String>> fieldErrors = new HashMap<>();
 
-        // Mejora UX: Mensaje específico para Payload Too Large (413)
         if (type == ApiErrorType.PAYLOAD_TOO_LARGE) {
             msg = context.getString(R.string.api_error_payload_too_large);
             hasCustomMsg = true;
@@ -58,37 +63,34 @@ public final class ApiErrorParser {
                 if (root != null && root.isJsonObject()) {
                     JsonObject obj = root.getAsJsonObject();
 
-                    // 1. Buscar mensaje genérico en campos comunes del backend
+                    // 1. Mensaje genérico del backend — fallback, puede ser sobreescrito por detail.
                     if (obj.has("mensaje") && obj.get("mensaje").isJsonPrimitive()) {
-                        String m = obj.get("mensaje").getAsString();
+                        String m = cleanBackendMsg(obj.get("mensaje").getAsString());
                         if (StringUtils.hasText(m)) { msg = m; hasCustomMsg = true; }
                     }
-
                     if (obj.has("message") && obj.get("message").isJsonPrimitive()) {
-                        String m = obj.get("message").getAsString();
+                        String m = cleanBackendMsg(obj.get("message").getAsString());
                         if (StringUtils.hasText(m) && !hasCustomMsg) { msg = m; hasCustomMsg = true; }
                     }
-
                     if (obj.has("error") && obj.get("error").isJsonPrimitive()) {
-                        String m = obj.get("error").getAsString();
+                        String m = cleanBackendMsg(obj.get("error").getAsString());
                         if (StringUtils.hasText(m) && !hasCustomMsg) { msg = m; hasCustomMsg = true; }
                     }
 
-                    // 2. Errores por campos (Formato personalizado)
+                    // 2. Errores por campos (formato personalizado del backend).
                     if (obj.has("errores_campos") && obj.get("errores_campos").isJsonObject()) {
                         JsonObject fe = obj.getAsJsonObject("errores_campos");
                         for (String key : fe.keySet()) {
                             JsonElement ve = fe.get(key);
                             if (ve == null) continue;
-
                             if (ve.isJsonPrimitive()) {
-                                String m = ve.getAsString();
+                                String m = cleanBackendMsg(ve.getAsString());
                                 if (StringUtils.hasText(m)) addFieldError(fieldErrors, key, m);
                             } else if (ve.isJsonArray()) {
                                 JsonArray arr = ve.getAsJsonArray();
                                 for (JsonElement it : arr) {
                                     if (it != null && it.isJsonPrimitive()) {
-                                        String m = it.getAsString();
+                                        String m = cleanBackendMsg(it.getAsString());
                                         if (StringUtils.hasText(m)) addFieldError(fieldErrors, key, m);
                                     }
                                 }
@@ -99,41 +101,46 @@ public final class ApiErrorParser {
                         }
                     }
 
-                    // 3. Errores formato FastAPI/Pydantic ("detail")
+                    // 3. Errores formato FastAPI/Pydantic ("detail").
+                    //    El primer mensaje específico de campo SIEMPRE sobreescribe
+                    //    el "mensaje" genérico ("Solicitud inválida", etc.) del paso 1.
                     if (obj.has("detail")) {
                         JsonElement detail = obj.get("detail");
                         if (detail != null && detail.isJsonPrimitive()) {
-                            String d = detail.getAsString();
-                            if (StringUtils.hasText(d) && !hasCustomMsg) { msg = d; hasCustomMsg = true; }
+                            String d = cleanBackendMsg(detail.getAsString());
+                            if (StringUtils.hasText(d)) { msg = d; hasCustomMsg = true; }
+
                         } else if (detail != null && detail.isJsonArray()) {
                             JsonArray arr = detail.getAsJsonArray();
                             if (code == 400 || code == 422) type = ApiErrorType.VALIDATION;
+
                             for (JsonElement it : arr) {
                                 if (it == null || !it.isJsonObject()) continue;
                                 JsonObject o = it.getAsJsonObject();
 
-                                String col = o.has("columna") && o.get("columna").isJsonPrimitive() ? o.get("columna").getAsString() : null;
-                                String m = o.has("mensaje") && o.get("mensaje").isJsonPrimitive() ? o.get("mensaje").getAsString() : null;
+                                String col = o.has("columna") && o.get("columna").isJsonPrimitive()
+                                        ? o.get("columna").getAsString() : null;
+                                String m = o.has("mensaje") && o.get("mensaje").isJsonPrimitive()
+                                        ? cleanBackendMsg(o.get("mensaje").getAsString()) : null;
 
                                 if (!StringUtils.hasText(m) && o.has("msg") && o.get("msg").isJsonPrimitive()) {
-                                    m = o.get("msg").getAsString();
+                                    m = cleanBackendMsg(o.get("msg").getAsString());
                                 }
-
                                 if (!StringUtils.hasText(col) && o.has("loc") && o.get("loc").isJsonArray()) {
                                     col = lastLocAsFieldName(o.getAsJsonArray("loc"));
                                 }
-
                                 if (StringUtils.hasText(col) && StringUtils.hasText(m)) {
                                     addFieldError(fieldErrors, col, m);
                                 }
-
-                                if (StringUtils.hasText(m) && !hasCustomMsg) {
+                                // Primer mensaje específico sobreescribe siempre el genérico
+                                if (StringUtils.hasText(m)) {
                                     msg = m;
                                     hasCustomMsg = true;
+                                    break;
                                 }
                             }
 
-                            if (arr.size() > 0 && !hasCustomMsg) {
+                            if (!hasCustomMsg && arr.size() > 0) {
                                 msg = context.getString(R.string.api_error_validacion_invalida);
                                 hasCustomMsg = true;
                             }
@@ -147,7 +154,6 @@ public final class ApiErrorParser {
             }
         }
 
-        // Manejo especial de Rate Limit (429) para incluir Retry-After si no hay mensaje custom
         if (type == ApiErrorType.RATE_LIMIT && !hasCustomMsg) {
             String retryAfter = response.headers().get("Retry-After");
             if (StringUtils.hasText(retryAfter)) {
@@ -169,13 +175,12 @@ public final class ApiErrorParser {
             return ApiError.typed(ApiErrorType.CANCELED, context.getString(R.string.api_error_cancelado));
         }
 
-        // PUNTO 4: Manejo de RefreshFailedException usando GETTERS (Hardening)
         if (t instanceof com.proyecto.moveon.data.remote.retrofit.TokenAuthenticator.RefreshFailedException) {
             com.proyecto.moveon.data.remote.retrofit.TokenAuthenticator.RefreshFailedException ex =
                     (com.proyecto.moveon.data.remote.retrofit.TokenAuthenticator.RefreshFailedException) t;
 
-            int c = ex.getCode(); // Uso de getter
-            String retryAfter = ex.getRetryAfter(); // Uso de getter
+            int c = ex.getCode();
+            String retryAfter = ex.getRetryAfter();
             ApiErrorType type;
             String msg;
 
@@ -185,8 +190,6 @@ public final class ApiErrorParser {
                         ? context.getString(R.string.api_error_rate_limit_retry, retryAfter)
                         : context.getString(R.string.api_error_rate_limit);
             } else if (c == 400 || c == 422) {
-                // Hardening: 400/422 en el refresh automático son errores internos (UNKNOWN),
-                // ya que el usuario no tiene la culpa de un fallo de contrato en el refresco.
                 type = ApiErrorType.UNKNOWN;
                 msg = context.getString(R.string.api_error_refresh_invalido);
             } else {
@@ -197,32 +200,37 @@ public final class ApiErrorParser {
         }
 
         if (t instanceof SocketTimeoutException) {
-            // Eliminado t.getMessage()
             return ApiError.typed(ApiErrorType.TIMEOUT, context.getString(R.string.api_error_timeout));
         }
 
         if (t instanceof IOException) {
-            // Eliminado t.getMessage()
             return ApiError.typed(ApiErrorType.NETWORK, context.getString(R.string.api_error_conexion));
         }
 
-        // Eliminado t.getMessage()
         return ApiError.local(context.getString(R.string.api_error_inesperado));
     }
 
     /**
-     * Mapea códigos HTTP a tipos de error lógicos para la aplicación
+     * Elimina el prefijo "Error:" que añade el backend en sus mensajes de validación,
+     * para que el toast al usuario sea más natural y limpio.
+     * Ej.: "Error: El nombre no puede contener números" → "El nombre no puede contener números"
      */
+    @NonNull
+    private static String cleanBackendMsg(@NonNull String m) {
+        String trimmed = m.trim();
+        if (trimmed.startsWith("Error: ")) {
+            return trimmed.substring(7).trim();
+        }
+        return trimmed;
+    }
+
     private static ApiErrorType mapHttpToType(int code) {
         if (code == 401) return ApiErrorType.UNAUTHORIZED;
         if (code == 403) return ApiErrorType.FORBIDDEN;
         if (code == 404) return ApiErrorType.NOT_FOUND;
         if (code == 408) return ApiErrorType.TIMEOUT;
         if (code == 409) return ApiErrorType.CONFLICT;
-
-        // PUNTO 3 (Opcional UX): Manejo de Payload Too Large (413)
         if (code == 413) return ApiErrorType.PAYLOAD_TOO_LARGE;
-
         if (code == 429) return ApiErrorType.RATE_LIMIT;
         if (code == 400 || code == 422) return ApiErrorType.VALIDATION;
         if (code >= 500) return ApiErrorType.SERVER;
