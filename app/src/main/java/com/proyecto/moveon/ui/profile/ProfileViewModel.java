@@ -104,7 +104,7 @@ public class ProfileViewModel extends AndroidViewModel {
 
     public void uploadPhoto(@NonNull File file) {
         photoState.setValue(UiState.loading());
-        RequestBody requestBody = RequestBody.create(MediaType.parse("image/jpeg"), file);
+        RequestBody requestBody = RequestBody.create(file, MediaType.parse("image/jpeg"));
         MultipartBody.Part part = MultipartBody.Part.createFormData(
                 "archivo", file.getName(), requestBody);
         apiClient.postMultipart(ENDPOINT_PHOTO, part,

@@ -5,7 +5,7 @@ plugins {
 }
 
 /**
- * Lee una propiedad desde local.properties (raíz del proyecto)
+ * Lee una propiedad desde local.properties (raíz del proyecto).
  */
 fun localProp(key: String, defaultValue: String = ""): String {
     val props = Properties()
@@ -17,13 +17,13 @@ fun localProp(key: String, defaultValue: String = ""): String {
 }
 
 /**
- * Selector de backend para la app Android (LOCAL / PRODUCCION)
+ * Selector de backend para la app Android (LOCAL / PRODUCCION).
  * SOLO cambia a qué backend apunta la app (y por tanto, qué BD usa ese backend).
  */
 val moveonBackend = localProp("MOVEON_BACKEND", "LOCAL").trim().uppercase()
 
 /**
- * URL del backend según selector
+ * URL del backend según selector.
  * - Emulador Android + backend local en tu PC -> http://10.0.2.2:8000
  * - Producción -> https://dominio.com
  */
@@ -33,16 +33,24 @@ val moveonBaseUrl = when (moveonBackend) {
 }
 
 /**
- * APP_ID para handshake del backend
- * (lo sacamos de local.properties para no hardcodearlo en el código Java)
+ * APP_ID para handshake del backend.
+ * (se saca de local.properties para no hardcodearlo en el código Java)
  */
 val appId = localProp("APP_ID", "")
 
 /**
- * TTL de caché para app-session (ms)
- * (lo sacamos de local.properties para poder ajustarlo sin tocar Java)
+ * TTL de caché para app-session (ms).
+ * (se saca de local.properties para poder ajustarlo sin tocar Java)
  */
 val appSessionCacheTtlMs = localProp("APP_SESSION_CACHE_TTL_MS", "240000").trim()
+
+/**
+ * Google Maps API Key.
+ * Se lee desde local.properties como MAPS_API_KEY y se inyecta en el
+ * AndroidManifest a través del buildConfigField/manifestPlaceholders.
+ * NUNCA se hardcodea en el repositorio.
+ */
+val mapsApiKey = localProp("MAPS_API_KEY", "")
 
 android {
     namespace = "com.proyecto.moveon"
@@ -61,11 +69,14 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // ✅ Variables accesibles desde Java: BuildConfig.BASE_URL, BuildConfig.MOVEON_BACKEND, BuildConfig.APP_ID
-        buildConfigField("String", "BASE_URL", "\"$moveonBaseUrl\"")
-        buildConfigField("String", "MOVEON_BACKEND", "\"$moveonBackend\"")
-        buildConfigField("String", "APP_ID", "\"$appId\"")
-        buildConfigField("long", "APP_SESSION_CACHE_TTL_MS", "${appSessionCacheTtlMs}L")
+        // Variables accesibles desde Java: BuildConfig.BASE_URL, etc.
+        buildConfigField("String", "BASE_URL",               "\"$moveonBaseUrl\"")
+        buildConfigField("String", "MOVEON_BACKEND",         "\"$moveonBackend\"")
+        buildConfigField("String", "APP_ID",                 "\"$appId\"")
+        buildConfigField("long",   "APP_SESSION_CACHE_TTL_MS", "${appSessionCacheTtlMs}L")
+
+        // Inyecta MAPS_API_KEY en AndroidManifest.xml como ${MAPS_API_KEY}
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
@@ -78,7 +89,6 @@ android {
         }
     }
 
-    // Asegura generación de BuildConfig
     buildFeatures {
         buildConfig = true
         viewBinding = true
@@ -103,6 +113,14 @@ dependencies {
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.converter.gson)
     implementation("com.github.bumptech.glide:glide:4.16.0")
+
+    // Google Maps SDK for Android
+    implementation("com.google.android.gms:play-services-maps:19.0.0")
+    // FusedLocationProviderClient
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    // Maps Android SDK Utility Library (PolyUtil.encode para encoded polyline)
+    implementation("com.google.maps.android:android-maps-utils:3.8.2")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

@@ -25,8 +25,7 @@ public final class ApiErrorParser {
     private ApiErrorParser() {}
 
     /**
-     * Parsea una respuesta de error de Retrofit (códigos HTTP 4xx o 5xx).
-     *
+     * Parsea una respuesta de error de Retrofit (códigos HTTP 4xx o 5xx)
      * Prioridad de mensaje para el usuario:
      *   1. Primer mensaje específico del array "detail" (FastAPI/Pydantic) — MAYOR prioridad
      *   2. Mensajes de "errores_campos"
@@ -140,7 +139,7 @@ public final class ApiErrorParser {
                                 }
                             }
 
-                            if (!hasCustomMsg && arr.size() > 0) {
+                            if (!hasCustomMsg && !arr.isEmpty()) {
                                 msg = context.getString(R.string.api_error_validacion_invalida);
                                 hasCustomMsg = true;
                             }
@@ -246,7 +245,7 @@ public final class ApiErrorParser {
     }
 
     private static String lastLocAsFieldName(JsonArray loc) {
-        if (loc == null || loc.size() == 0) return null;
+        if (loc == null || loc.isEmpty()) return null;
         JsonElement last = loc.get(loc.size() - 1);
         if (last != null && last.isJsonPrimitive()) {
             String s = last.getAsString();
