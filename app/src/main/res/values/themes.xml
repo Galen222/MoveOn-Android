@@ -2,7 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="Base.Theme.MoveOn" parent="Theme.Material3.Light.NoActionBar">
-
+        <item name="fontFamily">@font/space_grotesk</item>
         <!-- =========================
              BRAND / PRIMARY (Material3)
              ========================= -->

@@ -31,7 +31,7 @@ import java.time.format.DateTimeFormatter;
  * Responsabilidades:
  * - Bind/Unbind con TrackingService
  * - Exponer TrackingState como LiveData al Fragment
- * - Cargar el peso del usuario al arrancar para el cálculo de calorías
+ * - Cargar el peso del usuario tras conectar con el servicio
  * - Llamar a POST /actividad/guardar al finalizar
  */
 public final class TrackingViewModel extends AndroidViewModel {
@@ -84,6 +84,9 @@ public final class TrackingViewModel extends AndroidViewModel {
             trackingState.addSource(
                     service.getStateLiveData(),
                     trackingState::setValue);
+
+            // Cargar peso aquí, cuando service ya no es null
+            loadUserWeight();
         }
 
         @Override
@@ -101,7 +104,6 @@ public final class TrackingViewModel extends AndroidViewModel {
         super(application);
         repository = new ActivityRepository(application);
         trackingState.setValue(TrackingState.idle());
-        loadUserWeight();
         bindTrackingService();
     }
 

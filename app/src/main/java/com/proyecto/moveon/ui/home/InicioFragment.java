@@ -1,6 +1,5 @@
 package com.proyecto.moveon.ui.home;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -363,14 +362,15 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
     private void showWalkingStatus() {
         if (binding == null) return;
 
-        binding.statusWalking.setBackgroundColor(
-                ContextCompat.getColor(requireContext(), R.color.greenPrimary));
+        binding.statusWalking.setBackground(
+                ContextCompat.getDrawable(requireContext(), R.drawable.pill_active));
         binding.tvWalking.setTextColor(
                 ContextCompat.getColor(requireContext(), R.color.textOnGreen));
         binding.ivWalking.setColorFilter(
                 ContextCompat.getColor(requireContext(), R.color.textOnGreen));
 
-        binding.statusRunning.setBackgroundColor(Color.TRANSPARENT);
+        binding.statusRunning.setBackground(
+                ContextCompat.getDrawable(requireContext(), R.drawable.pill_inactive));
         binding.tvRunning.setTextColor(
                 ContextCompat.getColor(requireContext(), R.color.textSecondary));
         binding.ivRunning.setColorFilter(
@@ -380,14 +380,15 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
     private void showRunningStatus() {
         if (binding == null) return;
 
-        binding.statusRunning.setBackgroundColor(
-                ContextCompat.getColor(requireContext(), R.color.greenPrimary));
+        binding.statusRunning.setBackground(
+                ContextCompat.getDrawable(requireContext(), R.drawable.pill_active));
         binding.tvRunning.setTextColor(
                 ContextCompat.getColor(requireContext(), R.color.textOnGreen));
         binding.ivRunning.setColorFilter(
                 ContextCompat.getColor(requireContext(), R.color.textOnGreen));
 
-        binding.statusWalking.setBackgroundColor(Color.TRANSPARENT);
+        binding.statusWalking.setBackground(
+                ContextCompat.getDrawable(requireContext(), R.drawable.pill_inactive));
         binding.tvWalking.setTextColor(
                 ContextCompat.getColor(requireContext(), R.color.textSecondary));
         binding.ivWalking.setColorFilter(

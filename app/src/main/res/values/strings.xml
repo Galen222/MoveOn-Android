@@ -279,6 +279,9 @@
     <string name="tracking_default_time">00:00</string>
     <string name="tracking_default_distance">0 m</string>
     <string name="tracking_default_calories">0 kcal</string>
+    <string name="tracking_label_time">TIEMPO</string>
+    <string name="tracking_label_distance">DISTANCIA</string>
+    <string name="tracking_label_cal">CAL</string>
 
     <!-- Tracking — Formatos de métricas -->
     <string name="tracking_calories_format">%1$d kcal</string>
