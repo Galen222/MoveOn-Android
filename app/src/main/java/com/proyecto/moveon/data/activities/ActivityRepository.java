@@ -19,6 +19,7 @@ import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.data.activities.dto.ActividadResponseDto;
 import com.proyecto.moveon.data.activities.dto.ActividadesPageDto;
+import com.proyecto.moveon.data.activities.dto.BorrarActividadResponseDto;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadRequestDto;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadResponseDto;
 import com.proyecto.moveon.data.activities.local.ActividadLocalDataSource;
@@ -33,7 +34,6 @@ import com.proyecto.moveon.domain.activity.ActividadItem;
 import com.proyecto.moveon.utils.StringUtils;
 import com.proyecto.moveon.workers.SyncActividadesWorker;
 
-import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -50,6 +50,7 @@ import java.util.concurrent.TimeUnit;
  * - guardarActividad(...) escribe primero en Room y luego encola sincronización.
  * - obtenerPerfil(...) mantiene el comportamiento actual por red para leer el peso.
  * - observeActividades()/refreshFromServer() permiten alimentar Stats desde local.
+ * - borrarActividad(...) elimina en remoto y luego en local si el servidor confirma.
  */
 public final class ActivityRepository {
 
@@ -92,6 +93,8 @@ public final class ActivityRepository {
         if (!StringUtils.hasText(username)) return null;
         return username.trim().toLowerCase(Locale.ROOT);
     }
+
+    // ── Guardar ───────────────────────────────────────────────────────────────
 
     /**
      * Mantiene la misma firma que ya usa TrackingViewModel,
@@ -150,6 +153,8 @@ public final class ActivityRepository {
         });
     }
 
+    // ── Perfil ────────────────────────────────────────────────────────────────
+
     /**
      * Mantiene el contrato actual para leer el peso desde TrackingViewModel.
      * Aquí se deja por red directa para no bloquear el hilo principal con consultas Room síncronas.
@@ -164,6 +169,8 @@ public final class ActivityRepository {
                 callback::onResult
         );
     }
+
+    // ── Observar / Refresh ────────────────────────────────────────────────────
 
     public LiveData<List<ActividadItem>> observeActividades(@NonNull String accountKey) {
         return Transformations.map(local.observeVisible(accountKey), list -> {
@@ -193,6 +200,63 @@ public final class ActivityRepository {
             });
         });
     }
+
+    // ── Borrar ────────────────────────────────────────────────────────────────
+
+    /**
+     * Elimina una actividad en el servidor y, si confirma, la borra en local.
+     * Solo permite borrar actividades ya sincronizadas (remoteId != null, syncState == SYNCED).
+     * Las actividades PENDING_CREATE no se pueden borrar desde Stats — deben sincronizarse primero.
+     *
+     * @param localId  identificador local de la actividad en Room
+     * @param callback resultado con {@link BorrarActividadResponseDto} o error
+     */
+    public void borrarActividad(
+            @NonNull String localId,
+            @NonNull Callback<BorrarActividadResponseDto> callback) {
+
+        io.execute(() -> {
+            ActividadEntity entity = local.getByLocalId(localId);
+
+            if (entity == null) {
+                callback.onResult(ApiResult.failure(
+                        ApiError.local("Actividad no encontrada")));
+                return;
+            }
+
+            if (entity.remoteId == null || !"SYNCED".equals(entity.syncState)) {
+                callback.onResult(ApiResult.failure(
+                        ApiError.typed(ApiErrorType.VALIDATION,
+                                "Actividad pendiente de sincronizar")));
+                return;
+            }
+
+            int remoteId = entity.remoteId;
+
+            remote.deleteActividad(remoteId, result -> {
+                if (!result.isSuccess()) {
+                    callback.onResult(ApiResult.failure(
+                            result.error != null
+                                    ? result.error
+                                    : ApiError.local("Error al eliminar la actividad")));
+                    return;
+                }
+
+                // El servidor confirmó el borrado — eliminamos en local
+                io.execute(() -> {
+                    local.deleteByLocalId(localId);
+
+                    BorrarActividadResponseDto dto = new BorrarActividadResponseDto();
+                    dto.estatus = "success";
+                    dto.mensaje = result.data;
+                    dto.nuevoTotalPuntos = 0; // El endpoint delete devuelve mensaje, no puntos directamente
+                    callback.onResult(ApiResult.success(dto));
+                });
+            });
+        });
+    }
+
+    // ── Sincronización ────────────────────────────────────────────────────────
 
     @NonNull
     public SyncResult syncPendingNow(@NonNull String accountKey) {
@@ -267,6 +331,8 @@ public final class ActivityRepository {
         apiClient.cancelAll();
         io.shutdownNow();
     }
+
+    // ── Privados ──────────────────────────────────────────────────────────────
 
     private void mergeRemoteSnapshot(@NonNull String accountKey,
                                      @NonNull List<ActividadResponseDto> remoteItems) {
@@ -364,6 +430,8 @@ public final class ActivityRepository {
                 || type == ApiErrorType.SERVER
                 || type == ApiErrorType.CANCELED;
     }
+
+    // ── Inner classes ─────────────────────────────────────────────────────────
 
     public static final class SyncResult {
         public final boolean retry;
