@@ -50,12 +50,12 @@
     <!-- Tracking — grosor de la polilínea de ruta en el mapa -->
     <dimen name="tracking_polyline_width">8dp</dimen>
 
-    <!-- Stats - Historial items -->
+    <!-- Stats — items del historial -->
     <dimen name="stats_item_icon_size">40dp</dimen>
     <dimen name="stats_item_padding_vertical">12dp</dimen>
     <dimen name="stats_item_padding_horizontal">16dp</dimen>
 
-    <!-- Stats - Gráfico semanal -->
+    <!-- Stats — gráfico semanal -->
     <dimen name="stats_chart_height">160dp</dimen>
     <dimen name="stats_chart_bar_width">32dp</dimen>
     <dimen name="stats_chart_bar_radius">6dp</dimen>

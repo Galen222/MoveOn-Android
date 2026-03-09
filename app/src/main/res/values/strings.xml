@@ -109,24 +109,24 @@
     <!-- no se esta usando -->
     <string name="stats_desc_compare_icon">Icono comparación</string>
 
-    <!-- Stats - Carga y estados -->
+    <!-- Stats - Estado vacío y carga -->
     <string name="stats_loading">Cargando estadísticas…</string>
-    <string name="stats_empty_title">Sin actividades</string>
-    <string name="stats_empty_subtitle">Completa tu primera actividad para ver tus estadísticas</string>
+    <string name="stats_empty_title">Sin actividades aún</string>
+    <string name="stats_empty_subtitle">Registra tu primera actividad para ver tus estadísticas aquí</string>
     <string name="stats_btn_retry">Reintentar</string>
 
     <!-- Stats - Historial -->
-    <string name="stats_section_history">Historial</string>
+    <string name="stats_section_history">Historial de actividades</string>
 
     <!-- Stats - Borrar actividad -->
     <string name="stats_delete_title">Eliminar actividad</string>
-    <string name="stats_delete_message">¿Eliminar esta actividad? Esta acción no se puede deshacer.</string>
+    <string name="stats_delete_message">¿Seguro que quieres eliminar esta actividad? Esta acción no se puede deshacer.</string>
     <string name="stats_delete_confirm">Eliminar</string>
-    <string name="stats_delete_ok">Actividad eliminada</string>
+    <string name="stats_delete_ok">Actividad eliminada correctamente</string>
     <string name="stats_delete_error">No se pudo eliminar la actividad</string>
-    <string name="stats_delete_no_sync">No se puede eliminar: actividad pendiente de sincronizar</string>
+    <string name="stats_delete_no_sync">Esta actividad aún no se ha sincronizado y no puede eliminarse</string>
 
-    <!-- Stats - Formatos -->
+    <!-- Stats - Formatos de métricas -->
     <string name="stats_format_km">%1$.2f km</string>
     <string name="stats_format_kcal">%1$d kcal</string>
     <string name="stats_format_streak">%1$d días</string>
@@ -134,11 +134,12 @@
     <string name="stats_format_time_m">%1$dm</string>
     <string name="stats_weekly_goal_format">%1$.1f / %2$.1f km</string>
     <string name="stats_weekly_goal_done">¡Objetivo semanal completado!</string>
+    <string name="stats_goal_remaining_format">Faltan %1$s</string>
 
-    <!-- Stats - ContentDescriptions -->
-    <string name="stats_desc_activity_icon">Tipo de actividad</string>
+    <!-- Stats - Accesibilidad -->
+    <string name="stats_desc_activity_icon">Icono tipo de actividad</string>
     <string name="stats_desc_delete">Eliminar actividad</string>
-    <string name="stats_pending_badge">Pendiente de sync</string>
+    <string name="stats_pending_badge">Pendiente de sincronizar</string>
 
     <!-- Perfil — cabecera -->
     <string name="profile_default_username">Usuario</string>
@@ -318,6 +319,5 @@
     <string name="tracking_calories_format">%1$d kcal</string>
     <string name="tracking_distance_m_format">%1$d m</string>
     <string name="tracking_distance_km_format">%1$.2f km</string>
-
 
 </resources>

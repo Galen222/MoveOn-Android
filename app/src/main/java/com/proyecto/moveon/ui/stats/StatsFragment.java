@@ -10,10 +10,11 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.proyecto.moveon.R;
 import com.proyecto.moveon.databinding.FragmentStatsBinding;
+import com.proyecto.moveon.domain.activity.StatsCalculator;
 import com.proyecto.moveon.domain.activity.StatsResumen;
 
-import java.util.Locale;
 
 public class StatsFragment extends Fragment {
 
@@ -26,7 +27,7 @@ public class StatsFragment extends Fragment {
         binding = FragmentStatsBinding.inflate(inflater, container, false);
         viewModel = new ViewModelProvider(this).get(StatsViewModel.class);
 
-        bindSummary(StatsResumen.empty(StatsViewModel.DEFAULT_WEEKLY_GOAL_METERS));
+        bindSummary(StatsResumen.empty(StatsCalculator.DEFAULT_WEEKLY_GOAL_METERS));
         observeViewModel();
         viewModel.load();
 
@@ -45,7 +46,7 @@ public class StatsFragment extends Fragment {
             if (state.data != null) {
                 bindSummary(state.data);
             } else if (state.error != null) {
-                bindSummary(StatsResumen.empty(StatsViewModel.DEFAULT_WEEKLY_GOAL_METERS));
+                bindSummary(StatsResumen.empty(StatsCalculator.DEFAULT_WEEKLY_GOAL_METERS));
             }
         });
     }
@@ -67,9 +68,10 @@ public class StatsFragment extends Fragment {
 
         long remaining = Math.max(0L, summary.weeklyGoalMeters - summary.weeklyDistanceMeters);
         if (remaining > 0) {
-            binding.tvGoalRemaining.setText("Faltan " + formatDistance(remaining));
+            binding.tvGoalRemaining.setText(getString(R.string.stats_goal_remaining_format,
+                    formatDistance(remaining)));
         } else {
-            binding.tvGoalRemaining.setText("Objetivo semanal completado");
+            binding.tvGoalRemaining.setText(R.string.stats_weekly_goal_done);
         }
 
         binding.tvTodayDistance.setText(formatDistance(summary.todayDistanceMeters));
@@ -82,7 +84,7 @@ public class StatsFragment extends Fragment {
 
     @NonNull
     private String formatDistance(long meters) {
-        return String.format(Locale.getDefault(), "%.1f km", meters / 1000.0d);
+        return getString(R.string.stats_format_km, meters / 1000.0f);
     }
 
     @NonNull
@@ -91,13 +93,13 @@ public class StatsFragment extends Fragment {
         long minutes = (seconds % 3600L) / 60L;
 
         if (hours > 0L) {
-            return String.format(Locale.getDefault(), "%dh %02dm", hours, minutes);
+            return getString(R.string.stats_format_time_hm, hours, minutes);
         }
-        return String.format(Locale.getDefault(), "%dm", minutes);
+        return getString(R.string.stats_format_time_m, minutes);
     }
 
     @NonNull
     private String formatStreak(int streakDays) {
-        return streakDays == 1 ? "1 día" : streakDays + " días";
+        return getString(R.string.stats_format_streak, streakDays);
     }
 }
