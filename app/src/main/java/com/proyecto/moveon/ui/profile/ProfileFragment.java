@@ -20,13 +20,14 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.signature.ObjectKey;
 import com.google.android.material.datepicker.CalendarConstraints;
 import com.google.android.material.datepicker.DateValidatorPointBackward;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.theme.ThemeManager;
-import com.proyecto.moveon.data.profile.dto.UpdateProfileRequestDto;
+import com.proyecto.moveon.data.profile.sync.ProfilePatchPayload;
 import com.proyecto.moveon.databinding.DialogEditFieldBinding;
 import com.proyecto.moveon.databinding.DialogEditNumberBinding;
 import com.proyecto.moveon.databinding.DialogEditProvinciaBinding;
@@ -48,10 +49,9 @@ public class ProfileFragment extends Fragment {
     private FragmentProfileBinding binding;
     private ProfileViewModel        viewModel;
 
-    // Estado actual del perfil cargado, para pre-rellenar diálogos
     @Nullable private PerfilUsuario perfilActual;
+    @Nullable private String transientPhotoPreviewPath;
 
-    // Lanzador de galería — abre el explorador de archivos del sistema
     private final ActivityResultLauncher<Intent> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) return;
@@ -64,6 +64,7 @@ public class ProfileFragment extends Fragment {
                             getString(R.string.profile_error_photo_read), Toast.LENGTH_SHORT).show();
                     return;
                 }
+                showTransientPhotoPreview(file);
                 viewModel.uploadPhoto(file);
             });
 
@@ -96,8 +97,6 @@ public class ProfileFragment extends Fragment {
         binding = null;
     }
 
-    // Datos locales (antes de que cargue el servidor)
-
     private void bindLocalData() {
         String username = viewModel.getUsername();
         if (!StringUtils.hasText(username)) {
@@ -106,8 +105,6 @@ public class ProfileFragment extends Fragment {
         binding.tvUserName.setText(username);
         binding.switchNotifications.setChecked(viewModel.areNotificationsEnabled());
     }
-
-    // ── Bind datos de perfil ──────────────────────────────────────────────────
 
     private void bindPerfilData(@NonNull PerfilUsuario perfil) {
         if (binding == null) return;
@@ -139,27 +136,62 @@ public class ProfileFragment extends Fragment {
                         ? getString(R.string.profile_peso_formato, perfil.peso)
                         : notIndicated);
 
-        // Switch perfil público — sin disparar listener
         binding.switchPublicProfile.setOnCheckedChangeListener(null);
         binding.switchPublicProfile.setChecked(perfil.perfilVisible);
         binding.switchPublicProfile.setOnCheckedChangeListener((btn, isChecked) -> {
             if (!btn.isPressed()) return;
-            UpdateProfileRequestDto dto = new UpdateProfileRequestDto.Builder()
+            viewModel.updatePerfil(new ProfilePatchPayload()
                     .perfilVisible(isChecked)
-                    .build();
-            viewModel.updatePerfil(dto);
+                    .toJson());
         });
 
-        // Foto de perfil con Glide
-        if (StringUtils.hasText(perfil.fotoPerfil)) {
-            Glide.with(this)
-                    .load(perfil.fotoPerfil)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .placeholder(R.drawable.default_profile)
-                    .error(R.drawable.default_profile)
-                    .circleCrop()
-                    .into(binding.ivProfilePicture);
+        Object photoSource;
+        if (StringUtils.hasText(perfil.pendingLocalPhotoPath)
+                && new File(perfil.pendingLocalPhotoPath).exists()) {
+            transientPhotoPreviewPath = null;
+            photoSource = new File(perfil.pendingLocalPhotoPath);
+        } else if (StringUtils.hasText(transientPhotoPreviewPath)
+                && new File(transientPhotoPreviewPath).exists()) {
+            photoSource = new File(transientPhotoPreviewPath);
+        } else if (StringUtils.hasText(perfil.localPhotoPath)
+                && new File(perfil.localPhotoPath).exists()) {
+            transientPhotoPreviewPath = null;
+            photoSource = new File(perfil.localPhotoPath);
+        } else if (StringUtils.hasText(perfil.fotoPerfil)) {
+            transientPhotoPreviewPath = null;
+            photoSource = appendPhotoVersion(perfil.fotoPerfil, perfil.fotoVersion);
+        } else {
+            photoSource = R.drawable.default_profile;
         }
+
+        loadProfilePhoto(photoSource);
+    }
+
+    private void loadProfilePhoto(@NonNull Object photoSource) {
+        if (binding == null) return;
+
+        com.bumptech.glide.RequestBuilder<?> request = Glide.with(this)
+                .load(photoSource)
+                .placeholder(R.drawable.default_profile)
+                .error(R.drawable.default_profile)
+                .circleCrop();
+
+        if (photoSource instanceof File) {
+            File file = (File) photoSource;
+            request = request
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
+                    .signature(new ObjectKey(file.getAbsolutePath() + ":" + file.lastModified()));
+        } else {
+            request = request.diskCacheStrategy(DiskCacheStrategy.ALL);
+        }
+
+        request.into(binding.ivProfilePicture);
+    }
+
+    private void showTransientPhotoPreview(@NonNull File file) {
+        transientPhotoPreviewPath = file.getAbsolutePath();
+        loadProfilePhoto(file);
     }
 
     @NonNull
@@ -171,10 +203,13 @@ public class ProfileFragment extends Fragment {
         return fecha;
     }
 
-    // ── Listeners ─────────────────────────────────────────────────────────────
+    @NonNull
+    private String appendPhotoVersion(@NonNull String baseUrl, int version) {
+        String separator = baseUrl.contains("?") ? "&" : "?";
+        return baseUrl + separator + "v=" + version;
+    }
 
     private void setupListeners() {
-        // Tema
         binding.toggleThemeMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
             String newMode;
@@ -189,20 +224,17 @@ public class ProfileFragment extends Fragment {
             requireActivity().recreate();
         });
 
-        // Comunidad (próximamente)
         binding.itemRanking.setOnClickListener(v ->
                 Toast.makeText(requireContext(), R.string.common_proximamente, Toast.LENGTH_SHORT).show());
         binding.itemShareRoutes.setOnClickListener(v ->
                 Toast.makeText(requireContext(), R.string.common_proximamente, Toast.LENGTH_SHORT).show());
 
-        // Notificaciones
         binding.switchNotifications.setOnCheckedChangeListener((btn, isChecked) -> {
             if (btn.isPressed()) {
                 viewModel.setNotificationsEnabled(isChecked);
             }
         });
 
-        // Foto de perfil
         binding.fabChangePhoto.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.setType("image/*");
@@ -210,32 +242,36 @@ public class ProfileFragment extends Fragment {
             pickImageLauncher.launch(intent);
         });
 
-        // Logout
         binding.btnLogout.setOnClickListener(v -> viewModel.logout());
 
-        // Edición de campos personales
         binding.itemFullName.setOnClickListener(v -> showEditTextDialog(
                 getString(R.string.profile_label_fullname),
                 perfilActual != null ? perfilActual.nombreReal : null,
                 android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS,
-                value -> viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
-                        .nombreReal(value.isEmpty() ? null : value)
-                        .build())
+                false,
+                value -> {
+                    viewModel.updatePerfil(new ProfilePatchPayload()
+                            .nombreReal(value.isEmpty() ? null : value)
+                            .toJson());
+                    return true;
+                }
         ));
 
         binding.itemEmail.setOnClickListener(v -> showEditTextDialog(
                 getString(R.string.profile_label_email),
                 perfilActual != null ? perfilActual.email : null,
                 android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,
-                value -> viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
-                        .email(value.isEmpty() ? null : value)
-                        .build())
+                true,
+                value -> {
+                    viewModel.updatePerfil(new ProfilePatchPayload()
+                            .email(value)
+                            .toJson());
+                    return true;
+                }
         ));
 
         binding.itemBirthdate.setOnClickListener(v -> showBirthdatePicker());
-
         binding.itemProvincia.setOnClickListener(v -> showEditProvinciaDialog());
-
         binding.itemGenero.setOnClickListener(v -> showGeneroDialog());
 
         binding.itemAltura.setOnClickListener(v -> showEditNumberDialog(
@@ -243,15 +279,20 @@ public class ProfileFragment extends Fragment {
                 perfilActual != null && perfilActual.altura != null
                         ? String.valueOf(perfilActual.altura) : null,
                 true,
+                true,
                 value -> {
+                    if (value.isEmpty()) {
+                        viewModel.updatePerfil(new ProfilePatchPayload().altura(null).toJson());
+                        return true;
+                    }
                     try {
                         int altura = Integer.parseInt(value);
-                        viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
-                                .altura(altura)
-                                .build());
+                        viewModel.updatePerfil(new ProfilePatchPayload().altura(altura).toJson());
+                        return true;
                     } catch (NumberFormatException e) {
                         Toast.makeText(requireContext(),
                                 R.string.dialog_error_invalid_number, Toast.LENGTH_SHORT).show();
+                        return false;
                     }
                 }
         ));
@@ -261,25 +302,29 @@ public class ProfileFragment extends Fragment {
                 perfilActual != null && perfilActual.peso != null
                         ? String.valueOf(perfilActual.peso) : null,
                 false,
+                true,
                 value -> {
+                    if (value.isEmpty()) {
+                        viewModel.updatePerfil(new ProfilePatchPayload().peso(null).toJson());
+                        return true;
+                    }
                     try {
                         double peso = Double.parseDouble(value);
-                        viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
-                                .peso(peso)
-                                .build());
+                        viewModel.updatePerfil(new ProfilePatchPayload().peso(peso).toJson());
+                        return true;
                     } catch (NumberFormatException e) {
                         Toast.makeText(requireContext(),
                                 R.string.dialog_error_invalid_number, Toast.LENGTH_SHORT).show();
+                        return false;
                     }
                 }
         ));
     }
 
-    // ── Diálogos de edición ───────────────────────────────────────────────────
-
     private void showEditTextDialog(@NonNull String label,
                                     @Nullable String currentValue,
                                     int inputType,
+                                    boolean required,
                                     @NonNull OnValueSavedListener listener) {
         DialogEditFieldBinding dialogBinding =
                 DialogEditFieldBinding.inflate(LayoutInflater.from(requireContext()));
@@ -302,8 +347,14 @@ public class ProfileFragment extends Fragment {
             String value = dialogBinding.etField.getText() != null
                     ? dialogBinding.etField.getText().toString().trim() : "";
             dialogBinding.tilField.setError(null);
-            listener.onSaved(value);
-            dialog.dismiss();
+
+            if (required && value.isEmpty()) {
+                dialogBinding.tilField.setError(getString(R.string.dialog_error_required));
+                return;
+            }
+
+            boolean close = listener.onSaved(value);
+            if (close) dialog.dismiss();
         }));
 
         dialog.show();
@@ -312,6 +363,7 @@ public class ProfileFragment extends Fragment {
     private void showEditNumberDialog(@NonNull String label,
                                       @Nullable String currentValue,
                                       boolean isInteger,
+                                      boolean allowEmpty,
                                       @NonNull OnValueSavedListener listener) {
         DialogEditNumberBinding dialogBinding =
                 DialogEditNumberBinding.inflate(LayoutInflater.from(requireContext()));
@@ -335,20 +387,19 @@ public class ProfileFragment extends Fragment {
         dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String value = dialogBinding.etNumber.getText() != null
                     ? dialogBinding.etNumber.getText().toString().trim() : "";
-            if (value.isEmpty()) {
+            if (!allowEmpty && value.isEmpty()) {
                 dialogBinding.tilNumber.setError(getString(R.string.dialog_error_required));
                 return;
             }
             dialogBinding.tilNumber.setError(null);
-            listener.onSaved(value);
-            dialog.dismiss();
+            boolean close = listener.onSaved(value);
+            if (close) dialog.dismiss();
         }));
 
         dialog.show();
     }
 
     private void showBirthdatePicker() {
-        // Límite máximo: hoy menos 18 años (el usuario debe ser mayor de edad)
         Calendar maxDate = Calendar.getInstance();
         maxDate.add(Calendar.YEAR, -18);
 
@@ -357,7 +408,6 @@ public class ProfileFragment extends Fragment {
                 .setValidator(DateValidatorPointBackward.before(maxDate.getTimeInMillis()))
                 .build();
 
-        // Selección inicial: fecha actual del perfil o el límite máximo si no hay
         long initialSelection;
         if (perfilActual != null && StringUtils.hasText(perfilActual.fechaNacimiento)) {
             try {
@@ -385,7 +435,6 @@ public class ProfileFragment extends Fragment {
             Calendar selected = Calendar.getInstance();
             selected.setTimeInMillis(selection);
 
-            // Doble check +18 en cliente
             Calendar minRequired = Calendar.getInstance();
             minRequired.add(Calendar.YEAR, -18);
             if (selected.after(minRequired)) {
@@ -399,9 +448,9 @@ public class ProfileFragment extends Fragment {
                     selected.get(Calendar.MONTH) + 1,
                     selected.get(Calendar.DAY_OF_MONTH));
 
-            viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
+            viewModel.updatePerfil(new ProfilePatchPayload()
                     .fechaNacimiento(fecha)
-                    .build());
+                    .toJson());
         });
 
         picker.show(getParentFragmentManager(), "birthdate_picker");
@@ -421,7 +470,6 @@ public class ProfileFragment extends Fragment {
             dialogBinding.actvProvincia.setText(perfilActual.provincia, false);
         }
 
-        // Mostrar dropdown al ganar foco o al hacer clic
         dialogBinding.actvProvincia.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) dialogBinding.actvProvincia.showDropDown();
         });
@@ -435,7 +483,6 @@ public class ProfileFragment extends Fragment {
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
                 .create();
 
-        // Forzar dropdown al mostrarse el diálogo
         dialog.setOnShowListener(d -> {
             dialogBinding.actvProvincia.post(() -> {
                 dialogBinding.actvProvincia.requestFocus();
@@ -450,12 +497,11 @@ public class ProfileFragment extends Fragment {
                     return;
                 }
                 dialogBinding.tilProvincia.setError(null);
-                // "No indicar" → enviar null para limpiar el campo en el servidor
                 String provinciaValue = getString(R.string.profile_provincia_no_indicar).equals(value)
                         ? null : value;
-                viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
+                viewModel.updatePerfil(new ProfilePatchPayload()
                         .provincia(provinciaValue)
-                        .build());
+                        .toJson());
                 dialog.dismiss();
             });
         });
@@ -468,14 +514,12 @@ public class ProfileFragment extends Fragment {
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.profile_label_genero)
                 .setItems(opciones, (d, which) ->
-                        viewModel.updatePerfil(new UpdateProfileRequestDto.Builder()
+                        viewModel.updatePerfil(new ProfilePatchPayload()
                                 .genero(opciones[which])
-                                .build()))
+                                .toJson()))
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
                 .show();
     }
-
-    // ── Observadores ─────────────────────────────────────────────────────────
 
     private void observeViewModel() {
         viewModel.getPerfilState().observe(getViewLifecycleOwner(), state -> {
@@ -493,10 +537,16 @@ public class ProfileFragment extends Fragment {
             if (state == null || binding == null) return;
             showOverlay(state.loading);
             if (state.data != null) {
-                Toast.makeText(requireContext(),
-                        R.string.profile_update_ok, Toast.LENGTH_SHORT).show();
+                String updateStatus = state.data;
+                if ("SYNCED".equals(updateStatus)) {
+                    Toast.makeText(requireContext(),
+                            R.string.profile_update_ok, Toast.LENGTH_SHORT).show();
+                } else if ("QUEUED".equals(updateStatus)) {
+                    Toast.makeText(requireContext(),
+                            "Cambio guardado localmente. Se sincronizará cuando vuelva la conexión.",
+                            Toast.LENGTH_SHORT).show();
+                }
                 viewModel.resetUpdateState();
-                viewModel.loadPerfil();
             } else if (state.error != null) {
                 Toast.makeText(requireContext(),
                         state.error.getMessage(), Toast.LENGTH_SHORT).show();
@@ -508,11 +558,21 @@ public class ProfileFragment extends Fragment {
             if (state == null || binding == null) return;
             showOverlay(state.loading);
             if (state.data != null) {
-                Toast.makeText(requireContext(),
-                        R.string.profile_photo_ok, Toast.LENGTH_SHORT).show();
+                if ("SYNCED".equals(state.data)) {
+                    transientPhotoPreviewPath = null;
+                    Toast.makeText(requireContext(),
+                            R.string.profile_photo_ok, Toast.LENGTH_SHORT).show();
+                } else if ("QUEUED".equals(state.data)) {
+                    Toast.makeText(requireContext(),
+                            "Foto guardada localmente. Se subirá cuando vuelva la conexión.",
+                            Toast.LENGTH_SHORT).show();
+                }
                 viewModel.resetPhotoState();
-                viewModel.loadPerfil();
             } else if (state.error != null) {
+                transientPhotoPreviewPath = null;
+                if (perfilActual != null) {
+                    bindPerfilData(perfilActual);
+                }
                 Toast.makeText(requireContext(),
                         state.error.getMessage(), Toast.LENGTH_SHORT).show();
                 viewModel.resetPhotoState();
@@ -534,8 +594,6 @@ public class ProfileFragment extends Fragment {
             goToLogin();
         });
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void showOverlay(boolean show) {
         if (binding == null) return;
@@ -579,9 +637,7 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    // ── Interfaz callback ─────────────────────────────────────────────────────
-
     private interface OnValueSavedListener {
-        void onSaved(@NonNull String value);
+        boolean onSaved(@NonNull String value);
     }
 }

@@ -112,14 +112,19 @@ dependencies {
     implementation(libs.lifecycle.livedata)
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.converter.gson)
-    implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation(libs.glide)
+
+    // Persistencia local / sincronización offline-first
+    implementation(libs.room.runtime)
+    annotationProcessor(libs.room.compiler)
+    implementation(libs.work.runtime)
 
     // Google Maps SDK for Android
-    implementation("com.google.android.gms:play-services-maps:19.0.0")
+    implementation(libs.play.services.maps)
     // FusedLocationProviderClient
-    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation(libs.play.services.location)
     // Maps Android SDK Utility Library (PolyUtil.encode para encoded polyline)
-    implementation("com.google.maps.android:android-maps-utils:3.8.2")
+    implementation(libs.android.maps.utils)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

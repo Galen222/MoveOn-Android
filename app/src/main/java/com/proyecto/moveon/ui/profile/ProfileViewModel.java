@@ -5,149 +5,141 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.proyecto.moveon.core.api.ApiError;
-import com.proyecto.moveon.data.profile.dto.ProfileInfoDto;
-import com.proyecto.moveon.data.profile.dto.UpdateProfileRequestDto;
-import com.proyecto.moveon.data.remote.AuthenticatedApiClient;
+import com.proyecto.moveon.data.profile.PerfilRepository;
 import com.proyecto.moveon.data.session.AuthRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
 import com.proyecto.moveon.ui.common.UiState;
+import com.proyecto.moveon.utils.OfflineSessionCleaner;
 import com.proyecto.moveon.utils.StringUtils;
 
 import java.io.File;
 
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.RequestBody;
-
 public class ProfileViewModel extends AndroidViewModel {
 
-    private static final String PREFS_NAME        = "user_prefs";
+    private static final String LEGACY_PREFS_NAME = "user_prefs";
     private static final String KEY_NOTIFICATIONS = "notifications_enabled";
-    private static final String ENDPOINT_PROFILE  = "perfil/informacion";
-    private static final String ENDPOINT_UPDATE   = "perfil/actualizar";
-    private static final String ENDPOINT_PHOTO    = "perfil/foto";
 
-    private final AuthRepository         authRepository;
-    private final SecureSessionManager   sessionManager;
-    private final AuthenticatedApiClient apiClient;
-    private final SharedPreferences      prefs;
-    private final Gson                   gson = new Gson();
+    private final AuthRepository authRepository;
+    private final SecureSessionManager sessionManager;
+    private final PerfilRepository perfilRepository;
 
-    private final MutableLiveData<UiState<PerfilUsuario>> perfilState  = new MutableLiveData<>();
-    private final MutableLiveData<UiState<String>>        updateState  = new MutableLiveData<>();
-    private final MutableLiveData<UiState<String>>        photoState   = new MutableLiveData<>();
-    private final MutableLiveData<UiState<String>>        logoutState  = new MutableLiveData<>();
+    private final MediatorLiveData<UiState<PerfilUsuario>> perfilState = new MediatorLiveData<>();
+    private final MutableLiveData<UiState<String>> updateState = new MutableLiveData<>();
+    private final MutableLiveData<UiState<String>> photoState  = new MutableLiveData<>();
+    private final MutableLiveData<UiState<String>> logoutState = new MutableLiveData<>();
+
+    @Nullable private final String accountKey;
+    @Nullable private LiveData<PerfilUsuario> perfilSource;
 
     public ProfileViewModel(@NonNull Application application) {
         super(application);
         authRepository = new AuthRepository(application);
         sessionManager = new SecureSessionManager(application);
-        apiClient      = new AuthenticatedApiClient(application);
-        prefs          = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        perfilRepository = new PerfilRepository(application);
+        migrateLegacyNotificationsPreference(application);
+        accountKey = PerfilRepository.buildAccountKey(sessionManager.getUsername());
+
+        attachPerfilSource();
     }
 
-    // ── LiveData expuesto ─────────────────────────────────────────────────────
-
     public LiveData<UiState<PerfilUsuario>> getPerfilState() { return perfilState; }
-    public LiveData<UiState<String>>        getUpdateState() { return updateState; }
-    public LiveData<UiState<String>>        getPhotoState()  { return photoState; }
-    public LiveData<UiState<String>>        getLogoutState() { return logoutState; }
-
-    // ── Username local ────────────────────────────────────────────────────────
+    public LiveData<UiState<String>> getUpdateState() { return updateState; }
+    public LiveData<UiState<String>> getPhotoState()  { return photoState; }
+    public LiveData<UiState<String>> getLogoutState() { return logoutState; }
 
     public String getUsername() {
         String u = sessionManager.getUsername();
         return StringUtils.hasText(u) ? u : null;
     }
 
-    // ── Perfil ────────────────────────────────────────────────────────────────
-
     public void loadPerfil() {
-        perfilState.setValue(UiState.loading());
-        apiClient.get(ENDPOINT_PROFILE,
-                json -> mapToDomain(gson.fromJson(json, ProfileInfoDto.class)),
-                result -> {
-                    if (result.isSuccess()) {
-                        perfilState.postValue(UiState.success(result.data));
-                    } else {
-                        perfilState.postValue(UiState.error(
-                                result.error != null ? result.error : ApiError.local("Error")));
-                    }
-                });
+        if (accountKey == null) {
+            perfilState.setValue(UiState.error(ApiError.local("No hay sesión activa")));
+            return;
+        }
+
+        UiState<PerfilUsuario> current = perfilState.getValue();
+        if (current == null || current.data == null) {
+            perfilState.setValue(UiState.loading());
+        }
+
+        perfilRepository.refreshPerfil(accountKey, error -> {
+            UiState<PerfilUsuario> latest = perfilState.getValue();
+            if (error != null && (latest == null || latest.data == null)) {
+                perfilState.postValue(UiState.error(error));
+            }
+        });
     }
 
-    public void updatePerfil(@NonNull UpdateProfileRequestDto dto) {
+    public void updatePerfil(@NonNull JsonObject patchJson) {
+        if (accountKey == null) {
+            updateState.setValue(UiState.error(ApiError.local("No hay sesión activa")));
+            return;
+        }
+
+        if (patchJson.size() == 0) {
+            updateState.setValue(UiState.error(ApiError.local("No hay cambios para guardar")));
+            return;
+        }
+
         updateState.setValue(UiState.loading());
-        apiClient.patchJson(ENDPOINT_UPDATE, gson.toJsonTree(dto),
-                json -> {
-                    JsonObject obj = json.getAsJsonObject();
-                    return obj.has("mensaje") ? obj.get("mensaje").getAsString() : "OK";
-                },
-                result -> {
-                    if (result.isSuccess()) {
-                        updateState.postValue(UiState.success(
-                                result.data != null ? result.data : "OK"));
-                    } else {
-                        updateState.postValue(UiState.error(
-                                result.error != null ? result.error : ApiError.local("Error")));
-                    }
-                });
+        perfilRepository.applyLocalPatchAndEnqueue(accountKey, patchJson, result -> {
+            if (PerfilRepository.UpdateResult.STATUS_FAILED.equals(result.status)) {
+                updateState.postValue(UiState.error(
+                        result.error != null ? result.error : ApiError.local("Error")));
+            } else {
+                updateState.postValue(UiState.success(result.status));
+            }
+        });
     }
 
     public void uploadPhoto(@NonNull File file) {
+        if (accountKey == null) {
+            photoState.setValue(UiState.error(ApiError.local("No hay sesión activa")));
+            return;
+        }
+
         photoState.setValue(UiState.loading());
-        RequestBody requestBody = RequestBody.create(file, MediaType.parse("image/jpeg"));
-        MultipartBody.Part part = MultipartBody.Part.createFormData(
-                "archivo", file.getName(), requestBody);
-        apiClient.postMultipart(ENDPOINT_PHOTO, part,
-                json -> {
-                    JsonObject obj = json.getAsJsonObject();
-                    return obj.has("mensaje") ? obj.get("mensaje").getAsString() : "OK";
-                },
-                result -> {
-                    if (result.isSuccess()) {
-                        photoState.postValue(UiState.success(
-                                result.data != null ? result.data : "OK"));
-                    } else {
-                        photoState.postValue(UiState.error(
-                                result.error != null ? result.error : ApiError.local("Error")));
-                    }
-                });
+        perfilRepository.uploadPhotoLocalFirst(accountKey, file, result -> {
+            if (PerfilRepository.UpdateResult.STATUS_FAILED.equals(result.status)) {
+                photoState.postValue(UiState.error(
+                        result.error != null ? result.error : ApiError.local("Error subiendo la foto")));
+            } else {
+                photoState.postValue(UiState.success(result.status));
+            }
+        });
     }
 
     public void resetUpdateState() { updateState.setValue(null); }
     public void resetPhotoState()  { photoState.setValue(null); }
 
-    // ── Notificaciones (local) ────────────────────────────────────────────────
-
     public boolean areNotificationsEnabled() {
-        return prefs.getBoolean(KEY_NOTIFICATIONS, false);
+        return sessionManager.areNotificationsEnabled();
     }
 
     public void setNotificationsEnabled(boolean enabled) {
-        prefs.edit().putBoolean(KEY_NOTIFICATIONS, enabled).apply();
+        sessionManager.saveNotificationsEnabled(enabled);
     }
-
-    // ── Logout ────────────────────────────────────────────────────────────────
 
     public void logout() {
         String refreshToken = sessionManager.getRefreshToken();
         if (!StringUtils.hasText(refreshToken)) {
-            sessionManager.logout();
+            OfflineSessionCleaner.clearSessionAndLocalDataBlocking(getApplication());
             logoutState.setValue(UiState.success("Local"));
             return;
         }
         logoutState.setValue(UiState.loading());
         authRepository.logout(refreshToken, result -> {
-            sessionManager.logout();
+            OfflineSessionCleaner.clearSessionAndLocalDataBlocking(getApplication());
             if (result.isSuccess()) {
                 logoutState.postValue(UiState.success(
                         result.data != null ? result.data : "OK"));
@@ -158,29 +150,38 @@ public class ProfileViewModel extends AndroidViewModel {
         });
     }
 
-    // ── Mapper DTO → Dominio ──────────────────────────────────────────────────
+    private void attachPerfilSource() {
+        if (accountKey == null) return;
+        perfilSource = perfilRepository.observePerfil(accountKey);
+        perfilState.addSource(perfilSource, perfil -> {
+            if (perfil != null) {
+                perfilState.setValue(UiState.success(perfil));
+            }
+        });
+    }
 
-    @NonNull
-    private PerfilUsuario mapToDomain(@NonNull ProfileInfoDto dto) {
-        return new PerfilUsuario(
-                dto.nombreUsuario,
-                dto.email,
-                dto.fechaNacimiento,
-                dto.totalPuntos,
-                dto.nombreReal,
-                dto.genero,
-                dto.altura,
-                dto.peso,
-                dto.provincia,
-                dto.fotoPerfil,
-                dto.perfilVisible
-        );
+    private void migrateLegacyNotificationsPreference(@NonNull Context context) {
+        SharedPreferences legacyPrefs =
+                context.getApplicationContext().getSharedPreferences(LEGACY_PREFS_NAME, Context.MODE_PRIVATE);
+
+        if (!legacyPrefs.contains(KEY_NOTIFICATIONS)) return;
+        if (sessionManager.hasNotificationsPreference()) {
+            legacyPrefs.edit().remove(KEY_NOTIFICATIONS).apply();
+            return;
+        }
+
+        boolean enabled = legacyPrefs.getBoolean(KEY_NOTIFICATIONS, false);
+        sessionManager.saveNotificationsEnabled(enabled);
+        legacyPrefs.edit().remove(KEY_NOTIFICATIONS).apply();
     }
 
     @Override
     protected void onCleared() {
         authRepository.cancelAll();
-        apiClient.cancelAll();
+        if (perfilSource != null) {
+            perfilState.removeSource(perfilSource);
+        }
+        perfilRepository.cancelOngoing();
         super.onCleared();
     }
 }

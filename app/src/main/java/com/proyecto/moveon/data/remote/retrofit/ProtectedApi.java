@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Multipart;
 import retrofit2.http.PATCH;
@@ -22,6 +23,9 @@ public interface ProtectedApi {
 
     @PATCH
     Call<JsonElement> patch(@Url String url, @Body JsonElement body);
+
+    @DELETE
+    Call<JsonElement> delete(@Url String url);
 
     @Multipart
     @POST

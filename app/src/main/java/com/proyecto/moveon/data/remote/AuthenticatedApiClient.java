@@ -33,16 +33,12 @@ public final class AuthenticatedApiClient extends BaseRepository {
         this.appContext = context.getApplicationContext();
     }
 
-    // SEGURIDAD PRO: Bloquea cualquier esquema absoluto al inicio
     private boolean isInvalidUrl(String url) {
         if (url == null || url.trim().isEmpty()) return true;
         String clean = url.trim().toLowerCase();
-
-        // Regex: Empieza por letra, seguido de letras/números/+/-/. , y luego"://"
         return clean.matches("^[a-z][a-z0-9+.-]*://.*") || clean.startsWith("//");
     }
 
-    // Además, añadimos .trim() a la sanitización para evitar espacios accidentales
     private String sanitizeUrl(String url) {
         if (url == null) return "";
         String clean = url.trim();
@@ -76,6 +72,14 @@ public final class AuthenticatedApiClient extends BaseRepository {
         enqueueCall(RetrofitProvider.protectedApi(appContext).patch(sanitizeUrl(url), body), mapper, callback);
     }
 
+    public <T> void delete(String url, Mapper<JsonElement, T> mapper, Callback<T> callback) {
+        if (isInvalidUrl(url)) {
+            callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida))));
+            return;
+        }
+        enqueueCall(RetrofitProvider.protectedApi(appContext).delete(sanitizeUrl(url)), mapper, callback);
+    }
+
     public <T> void postMultipart(String url, MultipartBody.Part file, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
             callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida))));
@@ -93,7 +97,6 @@ public final class AuthenticatedApiClient extends BaseRepository {
             public void onResponse(@NonNull Call<JsonElement> c, @NonNull Response<JsonElement> response) {
                 untrackCall(call);
 
-                // OkHttp ya maneja el 401 y el reintento por detrás.
                 if (!response.isSuccessful()) {
                     callback.onResult(ApiResult.failure(ApiErrorParser.fromHttp(appContext, response)));
                     return;
@@ -111,8 +114,7 @@ public final class AuthenticatedApiClient extends BaseRepository {
             @Override
             public void onFailure(@NonNull Call<JsonElement> c, @NonNull Throwable t) {
                 untrackCall(call);
-                if (call.isCanceled()) return; // Early return limpio
-
+                if (call.isCanceled()) return;
                 callback.onResult(ApiResult.failure(ApiErrorParser.fromThrowable(appContext, t, false)));
             }
         });

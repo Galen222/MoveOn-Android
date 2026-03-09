@@ -1,6 +1,7 @@
 package com.proyecto.moveon.data.profile.dto;
 
 import androidx.annotation.Keep;
+
 import com.google.gson.annotations.SerializedName;
 
 @Keep
@@ -15,6 +16,7 @@ public final class ProfileInfoDto {
     @SerializedName("peso")             public Double  peso;
     @SerializedName("provincia")        public String  provincia;
     @SerializedName("foto_perfil")      public String  fotoPerfil;
+    @SerializedName("foto_version")     public int     fotoVersion;
     @SerializedName("perfil_visible")   public boolean perfilVisible;
     @SerializedName("total_puntos")     public int     totalPuntos;
 }

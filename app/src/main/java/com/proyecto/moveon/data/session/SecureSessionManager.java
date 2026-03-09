@@ -6,12 +6,14 @@ import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
+
 import androidx.annotation.Nullable;
 
 import com.proyecto.moveon.utils.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
+
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -31,6 +33,8 @@ public class SecureSessionManager {
     private static final String KEY_USERNAME_IV = "username_iv";
     private static final String KEY_REMEMBERED_ID_CT = "remembered_id_ct";
     private static final String KEY_REMEMBERED_ID_IV = "remembered_id_iv";
+    private static final String KEY_NOTIFICATIONS_CT = "notifications_enabled_ct";
+    private static final String KEY_NOTIFICATIONS_IV = "notifications_enabled_iv";
 
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int GCM_TAG_LENGTH_BITS = 128;
@@ -49,7 +53,6 @@ public class SecureSessionManager {
     public void saveLogin(String username, String accessToken, String refreshToken) {
         try {
             SharedPreferences.Editor editor = prefs.edit();
-            // StringUtils.textOf maneja el null safety que antes hacías manualmente
             putEncrypted(editor, KEY_USERNAME_CT, KEY_USERNAME_IV, StringUtils.textOf(username));
             putEncrypted(editor, KEY_ACCESS_TOKEN_CT, KEY_ACCESS_TOKEN_IV, StringUtils.textOf(accessToken));
             putEncrypted(editor, KEY_REFRESH_TOKEN_CT, KEY_REFRESH_TOKEN_IV, StringUtils.textOf(refreshToken));
@@ -65,14 +68,8 @@ public class SecureSessionManager {
     }
 
     public boolean isLoggedIn() {
-        // Preferimos refresh (sesión real). Mantenemos compatibilidad con token viejo.
         return StringUtils.hasText(getRefreshToken()) || StringUtils.hasText(getAccessToken());
     }
-
-    /** No se usa
-     * public boolean hasRefreshSession() {
-        return StringUtils.hasText(getRefreshToken());
-    }*/
 
     @Nullable
     public String getAccessToken() {
@@ -94,6 +91,7 @@ public class SecureSessionManager {
                 .remove(KEY_USERNAME_CT).remove(KEY_USERNAME_IV)
                 .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
                 .remove(KEY_REFRESH_TOKEN_CT).remove(KEY_REFRESH_TOKEN_IV)
+                .remove(KEY_NOTIFICATIONS_CT).remove(KEY_NOTIFICATIONS_IV)
                 .apply();
     }
 
@@ -103,10 +101,8 @@ public class SecureSessionManager {
 
             String safeIdentifier = StringUtils.textOf(identifier);
             if (safeIdentifier.isEmpty()) {
-                // Si desmarca la casilla, borramos el rastro
                 editor.remove(KEY_REMEMBERED_ID_CT).remove(KEY_REMEMBERED_ID_IV);
             } else {
-                // Si la marca, lo guardamos cifrado
                 putEncrypted(editor, KEY_REMEMBERED_ID_CT, KEY_REMEMBERED_ID_IV, safeIdentifier);
             }
 
@@ -119,6 +115,25 @@ public class SecureSessionManager {
     @Nullable
     public String getRememberedIdentifier() {
         return getDecryptedValue(KEY_REMEMBERED_ID_CT, KEY_REMEMBERED_ID_IV);
+    }
+
+    public void saveNotificationsEnabled(boolean enabled) {
+        try {
+            SharedPreferences.Editor editor = prefs.edit();
+            putEncrypted(editor, KEY_NOTIFICATIONS_CT, KEY_NOTIFICATIONS_IV, Boolean.toString(enabled));
+            editor.apply();
+        } catch (Exception e) {
+            throw new RuntimeException("Error guardando preferencia de notificaciones", e);
+        }
+    }
+
+    public boolean areNotificationsEnabled() {
+        String value = getDecryptedValue(KEY_NOTIFICATIONS_CT, KEY_NOTIFICATIONS_IV);
+        return Boolean.parseBoolean(StringUtils.textOf(value));
+    }
+
+    public boolean hasNotificationsPreference() {
+        return prefs.contains(KEY_NOTIFICATIONS_CT) && prefs.contains(KEY_NOTIFICATIONS_IV);
     }
 
     private void putEncrypted(SharedPreferences.Editor editor, String ctKey, String ivKey, String plainText) throws Exception {
@@ -135,7 +150,6 @@ public class SecureSessionManager {
         try {
             return decrypt(ctBase64, ivBase64);
         } catch (Exception e) {
-            // AUTOCURACIÓN: Si la clave está corrupta, borramos la basura para mantener la consistencia
             prefs.edit().remove(ctKey).remove(ivKey).apply();
             return null;
         }
@@ -187,6 +201,7 @@ public class SecureSessionManager {
     private static class EncryptedValue {
         final String cipherTextBase64;
         final String ivBase64;
+
         EncryptedValue(String cipherTextBase64, String ivBase64) {
             this.cipherTextBase64 = cipherTextBase64;
             this.ivBase64 = ivBase64;
