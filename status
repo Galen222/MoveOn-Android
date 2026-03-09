@@ -1,0 +1,29 @@
+[33mfbe26c2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m servicio y viewmodel — TrackingService y TrackingViewModel 1- TrackingService.java — Es el motor del tracking. Corre en segundo plano como servicio del sistema (foreground service) y es el único que toca hardware: -Pide ubicación GPS cada 3 segundos via FusedLocationProvider -Lee el acelerómetro y decide si el usuario camina o corre -Lleva el cronómetro interno (tick cada segundo) -Acumula la distancia y calcula las calorías -Publica todo como LiveData para que el ViewModel lo recoja
+[33m1d0a4a3[m capa de datos — DTOs y ActivityRepository
+[33me6fdbd8[m Pequeños arreglos y nuevo build.grale.kts. manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey añadir en local.properties -> MAPS_API_KEY=tu_key
+[33m4b71a32[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m implementar edición completa de perfil de usuario Nuevos archivos:
+[33m05a34e6[m Implementado Gidle : librería de Android para cargar, mostrar y manejar imágenes de forma eficiente.
+[33m29ad164[m Añadir aceptación de EULA y restricción de edad +18
+[33mf5f8e7e[m implementar flujo de recuperación de contraseña en dos pasos
+[33mc34291c[m Ahora el tiempo de expiración del token de x-app-session es configurable en local.pripierties.
+[33mef55ba6[m - Capa de Red y Datos (Core):   * Integración de Retrofit y OkHttp con clientes diferenciados (Público, Protegido y Handshake).   * Creación de interfaces API (MoveOnApi, ProtectedApi, HandshakeApi) y AuthenticatedApiClient.   * Implementación de DTOs para Request/Response (Login, Register, Refresh, Session).   * Creación de Mappers para aislar la capa de red de los modelos de dominio (LoginSession, RegisterInput).   * Implementación de BaseRepository para tracking y cancelación segura de llamadas en vuelo.
+[33ma97b7f6[m Creadas dos utilidades y refactorizadas todas las clases para usarlas eliminando código repetido. Ahora el fragmento que no está visible se queda en started y no en resumed reduciendo consumo.
+[33ma9f076e[m Centralizado SecureSessionManager en MainActivity y LoginActivity ViewModels y así evitar crasheos de red.
+[33m977083f[m Añadida cancelación de carga de rutas en la API para evitar crasheos si se navega a otra pantalla durante la petición.
+[33m79f8102[m Al cerrar sesión aparece Saliendo... y no restaura el estado del botón lo cual hace que visualmente no se vea Cerrar sesión durante 1 segundo antes de volver al login.
+[33m0a0f43d[m ProfileFragment ahora usa ProfileViewModel para las peticiones, uiState para los estados. Strings extraídas en los 3 fragmentos.
+[33m469ca4e[m Arreglado que cuando se cierra sesión no se destruye la preferencia de recordar cuenta para que aparezca en el login.
+[33ma661c21[m Ahora mainActivity también usa ViewBinding
+[33m94a4785[m Ahora el usuario o correo que se recuerda para el login se maneja desde SecureSessionManager estando cifrado como el resto de preferencias que se guardan.
+[33m97db1c1[m Refactor auth: ViewBinding, validaciones, accesibilidad, strings y recordar cuenta
+[33m73c8313[m Arreglada doble carga de tx.commit() antes de cargar fragmentos. Ahora se usa ViewBinding en vez de findViewById en los fragmentos.
+[33mf21f746[m Ahora MainActivity no recrea fragments si no que los preserva y se refrescan desde el ViewModel.
+[33m4175498[m Implementadas librerías Retrofit y OKHttp para el manejo de endpoints. Limpieza de código antiguo. Añadidos callbacks a ViewModel para manejar estados fuera de las vistas.
+[33m414e01c[m Cambiado SessionManager a SecureSessionManager y ahora se encriptan los datos persistentes. Agregado código de persistencia de sesión y refresco de sesión frente a login. Configurado backup de aplicación para no incluir datos sensibles. Añadido helper para persistencia de sesión y helper para login+registro+logout. Añadido icono e imagen de splash screen.
+[33m40b4750[m Quitado permitir tráfico HTTP, ahora solo se permite tráfico HTTPS, salvo el tráfico HTTP al emulador y al PC local.
+[33m378a71c[m Cambiado APP_ID_SECRET por APP_ID ya que solo es un verificador y no un secreto de seguridad.
+[33md9c33a2[m Update README.md
+[33m51dc3db[m Arreglado modo claro/oscuro y añadido auto. Temas actualizados a Material 3. Quitada actividad de Splash Screen y añadida librería core-splashscreen para su manejo. Cambiado enrutador a MoveOnApp.java.
+[33m50e5fd1[m Update README.md
+[33m81a3a48[m Create README.md
+[33m832b1d2[m Commit Inicial:
