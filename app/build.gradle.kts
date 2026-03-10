@@ -101,31 +101,39 @@ android {
 }
 
 dependencies {
+    // UI y Componentes Base de Android
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.core.splashscreen)
+
+    // Arquitectura y Ciclo de Vida (Lifecycle)
+    implementation(libs.lifecycle.livedata)
+    implementation(libs.lifecycle.viewmodel)
+
+    // Red y Peticiones API (Retrofit)
     implementation(libs.retrofit)
     implementation(libs.okhttp)
     implementation(libs.logging.interceptor)
-    implementation(libs.lifecycle.livedata)
-    implementation(libs.lifecycle.viewmodel)
     implementation(libs.converter.gson)
+
+    // Carga y Procesamiento de Imágenes
     implementation(libs.glide)
 
-    // Persistencia local / sincronización offline-first
+    // Persistencia local / Sincronización offline-first y Trabajo en Background
     implementation(libs.room.runtime)
-    annotationProcessor(libs.room.compiler)
+    annotationProcessor(libs.room.compiler) // Nota: Si usas Kotlin, considera cambiar a ksp(libs.room.compiler)
     implementation(libs.work.runtime)
 
-    // Google Maps SDK for Android
+    // Google Maps SDK y Localización
     implementation(libs.play.services.maps)
     // FusedLocationProviderClient
     implementation(libs.play.services.location)
     // Maps Android SDK Utility Library (PolyUtil.encode para encoded polyline)
     implementation(libs.android.maps.utils)
 
+    // Pruebas (Testing Unitario y de Interfaz)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

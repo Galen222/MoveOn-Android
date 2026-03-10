@@ -19,7 +19,7 @@
     <string name="login_btn_registrar">Crear cuenta</string>
     <string name="login_olvidaste_password">¿Olvidaste tu contraseña?</string>
     <string name="login_divisor">O</string>
-    <string name="login_bienvenido">Bienvenido, %1$s</string>
+    <string name="login_bienvenido">Bienvenido %1$s</string>
 
     <!-- Login - Errores -->
     <string name="login_error_identificador_vacio">Introduce tu correo o usuario</string>

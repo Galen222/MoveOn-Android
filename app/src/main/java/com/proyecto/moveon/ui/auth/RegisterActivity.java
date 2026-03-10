@@ -139,7 +139,14 @@ public class RegisterActivity extends AppCompatActivity {
 
         viewModel.getLoginState().observe(this, state -> {
             if (state == null) return;
+
             if (state.data != null) {
+                Toast.makeText(
+                        this,
+                        getString(R.string.login_bienvenido, state.data.nombreUsuario),
+                        Toast.LENGTH_SHORT
+                ).show();
+
                 viewModel.resetLoginState();
                 NavigationUtils.goToActivityAndClearTask(this, MainActivity.class);
             }
