@@ -174,6 +174,11 @@
     <string name="profile_item_share_routes">Compartir rutas</string>
     <string name="profile_item_notifications">Notificaciones</string>
 
+    <!-- Perfil — Notificaciones -->
+    <string name="profile_notifications_blocked_system">Las notificaciones están bloqueadas en los ajustes del sistema</string>
+    <string name="profile_notifications_open_settings">Abrir ajustes</string>
+    <string name="profile_notifications_permission_denied">Permiso de notificaciones denegado</string>
+
     <!-- Perfil — ítems preferencias -->
     <string name="profile_item_public_profile">Perfil público</string>
     <string name="profile_item_theme">Tema</string>

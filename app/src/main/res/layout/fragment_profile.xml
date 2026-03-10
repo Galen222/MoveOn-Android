@@ -178,7 +178,10 @@
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/dividerColor" />
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/dividerColor" />
 
                     <!-- Email -->
                     <androidx.constraintlayout.widget.ConstraintLayout
@@ -230,7 +233,10 @@
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/dividerColor" />
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/dividerColor" />
 
                     <!-- Fecha de nacimiento -->
                     <androidx.constraintlayout.widget.ConstraintLayout
@@ -282,7 +288,10 @@
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/dividerColor" />
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/dividerColor" />
 
                     <!-- Provincia -->
                     <androidx.constraintlayout.widget.ConstraintLayout
@@ -334,7 +343,10 @@
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/dividerColor" />
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/dividerColor" />
 
                     <!-- Género -->
                     <androidx.constraintlayout.widget.ConstraintLayout
@@ -386,9 +398,12 @@
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/dividerColor" />
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/dividerColor" />
 
-                    <!-- Altura y Peso: dos columnas con ConstraintLayout para evitar nested weights -->
+                    <!-- Altura y Peso -->
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -509,7 +524,7 @@
                         android:letterSpacing="0.08"
                         android:layout_marginBottom="8dp" />
 
-                    <!-- item_ranking: touch target garantizado con minHeight -->
+                    <!-- item_ranking -->
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:id="@+id/item_ranking"
                         android:layout_width="match_parent"
@@ -544,9 +559,12 @@
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/dividerColor" />
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/dividerColor" />
 
-                    <!-- item_share_routes: touch target garantizado con minHeight -->
+                    <!-- item_share_routes -->
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:id="@+id/item_share_routes"
                         android:layout_width="match_parent"
@@ -641,7 +659,10 @@
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/dividerColor" />
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/dividerColor" />
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
@@ -650,6 +671,7 @@
                         android:paddingVertical="@dimen/profile_item_padding_vertical">
 
                         <TextView
+                            android:id="@+id/tv_notifications_label"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:text="@string/profile_item_notifications"
@@ -658,7 +680,7 @@
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toStartOf="@id/switch_notifications"
                             app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent" />
+                            app:layout_constraintBottom_toBottomOf="@id/switch_notifications" />
 
                         <com.google.android.material.switchmaterial.SwitchMaterial
                             android:id="@+id/switch_notifications"
@@ -667,12 +689,43 @@
                             app:thumbTint="@color/switch_thumb_color"
                             app:trackTint="@color/switch_track_color"
                             app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <TextView
+                            android:id="@+id/tv_notifications_blocked"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/profile_notifications_blocked_system"
+                            android:textColor="@color/textSecondary"
+                            android:textSize="13sp"
+                            android:visibility="gone"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/switch_notifications"
+                            app:layout_constraintTop_toBottomOf="@id/tv_notifications_label" />
+
+                        <TextView
+                            android:id="@+id/tv_notifications_open_settings"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/profile_notifications_open_settings"
+                            android:textColor="@color/greenPrimary"
+                            android:textSize="13sp"
+                            android:visibility="gone"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackgroundBorderless"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/tv_notifications_blocked"
                             app:layout_constraintBottom_toBottomOf="parent" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/dividerColor" />
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/dividerColor" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -744,7 +797,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- btn_logout: wrap_content + gravedad central para evitar "too wide" -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_logout"
                 style="@style/Widget.Material3.Button.OutlinedButton"

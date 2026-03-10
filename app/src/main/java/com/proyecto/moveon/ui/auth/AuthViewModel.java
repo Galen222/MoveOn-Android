@@ -144,7 +144,7 @@ public class AuthViewModel extends AndroidViewModel {
     // ── Recuperación de contraseña — Paso 2 ─────────────────────────────────
 
     /**
-     * Valida el código recibido por email y establece la nueva contraseña.
+     * Se valida el código recibido por email y establece la nueva contraseña.
      * Resultado publicado en {@link #resetState}.
      */
     public void resetearPassword(String email, String codigo, String nuevaPassword) {

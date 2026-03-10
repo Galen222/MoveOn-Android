@@ -1,9 +1,15 @@
 package com.proyecto.moveon.ui.profile;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +21,9 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -46,34 +55,67 @@ import java.util.Locale;
 
 public class ProfileFragment extends Fragment {
 
-    private FragmentProfileBinding binding;
-    private ProfileViewModel        viewModel;
+    private static final String PREFS_UI = "profile_ui_prefs";
+    private static final String KEY_NOTIFICATIONS_PERMISSION_REQUESTED =
+            "notifications_permission_requested";
 
-    @Nullable private PerfilUsuario perfilActual;
-    @Nullable private String transientPhotoPreviewPath;
+    private FragmentProfileBinding binding;
+    private ProfileViewModel viewModel;
+
+    @Nullable
+    private PerfilUsuario perfilActual;
+
+    @Nullable
+    private String transientPhotoPreviewPath;
 
     private final ActivityResultLauncher<Intent> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) return;
+
                 Uri uri = result.getData().getData();
                 if (uri == null) return;
 
                 File file = uriToFile(uri);
                 if (file == null) {
                     Toast.makeText(requireContext(),
-                            getString(R.string.profile_error_photo_read), Toast.LENGTH_SHORT).show();
+                            getString(R.string.profile_error_photo_read),
+                            Toast.LENGTH_SHORT).show();
                     return;
                 }
+
                 showTransientPhotoPreview(file);
                 viewModel.uploadPhoto(file);
             });
 
-    public ProfileFragment() {}
+    private final ActivityResultLauncher<String> notificationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (!isAdded() || binding == null) return;
+
+                if (isGranted) {
+                    viewModel.setNotificationsEnabled(true);
+                } else {
+                    viewModel.setNotificationsEnabled(false);
+                    Toast.makeText(requireContext(),
+                            R.string.profile_notifications_permission_denied,
+                            Toast.LENGTH_SHORT).show();
+                }
+
+                refreshNotificationsUi();
+            });
+
+    private final ActivityResultLauncher<Intent> notificationSettingsLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (!isAdded() || binding == null) return;
+                refreshNotificationsUi();
+            });
+
+    public ProfileFragment() {
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        binding   = FragmentProfileBinding.inflate(inflater, container, false);
+        binding = FragmentProfileBinding.inflate(inflater, container, false);
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
 
         bindLocalData();
@@ -89,6 +131,7 @@ public class ProfileFragment extends Fragment {
     public void onResume() {
         super.onResume();
         syncThemeToggleWithSavedMode();
+        refreshNotificationsUi();
     }
 
     @Override
@@ -103,7 +146,7 @@ public class ProfileFragment extends Fragment {
             username = getString(R.string.profile_default_username);
         }
         binding.tvUserName.setText(username);
-        binding.switchNotifications.setChecked(viewModel.areNotificationsEnabled());
+        refreshNotificationsUi();
     }
 
     private void bindPerfilData(@NonNull PerfilUsuario perfil) {
@@ -122,7 +165,8 @@ public class ProfileFragment extends Fragment {
         binding.tvEmail.setText(perfil.email);
         binding.tvBirthdate.setText(
                 StringUtils.hasText(perfil.fechaNacimiento)
-                        ? formatFecha(perfil.fechaNacimiento) : notIndicated);
+                        ? formatFecha(perfil.fechaNacimiento)
+                        : notIndicated);
         binding.tvProvincia.setText(
                 StringUtils.hasText(perfil.provincia) ? perfil.provincia : notIndicated);
         binding.tvGenero.setText(
@@ -212,28 +256,36 @@ public class ProfileFragment extends Fragment {
     private void setupListeners() {
         binding.toggleThemeMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
+
             String newMode;
-            if      (checkedId == R.id.btn_theme_light)  newMode = ThemeManager.MODE_LIGHT;
-            else if (checkedId == R.id.btn_theme_dark)   newMode = ThemeManager.MODE_DARK;
-            else if (checkedId == R.id.btn_theme_system) newMode = ThemeManager.MODE_SYSTEM;
-            else return;
+            if (checkedId == R.id.btn_theme_light) {
+                newMode = ThemeManager.MODE_LIGHT;
+            } else if (checkedId == R.id.btn_theme_dark) {
+                newMode = ThemeManager.MODE_DARK;
+            } else if (checkedId == R.id.btn_theme_system) {
+                newMode = ThemeManager.MODE_SYSTEM;
+            } else {
+                return;
+            }
 
             String currentMode = ThemeManager.getSavedMode(requireContext());
             if (newMode.equals(currentMode)) return;
+
             ThemeManager.saveAndApply(requireContext(), newMode);
             requireActivity().recreate();
         });
 
         binding.itemRanking.setOnClickListener(v ->
-                Toast.makeText(requireContext(), R.string.common_proximamente, Toast.LENGTH_SHORT).show());
-        binding.itemShareRoutes.setOnClickListener(v ->
-                Toast.makeText(requireContext(), R.string.common_proximamente, Toast.LENGTH_SHORT).show());
+                Toast.makeText(requireContext(),
+                        R.string.common_proximamente,
+                        Toast.LENGTH_SHORT).show());
 
-        binding.switchNotifications.setOnCheckedChangeListener((btn, isChecked) -> {
-            if (btn.isPressed()) {
-                viewModel.setNotificationsEnabled(isChecked);
-            }
-        });
+        binding.itemShareRoutes.setOnClickListener(v ->
+                Toast.makeText(requireContext(),
+                        R.string.common_proximamente,
+                        Toast.LENGTH_SHORT).show());
+
+        binding.tvNotificationsOpenSettings.setOnClickListener(v -> openNotificationSettings());
 
         binding.fabChangePhoto.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -277,7 +329,8 @@ public class ProfileFragment extends Fragment {
         binding.itemAltura.setOnClickListener(v -> showEditNumberDialog(
                 getString(R.string.profile_label_altura),
                 perfilActual != null && perfilActual.altura != null
-                        ? String.valueOf(perfilActual.altura) : null,
+                        ? String.valueOf(perfilActual.altura)
+                        : null,
                 true,
                 true,
                 value -> {
@@ -291,7 +344,8 @@ public class ProfileFragment extends Fragment {
                         return true;
                     } catch (NumberFormatException e) {
                         Toast.makeText(requireContext(),
-                                R.string.dialog_error_invalid_number, Toast.LENGTH_SHORT).show();
+                                R.string.dialog_error_invalid_number,
+                                Toast.LENGTH_SHORT).show();
                         return false;
                     }
                 }
@@ -300,7 +354,8 @@ public class ProfileFragment extends Fragment {
         binding.itemPeso.setOnClickListener(v -> showEditNumberDialog(
                 getString(R.string.profile_label_peso),
                 perfilActual != null && perfilActual.peso != null
-                        ? String.valueOf(perfilActual.peso) : null,
+                        ? String.valueOf(perfilActual.peso)
+                        : null,
                 false,
                 true,
                 value -> {
@@ -314,11 +369,14 @@ public class ProfileFragment extends Fragment {
                         return true;
                     } catch (NumberFormatException e) {
                         Toast.makeText(requireContext(),
-                                R.string.dialog_error_invalid_number, Toast.LENGTH_SHORT).show();
+                                R.string.dialog_error_invalid_number,
+                                Toast.LENGTH_SHORT).show();
                         return false;
                     }
                 }
         ));
+
+        refreshNotificationsUi();
     }
 
     private void showEditTextDialog(@NonNull String label,
@@ -343,19 +401,21 @@ public class ProfileFragment extends Fragment {
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
                 .create();
 
-        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String value = dialogBinding.etField.getText() != null
-                    ? dialogBinding.etField.getText().toString().trim() : "";
-            dialogBinding.tilField.setError(null);
+        dialog.setOnShowListener(d ->
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                    String value = dialogBinding.etField.getText() != null
+                            ? dialogBinding.etField.getText().toString().trim()
+                            : "";
+                    dialogBinding.tilField.setError(null);
 
-            if (required && value.isEmpty()) {
-                dialogBinding.tilField.setError(getString(R.string.dialog_error_required));
-                return;
-            }
+                    if (required && value.isEmpty()) {
+                        dialogBinding.tilField.setError(getString(R.string.dialog_error_required));
+                        return;
+                    }
 
-            boolean close = listener.onSaved(value);
-            if (close) dialog.dismiss();
-        }));
+                    boolean close = listener.onSaved(value);
+                    if (close) dialog.dismiss();
+                }));
 
         dialog.show();
     }
@@ -375,7 +435,8 @@ public class ProfileFragment extends Fragment {
         }
         dialogBinding.etNumber.setInputType(isInteger
                 ? android.text.InputType.TYPE_CLASS_NUMBER
-                : android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+                : android.text.InputType.TYPE_CLASS_NUMBER
+                | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(label)
@@ -384,17 +445,19 @@ public class ProfileFragment extends Fragment {
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
                 .create();
 
-        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String value = dialogBinding.etNumber.getText() != null
-                    ? dialogBinding.etNumber.getText().toString().trim() : "";
-            if (!allowEmpty && value.isEmpty()) {
-                dialogBinding.tilNumber.setError(getString(R.string.dialog_error_required));
-                return;
-            }
-            dialogBinding.tilNumber.setError(null);
-            boolean close = listener.onSaved(value);
-            if (close) dialog.dismiss();
-        }));
+        dialog.setOnShowListener(d ->
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                    String value = dialogBinding.etNumber.getText() != null
+                            ? dialogBinding.etNumber.getText().toString().trim()
+                            : "";
+                    if (!allowEmpty && value.isEmpty()) {
+                        dialogBinding.tilNumber.setError(getString(R.string.dialog_error_required));
+                        return;
+                    }
+                    dialogBinding.tilNumber.setError(null);
+                    boolean close = listener.onSaved(value);
+                    if (close) dialog.dismiss();
+                }));
 
         dialog.show();
     }
@@ -439,7 +502,8 @@ public class ProfileFragment extends Fragment {
             minRequired.add(Calendar.YEAR, -18);
             if (selected.after(minRequired)) {
                 Toast.makeText(requireContext(),
-                        R.string.profile_error_birthdate_min_age, Toast.LENGTH_SHORT).show();
+                        R.string.profile_error_birthdate_min_age,
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -462,7 +526,10 @@ public class ProfileFragment extends Fragment {
 
         String[] provincias = getResources().getStringArray(R.array.provincias);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                requireContext(), android.R.layout.simple_dropdown_item_1line, provincias);
+                requireContext(),
+                android.R.layout.simple_dropdown_item_1line,
+                provincias
+        );
         dialogBinding.actvProvincia.setAdapter(adapter);
         dialogBinding.tilProvincia.setHint(getString(R.string.profile_label_provincia));
 
@@ -491,17 +558,23 @@ public class ProfileFragment extends Fragment {
 
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                 String value = dialogBinding.actvProvincia.getText() != null
-                        ? dialogBinding.actvProvincia.getText().toString().trim() : "";
+                        ? dialogBinding.actvProvincia.getText().toString().trim()
+                        : "";
+
                 if (value.isEmpty()) {
                     dialogBinding.tilProvincia.setError(getString(R.string.dialog_error_required));
                     return;
                 }
+
                 dialogBinding.tilProvincia.setError(null);
                 String provinciaValue = getString(R.string.profile_provincia_no_indicar).equals(value)
-                        ? null : value;
+                        ? null
+                        : value;
+
                 viewModel.updatePerfil(new ProfilePatchPayload()
                         .provincia(provinciaValue)
                         .toJson());
+
                 dialog.dismiss();
             });
         });
@@ -524,23 +597,29 @@ public class ProfileFragment extends Fragment {
     private void observeViewModel() {
         viewModel.getPerfilState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
+
             showOverlay(state.loading);
+
             if (state.data != null) {
                 bindPerfilData(state.data);
             } else if (state.error != null) {
                 Toast.makeText(requireContext(),
-                        state.error.getMessage(), Toast.LENGTH_SHORT).show();
+                        state.error.getMessage(),
+                        Toast.LENGTH_SHORT).show();
             }
         });
 
         viewModel.getUpdateState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
+
             showOverlay(state.loading);
+
             if (state.data != null) {
                 String updateStatus = state.data;
                 if ("SYNCED".equals(updateStatus)) {
                     Toast.makeText(requireContext(),
-                            R.string.profile_update_ok, Toast.LENGTH_SHORT).show();
+                            R.string.profile_update_ok,
+                            Toast.LENGTH_SHORT).show();
                 } else if ("QUEUED".equals(updateStatus)) {
                     Toast.makeText(requireContext(),
                             "Cambio guardado localmente. Se sincronizará cuando vuelva la conexión.",
@@ -549,19 +628,23 @@ public class ProfileFragment extends Fragment {
                 viewModel.resetUpdateState();
             } else if (state.error != null) {
                 Toast.makeText(requireContext(),
-                        state.error.getMessage(), Toast.LENGTH_SHORT).show();
+                        state.error.getMessage(),
+                        Toast.LENGTH_SHORT).show();
                 viewModel.resetUpdateState();
             }
         });
 
         viewModel.getPhotoState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
+
             showOverlay(state.loading);
+
             if (state.data != null) {
                 if ("SYNCED".equals(state.data)) {
                     transientPhotoPreviewPath = null;
                     Toast.makeText(requireContext(),
-                            R.string.profile_photo_ok, Toast.LENGTH_SHORT).show();
+                            R.string.profile_photo_ok,
+                            Toast.LENGTH_SHORT).show();
                 } else if ("QUEUED".equals(state.data)) {
                     Toast.makeText(requireContext(),
                             "Foto guardada localmente. Se subirá cuando vuelva la conexión.",
@@ -574,25 +657,168 @@ public class ProfileFragment extends Fragment {
                     bindPerfilData(perfilActual);
                 }
                 Toast.makeText(requireContext(),
-                        state.error.getMessage(), Toast.LENGTH_SHORT).show();
+                        state.error.getMessage(),
+                        Toast.LENGTH_SHORT).show();
                 viewModel.resetPhotoState();
             }
         });
 
         viewModel.getLogoutState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
+
             if (state.loading) {
                 binding.btnLogout.setEnabled(false);
                 binding.btnLogout.setText(getString(R.string.profile_btn_logging_out));
                 return;
             }
+
             if (state.error != null) {
                 Toast.makeText(requireContext(),
                         getString(R.string.profile_error_logout_server),
                         Toast.LENGTH_SHORT).show();
             }
+
             goToLogin();
         });
+    }
+
+    private boolean hasNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return true;
+        }
+        return ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private boolean areNotificationsEnabledAtSystemLevel() {
+        return NotificationManagerCompat.from(requireContext()).areNotificationsEnabled();
+    }
+
+    private boolean hasRequestedNotificationPermission() {
+        SharedPreferences prefs = requireContext()
+                .getSharedPreferences(PREFS_UI, Context.MODE_PRIVATE);
+        return prefs.getBoolean(KEY_NOTIFICATIONS_PERMISSION_REQUESTED, false);
+    }
+
+    private void markNotificationPermissionRequested() {
+        SharedPreferences prefs = requireContext()
+                .getSharedPreferences(PREFS_UI, Context.MODE_PRIVATE);
+        prefs.edit().putBoolean(KEY_NOTIFICATIONS_PERMISSION_REQUESTED, true).apply();
+    }
+
+    private boolean isNotificationPermissionRequestable() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return false;
+        }
+
+        return ActivityCompat.shouldShowRequestPermissionRationale(
+                requireActivity(),
+                Manifest.permission.POST_NOTIFICATIONS
+        );
+    }
+
+    /**
+     * Estado efectivo real: la app puede mostrar notificaciones AHORA.
+     */
+    private boolean areNotificationsActuallyEnabledForApp() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return areNotificationsEnabledAtSystemLevel();
+        }
+
+        return hasNotificationPermission() && areNotificationsEnabledAtSystemLevel();
+    }
+
+    /**
+     * "Bloqueadas" = la app ya no puede resolverlo sola y hace falta ir a Ajustes.
+     *
+     * API < 33:
+     * - si el sistema las desactiva, están bloqueadas
+     *
+     * API 33+:
+     * - si el permiso está concedido pero el sistema las tiene desactivadas, están bloqueadas
+     * - si nunca se pidió el permiso, NO están bloqueadas
+     * - si aún se puede volver a mostrar el prompt, NO están bloqueadas
+     * - solo están bloqueadas cuando ya no se puede resolver desde la app
+     */
+    private boolean isNotificationsBlockedBySystem() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return !areNotificationsEnabledAtSystemLevel();
+        }
+
+        if (hasNotificationPermission()) {
+            return !areNotificationsEnabledAtSystemLevel();
+        }
+
+        if (!hasRequestedNotificationPermission()) {
+            return false;
+        }
+
+        return !isNotificationPermissionRequestable();
+    }
+
+    private void refreshNotificationsUi() {
+        if (binding == null) return;
+
+        boolean preferredEnabled = viewModel.areNotificationsEnabled();
+        boolean actuallyEnabled = areNotificationsActuallyEnabledForApp();
+        boolean blockedBySystem = isNotificationsBlockedBySystem();
+
+        // El switch refleja el estado efectivo real, no solo la preferencia guardada.
+        boolean effectiveChecked = preferredEnabled && actuallyEnabled;
+
+        binding.switchNotifications.setOnCheckedChangeListener(null);
+        binding.switchNotifications.setEnabled(!blockedBySystem);
+        binding.switchNotifications.setChecked(effectiveChecked);
+
+        binding.switchNotifications.setOnCheckedChangeListener((btn, isChecked) -> {
+            if (!btn.isPressed()) return;
+
+            if (!isChecked) {
+                viewModel.setNotificationsEnabled(false);
+                refreshNotificationsUi();
+                return;
+            }
+
+            if (isNotificationsBlockedBySystem()) {
+                openNotificationSettings();
+                return;
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission()) {
+                markNotificationPermissionRequested();
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                return;
+            }
+
+            if (!areNotificationsEnabledAtSystemLevel()) {
+                openNotificationSettings();
+                return;
+            }
+
+            viewModel.setNotificationsEnabled(true);
+            refreshNotificationsUi();
+        });
+
+        int blockedVisibility = blockedBySystem ? View.VISIBLE : View.GONE;
+        binding.tvNotificationsBlocked.setVisibility(blockedVisibility);
+        binding.tvNotificationsOpenSettings.setVisibility(blockedVisibility);
+    }
+
+    private void openNotificationSettings() {
+        if (!isAdded()) return;
+
+        Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName());
+
+        try {
+            notificationSettingsLauncher.launch(intent);
+        } catch (Exception e) {
+            Intent fallbackIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    .setData(Uri.fromParts("package", requireContext().getPackageName(), null));
+            notificationSettingsLauncher.launch(fallbackIntent);
+        }
     }
 
     private void showOverlay(boolean show) {
@@ -602,11 +828,18 @@ public class ProfileFragment extends Fragment {
 
     private void syncThemeToggleWithSavedMode() {
         if (binding == null) return;
+
         String mode = ThemeManager.getSavedMode(requireContext());
         int checkedId;
-        if      (ThemeManager.MODE_LIGHT.equals(mode))  checkedId = R.id.btn_theme_light;
-        else if (ThemeManager.MODE_DARK.equals(mode))   checkedId = R.id.btn_theme_dark;
-        else                                            checkedId = R.id.btn_theme_system;
+
+        if (ThemeManager.MODE_LIGHT.equals(mode)) {
+            checkedId = R.id.btn_theme_light;
+        } else if (ThemeManager.MODE_DARK.equals(mode)) {
+            checkedId = R.id.btn_theme_dark;
+        } else {
+            checkedId = R.id.btn_theme_system;
+        }
+
         if (binding.toggleThemeMode.getCheckedButtonId() != checkedId) {
             binding.toggleThemeMode.check(checkedId);
         }
@@ -622,7 +855,9 @@ public class ProfileFragment extends Fragment {
         try {
             InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
             if (inputStream == null) return null;
+
             File tempFile = File.createTempFile("photo_", ".jpg", requireContext().getCacheDir());
+
             try (FileOutputStream out = new FileOutputStream(tempFile)) {
                 byte[] buffer = new byte[4096];
                 int read;
@@ -630,6 +865,7 @@ public class ProfileFragment extends Fragment {
                     out.write(buffer, 0, read);
                 }
             }
+
             inputStream.close();
             return tempFile;
         } catch (IOException e) {
