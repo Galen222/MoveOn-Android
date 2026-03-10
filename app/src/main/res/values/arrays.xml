@@ -62,4 +62,16 @@
         <item>Mujer</item>
         <item>Otro</item>
     </string-array>
+
+    <!-- Stats — días cortos de la semana para el gráfico (Lun–Dom) -->
+    <string-array name="stats_week_days_short">
+        <item>Lun</item>
+        <item>Mar</item>
+        <item>Mié</item>
+        <item>Jue</item>
+        <item>Vie</item>
+        <item>Sáb</item>
+        <item>Dom</item>
+    </string-array>
+
 </resources>
