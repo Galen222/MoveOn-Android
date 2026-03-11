@@ -19,8 +19,7 @@ public class SyncActividadesWorker extends Worker {
     @Override
     public Result doWork() {
         SecureSessionManager sessionManager = new SecureSessionManager(getApplicationContext());
-        String username = sessionManager.getUsername();
-        String accountKey = ActivityRepository.buildAccountKey(username);
+        String accountKey = sessionManager.getAccountKey();
 
         if (accountKey == null) {
             return Result.success();

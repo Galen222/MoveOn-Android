@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+    <!-- En main/release no se permite tráfico HTTP en claro para ningún host. -->
     <base-config cleartextTrafficPermitted="false" />
-
-    <!-- Permite HTTP solo al emulador local. En producción no aplica. -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">10.0.2.2</domain>
-    </domain-config>
-
 </network-security-config>

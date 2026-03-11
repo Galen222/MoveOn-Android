@@ -10,6 +10,16 @@ import com.proyecto.moveon.data.local.entity.PerfilPendingPatchEntity;
 
 import java.util.List;
 
+/**
+ * Cola local de operaciones PATCH pendientes del perfil.
+ * El PerfilRepository actual necesita gestionar:
+ * - inserción de operaciones
+ * - lectura de pendientes en orden FIFO
+ * - conteo de pendientes
+ * - update de intentos/errores
+ * - borrado por operationId
+ * - borrado completo por cuenta
+ */
 @Dao
 public interface PerfilPendingPatchDao {
 

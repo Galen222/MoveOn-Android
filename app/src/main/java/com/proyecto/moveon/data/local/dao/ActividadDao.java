@@ -10,6 +10,9 @@ import com.proyecto.moveon.data.local.entity.ActividadEntity;
 
 import java.util.List;
 
+/**
+ * DAO real de actividades para la entidad ActividadEntity actual.
+ */
 @Dao
 public interface ActividadDao {
 

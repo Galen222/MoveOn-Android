@@ -9,6 +9,15 @@ import androidx.room.Update;
 
 import com.proyecto.moveon.data.local.entity.PerfilCacheEntity;
 
+/**
+ * DAO real de caché de perfil.
+ * El PerfilRepository actual necesita:
+ * - observe(...)
+ * - getNow(...)
+ * - upsert(...)
+ * - update(...)
+ * - deleteByAccount(...)
+ */
 @Dao
 public interface PerfilCacheDao {
 

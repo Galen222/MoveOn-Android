@@ -47,8 +47,7 @@ val appSessionCacheTtlMs = localProp("APP_SESSION_CACHE_TTL_MS", "240000").trim(
 /**
  * Google Maps API Key.
  * Se lee desde local.properties como MAPS_API_KEY y se inyecta en el
- * AndroidManifest a través del buildConfigField/manifestPlaceholders.
- * NUNCA se hardcodea en el repositorio.
+ * AndroidManifest a través del manifestPlaceholders.
  */
 val mapsApiKey = localProp("MAPS_API_KEY", "")
 
@@ -70,18 +69,31 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Variables accesibles desde Java: BuildConfig.BASE_URL, etc.
-        buildConfigField("String", "BASE_URL",               "\"$moveonBaseUrl\"")
-        buildConfigField("String", "MOVEON_BACKEND",         "\"$moveonBackend\"")
-        buildConfigField("String", "APP_ID",                 "\"$appId\"")
-        buildConfigField("long",   "APP_SESSION_CACHE_TTL_MS", "${appSessionCacheTtlMs}L")
+        buildConfigField("String", "BASE_URL", "\"$moveonBaseUrl\"")
+        buildConfigField("String", "MOVEON_BACKEND", "\"$moveonBackend\"")
+        buildConfigField("String", "APP_ID", "\"$appId\"")
+        buildConfigField("long", "APP_SESSION_CACHE_TTL_MS", "${appSessionCacheTtlMs}L")
 
         // Inyecta MAPS_API_KEY en AndroidManifest.xml como ${MAPS_API_KEY}
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+
+        // Exporta el esquema de Room para poder auditar migraciones y escribir tests.
+        javaCompileOptions {
+            annotationProcessorOptions {
+                argument("room.schemaLocation", "$projectDir/schemas")
+            }
+        }
     }
 
     buildTypes {
-        release {
+        debug {
             isMinifyEnabled = false
+            isShrinkResources = false
+        }
+
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -97,6 +109,11 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    // Deja los esquemas accesibles para futuros tests de migración con Room.
+    sourceSets {
+        getByName("androidTest").assets.directories.add("$projectDir/schemas")
     }
 }
 
@@ -128,8 +145,11 @@ dependencies {
 
     // Google Maps SDK y Localización
     implementation(libs.play.services.maps)
+
     // FusedLocationProviderClient
+
     implementation(libs.play.services.location)
+
     // Maps Android SDK Utility Library (PolyUtil.encode para encoded polyline)
     implementation(libs.android.maps.utils)
 

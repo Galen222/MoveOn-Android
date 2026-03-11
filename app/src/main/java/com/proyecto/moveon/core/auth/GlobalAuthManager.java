@@ -3,12 +3,19 @@ package com.proyecto.moveon.core.auth;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.proyecto.moveon.ui.common.Event;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Singleton para gestionar la expiración de sesión a nivel global.
+ * Usa Event para evitar re-consumo tras rotaciones y AtomicBoolean para deduplicar ráfagas de 401.
  */
 public class GlobalAuthManager {
     private static GlobalAuthManager instance;
-    private final MutableLiveData<Boolean> sessionExpiredEvent = new MutableLiveData<>();
+
+    private final MutableLiveData<Event<String>> sessionExpiredEvent = new MutableLiveData<>();
+    private final AtomicBoolean dispatchInProgress = new AtomicBoolean(false);
 
     private GlobalAuthManager() {}
 
@@ -21,13 +28,16 @@ public class GlobalAuthManager {
 
     // Se llama desde el hilo de red (OkHttp) cuando el refresh falla
     public void notifySessionExpired() {
-        sessionExpiredEvent.postValue(true);
+        if (dispatchInProgress.compareAndSet(false, true)) {
+            sessionExpiredEvent.postValue(new Event<>("session_expired"));
+        }
     }
 
-    public LiveData<Boolean> getSessionExpiredEvent() {
+    public LiveData<Event<String>> getSessionExpiredEvent() {
         return sessionExpiredEvent;
     }
 
-    // Para limpiar el evento y que no se repita al girar la pantalla
-    public void resetEvent() { sessionExpiredEvent.postValue(false); }
+    public void acknowledgeSessionExpired() {
+        dispatchInProgress.set(false);
+    }
 }

@@ -13,10 +13,10 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.auth.GlobalAuthManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityMainBinding;
 import com.proyecto.moveon.ui.auth.LoginActivity;
-import com.proyecto.moveon.core.auth.GlobalAuthManager;
 import com.proyecto.moveon.ui.common.SessionUiHelper;
 import com.proyecto.moveon.ui.home.InicioFragment;
 import com.proyecto.moveon.ui.profile.ProfileFragment;
@@ -67,10 +67,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 2. NUEVO: Escuchador GLOBAL para cualquier petición fallida en cualquier momento
-        GlobalAuthManager.getInstance().getSessionExpiredEvent().observe(this, expired -> {
-            if (Boolean.TRUE.equals(expired)) {
-                GlobalAuthManager.getInstance().resetEvent(); // Limpiar bandera
+        // 2. Escuchador GLOBAL para cualquier petición fallida en cualquier momento.
+        GlobalAuthManager.getInstance().getSessionExpiredEvent().observe(this, ev -> {
+            if (ev == null) return;
+            String token = ev.getContentIfNotHandled();
+            if (token != null) {
+                GlobalAuthManager.getInstance().acknowledgeSessionExpired();
                 SessionUiHelper.handleSessionExpired(this, getString(R.string.auth_sesion_expirada));
             }
         });

@@ -46,7 +46,7 @@ public class ProfileViewModel extends AndroidViewModel {
         sessionManager = new SecureSessionManager(application);
         perfilRepository = new PerfilRepository(application);
         migrateLegacyNotificationsPreference(application);
-        accountKey = PerfilRepository.buildAccountKey(sessionManager.getUsername());
+        accountKey = sessionManager.getAccountKey();
 
         attachPerfilSource();
     }

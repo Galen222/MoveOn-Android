@@ -91,12 +91,9 @@ public final class AuthenticatedApiClient extends BaseRepository {
     private <T> void enqueueCall(Call<JsonElement> call,
                                  Mapper<JsonElement, T> mapper,
                                  Callback<T> callback) {
-        trackCall(call);
-        call.enqueue(new retrofit2.Callback<JsonElement>() {
+        enqueueTracked(call, new retrofit2.Callback<JsonElement>() {
             @Override
             public void onResponse(@NonNull Call<JsonElement> c, @NonNull Response<JsonElement> response) {
-                untrackCall(call);
-
                 if (!response.isSuccessful()) {
                     callback.onResult(ApiResult.failure(ApiErrorParser.fromHttp(appContext, response)));
                     return;
@@ -113,8 +110,7 @@ public final class AuthenticatedApiClient extends BaseRepository {
 
             @Override
             public void onFailure(@NonNull Call<JsonElement> c, @NonNull Throwable t) {
-                untrackCall(call);
-                if (call.isCanceled()) return;
+                if (c.isCanceled()) return;
                 callback.onResult(ApiResult.failure(ApiErrorParser.fromThrowable(appContext, t, false)));
             }
         });

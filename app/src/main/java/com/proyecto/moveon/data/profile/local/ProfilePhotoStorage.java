@@ -5,6 +5,10 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.proyecto.moveon.BuildConfig;
+import com.proyecto.moveon.data.session.SecureSessionManager;
+import com.proyecto.moveon.utils.StringUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -12,15 +16,32 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public final class ProfilePhotoStorage {
 
     private static final String ROOT_DIR = "profile_photos";
-    private static final OkHttpClient HTTP = new OkHttpClient();
+    private static final long MAX_DOWNLOAD_BYTES = 5L * 1024L * 1024L;
+    private static final String CLOUDINARY_ROOT_DOMAIN = "cloudinary.com";
+
+    /**
+     * Cliente dedicado para descargas de foto remota.
+     * Añade timeouts explícitos y evita redirects automáticos.
+     */
+    private static final OkHttpClient HTTP = new OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .callTimeout(45, TimeUnit.SECONDS)
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .build();
 
     private ProfilePhotoStorage() {}
 
@@ -75,23 +96,44 @@ public final class ProfilePhotoStorage {
                                              @NonNull String accountKey,
                                              @NonNull String remoteUrl,
                                              int version) throws IOException {
-        Request request = new Request.Builder().url(remoteUrl).get().build();
-        try (Response response = HTTP.newCall(request).execute()) {
-            if (!response.isSuccessful() || response.body() == null) {
+        HttpUrl backendBase = HttpUrl.parse(BuildConfig.BASE_URL);
+        HttpUrl parsedUrl = validateRemoteUrl(remoteUrl, backendBase);
+
+        Request.Builder requestBuilder = new Request.Builder()
+                .url(parsedUrl)
+                .get();
+
+        // Si la imagen se sirve desde el mismo backend, mandamos el bearer.
+        if (backendBase != null && isSameOrigin(parsedUrl, backendBase)) {
+            String accessToken = new SecureSessionManager(context).getAccessToken();
+            if (StringUtils.hasText(accessToken)) {
+                requestBuilder.header("Authorization", "Bearer " + accessToken);
+            }
+        }
+
+        try (Response response = HTTP.newCall(requestBuilder.build()).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("No se pudo descargar la foto remota: HTTP " + response.code());
+            }
+            ResponseBody body = response.body();
+            if (body == null) {
                 throw new IOException("No se pudo descargar la foto remota");
             }
 
-            String ext = safeExtension(remoteUrl);
+            long declaredLength = body.contentLength();
+            if (declaredLength > MAX_DOWNLOAD_BYTES) {
+                throw new IOException("La foto remota supera el tamaño máximo permitido");
+            }
+            String contentType = body.contentType() != null ? body.contentType().toString() : "";
+            if (!contentType.startsWith("image/")) {
+                throw new IOException("El contenido remoto no es una imagen válida");
+            }
+            String ext = extensionFromContentType(contentType, parsedUrl.encodedPath());
             File accountDir = getAccountDir(context, accountKey);
             File dst = new File(accountDir, String.format(Locale.ROOT, "avatar_v%d%s", version, ext));
-            try (InputStream in = response.body().byteStream();
+            try (InputStream in = body.byteStream();
                  OutputStream out = new FileOutputStream(dst, false)) {
-                byte[] buffer = new byte[8192];
-                int read;
-                while ((read = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, read);
-                }
-                out.flush();
+                copyWithLimit(in, out, MAX_DOWNLOAD_BYTES);
             }
             deleteOtherCurrentFiles(accountDir, dst.getName());
             return dst.getAbsolutePath();
@@ -163,13 +205,83 @@ public final class ProfilePhotoStorage {
         }
         try (InputStream in = new FileInputStream(src);
              OutputStream out = new FileOutputStream(dst, false)) {
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = in.read(buffer)) != -1) {
-                out.write(buffer, 0, read);
-            }
-            out.flush();
+            copyWithLimit(in, out, Long.MAX_VALUE);
         }
+    }
+
+    private static void copyWithLimit(@NonNull InputStream in,
+                                      @NonNull OutputStream out,
+                                      long maxBytes) throws IOException {
+        byte[] buffer = new byte[8192];
+        long total = 0;
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            total += read;
+            if (total > maxBytes) {
+                throw new IOException("La descarga supera el tamaño máximo permitido");
+            }
+            out.write(buffer, 0, read);
+        }
+        out.flush();
+    }
+    @NonNull
+    private static HttpUrl validateRemoteUrl(@NonNull String remoteUrl,
+                                             @Nullable HttpUrl backendBase) throws IOException {
+        HttpUrl url = HttpUrl.parse(remoteUrl);
+        if (url == null) {
+            throw new IOException("URL remota inválida");
+        }
+
+        String scheme = url.scheme();
+        if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) {
+            throw new IOException("Esquema de URL no permitido");
+        }
+
+        // En release solo HTTPS. En debug seguimos permitiendo HTTP para entorno local.
+        if (!BuildConfig.DEBUG && !"https".equalsIgnoreCase(scheme)) {
+            throw new IOException("En producción solo se permiten fotos remotas por HTTPS");
+        }
+
+        String host = url.host();
+        if (!StringUtils.hasText(host)) {
+            throw new IOException("URL remota sin host");
+        }
+
+        // Allowlist explícita:
+        // 1) el mismo backend si en algún entorno sirve imágenes autenticadas
+        // 2) Cloudinary, que es de donde viene la foto de perfil
+        if (!isAllowedRemoteHost(url, backendBase)) {
+            throw new IOException("Host remoto no permitido para fotos de perfil");
+        }
+
+        return url;
+    }
+
+    private static boolean isAllowedRemoteHost(@NonNull HttpUrl candidate,
+                                               @Nullable HttpUrl backendBase) {
+        if (backendBase != null && isSameOrigin(candidate, backendBase)) {
+            return true;
+        }
+
+        String host = candidate.host().toLowerCase(Locale.ROOT);
+        return host.equals(CLOUDINARY_ROOT_DOMAIN)
+                || host.endsWith("." + CLOUDINARY_ROOT_DOMAIN);
+    }
+
+    private static boolean isSameOrigin(@NonNull HttpUrl a, @NonNull HttpUrl b) {
+        return a.scheme().equalsIgnoreCase(b.scheme())
+                && a.host().equalsIgnoreCase(b.host())
+                && a.port() == b.port();
+    }
+
+    @NonNull
+    private static String extensionFromContentType(@NonNull String contentType, @Nullable String urlPath) {
+        String lower = contentType.toLowerCase(Locale.ROOT);
+        if (lower.contains("jpeg") || lower.contains("jpg")) return ".jpg";
+        if (lower.contains("png")) return ".png";
+        if (lower.contains("webp")) return ".webp";
+        if (lower.contains("gif")) return ".gif";
+        return safeExtension(urlPath);
     }
 
     @NonNull

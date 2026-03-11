@@ -13,12 +13,10 @@ import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
-import com.proyecto.moveon.app.MoveOnApp;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.data.activities.dto.ActividadResponseDto;
-import com.proyecto.moveon.data.activities.dto.ActividadesPageDto;
 import com.proyecto.moveon.data.activities.dto.BorrarActividadResponseDto;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadRequestDto;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadResponseDto;
@@ -38,7 +36,6 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -83,28 +80,30 @@ public final class ActivityRepository {
         this.appContext = context.getApplicationContext();
         this.sessionManager = new SecureSessionManager(appContext);
         this.apiClient = new AuthenticatedApiClient(appContext);
-        AppDatabase db = MoveOnApp.getInstance().getDb();
+        AppDatabase db = AppDatabase.getInstance(appContext);
         this.local = new ActividadLocalDataSource(db);
         this.remote = new ActividadRemoteDataSource(appContext);
     }
 
+    /**
+     * Devuelve la accountKey del usuario autenticado.
+     */
     @Nullable
-    public static String buildAccountKey(@Nullable String username) {
-        if (!StringUtils.hasText(username)) return null;
-        return username.trim().toLowerCase(Locale.ROOT);
+    public String getCurrentAccountKey() {
+        return sessionManager.getAccountKey();
     }
 
     // ── Guardar ───────────────────────────────────────────────────────────────
 
     /**
-     * Mantiene la misma firma que ya usa TrackingViewModel,
-     * pero ahora guarda primero en local y responde éxito inmediato si la validación es correcta.
+     * Mantiene la misma firma que usa TrackingViewModel,
+     * Guarda primero en local y responde éxito inmediato si la validación es correcta.
      */
     public void guardarActividad(
             @NonNull GuardarActividadRequestDto request,
             @NonNull Callback<GuardarActividadResponseDto> callback) {
 
-        String accountKey = buildAccountKey(sessionManager.getUsername());
+        String accountKey = sessionManager.getAccountKey();
         if (accountKey == null) {
             callback.onResult(ApiResult.failure(ApiError.local("No hay sesión activa")));
             return;

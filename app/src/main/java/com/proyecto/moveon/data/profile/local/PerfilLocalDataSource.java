@@ -10,6 +10,9 @@ import com.proyecto.moveon.data.local.entity.PerfilPendingPatchEntity;
 
 import java.util.List;
 
+/**
+ * Acceso local a perfil.
+ */
 public class PerfilLocalDataSource {
 
     private final PerfilCacheDao cacheDao;

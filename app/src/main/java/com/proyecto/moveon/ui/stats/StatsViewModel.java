@@ -69,7 +69,7 @@ public class StatsViewModel extends AndroidViewModel {
         super(application);
         actividadRepository = new ActivityRepository(application);
         SecureSessionManager sessionManager = new SecureSessionManager(application);
-        accountKey = ActivityRepository.buildAccountKey(sessionManager.getUsername());
+        accountKey = sessionManager.getAccountKey();
 
         attachSource();
     }

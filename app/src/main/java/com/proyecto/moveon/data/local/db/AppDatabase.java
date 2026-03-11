@@ -20,7 +20,7 @@ import com.proyecto.moveon.data.local.entity.PerfilPendingPatchEntity;
                 ActividadEntity.class
         },
         version = 4,
-        exportSchema = false
+        exportSchema = true
 )
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -39,7 +39,10 @@ public abstract class AppDatabase extends RoomDatabase {
                                     AppDatabase.class,
                                     "moveon_local.db"
                             )
-                            .fallbackToDestructiveMigration(true)
+                            // Importante: NO destruir datos offline silenciosamente.
+                            // .fallbackToDestructiveMigration(true)
+                            // Como no se está cambiando el esquema,
+                            // no hace falta tocar la versión ni añadir migraciones nuevas.
                             .build();
                 }
             }

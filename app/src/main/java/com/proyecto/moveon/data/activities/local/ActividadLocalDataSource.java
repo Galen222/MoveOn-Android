@@ -8,6 +8,9 @@ import com.proyecto.moveon.data.local.entity.ActividadEntity;
 
 import java.util.List;
 
+/**
+ * Acceso local a actividades.
+ */
 public class ActividadLocalDataSource {
 
     private final ActividadDao dao;

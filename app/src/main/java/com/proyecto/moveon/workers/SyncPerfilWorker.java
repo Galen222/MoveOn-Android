@@ -19,7 +19,7 @@ public class SyncPerfilWorker extends Worker {
     @Override
     public Result doWork() {
         SecureSessionManager sessionManager = new SecureSessionManager(getApplicationContext());
-        String accountKey = PerfilRepository.buildAccountKey(sessionManager.getUsername());
+        String accountKey = sessionManager.getAccountKey();
         if (accountKey == null) {
             return Result.success();
         }

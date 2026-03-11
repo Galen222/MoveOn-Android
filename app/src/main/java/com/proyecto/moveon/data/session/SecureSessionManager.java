@@ -7,9 +7,12 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.proyecto.moveon.utils.StringUtils;
+
+import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
@@ -31,6 +34,8 @@ public class SecureSessionManager {
     private static final String KEY_REFRESH_TOKEN_IV = "refresh_token_iv";
     private static final String KEY_USERNAME_CT = "username_ct";
     private static final String KEY_USERNAME_IV = "username_iv";
+    private static final String KEY_USER_ID_CT = "user_id_ct";
+    private static final String KEY_USER_ID_IV = "user_id_iv";
     private static final String KEY_REMEMBERED_ID_CT = "remembered_id_ct";
     private static final String KEY_REMEMBERED_ID_IV = "remembered_id_iv";
     private static final String KEY_NOTIFICATIONS_CT = "notifications_enabled_ct";
@@ -40,22 +45,33 @@ public class SecureSessionManager {
     private static final int GCM_TAG_LENGTH_BITS = 128;
 
     private final SharedPreferences prefs;
-    private final Context appContext;
 
     public SecureSessionManager(Context context) {
-        this.appContext = context.getApplicationContext();
+        Context appContext = context.getApplicationContext();
         this.prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             throw new IllegalStateException("SecureSessionManager requiere minSdk 23+ (Android 6.0)");
         }
     }
 
+    /**
+     * Guarda la sesión cifrada y deriva el userId inmutable desde el claim "sub"
+     * del access token.
+     */
     public void saveLogin(String username, String accessToken, String refreshToken) {
         try {
             SharedPreferences.Editor editor = prefs.edit();
             putEncrypted(editor, KEY_USERNAME_CT, KEY_USERNAME_IV, StringUtils.textOf(username));
             putEncrypted(editor, KEY_ACCESS_TOKEN_CT, KEY_ACCESS_TOKEN_IV, StringUtils.textOf(accessToken));
             putEncrypted(editor, KEY_REFRESH_TOKEN_CT, KEY_REFRESH_TOKEN_IV, StringUtils.textOf(refreshToken));
+
+            String userId = extractUserIdFromAccessToken(accessToken);
+            if (StringUtils.hasText(userId)) {
+                putEncrypted(editor, KEY_USER_ID_CT, KEY_USER_ID_IV, userId);
+            } else {
+                editor.remove(KEY_USER_ID_CT).remove(KEY_USER_ID_IV);
+            }
+
             editor.apply();
         } catch (Exception e) {
             throw new RuntimeException("Error guardando sesión segura", e);
@@ -67,8 +83,11 @@ public class SecureSessionManager {
         saveLogin(username, accessToken, refreshToken);
     }
 
+    /**
+     * La sesión solo es válida si existen ambos tokens.
+     */
     public boolean isLoggedIn() {
-        return StringUtils.hasText(getRefreshToken()) || StringUtils.hasText(getAccessToken());
+        return StringUtils.hasText(getAccessToken()) && StringUtils.hasText(getRefreshToken());
     }
 
     @Nullable
@@ -86,11 +105,44 @@ public class SecureSessionManager {
         return getDecryptedValue(KEY_USERNAME_CT, KEY_USERNAME_IV);
     }
 
+    /**
+     * Devuelve el userId estable. Si aún no estaba cacheado, lo recupera desde el JWT.
+     */
+    @Nullable
+    public String getUserId() {
+        String stored = getDecryptedValue(KEY_USER_ID_CT, KEY_USER_ID_IV);
+        if (StringUtils.hasText(stored)) {
+            return stored;
+        }
+
+        String parsed = extractUserIdFromAccessToken(getAccessToken());
+        if (StringUtils.hasText(parsed)) {
+            persistUserIdQuietly(parsed);
+            return parsed;
+        }
+        return null;
+    }
+
+    /**
+     * Clave estable para particionar caché/offline por usuario.
+     */
+    @Nullable
+    public String getAccountKey() {
+        return buildAccountKeyFromUserId(getUserId());
+    }
+
+    @Nullable
+    public static String buildAccountKeyFromUserId(@Nullable String userId) {
+        if (!StringUtils.hasText(userId)) return null;
+        return "uid_" + userId.trim();
+    }
+
     public void logout() {
         prefs.edit()
                 .remove(KEY_USERNAME_CT).remove(KEY_USERNAME_IV)
                 .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
                 .remove(KEY_REFRESH_TOKEN_CT).remove(KEY_REFRESH_TOKEN_IV)
+                .remove(KEY_USER_ID_CT).remove(KEY_USER_ID_IV)
                 .remove(KEY_NOTIFICATIONS_CT).remove(KEY_NOTIFICATIONS_IV)
                 .apply();
     }
@@ -134,6 +186,34 @@ public class SecureSessionManager {
 
     public boolean hasNotificationsPreference() {
         return prefs.contains(KEY_NOTIFICATIONS_CT) && prefs.contains(KEY_NOTIFICATIONS_IV);
+    }
+
+    private void persistUserIdQuietly(@NonNull String userId) {
+        try {
+            SharedPreferences.Editor editor = prefs.edit();
+            putEncrypted(editor, KEY_USER_ID_CT, KEY_USER_ID_IV, userId);
+            editor.apply();
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Nullable
+    private String extractUserIdFromAccessToken(@Nullable String accessToken) {
+        if (!StringUtils.hasText(accessToken)) return null;
+
+        try {
+            String[] parts = accessToken.split("\\.");
+            if (parts.length < 2) return null;
+
+            byte[] payloadBytes = Base64.decode(parts[1], Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
+            String payloadJson = new String(payloadBytes, StandardCharsets.UTF_8);
+            JSONObject payload = new JSONObject(payloadJson);
+
+            String sub = payload.optString("sub", null);
+            return StringUtils.hasText(sub) ? sub.trim() : null;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private void putEncrypted(SharedPreferences.Editor editor, String ctKey, String ivKey, String plainText) throws Exception {

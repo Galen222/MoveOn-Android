@@ -1,0 +1,302 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 4,
+    "identityHash": "63fe907d5b868e72e46e93de4c69402b",
+    "entities": [
+      {
+        "tableName": "perfil_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`accountKey` TEXT NOT NULL, `nombreUsuario` TEXT NOT NULL, `nombreReal` TEXT, `email` TEXT NOT NULL, `fechaNacimiento` TEXT NOT NULL, `genero` TEXT, `altura` INTEGER, `peso` REAL, `provincia` TEXT, `fotoPerfil` TEXT, `fotoVersion` INTEGER NOT NULL, `localPhotoPath` TEXT, `pendingLocalPhotoPath` TEXT, `photoSyncState` TEXT, `photoLastError` TEXT, `perfilVisible` INTEGER NOT NULL, `totalPuntos` INTEGER NOT NULL, `dirty` INTEGER NOT NULL, `lastFetchedAtMs` INTEGER NOT NULL, `lastSyncedAtMs` INTEGER NOT NULL, PRIMARY KEY(`accountKey`))",
+        "fields": [
+          {
+            "fieldPath": "accountKey",
+            "columnName": "accountKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombreUsuario",
+            "columnName": "nombreUsuario",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombreReal",
+            "columnName": "nombreReal",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaNacimiento",
+            "columnName": "fechaNacimiento",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "genero",
+            "columnName": "genero",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "altura",
+            "columnName": "altura",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "peso",
+            "columnName": "peso",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "provincia",
+            "columnName": "provincia",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fotoPerfil",
+            "columnName": "fotoPerfil",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fotoVersion",
+            "columnName": "fotoVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localPhotoPath",
+            "columnName": "localPhotoPath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "pendingLocalPhotoPath",
+            "columnName": "pendingLocalPhotoPath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "photoSyncState",
+            "columnName": "photoSyncState",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "photoLastError",
+            "columnName": "photoLastError",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "perfilVisible",
+            "columnName": "perfilVisible",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalPuntos",
+            "columnName": "totalPuntos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dirty",
+            "columnName": "dirty",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastFetchedAtMs",
+            "columnName": "lastFetchedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAtMs",
+            "columnName": "lastSyncedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "accountKey"
+          ]
+        }
+      },
+      {
+        "tableName": "perfil_pending_patch",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`operationId` TEXT NOT NULL, `accountKey` TEXT NOT NULL, `payloadJson` TEXT NOT NULL, `createdAtMs` INTEGER NOT NULL, `attempts` INTEGER NOT NULL, `lastError` TEXT, `state` TEXT NOT NULL, PRIMARY KEY(`operationId`))",
+        "fields": [
+          {
+            "fieldPath": "operationId",
+            "columnName": "operationId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accountKey",
+            "columnName": "accountKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadJson",
+            "columnName": "payloadJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtMs",
+            "columnName": "createdAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attempts",
+            "columnName": "attempts",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastError",
+            "columnName": "lastError",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "operationId"
+          ]
+        }
+      },
+      {
+        "tableName": "actividades_locales",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`localId` TEXT NOT NULL, `accountKey` TEXT NOT NULL, `remoteId` INTEGER, `tipo` TEXT NOT NULL, `distancia` INTEGER NOT NULL, `duracion` INTEGER NOT NULL, `calorias_quemadas` INTEGER NOT NULL, `ruta_polilinea` TEXT, `ruta_mapa_url` TEXT, `fecha_ruta` TEXT NOT NULL, `sync_state` TEXT NOT NULL, `last_error` TEXT, `created_at_ms` INTEGER NOT NULL, `updated_at_ms` INTEGER NOT NULL, PRIMARY KEY(`localId`))",
+        "fields": [
+          {
+            "fieldPath": "localId",
+            "columnName": "localId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accountKey",
+            "columnName": "accountKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remoteId",
+            "columnName": "remoteId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "distancia",
+            "columnName": "distancia",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "duracion",
+            "columnName": "duracion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "caloriasQuemadas",
+            "columnName": "calorias_quemadas",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rutaPolilinea",
+            "columnName": "ruta_polilinea",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "rutaMapaUrl",
+            "columnName": "ruta_mapa_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fechaRuta",
+            "columnName": "fecha_ruta",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncState",
+            "columnName": "sync_state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastError",
+            "columnName": "last_error",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAtMs",
+            "columnName": "created_at_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtMs",
+            "columnName": "updated_at_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "localId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "ix_actividad_account_fecha",
+            "unique": false,
+            "columnNames": [
+              "accountKey",
+              "fecha_ruta"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `ix_actividad_account_fecha` ON `${TABLE_NAME}` (`accountKey`, `fecha_ruta`)"
+          },
+          {
+            "name": "ix_actividad_account_remote",
+            "unique": true,
+            "columnNames": [
+              "accountKey",
+              "remoteId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `ix_actividad_account_remote` ON `${TABLE_NAME}` (`accountKey`, `remoteId`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '63fe907d5b868e72e46e93de4c69402b')"
+    ]
+  }
+}
