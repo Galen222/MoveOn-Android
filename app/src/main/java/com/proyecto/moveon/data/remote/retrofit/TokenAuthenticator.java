@@ -119,7 +119,10 @@ public class TokenAuthenticator implements Authenticator {
     }
 
     private void logout() {
-        sessionManager.logout();
+        // Corta el bucle de reintentos 401, pero NO destruye el refresh token.
+        // Así el logout explícito del usuario todavía puede intentar revocar
+        // la sesión en backend.
+        sessionManager.clearAccessTokenOnly();
         GlobalAuthManager.getInstance().notifySessionExpired();
     }
 

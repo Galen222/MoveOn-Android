@@ -147,6 +147,18 @@ public class SecureSessionManager {
                 .apply();
     }
 
+    /**
+     * Invalida solo el access token.
+     * Se usa cuando falla el refresh en background para cortar el ciclo de 401,
+     * pero conservando el refresh token para que el logout explícito del usuario
+     * todavía pueda intentar revocar en backend.
+     */
+    public void clearAccessTokenOnly() {
+        prefs.edit()
+                .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
+                .apply();
+    }
+
     public void saveRememberedIdentifier(@Nullable String identifier) {
         try {
             SharedPreferences.Editor editor = prefs.edit();

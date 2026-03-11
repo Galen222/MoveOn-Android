@@ -673,9 +673,14 @@ public class ProfileFragment extends Fragment {
             }
 
             if (state.error != null) {
+                // Solo si hubo error restauramos el botón
+                binding.btnLogout.setEnabled(true);
+                binding.btnLogout.setText(getString(R.string.profile_btn_logout));
+
                 Toast.makeText(requireContext(),
                         getString(R.string.profile_error_logout_server),
                         Toast.LENGTH_SHORT).show();
+                return;
             }
 
             goToLogin();

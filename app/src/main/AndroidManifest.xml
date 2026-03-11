@@ -37,6 +37,11 @@
         android:theme="@style/Theme.MoveOn"
         android:usesCleartextTraffic="false">
 
+        <!-- Requerido por Google Maps SDK en API 28+ para resolver org.apache.http -->
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
+
         <!-- Google Maps API Key — inyectada desde local.properties via build.gradle.kts -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"

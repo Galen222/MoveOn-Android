@@ -37,6 +37,9 @@ public class ProfileViewModel extends AndroidViewModel {
     private final MutableLiveData<UiState<String>> photoState  = new MutableLiveData<>();
     private final MutableLiveData<UiState<String>> logoutState = new MutableLiveData<>();
 
+    private final java.util.concurrent.ExecutorService ioExecutor =
+            java.util.concurrent.Executors.newSingleThreadExecutor();
+
     @Nullable private final String accountKey;
     @Nullable private LiveData<PerfilUsuario> perfilSource;
 
@@ -132,21 +135,28 @@ public class ProfileViewModel extends AndroidViewModel {
 
     public void logout() {
         String refreshToken = sessionManager.getRefreshToken();
+        logoutState.setValue(UiState.loading());
+
         if (!StringUtils.hasText(refreshToken)) {
-            OfflineSessionCleaner.clearSessionAndLocalDataBlocking(getApplication());
-            logoutState.setValue(UiState.success("Local"));
+            ioExecutor.execute(() -> {
+                OfflineSessionCleaner.clearSessionAndLocalDataBlocking(getApplication());
+                logoutState.postValue(UiState.success("Local"));
+            });
             return;
         }
-        logoutState.setValue(UiState.loading());
+
         authRepository.logout(refreshToken, result -> {
-            OfflineSessionCleaner.clearSessionAndLocalDataBlocking(getApplication());
-            if (result.isSuccess()) {
-                logoutState.postValue(UiState.success(
-                        result.data != null ? result.data : "OK"));
-            } else {
-                logoutState.postValue(UiState.error(
-                        result.error != null ? result.error : ApiError.local("Error")));
-            }
+            ioExecutor.execute(() -> {
+                OfflineSessionCleaner.clearSessionAndLocalDataBlocking(getApplication());
+
+                if (result.isSuccess()) {
+                    logoutState.postValue(UiState.success(
+                            result.data != null ? result.data : "OK"));
+                } else {
+                    logoutState.postValue(UiState.error(
+                            result.error != null ? result.error : ApiError.local("Error")));
+                }
+            });
         });
     }
 
@@ -177,11 +187,7 @@ public class ProfileViewModel extends AndroidViewModel {
 
     @Override
     protected void onCleared() {
-        authRepository.cancelAll();
-        if (perfilSource != null) {
-            perfilState.removeSource(perfilSource);
-        }
-        perfilRepository.cancelOngoing();
+        ioExecutor.shutdown();
         super.onCleared();
     }
 }
