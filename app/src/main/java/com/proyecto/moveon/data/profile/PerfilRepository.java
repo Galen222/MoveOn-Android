@@ -50,9 +50,9 @@ public class PerfilRepository {
 
     public static final String UNIQUE_SYNC_WORK_NAME = "sync_perfil";
 
-    private static final String PHOTO_STATE_SYNCED = "SYNCED";
+    private static final String PHOTO_STATE_SYNCED  = "SYNCED";
     private static final String PHOTO_STATE_PENDING = "PENDING_UPLOAD";
-    private static final String PHOTO_STATE_FAILED = "FAILED";
+    private static final String PHOTO_STATE_FAILED  = "FAILED";
 
     private final Context appContext;
     private final PerfilLocalDataSource local;
@@ -65,14 +65,6 @@ public class PerfilRepository {
         AppDatabase db = AppDatabase.getInstance(appContext);
         this.local = new PerfilLocalDataSource(db);
         this.remote = new PerfilRemoteDataSource(appContext);
-    }
-
-    /**
-     * Devuelve la accountKey del usuario autenticado.
-     */
-    @Nullable
-    public String getCurrentAccountKey() {
-        return new com.proyecto.moveon.data.session.SecureSessionManager(appContext).getAccountKey();
     }
 
     public LiveData<PerfilUsuario> observePerfil(@NonNull String accountKey) {
@@ -90,7 +82,6 @@ public class PerfilRepository {
                 }
                 return;
             }
-
             io.execute(() -> {
                 mergeRemoteSnapshot(accountKey, result.data, false);
                 if (callback != null) callback.onComplete(null);
@@ -101,7 +92,8 @@ public class PerfilRepository {
     public void applyLocalPatchAndEnqueue(@NonNull String accountKey,
                                           @NonNull JsonObject patchJson,
                                           @Nullable UpdateCallback callback) {
-        if (patchJson.size() == 0) {
+        // BUG fix: isEmpty() en lugar de size() == 0
+        if (patchJson.isEmpty()) {
             if (callback != null) {
                 callback.onComplete(UpdateResult.failed(ApiError.local("No hay cambios para guardar")));
             }
@@ -111,12 +103,12 @@ public class PerfilRepository {
         io.execute(() -> {
             PerfilPendingPatchEntity op = new PerfilPendingPatchEntity();
             op.operationId = UUID.randomUUID().toString();
-            op.accountKey = accountKey;
+            op.accountKey  = accountKey;
             op.payloadJson = gson.toJson(patchJson);
             op.createdAtMs = System.currentTimeMillis();
-            op.attempts = 0;
-            op.lastError = null;
-            op.state = "PENDING";
+            op.attempts    = 0;
+            op.lastError   = null;
+            op.state       = "PENDING";
             local.enqueuePatch(op);
 
             PerfilCacheEntity current = getOrCreateCache(accountKey);
@@ -147,7 +139,7 @@ public class PerfilRepository {
                     ? result.error
                     : ApiError.local("Error sincronizando perfil");
             op.attempts += 1;
-            op.lastError = error.getMessage();
+            op.lastError  = error.getMessage();
 
             if (isRetryable(error)) {
                 local.updatePatch(op);
@@ -180,9 +172,9 @@ public class PerfilRepository {
                     ProfilePhotoStorage.deleteFileSilently(oldPendingPath);
                 }
                 current.pendingLocalPhotoPath = pendingPath;
-                current.photoSyncState = PHOTO_STATE_PENDING;
-                current.photoLastError = null;
-                current.dirty = true;
+                current.photoSyncState        = PHOTO_STATE_PENDING;
+                current.photoLastError        = null;
+                current.dirty                 = true;
                 local.saveCache(current);
 
                 ApiResult<String> uploadResult = remote.uploadPhotoBlocking(new File(pendingPath));
@@ -204,7 +196,7 @@ public class PerfilRepository {
                     current = getOrCreateCache(accountKey);
                     current.photoSyncState = PHOTO_STATE_PENDING;
                     current.photoLastError = error.getMessage();
-                    current.dirty = true;
+                    current.dirty          = true;
                     local.saveCache(current);
                     enqueueSync();
                     if (callback != null) callback.onComplete(UpdateResult.queued());
@@ -215,9 +207,7 @@ public class PerfilRepository {
                 if (callback != null) callback.onComplete(UpdateResult.failed(error));
             } catch (IOException e) {
                 if (callback != null) {
-                    callback.onComplete(
-                            UpdateResult.failed(ApiError.local("No se pudo guardar la foto localmente"))
-                    );
+                    callback.onComplete(UpdateResult.failed(ApiError.local("No se pudo guardar la foto localmente")));
                 }
             }
         });
@@ -242,7 +232,7 @@ public class PerfilRepository {
                         ? result.error
                         : ApiError.local("Error sincronizando perfil");
                 op.attempts += 1;
-                op.lastError = error.getMessage();
+                op.lastError  = error.getMessage();
 
                 if (isRetryable(error)) {
                     // Mantener FIFO real: si una operación reintentable falla,
@@ -276,7 +266,7 @@ public class PerfilRepository {
                         : ApiError.local("Error subiendo la foto");
                 if (isRetryable(error)) {
                     cache.photoLastError = error.getMessage();
-                    cache.dirty = true;
+                    cache.dirty          = true;
                     local.saveCache(cache);
                     retryNeeded = true;
                 } else {
@@ -317,93 +307,81 @@ public class PerfilRepository {
                                      @NonNull ProfileInfoDto dto,
                                      boolean preferPendingPhoto) {
         PerfilCacheEntity previous = local.getCacheNow(accountKey);
-        PerfilCacheEntity entity = previous != null ? copyOf(previous) : createEmptyCache(accountKey);
-        int previousVersion = previous != null ? previous.fotoVersion : -1;
+        PerfilCacheEntity entity   = previous != null ? copyOf(previous) : createEmptyCache(accountKey);
+        int previousVersion        = previous != null ? previous.fotoVersion : -1;
 
-        entity.accountKey = accountKey;
-        entity.nombreUsuario = StringUtils.hasText(dto.nombreUsuario) ? dto.nombreUsuario : entity.nombreUsuario;
-        entity.nombreReal = dto.nombreReal;
-        entity.email = StringUtils.textOf(dto.email);
+        entity.accountKey      = accountKey;
+        entity.nombreUsuario   = StringUtils.hasText(dto.nombreUsuario) ? dto.nombreUsuario : entity.nombreUsuario;
+        entity.nombreReal      = dto.nombreReal;
+        entity.email           = StringUtils.textOf(dto.email);
         entity.fechaNacimiento = StringUtils.textOf(dto.fechaNacimiento);
-        entity.genero = dto.genero;
-        entity.altura = dto.altura;
-        entity.peso = dto.peso;
-        entity.provincia = dto.provincia;
-        entity.fotoPerfil = dto.fotoPerfil;
-        entity.fotoVersion = dto.fotoVersion;
-        entity.perfilVisible = dto.perfilVisible;
-        entity.totalPuntos = dto.totalPuntos;
+        entity.genero          = dto.genero;
+        entity.altura          = dto.altura;
+        entity.peso            = dto.peso;
+        entity.provincia       = dto.provincia;
+        entity.fotoPerfil      = dto.fotoPerfil;
+        entity.fotoVersion     = dto.fotoVersion;
+        entity.perfilVisible   = dto.perfilVisible;
+        entity.totalPuntos     = dto.totalPuntos;
 
         if (preferPendingPhoto && previous != null && StringUtils.hasText(previous.pendingLocalPhotoPath)) {
             try {
                 String promoted = ProfilePhotoStorage.promotePendingToCurrent(
-                        appContext,
-                        accountKey,
-                        previous.pendingLocalPhotoPath,
-                        Math.max(dto.fotoVersion, 1)
-                );
-                if (StringUtils.hasText(previous.localPhotoPath)
-                        && !promoted.equals(previous.localPhotoPath)) {
+                        appContext, accountKey, previous.pendingLocalPhotoPath, Math.max(dto.fotoVersion, 1));
+                if (StringUtils.hasText(previous.localPhotoPath) && !promoted.equals(previous.localPhotoPath)) {
                     ProfilePhotoStorage.deleteFileSilently(previous.localPhotoPath);
                 }
-                entity.localPhotoPath = promoted;
+                entity.localPhotoPath        = promoted;
                 entity.pendingLocalPhotoPath = null;
-                entity.photoSyncState = PHOTO_STATE_SYNCED;
-                entity.photoLastError = null;
+                entity.photoSyncState        = PHOTO_STATE_SYNCED;
+                entity.photoLastError        = null;
             } catch (IOException e) {
-                // Conservamos el estado previo para no perder la preview local si la promoción falla.
-                entity.localPhotoPath = previous.localPhotoPath;
+                entity.localPhotoPath        = previous.localPhotoPath;
                 entity.pendingLocalPhotoPath = previous.pendingLocalPhotoPath;
-                entity.photoSyncState = previous.photoSyncState;
-                entity.photoLastError = previous.photoLastError;
+                entity.photoSyncState        = previous.photoSyncState;
+                entity.photoLastError        = previous.photoLastError;
             }
-        } else if (PHOTO_STATE_PENDING.equals(entity.photoSyncState)
-                && StringUtils.hasText(entity.pendingLocalPhotoPath)
-                && ProfilePhotoStorage.exists(entity.pendingLocalPhotoPath)) {
-            // Mantener la preview local mientras la subida siga pendiente.
-        } else if (!StringUtils.hasText(dto.fotoPerfil)) {
-            // Paridad funcional con V0: si el backend ya no publica foto,
-            // eliminamos la caché local actual para no mostrar un avatar obsoleto.
-            if (StringUtils.hasText(entity.localPhotoPath)) {
-                ProfilePhotoStorage.deleteFileSilently(entity.localPhotoPath);
-            }
-            entity.localPhotoPath = null;
-            entity.pendingLocalPhotoPath = null;
-            entity.photoSyncState = PHOTO_STATE_SYNCED;
-            entity.photoLastError = null;
-        } else {
-            boolean canReuseLocal = previous != null
-                    && previousVersion == dto.fotoVersion
-                    && StringUtils.hasText(previous.localPhotoPath)
-                    && ProfilePhotoStorage.exists(previous.localPhotoPath);
-            if (canReuseLocal) {
-                entity.localPhotoPath = previous.localPhotoPath;
+        } else if (!PHOTO_STATE_PENDING.equals(entity.photoSyncState)
+                || !StringUtils.hasText(entity.pendingLocalPhotoPath)
+                || !ProfilePhotoStorage.exists(entity.pendingLocalPhotoPath)) {
+            // Solo actualizamos la foto si no hay una subida pendiente en curso.
+            if (!StringUtils.hasText(dto.fotoPerfil)) {
+                if (StringUtils.hasText(entity.localPhotoPath)) {
+                    ProfilePhotoStorage.deleteFileSilently(entity.localPhotoPath);
+                }
+                entity.localPhotoPath        = null;
                 entity.pendingLocalPhotoPath = null;
-                entity.photoSyncState = PHOTO_STATE_SYNCED;
-                entity.photoLastError = null;
+                entity.photoSyncState        = PHOTO_STATE_SYNCED;
+                entity.photoLastError        = null;
             } else {
-                try {
-                    String downloadedPath = ProfilePhotoStorage.downloadRemotePhoto(
-                            appContext,
-                            accountKey,
-                            dto.fotoPerfil,
-                            Math.max(dto.fotoVersion, 1)
-                    );
-                    if (StringUtils.hasText(previous != null ? previous.localPhotoPath : null)
-                            && !downloadedPath.equals(previous.localPhotoPath)) {
-                        ProfilePhotoStorage.deleteFileSilently(previous.localPhotoPath);
-                    }
-                    entity.localPhotoPath = downloadedPath;
+                boolean canReuseLocal = previous != null
+                        && previousVersion == dto.fotoVersion
+                        && StringUtils.hasText(previous.localPhotoPath)
+                        && ProfilePhotoStorage.exists(previous.localPhotoPath);
+                if (canReuseLocal) {
+                    entity.localPhotoPath        = previous.localPhotoPath;
                     entity.pendingLocalPhotoPath = null;
-                    entity.photoSyncState = PHOTO_STATE_SYNCED;
-                    entity.photoLastError = null;
-                } catch (IOException e) {
-                    entity.localPhotoPath = previous != null ? previous.localPhotoPath : null;
-                    entity.pendingLocalPhotoPath = previous != null ? previous.pendingLocalPhotoPath : null;
-                    entity.photoSyncState = previous != null && StringUtils.hasText(previous.pendingLocalPhotoPath)
-                            ? previous.photoSyncState
-                            : PHOTO_STATE_FAILED;
-                    entity.photoLastError = "No se pudo actualizar la foto local";
+                    entity.photoSyncState        = PHOTO_STATE_SYNCED;
+                    entity.photoLastError        = null;
+                } else {
+                    try {
+                        String downloadedPath = ProfilePhotoStorage.downloadRemotePhoto(
+                                appContext, accountKey, dto.fotoPerfil, Math.max(dto.fotoVersion, 1));
+                        if (StringUtils.hasText(previous != null ? previous.localPhotoPath : null)
+                                && !downloadedPath.equals(previous.localPhotoPath)) {
+                            ProfilePhotoStorage.deleteFileSilently(previous.localPhotoPath);
+                        }
+                        entity.localPhotoPath        = downloadedPath;
+                        entity.pendingLocalPhotoPath = null;
+                        entity.photoSyncState        = PHOTO_STATE_SYNCED;
+                        entity.photoLastError        = null;
+                    } catch (IOException e) {
+                        entity.localPhotoPath        = previous != null ? previous.localPhotoPath : null;
+                        entity.pendingLocalPhotoPath = previous != null ? previous.pendingLocalPhotoPath : null;
+                        entity.photoSyncState        = previous != null && StringUtils.hasText(previous.pendingLocalPhotoPath)
+                                ? previous.photoSyncState : PHOTO_STATE_FAILED;
+                        entity.photoLastError        = "No se pudo actualizar la foto local";
+                    }
                 }
             }
         }
@@ -432,20 +410,16 @@ public class PerfilRepository {
         if (current == null || !StringUtils.hasText(current.pendingLocalPhotoPath)) return;
         try {
             String currentPath = ProfilePhotoStorage.promotePendingToCurrent(
-                    appContext,
-                    accountKey,
-                    current.pendingLocalPhotoPath,
-                    Math.max(current.fotoVersion, 1)
-            );
+                    appContext, accountKey, current.pendingLocalPhotoPath, Math.max(current.fotoVersion, 1));
             if (StringUtils.hasText(current.localPhotoPath) && !current.localPhotoPath.equals(currentPath)) {
                 ProfilePhotoStorage.deleteFileSilently(current.localPhotoPath);
             }
-            current.localPhotoPath = currentPath;
+            current.localPhotoPath        = currentPath;
             current.pendingLocalPhotoPath = null;
-            current.photoSyncState = PHOTO_STATE_SYNCED;
-            current.photoLastError = null;
-            current.dirty = hasPendingTextChanges(accountKey);
-            current.lastSyncedAtMs = System.currentTimeMillis();
+            current.photoSyncState        = PHOTO_STATE_SYNCED;
+            current.photoLastError        = null;
+            current.dirty                 = hasPendingTextChanges(accountKey);
+            current.lastSyncedAtMs        = System.currentTimeMillis();
             local.saveCache(current);
         } catch (IOException ignored) {
         }
@@ -458,9 +432,9 @@ public class PerfilRepository {
             ProfilePhotoStorage.deleteFileSilently(current.pendingLocalPhotoPath);
         }
         current.pendingLocalPhotoPath = null;
-        current.photoSyncState = PHOTO_STATE_FAILED;
-        current.photoLastError = errorMessage;
-        current.dirty = hasPendingTextChanges(accountKey);
+        current.photoSyncState        = PHOTO_STATE_FAILED;
+        current.photoLastError        = errorMessage;
+        current.dirty                 = hasPendingTextChanges(accountKey);
         local.saveCache(current);
     }
 
@@ -473,52 +447,52 @@ public class PerfilRepository {
     @NonNull
     private PerfilCacheEntity createEmptyCache(@NonNull String accountKey) {
         PerfilCacheEntity e = new PerfilCacheEntity();
-        e.accountKey = accountKey;
-        e.nombreUsuario = accountKey;
-        e.nombreReal = null;
-        e.email = "";
-        e.fechaNacimiento = "";
-        e.genero = null;
-        e.altura = null;
-        e.peso = null;
-        e.provincia = null;
-        e.fotoPerfil = null;
-        e.fotoVersion = 0;
-        e.localPhotoPath = null;
+        e.accountKey            = accountKey;
+        e.nombreUsuario         = accountKey;
+        e.nombreReal            = null;
+        e.email                 = "";
+        e.fechaNacimiento       = "";
+        e.genero                = null;
+        e.altura                = null;
+        e.peso                  = null;
+        e.provincia             = null;
+        e.fotoPerfil            = null;
+        e.fotoVersion           = 0;
+        e.localPhotoPath        = null;
         e.pendingLocalPhotoPath = null;
-        e.photoSyncState = PHOTO_STATE_SYNCED;
-        e.photoLastError = null;
-        e.perfilVisible = true;
-        e.totalPuntos = 0;
-        e.dirty = false;
-        e.lastFetchedAtMs = 0L;
-        e.lastSyncedAtMs = 0L;
+        e.photoSyncState        = PHOTO_STATE_SYNCED;
+        e.photoLastError        = null;
+        e.perfilVisible         = true;
+        e.totalPuntos           = 0;
+        e.dirty                 = false;
+        e.lastFetchedAtMs       = 0L;
+        e.lastSyncedAtMs        = 0L;
         return e;
     }
 
     @NonNull
     private PerfilCacheEntity copyOf(@NonNull PerfilCacheEntity source) {
         PerfilCacheEntity e = new PerfilCacheEntity();
-        e.accountKey = source.accountKey;
-        e.nombreUsuario = source.nombreUsuario;
-        e.nombreReal = source.nombreReal;
-        e.email = source.email;
-        e.fechaNacimiento = source.fechaNacimiento;
-        e.genero = source.genero;
-        e.altura = source.altura;
-        e.peso = source.peso;
-        e.provincia = source.provincia;
-        e.fotoPerfil = source.fotoPerfil;
-        e.fotoVersion = source.fotoVersion;
-        e.localPhotoPath = source.localPhotoPath;
+        e.accountKey            = source.accountKey;
+        e.nombreUsuario         = source.nombreUsuario;
+        e.nombreReal            = source.nombreReal;
+        e.email                 = source.email;
+        e.fechaNacimiento       = source.fechaNacimiento;
+        e.genero                = source.genero;
+        e.altura                = source.altura;
+        e.peso                  = source.peso;
+        e.provincia             = source.provincia;
+        e.fotoPerfil            = source.fotoPerfil;
+        e.fotoVersion           = source.fotoVersion;
+        e.localPhotoPath        = source.localPhotoPath;
         e.pendingLocalPhotoPath = source.pendingLocalPhotoPath;
-        e.photoSyncState = source.photoSyncState;
-        e.photoLastError = source.photoLastError;
-        e.perfilVisible = source.perfilVisible;
-        e.totalPuntos = source.totalPuntos;
-        e.dirty = source.dirty;
-        e.lastFetchedAtMs = source.lastFetchedAtMs;
-        e.lastSyncedAtMs = source.lastSyncedAtMs;
+        e.photoSyncState        = source.photoSyncState;
+        e.photoLastError        = source.photoLastError;
+        e.perfilVisible         = source.perfilVisible;
+        e.totalPuntos           = source.totalPuntos;
+        e.dirty                 = source.dirty;
+        e.lastFetchedAtMs       = source.lastFetchedAtMs;
+        e.lastSyncedAtMs        = source.lastSyncedAtMs;
         return e;
     }
 
@@ -594,40 +568,25 @@ public class PerfilRepository {
         public static final String STATUS_QUEUED = "QUEUED";
         public static final String STATUS_FAILED = "FAILED";
 
-        @NonNull public final String status;
+        @NonNull  public final String   status;
         @Nullable public final ApiError error;
 
         private UpdateResult(@NonNull String status, @Nullable ApiError error) {
             this.status = status;
-            this.error = error;
+            this.error  = error;
         }
 
-        public static UpdateResult synced() {
-            return new UpdateResult(STATUS_SYNCED, null);
-        }
-
-        public static UpdateResult queued() {
-            return new UpdateResult(STATUS_QUEUED, null);
-        }
-
-        public static UpdateResult failed(@NonNull ApiError error) {
-            return new UpdateResult(STATUS_FAILED, error);
-        }
+        public static UpdateResult synced() { return new UpdateResult(STATUS_SYNCED, null); }
+        public static UpdateResult queued() { return new UpdateResult(STATUS_QUEUED, null); }
+        public static UpdateResult failed(@NonNull ApiError error) { return new UpdateResult(STATUS_FAILED, error); }
     }
 
     public static final class SyncResult {
         public final boolean shouldRetry;
 
-        private SyncResult(boolean shouldRetry) {
-            this.shouldRetry = shouldRetry;
-        }
+        private SyncResult(boolean shouldRetry) { this.shouldRetry = shouldRetry; }
 
-        public static SyncResult success() {
-            return new SyncResult(false);
-        }
-
-        public static SyncResult retry() {
-            return new SyncResult(true);
-        }
+        public static SyncResult success() { return new SyncResult(false); }
+        public static SyncResult retry()   { return new SyncResult(true); }
     }
 }

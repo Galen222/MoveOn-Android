@@ -77,26 +77,18 @@ public final class ActivityRepository {
     private final ExecutorService io = Executors.newSingleThreadExecutor();
 
     public ActivityRepository(@NonNull Context context) {
-        this.appContext = context.getApplicationContext();
+        this.appContext     = context.getApplicationContext();
         this.sessionManager = new SecureSessionManager(appContext);
-        this.apiClient = new AuthenticatedApiClient(appContext);
-        AppDatabase db = AppDatabase.getInstance(appContext);
-        this.local = new ActividadLocalDataSource(db);
-        this.remote = new ActividadRemoteDataSource(appContext);
-    }
-
-    /**
-     * Devuelve la accountKey del usuario autenticado.
-     */
-    @Nullable
-    public String getCurrentAccountKey() {
-        return sessionManager.getAccountKey();
+        this.apiClient      = new AuthenticatedApiClient(appContext);
+        AppDatabase db      = AppDatabase.getInstance(appContext);
+        this.local          = new ActividadLocalDataSource(db);
+        this.remote         = new ActividadRemoteDataSource(appContext);
     }
 
     // ── Guardar ───────────────────────────────────────────────────────────────
 
     /**
-     * Mantiene la misma firma que usa TrackingViewModel,
+     * Mantiene la misma firma que usa TrackingViewModel.
      * Guarda primero en local y responde éxito inmediato si la validación es correcta.
      */
     public void guardarActividad(
@@ -119,33 +111,33 @@ public final class ActivityRepository {
             long now = System.currentTimeMillis();
 
             ActividadEntity entity = new ActividadEntity();
-            entity.localId = UUID.randomUUID().toString();
-            entity.accountKey = accountKey;
-            entity.remoteId = null;
-            entity.tipo = request.tipo;
-            entity.distancia = request.distancia;
-            entity.duracion = request.duracion;
-            entity.caloriasQuemadas = request.caloriasQuemadas;
-            entity.rutaPolilinea = request.rutaPolilinea;
-            entity.rutaMapaUrl = null;
-            entity.fechaRuta = request.fechaRuta;
-            entity.syncState = "PENDING_CREATE";
-            entity.lastError = null;
-            entity.createdAtMs = now;
-            entity.updatedAtMs = now;
+            entity.localId           = UUID.randomUUID().toString();
+            entity.accountKey        = accountKey;
+            entity.remoteId          = null;
+            entity.tipo              = request.tipo;
+            entity.distancia         = request.distancia;
+            entity.duracion          = request.duracion;
+            entity.caloriasQuemadas  = request.caloriasQuemadas;
+            entity.rutaPolilinea     = request.rutaPolilinea;
+            entity.rutaMapaUrl       = null;
+            entity.fechaRuta         = request.fechaRuta;
+            entity.syncState         = "PENDING_CREATE";
+            entity.lastError         = null;
+            entity.createdAtMs       = now;
+            entity.updatedAtMs       = now;
 
             local.save(entity);
             enqueueSync();
 
             GuardarActividadResponseDto dto = new GuardarActividadResponseDto();
-            dto.id = 0;
-            dto.tipo = entity.tipo;
-            dto.distancia = entity.distancia;
-            dto.duracion = entity.duracion;
+            dto.id               = 0;
+            dto.tipo             = entity.tipo;
+            dto.distancia        = entity.distancia;
+            dto.duracion         = entity.duracion;
             dto.caloriasQuemadas = entity.caloriasQuemadas;
-            dto.rutaPolilinea = entity.rutaPolilinea;
-            dto.rutaMapaUrl = entity.rutaMapaUrl;
-            dto.fechaRuta = entity.fechaRuta;
+            dto.rutaPolilinea    = entity.rutaPolilinea;
+            dto.rutaMapaUrl      = entity.rutaMapaUrl;
+            dto.fechaRuta        = entity.fechaRuta;
             dto.nuevoTotalPuntos = 0;
 
             callback.onResult(ApiResult.success(dto));
@@ -218,15 +210,13 @@ public final class ActivityRepository {
             ActividadEntity entity = local.getByLocalId(localId);
 
             if (entity == null) {
-                callback.onResult(ApiResult.failure(
-                        ApiError.local("Actividad no encontrada")));
+                callback.onResult(ApiResult.failure(ApiError.local("Actividad no encontrada")));
                 return;
             }
 
             if (entity.remoteId == null || !"SYNCED".equals(entity.syncState)) {
                 callback.onResult(ApiResult.failure(
-                        ApiError.typed(ApiErrorType.VALIDATION,
-                                "Actividad pendiente de sincronizar")));
+                        ApiError.typed(ApiErrorType.VALIDATION, "Actividad pendiente de sincronizar")));
                 return;
             }
 
@@ -241,13 +231,12 @@ public final class ActivityRepository {
                     return;
                 }
 
-                // El servidor confirmó el borrado — eliminamos en local
                 io.execute(() -> {
                     local.deleteByLocalId(localId);
 
                     BorrarActividadResponseDto dto = new BorrarActividadResponseDto();
-                    dto.estatus = "success";
-                    dto.mensaje = result.data;
+                    dto.estatus          = "success";
+                    dto.mensaje          = result.data;
                     dto.nuevoTotalPuntos = 0; // El endpoint delete devuelve mensaje, no puntos directamente
                     callback.onResult(ApiResult.success(dto));
                 });
@@ -266,17 +255,17 @@ public final class ActivityRepository {
 
             if (result.isSuccess() && result.data != null) {
                 ActividadResponseDto dto = result.data;
-                entity.remoteId = dto.id;
-                entity.tipo = dto.tipo;
-                entity.distancia = dto.distancia;
-                entity.duracion = dto.duracion;
+                entity.remoteId         = dto.id;
+                entity.tipo             = dto.tipo;
+                entity.distancia        = dto.distancia;
+                entity.duracion         = dto.duracion;
                 entity.caloriasQuemadas = dto.caloriasQuemadas;
-                entity.rutaPolilinea = dto.rutaPolilinea;
-                entity.rutaMapaUrl = dto.rutaMapaUrl;
-                entity.fechaRuta = dto.fechaRuta;
-                entity.syncState = "SYNCED";
-                entity.lastError = null;
-                entity.updatedAtMs = System.currentTimeMillis();
+                entity.rutaPolilinea    = dto.rutaPolilinea;
+                entity.rutaMapaUrl      = dto.rutaMapaUrl;
+                entity.fechaRuta        = dto.fechaRuta;
+                entity.syncState        = "SYNCED";
+                entity.lastError        = null;
+                entity.updatedAtMs      = System.currentTimeMillis();
                 local.save(entity);
                 continue;
             }
@@ -286,14 +275,14 @@ public final class ActivityRepository {
                     : ApiError.local("Error sincronizando actividad");
 
             if (isRetryable(error)) {
-                entity.lastError = error.getMessage();
+                entity.lastError   = error.getMessage();
                 entity.updatedAtMs = System.currentTimeMillis();
                 local.save(entity);
                 return SyncResult.retry();
             }
 
-            entity.syncState = "FAILED_CREATE";
-            entity.lastError = error.getMessage();
+            entity.syncState   = "FAILED_CREATE";
+            entity.lastError   = error.getMessage();
             entity.updatedAtMs = System.currentTimeMillis();
             local.save(entity);
         }
@@ -341,16 +330,16 @@ public final class ActivityRepository {
             remoteIds.add(dto.id);
 
             ActividadEntity existing = local.getByRemoteId(accountKey, dto.id);
-            ActividadEntity entity = existing != null ? existing : new ActividadEntity();
+            ActividadEntity entity   = existing != null ? existing : new ActividadEntity();
             if (existing == null) {
-                entity.localId = "remote_" + dto.id;
-                entity.accountKey = accountKey;
+                entity.localId     = "remote_" + dto.id;
+                entity.accountKey  = accountKey;
                 entity.createdAtMs = System.currentTimeMillis();
             }
 
             mapDtoIntoEntity(entity, dto);
-            entity.syncState = "SYNCED";
-            entity.lastError = null;
+            entity.syncState   = "SYNCED";
+            entity.lastError   = null;
             entity.updatedAtMs = System.currentTimeMillis();
             local.save(entity);
         }
@@ -365,14 +354,14 @@ public final class ActivityRepository {
     }
 
     private void mapDtoIntoEntity(@NonNull ActividadEntity entity, @NonNull ActividadResponseDto dto) {
-        entity.remoteId = dto.id;
-        entity.tipo = dto.tipo;
-        entity.distancia = dto.distancia;
-        entity.duracion = dto.duracion;
+        entity.remoteId         = dto.id;
+        entity.tipo             = dto.tipo;
+        entity.distancia        = dto.distancia;
+        entity.duracion         = dto.duracion;
         entity.caloriasQuemadas = dto.caloriasQuemadas;
-        entity.rutaPolilinea = dto.rutaPolilinea;
-        entity.rutaMapaUrl = dto.rutaMapaUrl;
-        entity.fechaRuta = dto.fechaRuta;
+        entity.rutaPolilinea    = dto.rutaPolilinea;
+        entity.rutaMapaUrl      = dto.rutaMapaUrl;
+        entity.fechaRuta        = dto.fechaRuta;
     }
 
     @NonNull
@@ -434,16 +423,9 @@ public final class ActivityRepository {
     public static final class SyncResult {
         public final boolean retry;
 
-        private SyncResult(boolean retry) {
-            this.retry = retry;
-        }
+        private SyncResult(boolean retry) { this.retry = retry; }
 
-        public static SyncResult success() {
-            return new SyncResult(false);
-        }
-
-        public static SyncResult retry() {
-            return new SyncResult(true);
-        }
+        public static SyncResult success() { return new SyncResult(false); }
+        public static SyncResult retry()   { return new SyncResult(true); }
     }
 }
