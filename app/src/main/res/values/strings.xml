@@ -109,6 +109,34 @@
     <!-- no se esta usando -->
     <string name="stats_desc_compare_icon">Icono comparación</string>
 
+    <!-- Stats — Eliminar actividad -->
+    <string name="stats_delete_title">Eliminar actividad</string>
+    <string name="stats_delete_message">¿Estás seguro de que quieres eliminar esta actividad? Esta acción no se puede deshacer.</string>
+    <string name="stats_delete_confirm">Eliminar</string>
+    <string name="stats_delete_ok">Actividad eliminada correctamente</string>
+    <string name="stats_delete_no_sync">No se puede eliminar una actividad pendiente de sincronizar</string>
+
+    <!-- Stats — Objetivo semanal -->
+    <string name="stats_goal_remaining_format">Te faltan %1$s para tu objetivo</string>
+    <string name="stats_weekly_goal_done">¡Objetivo semanal completado!</string>
+
+    <!-- Stats — Formatos -->
+    <string name="stats_format_km">%.2f km</string>
+    <string name="stats_format_time_hm">%1$dh %2$dm</string>
+    <string name="stats_format_time_m">%1$d min</string>
+    <string name="stats_format_streak">%1$d días</string>
+
+    <!-- Stats — Días semana (gráfico) -->
+    <string-array name="stats_week_days_short">
+        <item>L</item>
+        <item>M</item>
+        <item>X</item>
+        <item>J</item>
+        <item>V</item>
+        <item>S</item>
+        <item>D</item>
+    </string-array>
+
     <!-- Perfil — cabecera -->
     <string name="profile_default_username">Usuario</string>
     <string name="profile_default_email">Sin correo disponible</string>
@@ -241,6 +269,7 @@
     <string name="profile_puntos_formato">%1$d puntos</string>
     <string name="profile_altura_formato">%1$d cm</string>
     <string name="profile_peso_formato">%.1f kg</string>
+
     <!-- Perfil — hint fecha con formato visible -->
     <string name="profile_label_birthdate_hint">Fecha de nacimiento (AAAA-MM-DD)</string>
 
@@ -287,8 +316,6 @@
     <string name="tracking_calories_format">%1$d kcal</string>
     <string name="tracking_distance_m_format">%1$d m</string>
     <string name="tracking_distance_km_format">%1$.2f km</string>
-
-
 
     <!-- Errores de repositorio reutilizables -->
     <string name="error_no_sesion_activa">No hay sesión activa</string>
