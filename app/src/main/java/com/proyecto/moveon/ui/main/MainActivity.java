@@ -175,10 +175,8 @@ public class MainActivity extends AppCompatActivity {
             tx.setMaxLifecycle(profileFragment, Lifecycle.State.STARTED);
         }
 
-        if (target != null) {
-            tx.show(target);
-            tx.setMaxLifecycle(target, Lifecycle.State.RESUMED);
-        }
+        tx.show(target);
+        tx.setMaxLifecycle(target, Lifecycle.State.RESUMED);
 
         tx.commit();
         selectedItemId = itemId;

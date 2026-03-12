@@ -32,10 +32,7 @@ public final class RetrofitProvider {
         if (moveOnApi != null && protectedApi != null) return;
         synchronized (RetrofitProvider.class) {
             if (moveOnApi != null && protectedApi != null) return;
-            String baseUrl = BuildConfig.BASE_URL;
-            if (!baseUrl.endsWith("/")) {
-                baseUrl += "/";
-            }
+            String baseUrl = BuildConfig.BASE_URL + "/";
 
             // 1. Configuración del Logger
             HttpLoggingInterceptor log = null;
