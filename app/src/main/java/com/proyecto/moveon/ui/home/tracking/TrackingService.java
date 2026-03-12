@@ -13,6 +13,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 
@@ -119,7 +120,12 @@ public final class TrackingService extends Service implements SensorEventListene
 
     // -------------------------------------------------------------------------
     // Cronómetro
+    // BUG-02: Handler en main looper para centralizar todo el estado mutable
+    // en el hilo principal y eliminar la condición de carrera con onNewLocation().
     // -------------------------------------------------------------------------
+
+    // BUG-02: Handler anclado al main looper — todos los ticks se ejecutan en el hilo principal.
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     @Nullable private ScheduledFuture<?>   timerFuture = null;
@@ -227,6 +233,10 @@ public final class TrackingService extends Service implements SensorEventListene
         stopLocationUpdates();
         stopAccelerometer();
         publishState();
+        // BUG-03: Detener el foreground service para eliminar la notificación persistente
+        // y liberar los recursos del servicio.
+        stopForeground(STOP_FOREGROUND_REMOVE);
+        stopSelf();
     }
 
     /** Descarta la sesión actual y vuelve a IDLE. */
@@ -235,6 +245,9 @@ public final class TrackingService extends Service implements SensorEventListene
         resetInternalState();
         currentStatus = TrackingState.Status.IDLE;
         publishState();
+        // BUG-03: Ídem — resetear también detiene el foreground service.
+        stopForeground(STOP_FOREGROUND_REMOVE);
+        stopSelf();
     }
 
     // -------------------------------------------------------------------------
@@ -335,10 +348,18 @@ public final class TrackingService extends Service implements SensorEventListene
 
     private void startTimer() {
         stopTimer();
-        timerFuture = scheduler.scheduleWithFixedDelay(() -> {
-            elapsedSeconds++;
-            publishState();
-        }, 1L, 1L, TimeUnit.SECONDS);
+        // BUG-02: El tick se despacha al main looper via mainHandler.post() para que
+        // elapsedSeconds, calories y publishState() se ejecuten en el mismo hilo que
+        // onNewLocation() y onSensorChanged(), eliminando la condición de carrera.
+        // BUG-12: Se recalculan las calorías en cada tick para que avancen aunque el
+        // GPS no envíe actualizaciones (usuario lento / filtro de 5 m no superado).
+        timerFuture = scheduler.scheduleWithFixedDelay(
+                () -> mainHandler.post(() -> {
+                    elapsedSeconds++;
+                    calories = calculateCalories(); // BUG-12
+                    publishState();
+                }),
+                1L, 1L, TimeUnit.SECONDS);
     }
 
     private void stopTimer() {

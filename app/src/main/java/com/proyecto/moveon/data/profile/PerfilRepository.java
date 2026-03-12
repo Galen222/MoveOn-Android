@@ -311,7 +311,6 @@ public class PerfilRepository {
 
     public void cancelOngoing() {
         remote.cancelAll();
-        io.shutdownNow();
     }
 
     private void mergeRemoteSnapshot(@NonNull String accountKey,
@@ -587,8 +586,7 @@ public class PerfilRepository {
                 || type == ApiErrorType.TIMEOUT
                 || type == ApiErrorType.SERVER
                 || type == ApiErrorType.RATE_LIMIT
-                || type == ApiErrorType.CANCELED
-                || type == ApiErrorType.UNAUTHORIZED;
+                || type == ApiErrorType.CANCELED;
     }
 
     public static final class UpdateResult {

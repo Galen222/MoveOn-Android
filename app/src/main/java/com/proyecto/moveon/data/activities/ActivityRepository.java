@@ -328,7 +328,6 @@ public final class ActivityRepository {
     public void cancelAll() {
         remote.cancelAll();
         apiClient.cancelAll();
-        io.shutdownNow();
     }
 
     // ── Privados ──────────────────────────────────────────────────────────────
