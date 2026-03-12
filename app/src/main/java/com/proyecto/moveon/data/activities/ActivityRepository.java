@@ -29,6 +29,7 @@ import com.proyecto.moveon.data.profile.dto.ProfileInfoDto;
 import com.proyecto.moveon.data.remote.AuthenticatedApiClient;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.domain.activity.ActividadItem;
+import com.proyecto.moveon.R;
 import com.proyecto.moveon.utils.StringUtils;
 import com.proyecto.moveon.workers.SyncActividadesWorker;
 
@@ -97,7 +98,7 @@ public final class ActivityRepository {
 
         String accountKey = sessionManager.getAccountKey();
         if (accountKey == null) {
-            callback.onResult(ApiResult.failure(ApiError.local("No hay sesión activa")));
+            callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.error_no_sesion_activa))));
             return;
         }
 
@@ -180,7 +181,7 @@ public final class ActivityRepository {
                 if (callback != null) {
                     callback.onComplete(result.error != null
                             ? result.error
-                            : ApiError.local("Error cargando actividades"));
+                            : ApiError.local(appContext.getString(R.string.error_cargando_actividades)));
                 }
                 return;
             }
@@ -210,13 +211,13 @@ public final class ActivityRepository {
             ActividadEntity entity = local.getByLocalId(localId);
 
             if (entity == null) {
-                callback.onResult(ApiResult.failure(ApiError.local("Actividad no encontrada")));
+                callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.error_actividad_no_encontrada))));
                 return;
             }
 
             if (entity.remoteId == null || !"SYNCED".equals(entity.syncState)) {
                 callback.onResult(ApiResult.failure(
-                        ApiError.typed(ApiErrorType.VALIDATION, "Actividad pendiente de sincronizar")));
+                        ApiError.typed(ApiErrorType.VALIDATION, appContext.getString(R.string.error_actividad_pendiente_sync))));
                 return;
             }
 
@@ -272,7 +273,7 @@ public final class ActivityRepository {
 
             ApiError error = result.error != null
                     ? result.error
-                    : ApiError.local("Error sincronizando actividad");
+                    : ApiError.local(appContext.getString(R.string.error_sincronizando_actividad));
 
             if (isRetryable(error)) {
                 entity.lastError   = error.getMessage();

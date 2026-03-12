@@ -27,6 +27,7 @@ import com.proyecto.moveon.data.profile.local.PerfilLocalDataSource;
 import com.proyecto.moveon.data.profile.local.ProfilePhotoStorage;
 import com.proyecto.moveon.data.profile.remote.PerfilRemoteDataSource;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
+import com.proyecto.moveon.R;
 import com.proyecto.moveon.utils.StringUtils;
 import com.proyecto.moveon.workers.SyncPerfilWorker;
 
@@ -95,7 +96,7 @@ public class PerfilRepository {
         // BUG fix: isEmpty() en lugar de size() == 0
         if (patchJson.isEmpty()) {
             if (callback != null) {
-                callback.onComplete(UpdateResult.failed(ApiError.local("No hay cambios para guardar")));
+                callback.onComplete(UpdateResult.failed(ApiError.local(appContext.getString(R.string.error_no_hay_cambios))));
             }
             return;
         }

@@ -12,6 +12,7 @@ import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.google.gson.JsonObject;
+import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.data.profile.PerfilRepository;
 import com.proyecto.moveon.data.session.AuthRepository;
@@ -36,9 +37,6 @@ public class ProfileViewModel extends AndroidViewModel {
     private final MutableLiveData<UiState<String>> updateState = new MutableLiveData<>();
     private final MutableLiveData<UiState<String>> photoState  = new MutableLiveData<>();
     private final MutableLiveData<UiState<String>> logoutState = new MutableLiveData<>();
-
-    private final java.util.concurrent.ExecutorService ioExecutor =
-            java.util.concurrent.Executors.newSingleThreadExecutor();
 
     @Nullable private final String accountKey;
     @Nullable private LiveData<PerfilUsuario> perfilSource;
@@ -66,7 +64,7 @@ public class ProfileViewModel extends AndroidViewModel {
 
     public void loadPerfil() {
         if (accountKey == null) {
-            perfilState.setValue(UiState.error(ApiError.local("No hay sesión activa")));
+            perfilState.setValue(UiState.error(ApiError.local(getApplication().getString(R.string.error_no_sesion_activa))));
             return;
         }
 
@@ -85,12 +83,12 @@ public class ProfileViewModel extends AndroidViewModel {
 
     public void updatePerfil(@NonNull JsonObject patchJson) {
         if (accountKey == null) {
-            updateState.setValue(UiState.error(ApiError.local("No hay sesión activa")));
+            updateState.setValue(UiState.error(ApiError.local(getApplication().getString(R.string.error_no_sesion_activa))));
             return;
         }
 
-        if (patchJson.size() == 0) {
-            updateState.setValue(UiState.error(ApiError.local("No hay cambios para guardar")));
+        if (patchJson.isEmpty()) {
+            updateState.setValue(UiState.error(ApiError.local(getApplication().getString(R.string.error_no_hay_cambios))));
             return;
         }
 
@@ -98,7 +96,7 @@ public class ProfileViewModel extends AndroidViewModel {
         perfilRepository.applyLocalPatchAndEnqueue(accountKey, patchJson, result -> {
             if (PerfilRepository.UpdateResult.STATUS_FAILED.equals(result.status)) {
                 updateState.postValue(UiState.error(
-                        result.error != null ? result.error : ApiError.local("Error")));
+                        result.error != null ? result.error : ApiError.local(getApplication().getString(R.string.vm_error_generico))));
             } else {
                 updateState.postValue(UiState.success(result.status));
             }
@@ -107,7 +105,7 @@ public class ProfileViewModel extends AndroidViewModel {
 
     public void uploadPhoto(@NonNull File file) {
         if (accountKey == null) {
-            photoState.setValue(UiState.error(ApiError.local("No hay sesión activa")));
+            photoState.setValue(UiState.error(ApiError.local(getApplication().getString(R.string.error_no_sesion_activa))));
             return;
         }
 
@@ -115,7 +113,7 @@ public class ProfileViewModel extends AndroidViewModel {
         perfilRepository.uploadPhotoLocalFirst(accountKey, file, result -> {
             if (PerfilRepository.UpdateResult.STATUS_FAILED.equals(result.status)) {
                 photoState.postValue(UiState.error(
-                        result.error != null ? result.error : ApiError.local("Error subiendo la foto")));
+                        result.error != null ? result.error : ApiError.local(getApplication().getString(R.string.vm_error_generico))));
             } else {
                 photoState.postValue(UiState.success(result.status));
             }
@@ -135,28 +133,21 @@ public class ProfileViewModel extends AndroidViewModel {
 
     public void logout() {
         String refreshToken = sessionManager.getRefreshToken();
-        logoutState.setValue(UiState.loading());
-
         if (!StringUtils.hasText(refreshToken)) {
-            ioExecutor.execute(() -> {
-                OfflineSessionCleaner.clearSessionAndLocalDataBlocking(getApplication());
-                logoutState.postValue(UiState.success("Local"));
-            });
+            OfflineSessionCleaner.clearSessionAndLocalDataBlocking(getApplication());
+            logoutState.setValue(UiState.success("Local"));
             return;
         }
-
+        logoutState.setValue(UiState.loading());
         authRepository.logout(refreshToken, result -> {
-            ioExecutor.execute(() -> {
-                OfflineSessionCleaner.clearSessionAndLocalDataBlocking(getApplication());
-
-                if (result.isSuccess()) {
-                    logoutState.postValue(UiState.success(
-                            result.data != null ? result.data : "OK"));
-                } else {
-                    logoutState.postValue(UiState.error(
-                            result.error != null ? result.error : ApiError.local("Error")));
-                }
-            });
+            OfflineSessionCleaner.clearSessionAndLocalDataBlocking(getApplication());
+            if (result.isSuccess()) {
+                logoutState.postValue(UiState.success(
+                        result.data != null ? result.data : "OK"));
+            } else {
+                logoutState.postValue(UiState.error(
+                        result.error != null ? result.error : ApiError.local(getApplication().getString(R.string.vm_error_generico))));
+            }
         });
     }
 
@@ -187,7 +178,11 @@ public class ProfileViewModel extends AndroidViewModel {
 
     @Override
     protected void onCleared() {
-        ioExecutor.shutdown();
+        authRepository.cancelAll();
+        if (perfilSource != null) {
+            perfilState.removeSource(perfilSource);
+        }
+        perfilRepository.cancelOngoing();
         super.onCleared();
     }
 }
