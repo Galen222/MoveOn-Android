@@ -10,12 +10,12 @@ public class PerfilCacheEntity {
 
     @PrimaryKey
     @NonNull
-    public String accountKey;
+    public String accountKey = "";
 
-    @NonNull public String nombreUsuario;
+    @NonNull public String nombreUsuario = "";
     @Nullable public String nombreReal;
-    @NonNull public String email;
-    @NonNull public String fechaNacimiento;
+    @NonNull public String email = "";
+    @NonNull public String fechaNacimiento = "";
     @Nullable public String genero;
     @Nullable public Integer altura;
     @Nullable public Double peso;
@@ -28,6 +28,9 @@ public class PerfilCacheEntity {
     @Nullable public String photoLastError;
     public boolean perfilVisible;
     public int totalPuntos;
+    public long totalCalorias;
+    public long objetivoSemanalMetros;
+    public long objetivoMensualMetros;
 
     public boolean dirty;
     public long lastFetchedAtMs;

@@ -5,171 +5,208 @@ import androidx.annotation.Nullable;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.WeekFields;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Clase de utilidad pura para calcular agregados estadísticos a partir
  * de una lista de {@link ActividadItem}.
- *
- * <p>Todos los métodos son estáticos y no tienen efectos secundarios.
+
+ * Todos los métodos son estáticos y no tienen efectos secundarios.
  * No depende de ningún framework Android — es 100% testeable con JUnit.
- *
- * <p>Los cálculos usan la zona horaria local del dispositivo para determinar
- * qué actividades pertenecen a "hoy", "esta semana", etc.
+
+ * Las semanas son siempre lunes–domingo (ISO 8601).
+ * La racha cuenta días consecutivos hacia atrás desde hoy inclusive.
+ * Si hoy no tiene actividad, la racha es 0.
  */
 public final class StatsCalculator {
 
-    /** Objetivo semanal por defecto: 25 km en metros. */
-    public static final long DEFAULT_WEEKLY_GOAL_METERS = 25_000L;
+    public static final long DEFAULT_WEEKLY_GOAL_METERS  = 50_000L;
+    public static final long DEFAULT_MONTHLY_GOAL_METERS = 150_000L;
+
+
 
     private StatsCalculator() {
         // Clase utilitaria — no instanciar
     }
 
     /**
-     * Calcula el resumen completo de estadísticas a partir de la lista de actividades.
+     * Calcula el resumen completo de estadísticas a partir de la lista de actividades
+     * y los objetivos del usuario.
      *
-     * @param items lista de actividades visibles (nunca null, puede estar vacía)
+     * @param items             lista de actividades (nunca null, puede estar vacía)
+     * @param weeklyGoalMeters  objetivo semanal en metros
+     * @param monthlyGoalMeters objetivo mensual en metros
      * @return {@link StatsResumen} con todos los agregados calculados
      */
     @NonNull
-    public static StatsResumen calcular(@NonNull List<ActividadItem> items) {
+    public static StatsResumen calcular(@NonNull List<ActividadItem> items,
+                                        long weeklyGoalMeters,
+                                        long monthlyGoalMeters) {
         if (items.isEmpty()) {
-            return StatsResumen.empty(DEFAULT_WEEKLY_GOAL_METERS);
+            return StatsResumen.empty(weeklyGoalMeters, monthlyGoalMeters);
         }
 
-        final LocalDate hoy      = LocalDate.now(ZoneId.systemDefault());
-        final LocalDate ayer     = hoy.minusDays(1);
-        final LocalDate haceDos  = hoy.minusDays(2);
+        final LocalDate hoy     = LocalDate.now(ZoneId.systemDefault());
+        final LocalDate ayer    = hoy.minusDays(1);
+        final LocalDate haceDos = hoy.minusDays(2);
 
-        final WeekFields semanaFields = WeekFields.of(Locale.forLanguageTag("es-ES"));
-        final int semanaActual  = hoy.get(semanaFields.weekOfWeekBasedYear());
-        final int anioActual    = hoy.getYear();
+        // Semana actual (ISO: lunes–domingo)
+        final LocalDate lunesActual    = hoy.minusDays(hoy.getDayOfWeek().getValue() - 1L);
+        final LocalDate domingoActual  = lunesActual.plusDays(6);
 
-        final int mesActual     = hoy.getMonthValue();
-        final int anioMesActual = hoy.getYear();
-        final LocalDate primerDiaMesAnterior = hoy.withDayOfMonth(1).minusMonths(1);
-        final int mesAnterior      = primerDiaMesAnterior.getMonthValue();
-        final int anioMesAnterior  = primerDiaMesAnterior.getYear();
+        // Semana anterior
+        final LocalDate lunesAnterior  = lunesActual.minusDays(7);
+        final LocalDate domingoAnterior = lunesAnterior.plusDays(6);
 
-        long totalDistancia       = 0L;
-        long totalDuracion        = 0L;
-        long distanciaHoy         = 0L;
-        long distanciaAyer        = 0L;
-        long distanciaHaceDos     = 0L;
-        long distanciaMesActual   = 0L;
-        long distanciaMesAnterior = 0L;
-        long distanciaSemana      = 0L;
+        // Mes actual y anterior
+        final int mesActual          = hoy.getMonthValue();
+        final int anioMesActual      = hoy.getYear();
+        final LocalDate primerMesAnt = hoy.withDayOfMonth(1).minusMonths(1);
+        final int mesAnterior        = primerMesAnt.getMonthValue();
+        final int anioMesAnterior    = primerMesAnt.getYear();
+
+        // Acumuladores
+        long totalDistancia         = 0L;
+        long totalDuracion          = 0L;
+        long totalCalorias          = 0L;
+
+        long distanciaHoy           = 0L;
+        long duracionHoy            = 0L;
+        long caloriasHoy            = 0L;
+
+        long distanciaAyer          = 0L;
+        long distanciaHaceDos       = 0L;
+
+        long distanciaSemana        = 0L;
+        long caloriasSemana         = 0L;
+        long distanciaSemanaAnt     = 0L;
+        long caloriasSemanaAnt      = 0L;
+
+        long distanciaMesActual     = 0L;
+        long caloriasMesActual      = 0L;
+        long distanciaMesAnterior   = 0L;
+        long caloriasMesAnterior    = 0L;
+
+        long[] porDia               = new long[7];
 
         Set<LocalDate> diasConActividad = new HashSet<>();
 
-        for (ActividadItem item : items) {
-            LocalDate fechaActividad = parseFecha(item.fechaRutaIso);
-            if (fechaActividad == null) continue;
-
-            long metros   = item.distanciaMetros;
-            long segundos = item.duracionSegundos;
-
-            totalDistancia += metros;
-            totalDuracion  += segundos;
-            diasConActividad.add(fechaActividad);
-
-            if (fechaActividad.equals(hoy)) {
-                distanciaHoy += metros;
-            } else if (fechaActividad.equals(ayer)) {
-                distanciaAyer += metros;
-            } else if (fechaActividad.equals(haceDos)) {
-                distanciaHaceDos += metros;
-            }
-
-            int semanaItem = fechaActividad.get(semanaFields.weekOfWeekBasedYear());
-            int anioItem   = fechaActividad.getYear();
-            if (semanaItem == semanaActual && anioItem == anioActual) {
-                distanciaSemana += metros;
-            }
-
-            if (fechaActividad.getMonthValue() == mesActual
-                    && fechaActividad.getYear() == anioMesActual) {
-                distanciaMesActual += metros;
-            }
-
-            if (fechaActividad.getMonthValue() == mesAnterior
-                    && fechaActividad.getYear() == anioMesAnterior) {
-                distanciaMesAnterior += metros;
-            }
-        }
-
-        int streak = calcularStreak(diasConActividad, hoy);
-
-        return new StatsResumen(
-                items.size(),
-                totalDistancia,
-                totalDuracion,
-                streak,
-                distanciaHoy,
-                distanciaAyer,
-                distanciaHaceDos,
-                distanciaMesActual,
-                distanciaMesAnterior,
-                distanciaSemana,
-                DEFAULT_WEEKLY_GOAL_METERS
-        );
-    }
-
-    /**
-     * Calcula la distancia en metros para cada día de la semana actual (Lun–Dom).
-     * El array devuelto tiene 7 posiciones: índice 0 = lunes, índice 6 = domingo.
-     *
-     * @param items lista de actividades visibles
-     * @return array de 7 longs con la distancia en metros por día
-     */
-    @NonNull
-    public static long[] calcularDistanciaPorDiaSemana(@NonNull List<ActividadItem> items) {
-        long[] porDia = new long[7];
-        if (items.isEmpty()) return porDia;
-
-        final LocalDate hoy         = LocalDate.now(ZoneId.systemDefault());
-        final LocalDate lunesActual = hoy.minusDays(hoy.getDayOfWeek().getValue() - 1L);
+        // Mapa para historial: clave = "YYYY-MM" → [distancia, calorias]
+        Map<String, long[]> porMes = new TreeMap<>(Collections.reverseOrder());
 
         for (ActividadItem item : items) {
             LocalDate fecha = parseFecha(item.fechaRutaIso);
             if (fecha == null) continue;
 
-            long diasDesde = ChronoUnit.DAYS.between(lunesActual, fecha);
-            if (diasDesde >= 0 && diasDesde < 7) {
-                porDia[(int) diasDesde] += item.distanciaMetros;
+            long metros   = item.distanciaMetros;
+            long segundos = item.duracionSegundos;
+            long kcal     = item.caloriasQuemadas;
+
+            totalDistancia += metros;
+            totalDuracion  += segundos;
+            totalCalorias  += kcal;
+            diasConActividad.add(fecha);
+
+            // Hoy
+            if (fecha.equals(hoy)) {
+                distanciaHoy += metros;
+                duracionHoy  += segundos;
+                caloriasHoy  += kcal;
+            } else if (fecha.equals(ayer)) {
+                distanciaAyer += metros;
+            } else if (fecha.equals(haceDos)) {
+                distanciaHaceDos += metros;
             }
+
+            // Semana actual (lunes–domingo ISO)
+            if (!fecha.isBefore(lunesActual) && !fecha.isAfter(domingoActual)) {
+                distanciaSemana += metros;
+                caloriasSemana  += kcal;
+
+                // Gráfico semanal: índice 0=lunes, 6=domingo
+                int idx = (int) ChronoUnit.DAYS.between(lunesActual, fecha);
+                if (idx >= 0 && idx < 7) {
+                    porDia[idx] += metros;
+                }
+            }
+
+            // Semana anterior
+            if (!fecha.isBefore(lunesAnterior) && !fecha.isAfter(domingoAnterior)) {
+                distanciaSemanaAnt += metros;
+                caloriasSemanaAnt  += kcal;
+            }
+
+            // Mes actual
+            if (fecha.getMonthValue() == mesActual && fecha.getYear() == anioMesActual) {
+                distanciaMesActual += metros;
+                caloriasMesActual  += kcal;
+            }
+
+            // Mes anterior
+            if (fecha.getMonthValue() == mesAnterior && fecha.getYear() == anioMesAnterior) {
+                distanciaMesAnterior += metros;
+                caloriasMesAnterior  += kcal;
+            }
+
+            // Historial por mes (Card 9)
+            String mesKey = fecha.getYear() + "-" + String.format(Locale.US, "%02d", fecha.getMonthValue());
+            long[] totalesMes = porMes.computeIfAbsent(mesKey, k -> new long[2]);
+            totalesMes[0] += metros;
+            totalesMes[1] += kcal;
         }
 
-        return porDia;
+        int streak = calcularStreak(diasConActividad, hoy);
+        List<StatsResumen.MonthBlock> monthBlocks = buildMonthBlocks(items, porMes);
+
+        return new StatsResumen(
+                distanciaHoy,
+                duracionHoy,
+                caloriasHoy,
+                porDia,
+                distanciaSemana,
+                weeklyGoalMeters,
+                distanciaMesActual,
+                monthlyGoalMeters,
+                distanciaAyer,
+                distanciaHaceDos,
+                distanciaMesAnterior,
+                caloriasMesActual,
+                caloriasMesAnterior,
+                caloriasSemana,
+                distanciaSemanaAnt,
+                caloriasSemanaAnt,
+                totalDistancia,
+                totalDuracion,
+                totalCalorias,
+                streak,
+                items.size(),
+                monthBlocks
+        );
     }
 
     /**
      * Calcula la racha de días consecutivos con al menos una actividad,
-     * contando hacia atrás desde hoy.
-     *
-     * <p>Si hoy no tiene actividad, pero ayer sí, la racha cuenta desde ayer
-     * (el usuario aún puede completar hoy).
-     *
-     * @param diasConActividad conjunto de fechas con actividad registrada
-     * @param hoy              fecha actual del dispositivo
-     * @return número de días consecutivos de racha (mínimo 0)
+     * contando hacia atrás desde hoy inclusive.
+     * Si hoy no tiene actividad, la racha es 0.
      */
     public static int calcularStreak(@NonNull Set<LocalDate> diasConActividad,
                                      @NonNull LocalDate hoy) {
-        if (diasConActividad.isEmpty()) return 0;
-
-        LocalDate inicio = diasConActividad.contains(hoy) ? hoy : hoy.minusDays(1);
-        if (!diasConActividad.contains(inicio)) return 0;
+        if (diasConActividad.isEmpty() || !diasConActividad.contains(hoy)) return 0;
 
         int streak       = 0;
-        LocalDate cursor = inicio;
+        LocalDate cursor = hoy;
         while (diasConActividad.contains(cursor)) {
             streak++;
             cursor = cursor.minusDays(1);
@@ -180,9 +217,101 @@ public final class StatsCalculator {
     // ── Privados ──────────────────────────────────────────────────────────────
 
     /**
-     * Parsea una fecha ISO-8601 con zona horaria a {@link LocalDate} en la zona local.
-     * Devuelve null si el formato es inválido — nunca lanza excepción.
+     * Construye los bloques de historial (Card 9) agrupados por mes → semana ISO.
+     * Devuelve los últimos 3 meses en orden descendente (más reciente primero).
      */
+    @NonNull
+    private static List<StatsResumen.MonthBlock> buildMonthBlocks(
+            @NonNull List<ActividadItem> items,
+            @NonNull Map<String, long[]> porMes) {
+
+        if (porMes.isEmpty()) return Collections.emptyList();
+
+        // Construir mapa de actividades por fecha para las semanas
+        Map<LocalDate, long[]> porFecha = new HashMap<>();
+        for (ActividadItem item : items) {
+            LocalDate fecha = parseFecha(item.fechaRutaIso);
+            if (fecha == null) continue;
+            long[] totales = porFecha.computeIfAbsent(fecha, k -> new long[2]);
+            totales[0] += item.distanciaMetros;
+            totales[1] += item.caloriasQuemadas;
+        }
+
+        List<StatsResumen.MonthBlock> result = new ArrayList<>();
+        int count = 0;
+
+        for (Map.Entry<String, long[]> entry : porMes.entrySet()) {
+            if (count >= 3) break;
+
+            String[] parts = entry.getKey().split("-");
+            int year  = Integer.parseInt(parts[0]);
+            int month = Integer.parseInt(parts[1]);
+            long[] totalesMes = entry.getValue();
+
+            List<StatsResumen.WeekBlock> weekBlocks =
+                    buildWeekBlocks(year, month, porFecha);
+
+            result.add(new StatsResumen.MonthBlock(
+                    year, month,
+                    totalesMes[0], totalesMes[1],
+                    weekBlocks));
+            count++;
+        }
+
+        return result;
+    }
+
+    /**
+     * Divide un mes en semanas ISO (lunes–domingo) y calcula distancia/kcal de cada una.
+     */
+    @NonNull
+    private static List<StatsResumen.WeekBlock> buildWeekBlocks(
+            int year, int month,
+            @NonNull Map<LocalDate, long[]> porFecha) {
+
+        List<StatsResumen.WeekBlock> blocks = new ArrayList<>();
+
+        LocalDate primerDia = LocalDate.of(year, month, 1);
+        LocalDate ultimoDia = YearMonth.of(year, month).atEndOfMonth();
+
+        // Avanzar al lunes de la semana que contiene el primer día del mes
+        LocalDate cursor = primerDia.minusDays(primerDia.getDayOfWeek().getValue() - 1L);
+
+        while (!cursor.isAfter(ultimoDia)) {
+            LocalDate lunes   = cursor;
+            LocalDate domingo = cursor.plusDays(6);
+
+            long distSemana  = 0L;
+            long kcalSemana  = 0L;
+
+            for (LocalDate d = lunes; !d.isAfter(domingo); d = d.plusDays(1)) {
+                // Solo contar días que pertenecen al mes en cuestión
+                if (d.getMonthValue() == month && d.getYear() == year) {
+                    long[] totales = porFecha.get(d);
+                    if (totales != null) {
+                        distSemana += totales[0];
+                        kcalSemana += totales[1];
+                    }
+                }
+            }
+
+            // startDay y endDay en días del mes (puede quedar truncado al mes)
+            int startDay = Math.max(lunes.getDayOfMonth(),   primerDia.getDayOfMonth());
+            int endDay   = Math.min(domingo.getDayOfMonth(), ultimoDia.getDayOfMonth());
+
+            // Ajustar startDay si el lunes cae en el mes anterior
+            if (lunes.getMonthValue() != month || lunes.getYear() != year) {
+                startDay = 1;
+            }
+
+            blocks.add(new StatsResumen.WeekBlock(startDay, endDay, distSemana, kcalSemana));
+
+            cursor = cursor.plusDays(7);
+        }
+
+        return blocks;
+    }
+
     @Nullable
     private static LocalDate parseFecha(@NonNull String fechaIso) {
         try {

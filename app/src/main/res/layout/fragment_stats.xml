@@ -5,7 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surfaceBackground">
+    android:background="@color/surfaceBackground"
+    tools:ignore="TooManyViews">
 
     <!-- Contenido principal -->
     <androidx.core.widget.NestedScrollView
@@ -33,9 +34,11 @@
                 android:fontFamily="sans-serif-medium"
                 android:layout_marginBottom="20dp" />
 
-            <!-- Tarjeta resumen: Distancia / Tiempo / Racha -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- Card 1 — Hoy                                               -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_stats_summary"
+                android:id="@+id/card_today"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
@@ -46,100 +49,120 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
+                    android:orientation="vertical"
                     android:padding="16dp">
 
-                    <LinearLayout
-                        android:layout_width="0dp"
+                    <TextView
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:gravity="center">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/stats_label_distance"
-                            android:textSize="12sp"
-                            android:textColor="@color/textTertiary" />
-
-                        <TextView
-                            android:id="@+id/tv_distance"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textSize="20sp"
-                            android:textColor="@color/textPrimary"
-                            android:fontFamily="sans-serif-medium"
-                            android:layout_marginTop="4dp"
-                            tools:text="38.6 km" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="1dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginHorizontal="12dp"
-                        android:background="@color/dividerColor" />
+                        android:text="@string/stats_section_today"
+                        android:textSize="16sp"
+                        android:textColor="@color/textPrimary"
+                        android:fontFamily="sans-serif-medium"
+                        android:layout_marginBottom="12dp" />
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:gravity="center">
+                        android:orientation="horizontal"
+                        android:baselineAligned="false">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="@string/stats_label_time"
-                            android:textSize="12sp"
-                            android:textColor="@color/textTertiary" />
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center">
 
-                        <TextView
-                            android:id="@+id/tv_time"
-                            android:layout_width="wrap_content"
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/stats_label_distance"
+                                android:textSize="12sp"
+                                android:textColor="@color/textTertiary" />
+
+                            <TextView
+                                android:id="@+id/tv_today_dist"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="20sp"
+                                android:textColor="@color/textPrimary"
+                                android:fontFamily="sans-serif-medium"
+                                android:layout_marginTop="4dp"
+                                tools:text="2.3 km" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginEnd="12dp"
+                            android:background="@color/dividerColor" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:textSize="20sp"
-                            android:textColor="@color/textPrimary"
-                            android:fontFamily="sans-serif-medium"
-                            android:layout_marginTop="4dp"
-                            tools:text="5h 42m" />
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/stats_label_time"
+                                android:textSize="12sp"
+                                android:textColor="@color/textTertiary" />
+
+                            <TextView
+                                android:id="@+id/tv_today_time"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="20sp"
+                                android:textColor="@color/textPrimary"
+                                android:fontFamily="sans-serif-medium"
+                                android:layout_marginTop="4dp"
+                                tools:text="24 min" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginEnd="12dp"
+                            android:background="@color/dividerColor" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/stats_label_calories"
+                                android:textSize="12sp"
+                                android:textColor="@color/textTertiary" />
+
+                            <TextView
+                                android:id="@+id/tv_today_kcal"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="20sp"
+                                android:textColor="@color/textPrimary"
+                                android:fontFamily="sans-serif-medium"
+                                android:layout_marginTop="4dp"
+                                tools:text="180 kcal" />
+                        </LinearLayout>
+
                     </LinearLayout>
-
-                    <View
-                        android:layout_width="1dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginHorizontal="12dp"
-                        android:background="@color/dividerColor" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:gravity="center">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/stats_label_streak"
-                            android:textSize="12sp"
-                            android:textColor="@color/textTertiary" />
-
-                        <TextView
-                            android:id="@+id/tv_streak"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textSize="20sp"
-                            android:textColor="@color/textPrimary"
-                            android:fontFamily="sans-serif-medium"
-                            android:layout_marginTop="4dp"
-                            tools:text="7 días" />
-                    </LinearLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Tarjeta gráfico semanal -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- Card 2 — Gráfico semanal                                   -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_weekly_chart"
                 android:layout_width="match_parent"
@@ -164,23 +187,21 @@
                         android:fontFamily="sans-serif-medium"
                         android:layout_marginBottom="12dp" />
 
-                    <!-- Barras del gráfico -->
                     <LinearLayout
                         android:id="@+id/ll_chart_bars"
                         android:layout_width="match_parent"
                         android:layout_height="@dimen/stats_chart_height"
                         android:orientation="horizontal"
+                        android:baselineAligned="false"
                         android:gravity="bottom"
-                        android:contentDescription="@string/stats_desc_chart">
-
-                        <!-- Las 7 columnas se inflan programáticamente -->
-
-                    </LinearLayout>
+                        android:contentDescription="@string/stats_desc_chart" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Tarjeta objetivo semanal -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- Card 3 — Objetivo semanal                                  -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_weekly_goal"
                 android:layout_width="match_parent"
@@ -196,23 +217,31 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
+                    <!-- Título + chevron como TextView con drawableEnd -->
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:id="@+id/tv_weekly_goal_header"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
                         android:text="@string/stats_section_goal"
                         android:textSize="16sp"
                         android:textColor="@color/textPrimary"
                         android:fontFamily="sans-serif-medium"
-                        android:layout_marginBottom="8dp" />
+                        android:gravity="center_vertical"
+                        android:drawablePadding="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:contentDescription="@string/stats_goal_chevron_desc"
+                        app:drawableEndCompat="@drawable/ic_chevron_right"
+                        app:drawableTint="@color/textTertiary" />
 
                     <TextView
-                        android:id="@+id/tv_goal_remaining"
+                        android:id="@+id/tv_weekly_goal_remaining"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textSize="14sp"
                         android:textColor="@color/textSecondary"
                         android:layout_marginBottom="12dp"
-                        tools:text="Faltan 3.2 km" />
+                        tools:text="Te faltan 3.2 km para tu objetivo" />
 
                     <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/progress_weekly_goal"
@@ -229,10 +258,11 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
+                        android:baselineAligned="false"
                         android:layout_marginTop="8dp">
 
                         <TextView
-                            android:id="@+id/tv_current_progress"
+                            android:id="@+id/tv_weekly_progress"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -241,18 +271,103 @@
                             tools:text="19.5 km" />
 
                         <TextView
-                            android:id="@+id/tv_goal_target"
+                            android:id="@+id/tv_weekly_goal_target"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textSize="12sp"
                             android:textColor="@color/textTertiary"
-                            tools:text="25 km" />
+                            tools:text="50 km" />
 
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Tarjeta actividad reciente -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- Card 4 — Objetivo mensual                                  -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_monthly_goal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/cardBackground"
+                app:cardElevation="0dp"
+                app:cardCornerRadius="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Título + chevron como TextView con drawableEnd -->
+                    <TextView
+                        android:id="@+id/tv_monthly_goal_header"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:text="@string/stats_section_monthly_goal"
+                        android:textSize="16sp"
+                        android:textColor="@color/textPrimary"
+                        android:fontFamily="sans-serif-medium"
+                        android:gravity="center_vertical"
+                        android:drawablePadding="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:contentDescription="@string/stats_goal_chevron_desc"
+                        app:drawableEndCompat="@drawable/ic_chevron_right"
+                        app:drawableTint="@color/textTertiary" />
+
+                    <TextView
+                        android:id="@+id/tv_monthly_goal_remaining"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:textColor="@color/textSecondary"
+                        android:layout_marginBottom="12dp"
+                        tools:text="Te faltan 42.1 km para tu objetivo" />
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/progress_monthly_goal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:max="100"
+                        app:indicatorColor="@color/greenPrimary"
+                        app:trackColor="@color/dividerColor"
+                        app:trackCornerRadius="6dp"
+                        app:trackThickness="12dp"
+                        tools:progress="45" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:baselineAligned="false"
+                        android:layout_marginTop="8dp">
+
+                        <TextView
+                            android:id="@+id/tv_monthly_progress"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textSize="12sp"
+                            android:textColor="@color/textTertiary"
+                            tools:text="67.9 km" />
+
+                        <TextView
+                            android:id="@+id/tv_monthly_goal_target"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:textColor="@color/textTertiary"
+                            tools:text="150 km" />
+
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- Card 5 — Actividad reciente                                -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_recent_activity"
                 android:layout_width="match_parent"
@@ -281,10 +396,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
+                        android:baselineAligned="false"
                         android:layout_marginBottom="12dp">
 
                         <TextView
-                            android:id="@+id/tv_today_label"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -306,10 +421,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
+                        android:baselineAligned="false"
                         android:layout_marginBottom="12dp">
 
                         <TextView
-                            android:id="@+id/tv_yesterday_label"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -330,10 +445,10 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:baselineAligned="false">
 
                         <TextView
-                            android:id="@+id/tv_day2_label"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -354,9 +469,11 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Tarjeta comparación mensual -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- Card 6 — Comparativa mes actual vs anterior                -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_comparison"
+                android:id="@+id/card_month_comparison"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
@@ -371,21 +488,19 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:gravity="center_vertical"
-                        android:text="@string/stats_section_comparison"
-                        android:textSize="13sp"
-                        android:textColor="@color/textSecondary"
-                        app:drawableStartCompat="@drawable/stats_icon"
-                        app:drawableTint="@color/greenPrimary"
-                        android:drawablePadding="8dp" />
+                        android:text="@string/stats_section_month_comparison"
+                        android:textSize="16sp"
+                        android:textColor="@color/textPrimary"
+                        android:fontFamily="sans-serif-medium"
+                        android:layout_marginBottom="16dp" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:baselineAligned="false">
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -401,7 +516,7 @@
                                 android:textColor="@color/textTertiary" />
 
                             <TextView
-                                android:id="@+id/tv_current_month"
+                                android:id="@+id/tv_current_month_dist"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textSize="20sp"
@@ -409,12 +524,22 @@
                                 android:fontFamily="sans-serif-medium"
                                 android:layout_marginTop="4dp"
                                 tools:text="38.6 km" />
+
+                            <TextView
+                                android:id="@+id/tv_current_month_kcal"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="12sp"
+                                android:textColor="@color/textTertiary"
+                                android:layout_marginTop="2dp"
+                                tools:text="2 840 kcal" />
                         </LinearLayout>
 
                         <View
                             android:layout_width="1dp"
                             android:layout_height="match_parent"
-                            android:layout_marginHorizontal="16dp"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginEnd="16dp"
                             android:background="@color/dividerColor" />
 
                         <LinearLayout
@@ -431,7 +556,7 @@
                                 android:textColor="@color/textTertiary" />
 
                             <TextView
-                                android:id="@+id/tv_previous_month"
+                                android:id="@+id/tv_previous_month_dist"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textSize="20sp"
@@ -439,13 +564,316 @@
                                 android:fontFamily="sans-serif-medium"
                                 android:layout_marginTop="4dp"
                                 tools:text="32.7 km" />
+
+                            <TextView
+                                android:id="@+id/tv_previous_month_kcal"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="12sp"
+                                android:textColor="@color/textTertiary"
+                                android:layout_marginTop="2dp"
+                                tools:text="2 410 kcal" />
                         </LinearLayout>
 
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Sección historial -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- Card 7 — Comparativa semana actual vs anterior             -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_week_comparison"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/cardBackground"
+                app:cardElevation="0dp"
+                app:cardCornerRadius="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/stats_section_week_comparison"
+                        android:textSize="16sp"
+                        android:textColor="@color/textPrimary"
+                        android:fontFamily="sans-serif-medium"
+                        android:layout_marginBottom="16dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:baselineAligned="false">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/stats_period_this_week"
+                                android:textSize="12sp"
+                                android:textColor="@color/textTertiary" />
+
+                            <TextView
+                                android:id="@+id/tv_current_week_dist"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="20sp"
+                                android:textColor="@color/textPrimary"
+                                android:fontFamily="sans-serif-medium"
+                                android:layout_marginTop="4dp"
+                                tools:text="19.5 km" />
+
+                            <TextView
+                                android:id="@+id/tv_current_week_kcal"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="12sp"
+                                android:textColor="@color/textTertiary"
+                                android:layout_marginTop="2dp"
+                                tools:text="1 420 kcal" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginEnd="16dp"
+                            android:background="@color/dividerColor" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/stats_period_prev_week"
+                                android:textSize="12sp"
+                                android:textColor="@color/textTertiary" />
+
+                            <TextView
+                                android:id="@+id/tv_previous_week_dist"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="20sp"
+                                android:textColor="@color/textPrimary"
+                                android:fontFamily="sans-serif-medium"
+                                android:layout_marginTop="4dp"
+                                tools:text="24.1 km" />
+
+                            <TextView
+                                android:id="@+id/tv_previous_week_kcal"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="12sp"
+                                android:textColor="@color/textTertiary"
+                                android:layout_marginTop="2dp"
+                                tools:text="1 780 kcal" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- Card 8 — Totales históricos + racha                        -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_totals"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/cardBackground"
+                app:cardElevation="0dp"
+                app:cardCornerRadius="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/stats_section_totals"
+                        android:textSize="16sp"
+                        android:textColor="@color/textPrimary"
+                        android:fontFamily="sans-serif-medium"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:baselineAligned="false">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/stats_label_distance"
+                                android:textSize="11sp"
+                                android:textColor="@color/textTertiary" />
+
+                            <TextView
+                                android:id="@+id/tv_total_distance"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="16sp"
+                                android:textColor="@color/textPrimary"
+                                android:fontFamily="sans-serif-medium"
+                                android:layout_marginTop="4dp"
+                                tools:text="142.3 km" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/stats_label_time"
+                                android:textSize="11sp"
+                                android:textColor="@color/textTertiary" />
+
+                            <TextView
+                                android:id="@+id/tv_total_time"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="16sp"
+                                android:textColor="@color/textPrimary"
+                                android:fontFamily="sans-serif-medium"
+                                android:layout_marginTop="4dp"
+                                tools:text="14h 22m" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/stats_label_calories"
+                                android:textSize="11sp"
+                                android:textColor="@color/textTertiary" />
+
+                            <TextView
+                                android:id="@+id/tv_total_kcal"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="16sp"
+                                android:textColor="@color/textPrimary"
+                                android:fontFamily="sans-serif-medium"
+                                android:layout_marginTop="4dp"
+                                tools:text="10 840 kcal" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/stats_label_streak"
+                                android:textSize="11sp"
+                                android:textColor="@color/textTertiary" />
+
+                            <TextView
+                                android:id="@+id/tv_streak"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="16sp"
+                                android:textColor="@color/textPrimary"
+                                android:fontFamily="sans-serif-medium"
+                                android:layout_marginTop="4dp"
+                                tools:text="7 días" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- Card 9 — Historial por semanas (calendario)                -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_calendar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/cardBackground"
+                app:cardElevation="0dp"
+                app:cardCornerRadius="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/stats_section_calendar"
+                        android:textSize="16sp"
+                        android:textColor="@color/textPrimary"
+                        android:fontFamily="sans-serif-medium"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout
+                        android:id="@+id/ll_calendar_blocks"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_calendar_more"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/stats_calendar_btn_more"
+                        android:visibility="gone"
+                        app:iconGravity="end" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Historial de actividades -->
             <TextView
                 android:id="@+id/tv_history_title"
                 android:layout_width="wrap_content"

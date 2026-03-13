@@ -24,6 +24,7 @@ import com.proyecto.moveon.data.local.db.AppDatabase;
 import com.proyecto.moveon.data.local.entity.PerfilCacheEntity;
 import com.proyecto.moveon.data.local.entity.PerfilPendingPatchEntity;
 import com.proyecto.moveon.data.profile.dto.ProfileInfoDto;
+import com.proyecto.moveon.data.profile.UserPrefsRepository;
 import com.proyecto.moveon.data.profile.local.PerfilLocalDataSource;
 import com.proyecto.moveon.data.profile.local.ProfilePhotoStorage;
 import com.proyecto.moveon.data.profile.remote.PerfilRemoteDataSource;
@@ -58,6 +59,7 @@ public class PerfilRepository {
     private final Context appContext;
     private final PerfilLocalDataSource local;
     private final PerfilRemoteDataSource remote;
+    private final UserPrefsRepository userPrefsRepository;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final Gson gson = new Gson();
 
@@ -66,6 +68,7 @@ public class PerfilRepository {
         AppDatabase db = AppDatabase.getInstance(appContext);
         this.local = new PerfilLocalDataSource(db);
         this.remote = new PerfilRemoteDataSource(appContext);
+        this.userPrefsRepository = new UserPrefsRepository(appContext);
     }
 
     public LiveData<PerfilUsuario> observePerfil(@NonNull String accountKey) {
@@ -328,6 +331,9 @@ public class PerfilRepository {
         entity.fotoVersion     = dto.fotoVersion;
         entity.perfilVisible   = dto.perfilVisible;
         entity.totalPuntos     = dto.totalPuntos;
+        entity.totalCalorias          = dto.totalCalorias;
+        entity.objetivoSemanalMetros  = dto.objetivoSemanalMetros;
+        entity.objetivoMensualMetros  = dto.objetivoMensualMetros;
 
         if (preferPendingPhoto && previous != null && StringUtils.hasText(previous.pendingLocalPhotoPath)) {
             try {
@@ -407,6 +413,13 @@ public class PerfilRepository {
             entity.lastSyncedAtMs = entity.lastFetchedAtMs;
         }
 
+        // Sincronizar objetivos con UserPrefsRepository para que StatsViewModel los reciba
+        userPrefsRepository.syncFromServer(
+                accountKey,
+                entity.objetivoSemanalMetros,
+                entity.objetivoMensualMetros
+        );
+
         local.saveCache(entity);
     }
 
@@ -469,6 +482,9 @@ public class PerfilRepository {
         e.photoLastError        = null;
         e.perfilVisible         = true;
         e.totalPuntos           = 0;
+        e.totalCalorias         = 0L;
+        e.objetivoSemanalMetros = 50_000L;
+        e.objetivoMensualMetros = 150_000L;
         e.dirty                 = false;
         e.lastFetchedAtMs       = 0L;
         e.lastSyncedAtMs        = 0L;
@@ -495,6 +511,9 @@ public class PerfilRepository {
         e.photoLastError        = source.photoLastError;
         e.perfilVisible         = source.perfilVisible;
         e.totalPuntos           = source.totalPuntos;
+        e.totalCalorias         = source.totalCalorias;
+        e.objetivoSemanalMetros = source.objetivoSemanalMetros;
+        e.objetivoMensualMetros = source.objetivoMensualMetros;
         e.dirty                 = source.dirty;
         e.lastFetchedAtMs       = source.lastFetchedAtMs;
         e.lastSyncedAtMs        = source.lastSyncedAtMs;
@@ -546,6 +565,12 @@ public class PerfilRepository {
         }
         if (patch.has("perfil_visible") && !patch.get("perfil_visible").isJsonNull()) {
             cache.perfilVisible = patch.get("perfil_visible").getAsBoolean();
+        }
+        if (patch.has("objetivo_semanal_metros") && !patch.get("objetivo_semanal_metros").isJsonNull()) {
+            cache.objetivoSemanalMetros = patch.get("objetivo_semanal_metros").getAsLong();
+        }
+        if (patch.has("objetivo_mensual_metros") && !patch.get("objetivo_mensual_metros").isJsonNull()) {
+            cache.objetivoMensualMetros = patch.get("objetivo_mensual_metros").getAsLong();
         }
     }
 

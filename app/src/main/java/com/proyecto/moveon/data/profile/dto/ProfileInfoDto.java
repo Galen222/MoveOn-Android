@@ -19,4 +19,7 @@ public final class ProfileInfoDto {
     @SerializedName("foto_version")     public int     fotoVersion;
     @SerializedName("perfil_visible")   public boolean perfilVisible;
     @SerializedName("total_puntos")     public int     totalPuntos;
+    @SerializedName("total_calorias")          public long    totalCalorias;
+    @SerializedName("objetivo_semanal_metros") public long    objetivoSemanalMetros;
+    @SerializedName("objetivo_mensual_metros") public long    objetivoMensualMetros;
 }
