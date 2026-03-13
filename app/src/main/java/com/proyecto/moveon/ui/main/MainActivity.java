@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
 
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
-        if (!viewModel.isLoggedIn()) {
+        if (viewModel.isNotLoggedIn()) {
             goToLoginAndFinish();
             return;
         }
@@ -79,27 +79,27 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState != null) {
             selectedItemId = savedInstanceState.getInt(KEY_SELECTED_ITEM, R.id.nav_inicio);
-            Fragment fInicio = fragmentManager.findFragmentByTag(TAG_INICIO);
-            Fragment fStats = fragmentManager.findFragmentByTag(TAG_STATS);
+            Fragment fInicio  = fragmentManager.findFragmentByTag(TAG_INICIO);
+            Fragment fStats   = fragmentManager.findFragmentByTag(TAG_STATS);
             Fragment fProfile = fragmentManager.findFragmentByTag(TAG_PROFILE);
 
-            if (fInicio instanceof InicioFragment) inicioFragment = (InicioFragment) fInicio;
-            if (fStats instanceof StatsFragment) statsFragment = (StatsFragment) fStats;
+            if (fInicio  instanceof InicioFragment)  inicioFragment  = (InicioFragment)  fInicio;
+            if (fStats   instanceof StatsFragment)   statsFragment   = (StatsFragment)   fStats;
             if (fProfile instanceof ProfileFragment) profileFragment = (ProfileFragment) fProfile;
         } else {
-            inicioFragment = new InicioFragment();
-            statsFragment = new StatsFragment();
+            inicioFragment  = new InicioFragment();
+            statsFragment   = new StatsFragment();
             profileFragment = new ProfileFragment();
 
             FragmentTransaction tx = fragmentManager.beginTransaction();
             tx.setReorderingAllowed(true);
 
-            tx.add(R.id.frame_layout, inicioFragment, TAG_INICIO);
-            tx.add(R.id.frame_layout, statsFragment, TAG_STATS).hide(statsFragment);
+            tx.add(R.id.frame_layout, inicioFragment,  TAG_INICIO);
+            tx.add(R.id.frame_layout, statsFragment,   TAG_STATS).hide(statsFragment);
             tx.add(R.id.frame_layout, profileFragment, TAG_PROFILE).hide(profileFragment);
 
-            tx.setMaxLifecycle(inicioFragment, Lifecycle.State.RESUMED);
-            tx.setMaxLifecycle(statsFragment, Lifecycle.State.STARTED);
+            tx.setMaxLifecycle(inicioFragment,  Lifecycle.State.RESUMED);
+            tx.setMaxLifecycle(statsFragment,   Lifecycle.State.STARTED);
             tx.setMaxLifecycle(profileFragment, Lifecycle.State.STARTED);
 
             tx.commitNow();
@@ -158,8 +158,8 @@ public class MainActivity extends AppCompatActivity {
         FragmentTransaction tx = fragmentManager.beginTransaction();
         tx.setReorderingAllowed(true);
 
-        ensureAdded(tx, inicioFragment, TAG_INICIO);
-        ensureAdded(tx, statsFragment, TAG_STATS);
+        ensureAdded(tx, inicioFragment,  TAG_INICIO);
+        ensureAdded(tx, statsFragment,   TAG_STATS);
         ensureAdded(tx, profileFragment, TAG_PROFILE);
 
         if (inicioFragment != null && inicioFragment != target) {
@@ -193,8 +193,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Si el usuario vuelve a la app desde el fondo y la sesión ha muerto, lo expulsamos
-        if (!viewModel.isLoggedIn()) {
+        // Si el usuario vuelve a la app desde el fondo y la sesión ha muerto, lo expulsamos.
+        if (viewModel.isNotLoggedIn()) {
             goToLoginAndFinish();
         }
     }

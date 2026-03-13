@@ -1,15 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">MoveOn</string>
-    <string name="inicio">INICIO</string>
-    <string name="Inicio_fragment_inicio_xml">Inicio</string>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Navegación -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  APP                                                                   -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <string name="app_name">MoveOn</string>
+
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  NAVEGACIÓN                                                            -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="nav_inicio">Inicio</string>
     <string name="nav_stats">Stats</string>
     <string name="nav_perfil">Perfil</string>
 
-    <!-- Login - Textos UI -->
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  INICIO                                                                -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Textos UI -->
+    <string name="inicio">INICIO</string>
+    <string name="Inicio_fragment_inicio_xml">Inicio</string>
+    <string name="inicio_walking">Andando</string>
+    <string name="inicio_running">Corriendo</string>
+
+    <!-- ContentDescriptions -->
+    <string name="inicio_desc_add">Añadir</string>
+    <string name="inicio_desc_map">Mapa</string>
+    <string name="inicio_desc_location">Ubicación actual</string>
+    <string name="inicio_desc_walking">Icono andando</string>
+    <string name="inicio_desc_running">Icono corriendo</string>
+    <string name="inicio_desc_stop">Detener</string>
+    <string name="inicio_desc_play">Iniciar</string>
+    <string name="inicio_desc_reset">Reiniciar</string>
+
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  LOGIN                                                                 -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Textos UI -->
     <string name="login_titulo">Bienvenido a MoveOn</string>
     <string name="login_subtitulo">Inicia sesión para continuar</string>
     <string name="login_hint_usuario_correo">Usuario o Correo Electrónico</string>
@@ -20,21 +51,24 @@
     <string name="login_olvidaste_password">¿Olvidaste tu contraseña?</string>
     <string name="login_divisor">O</string>
     <string name="login_bienvenido">Bienvenido, %1$s</string>
+    <string name="login_recordar_cuenta">Recordar cuenta</string>
 
-    <!-- Login - Errores -->
+    <!-- Errores -->
     <string name="login_error_identificador_vacio">Introduce tu correo o usuario</string>
     <string name="login_error_password_vacio">Introduce tu contraseña</string>
 
-    <!-- Login - Recordar cuenta -->
-    <string name="login_recordar_cuenta">Recordar cuenta</string>
-
-    <!-- Login - ContentDescriptions -->
+    <!-- ContentDescriptions -->
     <string name="login_logo_desc">Logo de MoveOn</string>
     <string name="login_btn_entrar_desc">Botón para iniciar sesión</string>
     <string name="login_btn_registrar_desc">Botón para ir a la pantalla de registro</string>
     <string name="login_olvidaste_desc">Enlace para recuperar tu contraseña</string>
 
-    <!-- Registro - Textos UI -->
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  REGISTRO                                                              -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Textos UI -->
     <string name="registro_titulo">Crear cuenta</string>
     <string name="registro_subtitulo">Únete a MoveOn hoy</string>
     <string name="registro_hint_usuario">Usuario</string>
@@ -47,7 +81,7 @@
     <string name="registro_ya_tienes_cuenta">¿Ya tienes cuenta?</string>
     <string name="registro_iniciar_sesion">Iniciar sesión</string>
 
-    <!-- Registro - Errores -->
+    <!-- Errores -->
     <string name="registro_error_usuario_vacio">El nombre de usuario es obligatorio</string>
     <string name="registro_error_usuario_corto">Mínimo 5 caracteres</string>
     <string name="registro_error_usuario_formato">Solo letras y números, sin espacios</string>
@@ -57,15 +91,15 @@
     <string name="registro_error_password_vacio">La contraseña es obligatoria</string>
     <string name="registro_error_password_corta">La contraseña debe tener al menos 8 caracteres</string>
     <string name="registro_error_passwords_distintas">Las contraseñas no coinciden</string>
-    <!-- no se esta usando -->
-    <string name="registro_error_confirmar_vacio">Confirma tu contraseña</string>
+    <string name="registro_error_confirmar_vacio">Confirma tu contraseña</string><!-- no se está usando -->
+    <string name="registro_error_fecha_menor_edad">Debes ser mayor de 18 años para registrarte</string>
 
-    <!-- Registro - ContentDescriptions -->
+    <!-- ContentDescriptions -->
     <string name="registro_logo_desc">Logo de MoveOn</string>
     <string name="registro_btn_crear_desc">Botón para crear una cuenta nueva</string>
     <string name="registro_iniciar_sesion_desc">Enlace para ir a iniciar sesión</string>
 
-    <!-- Registro - EULA -->
+    <!-- EULA -->
     <string name="registro_eula_texto">He leído y acepto los %1$s y la %2$s de MoveOn</string>
     <string name="registro_eula_link_terminos">Términos y condiciones</string>
     <string name="registro_eula_link_politica">Política de privacidad</string>
@@ -74,43 +108,142 @@
     <string name="registro_eula_btn_aceptar">Acepto</string>
     <string name="registro_eula_btn_cerrar">Cerrar</string>
     <string name="registro_error_eula_no_aceptado">Debes aceptar los Términos y la Política de privacidad para continuar</string>
-    <string name="registro_error_fecha_menor_edad">Debes ser mayor de 18 años para registrarte</string>
     <string name="registro_eula_desc">Casilla para aceptar los Términos y condiciones y la Política de privacidad</string>
-    <string name="registro_eula_contenido_terminos">TÉRMINOS Y CONDICIONES DE USO\nVersión 1.0 — Vigente desde el 1 de junio de 2025\n\n1. ACEPTACIÓN\nAl crear una cuenta en MoveOn aceptas estos Términos en su totalidad. Si no estás de acuerdo, no uses la aplicación.\n\n2. EDAD MÍNIMA\nMoveOn está dirigida exclusivamente a personas mayores de 18 años. Al registrarte declaras que cumples este requisito. Nos reservamos el derecho a cancelar cuentas que incumplan esta condición.\n\n3. DESCRIPCIÓN DEL SERVICIO\nMoveOn es una aplicación de registro y seguimiento de actividad física (rutas, distancias y estadísticas personales). El servicio se ofrece tal cual y puede sufrir cambios o interrupciones en cualquier momento.\n\n4. CUENTA DE USUARIO\nEres responsable de mantener la confidencialidad de tus credenciales y de toda actividad realizada desde tu cuenta. Notifícanos de inmediato cualquier uso no autorizado.\n\n5. USO ACEPTABLE\nQueda prohibido: (a) usar la aplicación con fines ilegales; (b) intentar acceder a datos de otros usuarios; © realizar ingeniería inversa sobre el software; (d) publicar contenido ofensivo o falso.\n\n6. PROPIEDAD INTELECTUAL\nTodos los derechos sobre MoveOn, incluyendo el diseño, código fuente y marca, son propiedad de sus titulares. No se concede ninguna licencia fuera del uso personal y no comercial de la aplicación.\n\n7. LIMITACIÓN DE RESPONSABILIDAD\nMoveOn no garantiza la precisión de los datos de actividad ni su idoneidad para fines médicos o deportivos profesionales. No nos hacemos responsables de daños derivados del uso de la aplicación.\n\n8. MODIFICACIONES\nPodemos actualizar estos Términos en cualquier momento. El uso continuado implica la aceptación de los nuevos Términos.\n\n9. LEGISLACIÓN APLICABLE\nEstos Términos se rigen por la legislación española. \n\n10. CONTACTO\nPara cualquier consulta sobre estos Términos escríbenos a: info.moveon.app@gmail.com</string>
+    <string name="registro_eula_contenido_terminos" tools:ignore="Typos">TÉRMINOS Y CONDICIONES DE USO\nVersión 1.0 — Vigente desde el 1 de junio de 2025\n\n1. ACEPTACIÓN\nAl crear una cuenta en MoveOn aceptas estos Términos en su totalidad. Si no estás de acuerdo, no uses la aplicación.\n\n2. EDAD MÍNIMA\nMoveOn está dirigida exclusivamente a personas mayores de 18 años. Al registrarte declaras que cumples este requisito. Nos reservamos el derecho a cancelar cuentas que incumplan esta condición.\n\n3. DESCRIPCIÓN DEL SERVICIO\nMoveOn es una aplicación de registro y seguimiento de actividad física (rutas, distancias y estadísticas personales). El servicio se ofrece tal cual y puede sufrir cambios o interrupciones en cualquier momento.\n\n4. CUENTA DE USUARIO\nEres responsable de mantener la confidencialidad de tus credenciales y de toda actividad realizada desde tu cuenta. Notifícanos de inmediato cualquier uso no autorizado.\n\n5. USO ACEPTABLE\nQueda prohibido: (a) usar la aplicación con fines ilegales; (b) intentar acceder a datos de otros usuarios; © realizar ingeniería inversa sobre el software; (d) publicar contenido ofensivo o falso.\n\n6. PROPIEDAD INTELECTUAL\nTodos los derechos sobre MoveOn, incluyendo el diseño, código fuente y marca, son propiedad de sus titulares. No se concede ninguna licencia fuera del uso personal y no comercial de la aplicación.\n\n7. LIMITACIÓN DE RESPONSABILIDAD\nMoveOn no garantiza la precisión de los datos de actividad ni su idoneidad para fines médicos o deportivos profesionales. No nos hacemos responsables de daños derivados del uso de la aplicación.\n\n8. MODIFICACIONES\nPodemos actualizar estos Términos en cualquier momento. El uso continuado implica la aceptación de los nuevos Términos.\n\n9. LEGISLACIÓN APLICABLE\nEstos Términos se rigen por la legislación española. \n\n10. CONTACTO\nPara cualquier consulta sobre estos Términos escríbenos a: info.moveon.app@gmail.com</string>
     <string name="registro_eula_contenido_politica">POLÍTICA DE PRIVACIDAD\nVersión 1.0 — Vigente desde el 1 de junio de 2025\n\nResponsable del tratamiento: MoveOn App\nContacto: privacidad@moveon.app\n\n1. DATOS QUE RECOGEMOS\n• Datos de cuenta: nombre de usuario, correo electrónico, contraseña (cifrada) y fecha de nacimiento.\n• Datos de actividad: rutas GPS, distancias, tiempos y estadísticas de ejercicio.\n• Datos de aceptación legal: fecha y versión de aceptación de estos términos (obligatorio por RGPD).\n• Datos técnicos: modelo de dispositivo, versión del sistema operativo e identificadores de sesión.\n\n2. FINALIDAD Y BASE LEGAL\nTratamos tus datos para: (a) prestarte el servicio de seguimiento de actividad — ejecución de contrato (art. 6.1. b RGPD); (b) mejorar la aplicación mediante estadísticas agregadas — interés legítimo (art. 6.1. f RGPD); © cumplir obligaciones legales (art. 6.1.c RGPD).\n\n3. DATOS DE LOCALIZACIÓN\nMoveOn accede a tu ubicación GPS únicamente mientras registras una actividad y con tu consentimiento expreso. Los datos de ruta se almacenan en nuestros servidores para mostrarte tu historial. Puedes eliminar cualquier ruta desde la propia aplicación.\n\n4. CONSERVACIÓN\nConservamos tus datos mientras mantengas una cuenta activa. Tras la eliminación de la cuenta, los datos se borran en un plazo máximo de 30 días, salvo obligación legal de conservación.\n\n5. DESTINATARIOS\nNo vendemos tus datos a terceros. Podemos compartirlos con proveedores de infraestructura (alojamiento en la UE) bajo acuerdos de encargado del tratamiento conformes al RGPD.\n\n6. TUS DERECHOS\nTienes derecho a acceder, rectificar, suprimir, oponerte y solicitar la portabilidad de tus datos. Ejércelos escribiendo a privacidad@moveon.app. También puedes reclamar ante la Agencia Española de Protección de Datos (aepd.es).\n\n7. SEGURIDAD\nAplicamos cifrado TLS en todas las comunicaciones y almacenamos las contraseñas usando algoritmos de hash seguros (bcrypt). Adoptamos medidas técnicas y organizativas para proteger tus datos.\n\n8. MENORES\nMoveOn no está dirigida a menores de 18 años y no recogemos conscientemente datos de menores. Si detectamos una cuenta de un menor, la eliminaremos de inmediato.\n\n9. CAMBIOS EN ESTA POLÍTICA\nNotificaremos cualquier cambio relevante a través de la aplicación con al menos 15 días de antelación.\n\n10. CONTACTO\nPara ejercer tus derechos o resolver dudas: info.moveon.app@gmail.com</string>
 
-    <!-- Inicio - Textos UI -->
-    <string name="inicio_walking">Andando</string>
-    <string name="inicio_running">Corriendo</string>
-    <string name="inicio_desc_add">Añadir</string>
-    <string name="inicio_desc_map">Mapa</string>
-    <string name="inicio_desc_location">Ubicación actual</string>
-    <string name="inicio_desc_walking">Icono andando</string>
-    <string name="inicio_desc_running">Icono corriendo</string>
-    <string name="inicio_desc_stop">Detener</string>
-    <string name="inicio_desc_play">Iniciar</string>
-    <string name="inicio_desc_reset">Reiniciar</string>
 
-    <!-- Stats - Textos UI -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  RECUPERAR CONTRASEÑA                                                  -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Textos UI -->
+    <string name="forgot_title">Recuperar contraseña</string>
+    <string name="forgot_description_step1">Introduce tu correo y te enviaremos un código de verificación.</string>
+    <string name="forgot_description_step2">Introduce el código que recibiste y tu nueva contraseña.</string>
+    <string name="forgot_hint_email">Correo electrónico</string>
+    <string name="forgot_hint_codigo">Código de verificación</string>
+    <string name="forgot_hint_password_nueva">Nueva contraseña</string>
+    <string name="forgot_hint_password_confirmar">Confirmar nueva contraseña</string>
+
+    <!-- Botones -->
+    <string name="forgot_btn_enviar_codigo">Enviar código</string>
+    <string name="forgot_btn_enviando_codigo">Enviando…</string>
+    <string name="forgot_btn_cambiar_password">Cambiar contraseña</string>
+    <string name="forgot_btn_cambiando_password">Cambiando…</string>
+    <string name="forgot_btn_volver_login">Volver al inicio de sesión</string>
+
+    <!-- Errores -->
+    <string name="forgot_error_email_vacio">Introduce tu correo electrónico.</string>
+    <string name="forgot_error_email_formato">El correo no tiene un formato válido.</string>
+    <string name="forgot_error_codigo_vacio">Introduce el código de verificación.</string>
+    <string name="forgot_error_password_vacia">Introduce la nueva contraseña.</string>
+    <string name="forgot_error_password_corta">La contraseña debe tener al menos 8 caracteres.</string>
+    <string name="forgot_error_passwords_distintas">Las contraseñas no coinciden.</string>
+
+    <!-- Toasts -->
+    <string name="forgot_toast_codigo_enviado">Código enviado. Revisa tu correo.</string>
+    <string name="forgot_toast_password_cambiada">Contraseña cambiada. Ya puedes iniciar sesión.</string>
+
+    <!-- ContentDescriptions -->
+    <string name="forgot_logo_desc">Logo MoveOn</string>
+
+    <!-- Repositorio -->
+    <string name="repo_recuperacion_enviada">Código de recuperación enviado.</string>
+    <string name="repo_password_reseteada">Contraseña actualizada correctamente.</string>
+
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  TRACKING                                                              -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Notificación primer plano -->
+    <string name="tracking_notification_channel_name">Tracking activo</string>
+    <string name="tracking_notification_channel_desc">Muestra el estado del tracking mientras la app está en segundo plano</string>
+    <string name="tracking_notification_title">MoveOn — Actividad en curso</string>
+
+    <!-- Métricas por defecto -->
+    <string name="tracking_default_time">00:00</string>
+    <string name="tracking_default_distance">0 m</string>
+    <string name="tracking_default_calories">0 kcal</string>
+    <string name="tracking_label_time">TIEMPO</string>
+    <string name="tracking_label_distance">DISTANCIA</string>
+    <string name="tracking_label_cal">CAL</string>
+
+    <!-- Formatos de métricas -->
+    <string name="tracking_calories_format">%1$d kcal</string>
+    <string name="tracking_distance_m_format">%1$d m</string>
+    <string name="tracking_distance_km_format">%1$.2f km</string>
+
+    <!-- Diálogo Stop -->
+    <string name="tracking_dialog_stop_title">Finalizar actividad</string>
+    <string name="tracking_dialog_stop_message">¿Quieres finalizar y guardar la actividad?</string>
+    <string name="tracking_dialog_stop_confirm">Guardar</string>
+    <string name="tracking_dialog_stop_cancel">Cancelar</string>
+
+    <!-- Diálogo Reset -->
+    <string name="tracking_dialog_reset_title">Descartar actividad</string>
+    <string name="tracking_dialog_reset_message">¿Estás seguro de que quieres descartar la actividad en curso? Los datos se perderán.</string>
+    <string name="tracking_dialog_reset_confirm">Descartar</string>
+    <string name="tracking_dialog_reset_cancel">Cancelar</string>
+
+    <!-- Diálogo nueva actividad (btn_add con tracking activo) -->
+    <string name="tracking_dialog_new_activity_title">Nueva actividad</string>
+    <string name="tracking_dialog_new_activity_message">Hay una actividad en curso. ¿Quieres descartarla e iniciar una nueva?</string>
+    <string name="tracking_dialog_new_activity_confirm">Iniciar nueva</string>
+    <string name="tracking_dialog_new_activity_cancel">Cancelar</string>
+
+    <!-- Feedback -->
+    <string name="tracking_activity_saved_ok">¡Actividad guardada correctamente!</string>
+    <string name="tracking_permission_denied">Se necesita permiso de ubicación para registrar la actividad.</string>
+
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  STATS                                                                 -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Textos UI -->
     <string name="stats_title">Estadísticas</string>
     <string name="stats_label_distance">Distancia</string>
     <string name="stats_label_time">Tiempo</string>
     <string name="stats_label_streak">Racha</string>
+
+    <!-- Secciones -->
     <string name="stats_section_chart">Gráfico Semanal</string>
     <string name="stats_section_goal">Objetivo Semanal</string>
     <string name="stats_section_recent">Actividad Reciente</string>
     <string name="stats_section_comparison">Comparación este mes - anterior</string>
+    <string name="stats_section_history">Historial</string>
+
+    <!-- Periodos -->
     <string name="stats_period_today">Hoy</string>
     <string name="stats_period_yesterday">Ayer</string>
     <string name="stats_period_two_days_ago">Hace dos días</string>
     <string name="stats_period_this_month">Este mes</string>
     <string name="stats_period_prev_month">Anterior</string>
-    <string name="stats_desc_chart">Gráfico semanal</string>
-    <string name="stats_format_kcal">%1$d kcal</string>
-    <!-- no se esta usando -->
-    <string name="stats_desc_compare_icon">Icono comparación</string>
 
-    <!-- Stats — Eliminar actividad -->
+    <!-- Formatos -->
+    <string name="stats_format_km">%.2f km</string>
+    <string name="stats_format_time_hm">%1$dh %2$dm</string>
+    <string name="stats_format_time_m">%1$d min</string>
+    <string name="stats_format_streak">%1$d días</string>
+    <string name="stats_format_kcal">%1$d kcal</string>
+
+    <!-- Objetivo semanal -->
+    <string name="stats_goal_remaining_format">Te faltan %1$s para tu objetivo</string>
+    <string name="stats_weekly_goal_done">¡Objetivo semanal completado!</string>
+
+    <!-- Estado vacío -->
+    <string name="stats_empty_title">Sin actividad aún</string>
+    <string name="stats_empty_subtitle">Empieza a moverte y aquí verás tu progreso</string>
+    <string name="stats_btn_retry">Reintentar</string>
+
+    <!-- Ítem actividad -->
+    <string name="stats_desc_activity_icon">Icono de actividad</string>
+    <string name="stats_pending_badge">Pendiente de sync</string>
+    <string name="stats_desc_delete">Eliminar actividad</string>
+
+    <!-- Eliminar actividad -->
     <string name="stats_delete_title">Eliminar actividad</string>
     <string name="stats_delete_message">¿Estás seguro de que quieres eliminar esta actividad? Esta acción no se puede deshacer.</string>
     <string name="stats_delete_confirm">Eliminar</string>
@@ -118,97 +251,107 @@
     <string name="stats_delete_no_sync">No se puede eliminar una actividad pendiente de sincronizar</string>
     <string name="stats_delete_error">No se pudo eliminar la actividad</string>
 
-    <!-- Stats — Historial -->
-    <string name="stats_section_history">Historial</string>
-
-    <!-- Stats — Estado vacío -->
-    <string name="stats_empty_title">Sin actividad aún</string>
-    <string name="stats_empty_subtitle">Empieza a moverte y aquí verás tu progreso</string>
-    <string name="stats_btn_retry">Reintentar</string>
-
-    <!-- Stats — Item actividad -->
-    <string name="stats_desc_activity_icon">Icono de actividad</string>
-    <string name="stats_pending_badge">Pendiente de sync</string>
-    <string name="stats_desc_delete">Eliminar actividad</string>
-
-    <!-- Stats — Objetivo semanal -->
-    <string name="stats_goal_remaining_format">Te faltan %1$s para tu objetivo</string>
-    <string name="stats_weekly_goal_done">¡Objetivo semanal completado!</string>
-
-    <!-- Stats — Formatos -->
-    <string name="stats_format_km">%.2f km</string>
-    <string name="stats_format_time_hm">%1$dh %2$dm</string>
-    <string name="stats_format_time_m">%1$d min</string>
-    <string name="stats_format_streak">%1$d días</string>
+    <!-- ContentDescriptions -->
+    <string name="stats_desc_chart">Gráfico semanal</string>
+    <string name="stats_desc_compare_icon">Icono comparación</string><!-- no se está usando -->
 
 
-    <!-- Perfil — cabecera -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  PERFIL                                                                -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Cabecera -->
     <string name="profile_default_username">Usuario</string>
     <string name="profile_default_email">Sin correo disponible</string>
     <string name="profile_not_indicated">No indicada</string>
     <string name="profile_points_format">%1$d puntos</string>
+    <string name="profile_puntos_formato">%1$d puntos</string>
 
-    <!-- Perfil — labels campos -->
+    <!-- Labels campos -->
     <string name="profile_label_fullname">Nombre completo</string>
     <string name="profile_label_email">Correo electrónico</string>
     <string name="profile_label_birthdate">Fecha de nacimiento</string>
+    <string name="profile_label_birthdate_hint">Fecha de nacimiento (AAAA-MM-DD)</string>
     <string name="profile_label_provincia">Provincia</string>
     <string name="profile_label_genero">Género</string>
     <string name="profile_label_altura">Altura</string>
     <string name="profile_label_peso">Peso</string>
 
-    <!-- Perfil — formatos de valor -->
+    <!-- Formatos de valor -->
     <string name="profile_altura_format">%1$d cm</string>
+    <string name="profile_altura_formato">%1$d cm</string>
     <string name="profile_peso_format">%1$.1f kg</string>
+    <string name="profile_peso_formato">%.1f kg</string>
 
-    <!-- Perfil — hints diálogos de número -->
+    <!-- Hints diálogos de número -->
     <string name="profile_altura_hint">Altura en cm (ej: 175)</string>
     <string name="profile_peso_hint">Peso en kg (ej: 70.5)</string>
 
-    <!-- Perfil — secciones tarjetas -->
+    <!-- Provincia -->
+    <string name="profile_provincia_no_indicar">No indicar</string>
+
+    <!-- Secciones tarjetas -->
     <string name="profile_section_personal">Información personal</string>
     <string name="profile_section_community">Comunidad</string>
     <string name="profile_section_preferences">Privacidad y apariencia</string>
 
-    <!-- Perfil — ítems comunidad -->
+    <!-- Ítems comunidad -->
     <string name="profile_item_ranking">Ranking</string>
     <string name="profile_item_share_routes">Compartir rutas</string>
     <string name="profile_item_notifications">Notificaciones</string>
 
-    <!-- Perfil — ítems preferencias -->
+    <!-- Ítems preferencias -->
     <string name="profile_item_public_profile">Perfil público</string>
     <string name="profile_item_theme">Tema</string>
     <string name="profile_theme_light">Claro</string>
     <string name="profile_theme_dark">Oscuro</string>
     <string name="profile_theme_auto">Auto</string>
 
-    <!-- Perfil — botones -->
+    <!-- Botones -->
     <string name="profile_btn_logout">Cerrar sesión</string>
     <string name="profile_btn_logging_out">Saliendo…</string>
 
-    <!-- Perfil — foto -->
+    <!-- Foto -->
     <string name="profile_desc_picture">Foto de perfil</string>
     <string name="profile_desc_change_photo">Cambiar foto de perfil</string>
     <string name="profile_photo_ok">Foto actualizada correctamente</string>
     <string name="profile_error_photo_read">No se pudo leer la imagen seleccionada</string>
+    <string name="profile_error_photo_format">Solo se aceptan imágenes JPG o PNG</string>
 
-    <!-- Perfil — actualización -->
+    <!-- Actualización -->
     <string name="profile_update_ok">Perfil actualizado</string>
+    <string name="profile_update_queued">Cambio guardado localmente. Se sincronizará cuando vuelva la conexión.</string>
+    <string name="profile_photo_queued">Foto guardada localmente. Se subirá cuando vuelva la conexión.</string>
 
-    <!-- Perfil — errores -->
-    <string name="profile_error_logout_server">No se pudo cerrar sesión en servidor, pero se cerrará localmente.</string>
-
-    <!-- Perfil — Notificaciones -->
+    <!-- Notificaciones -->
     <string name="profile_notifications_blocked_system">Las notificaciones están bloqueadas en los ajustes del sistema</string>
     <string name="profile_notifications_open_settings">Abrir ajustes</string>
 
-    <!-- Diálogos genéricos -->
+    <!-- DatePicker -->
+    <string name="profile_error_birthdate_min_age">Debes ser mayor de 18 años</string>
+
+    <!-- Errores -->
+    <string name="profile_error_logout_server">No se pudo cerrar sesión en servidor, pero se cerrará localmente.</string>
+    <string name="error_cargando_perfil">Error cargando perfil</string>
+    <string name="error_sincronizando_perfil">Error sincronizando perfil</string>
+    <string name="error_subiendo_foto">Error subiendo la foto</string>
+    <string name="error_guardando_foto_local">No se pudo guardar la foto localmente</string>
+    <string name="error_actualizando_foto_local">No se pudo actualizar la foto local</string>
+    <string name="info_foto_guardada_local">Foto guardada localmente. Se sincronizará cuando haya conexión.</string>
+
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  DIÁLOGOS GENÉRICOS                                                    -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="dialog_btn_save">Guardar</string>
     <string name="dialog_btn_cancel">Cancelar</string>
     <string name="dialog_error_required">Este campo no puede estar vacío</string>
     <string name="dialog_error_invalid_number">Introduce un número válido</string>
 
-    <!-- API de Comunicación - Errores -->
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  API — ERRORES DE COMUNICACIÓN                                         -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="api_error_http">Error HTTP %1$d</string>
     <string name="api_error_validacion_invalida">Validación inválida</string>
     <string name="api_error_respuesta_invalida">Respuesta de error inválida</string>
@@ -222,120 +365,47 @@
     <string name="api_error_url_invalida">URL inválida (no se permiten rutas absolutas)</string>
     <string name="api_error_refresh_invalido">Petición de renovación inválida</string>
 
-    <!-- Autenticación -->
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  AUTENTICACIÓN                                                         -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="repo_registro_completado">Registro completado</string>
     <string name="repo_logout_ok">OK</string>
     <string name="auth_sesion_expirada">Tu sesión ha expirado. Inicia sesión de nuevo.</string>
 
-    <!-- Común -->
-    <string name="common_proximamente">Próximamente</string>
 
-    <!-- ViewModel - Errores -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  VIEWMODEL — ERRORES                                                   -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="vm_error_generico">Error</string>
     <string name="vm_error_respuesta_invalida">Respuesta inválida</string>
     <string name="vm_registro_completado">Registro completado</string>
     <string name="vm_error_login_post_registro">Cuenta creada, pero no se pudo iniciar sesión: %1$s</string>
 
-    <!-- Recuperar contraseña - Textos UI -->
-    <string name="forgot_title">Recuperar contraseña</string>
-    <string name="forgot_description_step1">Introduce tu correo y te enviaremos un código de verificación.</string>
-    <string name="forgot_description_step2">Introduce el código que recibiste y tu nueva contraseña.</string>
-    <string name="forgot_hint_email">Correo electrónico</string>
-    <string name="forgot_hint_codigo">Código de verificación</string>
-    <string name="forgot_hint_password_nueva">Nueva contraseña</string>
-    <string name="forgot_hint_password_confirmar">Confirmar nueva contraseña</string>
 
-    <!-- Recuperar contraseña - Botones -->
-    <string name="forgot_btn_enviar_codigo">Enviar código</string>
-    <string name="forgot_btn_enviando_codigo">Enviando…</string>
-    <string name="forgot_btn_cambiar_password">Cambiar contraseña</string>
-    <string name="forgot_btn_cambiando_password">Cambiando…</string>
-    <string name="forgot_btn_volver_login">Volver al inicio de sesión</string>
-
-    <!-- Recuperar contraseña - Errores -->
-    <string name="forgot_error_email_vacio">Introduce tu correo electrónico.</string>
-    <string name="forgot_error_email_formato">El correo no tiene un formato válido.</string>
-    <string name="forgot_error_codigo_vacio">Introduce el código de verificación.</string>
-    <string name="forgot_error_password_vacia">Introduce la nueva contraseña.</string>
-    <string name="forgot_error_password_corta">La contraseña debe tener al menos 8 caracteres.</string>
-    <string name="forgot_error_passwords_distintas">Las contraseñas no coinciden.</string>
-
-    <!-- Recuperar contraseña - Toasts -->
-    <string name="forgot_toast_codigo_enviado">Código enviado. Revisa tu correo.</string>
-    <string name="forgot_toast_password_cambiada">Contraseña cambiada. Ya puedes iniciar sesión.</string>
-
-    <!-- Recuperar contraseña - ContentDescriptions -->
-    <string name="forgot_logo_desc">Logo MoveOn</string>
-
-    <!-- Repositorio - Recuperar contraseña -->
-    <string name="repo_recuperacion_enviada">Código de recuperación enviado.</string>
-    <string name="repo_password_reseteada">Contraseña actualizada correctamente.</string>
-
-    <!-- Perfil — provincia opción vacía -->
-    <string name="profile_provincia_no_indicar">No indicar</string>
-
-    <!-- Perfil — alias de formato usados en ProfileFragment -->
-    <string name="profile_puntos_formato">%1$d puntos</string>
-    <string name="profile_altura_formato">%1$d cm</string>
-    <string name="profile_peso_formato">%.1f kg</string>
-
-    <!-- Perfil — hint fecha con formato visible -->
-    <string name="profile_label_birthdate_hint">Fecha de nacimiento (AAAA-MM-DD)</string>
-
-    <!-- Perfil — DatePicker -->
-    <string name="profile_error_birthdate_min_age">Debes ser mayor de 18 años</string>
-    <string name="profile_error_photo_format">Solo se aceptan imágenes JPG o PNG</string>
-
-    <!-- Tracking — Notificación primer plano -->
-    <string name="tracking_notification_channel_name">Tracking activo</string>
-    <string name="tracking_notification_channel_desc">Muestra el estado del tracking mientras la app está en segundo plano</string>
-    <string name="tracking_notification_title">MoveOn — Actividad en curso</string>
-
-    <!-- Tracking — Diálogo Stop -->
-    <string name="tracking_dialog_stop_title">Finalizar actividad</string>
-    <string name="tracking_dialog_stop_message">¿Quieres finalizar y guardar la actividad?</string>
-    <string name="tracking_dialog_stop_confirm">Guardar</string>
-    <string name="tracking_dialog_stop_cancel">Cancelar</string>
-
-    <!-- Tracking — Diálogo Reset -->
-    <string name="tracking_dialog_reset_title">Descartar actividad</string>
-    <string name="tracking_dialog_reset_message">¿Estás seguro de que quieres descartar la actividad en curso? Los datos se perderán.</string>
-    <string name="tracking_dialog_reset_confirm">Descartar</string>
-    <string name="tracking_dialog_reset_cancel">Cancelar</string>
-
-    <!-- Tracking — Diálogo nueva actividad (btn_add con tracking activo) -->
-    <string name="tracking_dialog_new_activity_title">Nueva actividad</string>
-    <string name="tracking_dialog_new_activity_message">Hay una actividad en curso. ¿Quieres descartarla e iniciar una nueva?</string>
-    <string name="tracking_dialog_new_activity_confirm">Iniciar nueva</string>
-    <string name="tracking_dialog_new_activity_cancel">Cancelar</string>
-
-    <!-- Tracking — Feedback -->
-    <string name="tracking_activity_saved_ok">¡Actividad guardada correctamente!</string>
-    <string name="tracking_permission_denied">Se necesita permiso de ubicación para registrar la actividad.</string>
-
-    <!-- Tracking — Métricas por defecto -->
-    <string name="tracking_default_time">00:00</string>
-    <string name="tracking_default_distance">0 m</string>
-    <string name="tracking_default_calories">0 kcal</string>
-    <string name="tracking_label_time">TIEMPO</string>
-    <string name="tracking_label_distance">DISTANCIA</string>
-    <string name="tracking_label_cal">CAL</string>
-
-    <!-- Tracking — Formatos de métricas -->
-    <string name="tracking_calories_format">%1$d kcal</string>
-    <string name="tracking_distance_m_format">%1$d m</string>
-    <string name="tracking_distance_km_format">%1$.2f km</string>
-
-    <!-- Errores de repositorio reutilizables -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  REPOSITORIO — ERRORES REUTILIZABLES                                   -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="error_no_sesion_activa">No hay sesión activa</string>
     <string name="error_actividad_no_encontrada">Actividad no encontrada</string>
     <string name="error_actividad_pendiente_sync">Actividad pendiente de sincronizar</string>
     <string name="error_sincronizando_actividad">Error sincronizando actividad</string>
     <string name="error_cargando_actividades">Error cargando actividades</string>
     <string name="error_no_hay_cambios">No hay cambios para guardar</string>
+    <string name="error_no_cambios">No hay cambios para guardar</string>
+    <string name="error_eliminando_actividad">Error al eliminar la actividad</string>
+    <string name="error_tipo_actividad_invalido">El tipo de actividad no es válido</string>
+    <string name="error_distancia_invalida">La distancia debe estar entre 1 y 300 000 metros</string>
+    <string name="error_duracion_invalida">La duración debe estar entre 1 y 86 400 segundos</string>
+    <string name="error_calorias_invalidas">Las calorías deben estar entre 1 y 10 000</string>
+    <string name="error_polilinea_invalida">La ruta polilínea no es válida</string>
+    <string name="error_fecha_futura">La fecha de la actividad no puede estar en el futuro</string>
+    <string name="error_formato_fecha_invalido">El formato de fecha no es válido</string>
 
-    <!-- Perfil — sync offline -->
-    <string name="profile_update_queued">Cambio guardado localmente. Se sincronizará cuando vuelva la conexión.</string>
-    <string name="profile_photo_queued">Foto guardada localmente. Se subirá cuando vuelva la conexión.</string>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  COMÚN                                                                 -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <string name="common_proximamente">Próximamente</string>
 
 </resources>

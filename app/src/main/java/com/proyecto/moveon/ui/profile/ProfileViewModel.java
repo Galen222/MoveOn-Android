@@ -44,7 +44,7 @@ public class ProfileViewModel extends AndroidViewModel {
     public ProfileViewModel(@NonNull Application application) {
         super(application);
         authRepository = new AuthRepository(application);
-        sessionManager = new SecureSessionManager(application);
+        sessionManager = SecureSessionManager.getInstance(application);
         perfilRepository = new PerfilRepository(application);
         migrateLegacyNotificationsPreference(application);
         accountKey = sessionManager.getAccountKey();
@@ -155,9 +155,7 @@ public class ProfileViewModel extends AndroidViewModel {
         if (accountKey == null) return;
         perfilSource = perfilRepository.observePerfil(accountKey);
         perfilState.addSource(perfilSource, perfil -> {
-            if (perfil != null) {
-                perfilState.setValue(UiState.success(perfil));
-            }
+            if (perfil != null) perfilState.setValue(UiState.success(perfil));
         });
     }
 

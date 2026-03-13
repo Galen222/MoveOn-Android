@@ -1,13 +1,13 @@
 package com.proyecto.moveon.domain.activity;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.WeekFields;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -44,43 +44,40 @@ public final class StatsCalculator {
             return StatsResumen.empty(DEFAULT_WEEKLY_GOAL_METERS);
         }
 
-        final LocalDate hoy = LocalDate.now(ZoneId.systemDefault());
-        final LocalDate ayer = hoy.minusDays(1);
-        final LocalDate haceDos = hoy.minusDays(2);
+        final LocalDate hoy      = LocalDate.now(ZoneId.systemDefault());
+        final LocalDate ayer     = hoy.minusDays(1);
+        final LocalDate haceDos  = hoy.minusDays(2);
 
-        // Semana actual — lunes a domingo según locale ES
         final WeekFields semanaFields = WeekFields.of(Locale.forLanguageTag("es-ES"));
-        final int semanaActual = hoy.get(semanaFields.weekOfWeekBasedYear());
-        final int anioActual = hoy.getYear();
+        final int semanaActual  = hoy.get(semanaFields.weekOfWeekBasedYear());
+        final int anioActual    = hoy.getYear();
 
-        // Mes actual y anterior
-        final int mesActual = hoy.getMonthValue();
+        final int mesActual     = hoy.getMonthValue();
         final int anioMesActual = hoy.getYear();
         final LocalDate primerDiaMesAnterior = hoy.withDayOfMonth(1).minusMonths(1);
-        final int mesAnterior = primerDiaMesAnterior.getMonthValue();
-        final int anioMesAnterior = primerDiaMesAnterior.getYear();
+        final int mesAnterior      = primerDiaMesAnterior.getMonthValue();
+        final int anioMesAnterior  = primerDiaMesAnterior.getYear();
 
-        long totalDistancia = 0L;
-        long totalDuracion = 0L;
-        long distanciaHoy = 0L;
-        long distanciaAyer = 0L;
-        long distanciaHaceDos = 0L;
-        long distanciaMesActual = 0L;
+        long totalDistancia       = 0L;
+        long totalDuracion        = 0L;
+        long distanciaHoy         = 0L;
+        long distanciaAyer        = 0L;
+        long distanciaHaceDos     = 0L;
+        long distanciaMesActual   = 0L;
         long distanciaMesAnterior = 0L;
-        long distanciaSemana = 0L;
+        long distanciaSemana      = 0L;
 
-        // Para el streak: conjunto de fechas con actividad
         Set<LocalDate> diasConActividad = new HashSet<>();
 
         for (ActividadItem item : items) {
             LocalDate fechaActividad = parseFecha(item.fechaRutaIso);
             if (fechaActividad == null) continue;
 
-            long metros = item.distanciaMetros;
+            long metros   = item.distanciaMetros;
             long segundos = item.duracionSegundos;
 
             totalDistancia += metros;
-            totalDuracion += segundos;
+            totalDuracion  += segundos;
             diasConActividad.add(fechaActividad);
 
             if (fechaActividad.equals(hoy)) {
@@ -91,20 +88,17 @@ public final class StatsCalculator {
                 distanciaHaceDos += metros;
             }
 
-            // Semana actual
             int semanaItem = fechaActividad.get(semanaFields.weekOfWeekBasedYear());
-            int anioItem = fechaActividad.getYear();
+            int anioItem   = fechaActividad.getYear();
             if (semanaItem == semanaActual && anioItem == anioActual) {
                 distanciaSemana += metros;
             }
 
-            // Mes actual
             if (fechaActividad.getMonthValue() == mesActual
                     && fechaActividad.getYear() == anioMesActual) {
                 distanciaMesActual += metros;
             }
 
-            // Mes anterior
             if (fechaActividad.getMonthValue() == mesAnterior
                     && fechaActividad.getYear() == anioMesAnterior) {
                 distanciaMesAnterior += metros;
@@ -140,8 +134,7 @@ public final class StatsCalculator {
         long[] porDia = new long[7];
         if (items.isEmpty()) return porDia;
 
-        final LocalDate hoy = LocalDate.now(ZoneId.systemDefault());
-        // DayOfWeek: MONDAY=1, SUNDAY=7 → convertimos a índice 0-6
+        final LocalDate hoy         = LocalDate.now(ZoneId.systemDefault());
         final LocalDate lunesActual = hoy.minusDays(hoy.getDayOfWeek().getValue() - 1L);
 
         for (ActividadItem item : items) {
@@ -172,12 +165,10 @@ public final class StatsCalculator {
                                      @NonNull LocalDate hoy) {
         if (diasConActividad.isEmpty()) return 0;
 
-        // Si hoy tiene actividad, empezamos desde hoy; si no, desde ayer
         LocalDate inicio = diasConActividad.contains(hoy) ? hoy : hoy.minusDays(1);
-
         if (!diasConActividad.contains(inicio)) return 0;
 
-        int streak = 0;
+        int streak       = 0;
         LocalDate cursor = inicio;
         while (diasConActividad.contains(cursor)) {
             streak++;
@@ -186,21 +177,13 @@ public final class StatsCalculator {
         return streak;
     }
 
+    // ── Privados ──────────────────────────────────────────────────────────────
+
     /**
      * Parsea una fecha ISO-8601 con zona horaria a {@link LocalDate} en la zona local.
      * Devuelve null si el formato es inválido — nunca lanza excepción.
      */
-    @NonNull
-    static LocalDate[] calcularRangoSemanaActual() {
-        LocalDate hoy = LocalDate.now(ZoneId.systemDefault());
-        LocalDate lunes = hoy.minusDays(hoy.getDayOfWeek().getValue() - 1L);
-        LocalDate domingo = lunes.plusDays(6);
-        return new LocalDate[]{lunes, domingo};
-    }
-
-    // ── Privados ──────────────────────────────────────────────────────────────
-
-    @androidx.annotation.Nullable
+    @Nullable
     private static LocalDate parseFecha(@NonNull String fechaIso) {
         try {
             return OffsetDateTime.parse(fechaIso)

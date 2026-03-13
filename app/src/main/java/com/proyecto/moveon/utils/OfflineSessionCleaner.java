@@ -23,18 +23,21 @@ public final class OfflineSessionCleaner {
         safeLogout(appContext);
         safeCancelWork(appContext);
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            try {
-                AppDatabase.getInstance(appContext).clearAllTables();
-            } catch (Exception ignored) {
-            }
-            try {
-                ProfilePhotoStorage.deleteAll(appContext);
-            } catch (Exception ignored) {
-            }
-        });
-        executor.shutdown();
+        // Warning: ExecutorService wrapped in try-with-resources para garantizar shutdown.
+        // shutdown() no cancela tareas en curso, solo impide encolar nuevas — el comportamiento
+        // deseado aquí: la tarea de borrado se completa normalmente.
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+            executor.execute(() -> {
+                try {
+                    AppDatabase.getInstance(appContext).clearAllTables();
+                } catch (Exception ignored) {
+                }
+                try {
+                    ProfilePhotoStorage.deleteAll(appContext);
+                } catch (Exception ignored) {
+                }
+            });
+        }
     }
 
     public static void clearSessionAndLocalDataBlocking(@NonNull Context context) {
@@ -53,7 +56,8 @@ public final class OfflineSessionCleaner {
 
     private static void safeLogout(@NonNull Context context) {
         try {
-            new SecureSessionManager(context).logout();
+            // BUG-08: Singleton en lugar de new para evitar múltiples instancias.
+            SecureSessionManager.getInstance(context).logout();
         } catch (Exception ignored) {
         }
     }

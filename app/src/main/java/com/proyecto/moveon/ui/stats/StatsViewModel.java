@@ -68,8 +68,8 @@ public class StatsViewModel extends AndroidViewModel {
     public StatsViewModel(@NonNull Application application) {
         super(application);
         actividadRepository = new ActivityRepository(application);
-        SecureSessionManager sessionManager = new SecureSessionManager(application);
-        accountKey = sessionManager.getAccountKey();
+        // BUG-08: Singleton en lugar de new para evitar múltiples instancias.
+        accountKey = SecureSessionManager.getInstance(application).getAccountKey();
 
         attachSource();
     }

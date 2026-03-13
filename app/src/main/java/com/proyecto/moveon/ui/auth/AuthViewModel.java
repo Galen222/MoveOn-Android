@@ -32,7 +32,8 @@ public class AuthViewModel extends AndroidViewModel {
     public AuthViewModel(@NonNull Application app) {
         super(app);
         authRepository = new AuthRepository(app);
-        sessionManager = new SecureSessionManager(app);
+        // BUG-08: Singleton en lugar de new para evitar múltiples instancias.
+        sessionManager = SecureSessionManager.getInstance(app);
     }
 
     // ── Exposición de LiveData ────────────────────────────────────────────────

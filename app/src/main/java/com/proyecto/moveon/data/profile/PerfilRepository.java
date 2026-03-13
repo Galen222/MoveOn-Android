@@ -5,7 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Transformations;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
 import androidx.work.ExistingWorkPolicy;
@@ -16,6 +16,7 @@ import androidx.work.WorkManager;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.api.ApiResult;
@@ -27,7 +28,6 @@ import com.proyecto.moveon.data.profile.local.PerfilLocalDataSource;
 import com.proyecto.moveon.data.profile.local.ProfilePhotoStorage;
 import com.proyecto.moveon.data.profile.remote.PerfilRemoteDataSource;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
-import com.proyecto.moveon.R;
 import com.proyecto.moveon.utils.StringUtils;
 import com.proyecto.moveon.workers.SyncPerfilWorker;
 
@@ -69,17 +69,20 @@ public class PerfilRepository {
     }
 
     public LiveData<PerfilUsuario> observePerfil(@NonNull String accountKey) {
-        return Transformations.map(local.observeCache(accountKey), entity -> {
-            if (entity == null) return null;
-            return mapEntityToDomain(entity);
-        });
+        // BUG-10: Transformations.map() deprecado desde Lifecycle 2.6 → MediatorLiveData
+        MediatorLiveData<PerfilUsuario> result = new MediatorLiveData<>();
+        result.addSource(local.observeCache(accountKey), entity ->
+                result.setValue(entity != null ? mapEntityToDomain(entity) : null));
+        return result;
     }
 
     public void refreshPerfil(@NonNull String accountKey, @Nullable RefreshCallback callback) {
         remote.fetchPerfil(result -> {
             if (!result.isSuccess() || result.data == null) {
                 if (callback != null) {
-                    callback.onComplete(result.error != null ? result.error : ApiError.local("Error cargando perfil"));
+                    callback.onComplete(result.error != null
+                            ? result.error
+                            : ApiError.local(appContext.getString(R.string.error_cargando_perfil)));
                 }
                 return;
             }
@@ -93,10 +96,10 @@ public class PerfilRepository {
     public void applyLocalPatchAndEnqueue(@NonNull String accountKey,
                                           @NonNull JsonObject patchJson,
                                           @Nullable UpdateCallback callback) {
-        // BUG fix: isEmpty() en lugar de size() == 0
         if (patchJson.isEmpty()) {
             if (callback != null) {
-                callback.onComplete(UpdateResult.failed(ApiError.local(appContext.getString(R.string.error_no_hay_cambios))));
+                callback.onComplete(UpdateResult.failed(
+                        ApiError.local(appContext.getString(R.string.error_no_hay_cambios))));
             }
             return;
         }
@@ -138,7 +141,7 @@ public class PerfilRepository {
 
             ApiError error = result.error != null
                     ? result.error
-                    : ApiError.local("Error sincronizando perfil");
+                    : ApiError.local(appContext.getString(R.string.error_sincronizando_perfil));
             op.attempts += 1;
             op.lastError  = error.getMessage();
 
@@ -192,13 +195,13 @@ public class PerfilRepository {
 
                 ApiError error = uploadResult.error != null
                         ? uploadResult.error
-                        : ApiError.local("Error subiendo la foto");
+                        : ApiError.local(appContext.getString(R.string.error_subiendo_foto));
                 if (isRetryable(error)) {
-                    current = getOrCreateCache(accountKey);
-                    current.photoSyncState = PHOTO_STATE_PENDING;
-                    current.photoLastError = error.getMessage();
-                    current.dirty          = true;
-                    local.saveCache(current);
+                    PerfilCacheEntity refreshed = getOrCreateCache(accountKey);
+                    refreshed.photoSyncState = PHOTO_STATE_PENDING;
+                    refreshed.photoLastError = error.getMessage();
+                    refreshed.dirty          = true;
+                    local.saveCache(refreshed);
                     enqueueSync();
                     if (callback != null) callback.onComplete(UpdateResult.queued());
                     return;
@@ -208,7 +211,8 @@ public class PerfilRepository {
                 if (callback != null) callback.onComplete(UpdateResult.failed(error));
             } catch (IOException e) {
                 if (callback != null) {
-                    callback.onComplete(UpdateResult.failed(ApiError.local("No se pudo guardar la foto localmente")));
+                    callback.onComplete(UpdateResult.failed(
+                            ApiError.local(appContext.getString(R.string.error_guardando_foto_local))));
                 }
             }
         });
@@ -231,7 +235,7 @@ public class PerfilRepository {
 
                 ApiError error = result.error != null
                         ? result.error
-                        : ApiError.local("Error sincronizando perfil");
+                        : ApiError.local(appContext.getString(R.string.error_sincronizando_perfil));
                 op.attempts += 1;
                 op.lastError  = error.getMessage();
 
@@ -264,7 +268,7 @@ public class PerfilRepository {
             } else {
                 ApiError error = uploadResult.error != null
                         ? uploadResult.error
-                        : ApiError.local("Error subiendo la foto");
+                        : ApiError.local(appContext.getString(R.string.error_subiendo_foto));
                 if (isRetryable(error)) {
                     cache.photoLastError = error.getMessage();
                     cache.dirty          = true;
@@ -381,7 +385,7 @@ public class PerfilRepository {
                         entity.pendingLocalPhotoPath = previous != null ? previous.pendingLocalPhotoPath : null;
                         entity.photoSyncState        = previous != null && StringUtils.hasText(previous.pendingLocalPhotoPath)
                                 ? previous.photoSyncState : PHOTO_STATE_FAILED;
-                        entity.photoLastError        = "No se pudo actualizar la foto local";
+                        entity.photoLastError        = appContext.getString(R.string.error_actualizando_foto_local);
                     }
                 }
             }

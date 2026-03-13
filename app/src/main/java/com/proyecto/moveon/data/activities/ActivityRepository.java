@@ -5,7 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Transformations;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
 import androidx.work.ExistingWorkPolicy;
@@ -79,7 +79,8 @@ public final class ActivityRepository {
 
     public ActivityRepository(@NonNull Context context) {
         this.appContext     = context.getApplicationContext();
-        this.sessionManager = new SecureSessionManager(appContext);
+        // BUG-08: Singleton en lugar de new para evitar múltiples instancias.
+        this.sessionManager = SecureSessionManager.getInstance(appContext);
         this.apiClient      = new AuthenticatedApiClient(appContext);
         AppDatabase db      = AppDatabase.getInstance(appContext);
         this.local          = new ActividadLocalDataSource(db);
@@ -164,15 +165,19 @@ public final class ActivityRepository {
 
     // ── Observar / Refresh ────────────────────────────────────────────────────
 
+    // BUG-10: Transformations.map() deprecado desde Lifecycle 2.6 → MediatorLiveData.
     public LiveData<List<ActividadItem>> observeActividades(@NonNull String accountKey) {
-        return Transformations.map(local.observeVisible(accountKey), list -> {
+        MediatorLiveData<List<ActividadItem>> result = new MediatorLiveData<>();
+        result.addSource(local.observeVisible(accountKey), list -> {
             List<ActividadItem> items = new ArrayList<>();
-            if (list == null) return items;
-            for (ActividadEntity entity : list) {
-                items.add(mapEntityToDomain(entity));
+            if (list != null) {
+                for (ActividadEntity entity : list) {
+                    items.add(mapEntityToDomain(entity));
+                }
             }
-            return items;
+            result.setValue(items);
         });
+        return result;
     }
 
     public void refreshFromServer(@NonNull String accountKey, @Nullable SyncCallback callback) {
@@ -211,13 +216,15 @@ public final class ActivityRepository {
             ActividadEntity entity = local.getByLocalId(localId);
 
             if (entity == null) {
-                callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.error_actividad_no_encontrada))));
+                callback.onResult(ApiResult.failure(
+                        ApiError.local(appContext.getString(R.string.error_actividad_no_encontrada))));
                 return;
             }
 
             if (entity.remoteId == null || !"SYNCED".equals(entity.syncState)) {
                 callback.onResult(ApiResult.failure(
-                        ApiError.typed(ApiErrorType.VALIDATION, appContext.getString(R.string.error_actividad_pendiente_sync))));
+                        ApiError.typed(ApiErrorType.VALIDATION,
+                                appContext.getString(R.string.error_actividad_pendiente_sync))));
                 return;
             }
 
@@ -225,10 +232,11 @@ public final class ActivityRepository {
 
             remote.deleteActividad(remoteId, result -> {
                 if (!result.isSuccess()) {
+                    // BUG-07: String hardcodeado sustituido por R.string.
                     callback.onResult(ApiResult.failure(
                             result.error != null
                                     ? result.error
-                                    : ApiError.local("Error al eliminar la actividad")));
+                                    : ApiError.local(appContext.getString(R.string.error_eliminando_actividad))));
                     return;
                 }
 
@@ -382,30 +390,38 @@ public final class ActivityRepository {
         );
     }
 
+    // BUG-07: Todos los strings de validación sustituidos por R.string.
     @Nullable
     private ApiError validateRequest(@NonNull GuardarActividadRequestDto request) {
         if (!VALID_TIPOS.contains(request.tipo)) {
-            return ApiError.typed(ApiErrorType.VALIDATION, "El tipo de actividad no es válido");
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_tipo_actividad_invalido));
         }
         if (request.distancia <= 0 || request.distancia > 300000) {
-            return ApiError.typed(ApiErrorType.VALIDATION, "La distancia debe estar entre 1 y 300000 metros");
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_distancia_invalida));
         }
         if (request.duracion <= 0 || request.duracion > 86400) {
-            return ApiError.typed(ApiErrorType.VALIDATION, "La duración debe estar entre 1 y 86400 segundos");
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_duracion_invalida));
         }
         if (request.caloriasQuemadas <= 0 || request.caloriasQuemadas > 10000) {
-            return ApiError.typed(ApiErrorType.VALIDATION, "Las calorías deben estar entre 1 y 10000");
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_calorias_invalidas));
         }
         if (StringUtils.hasText(request.rutaPolilinea) && request.rutaPolilinea.trim().length() < 2) {
-            return ApiError.typed(ApiErrorType.VALIDATION, "La ruta polilínea no es válida");
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_polilinea_invalida));
         }
         try {
             OffsetDateTime fecha = OffsetDateTime.parse(request.fechaRuta);
             if (fecha.isAfter(OffsetDateTime.now().plusMinutes(1))) {
-                return ApiError.typed(ApiErrorType.VALIDATION, "La fecha de la actividad no puede estar en el futuro");
+                return ApiError.typed(ApiErrorType.VALIDATION,
+                        appContext.getString(R.string.error_fecha_futura));
             }
         } catch (Exception e) {
-            return ApiError.typed(ApiErrorType.VALIDATION, "El formato de fecha no es válido");
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_formato_fecha_invalido));
         }
         return null;
     }

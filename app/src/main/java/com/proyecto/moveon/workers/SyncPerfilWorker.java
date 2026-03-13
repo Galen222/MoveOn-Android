@@ -18,8 +18,8 @@ public class SyncPerfilWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        SecureSessionManager sessionManager = new SecureSessionManager(getApplicationContext());
-        String accountKey = sessionManager.getAccountKey();
+        // BUG-08: Singleton en lugar de new para evitar múltiples instancias.
+        String accountKey = SecureSessionManager.getInstance(getApplicationContext()).getAccountKey();
         if (accountKey == null) {
             return Result.success();
         }

@@ -2,7 +2,6 @@ package com.proyecto.moveon.data.session;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
@@ -22,7 +21,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
-public class SecureSessionManager {
+public final class SecureSessionManager {
 
     private static final String PREF_NAME = "user_prefs_secure";
     private static final String KEYSTORE_ALIAS = "moveon_session_key_v1";
@@ -44,14 +43,32 @@ public class SecureSessionManager {
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int GCM_TAG_LENGTH_BITS = 128;
 
+    // ── Singleton ─────────────────────────────────────────────────────────────
+
+    @SuppressWarnings("StaticFieldLeak") // ApplicationContext — no hay leak
+    private static volatile SecureSessionManager instance;
+
+    /**
+     * Devuelve la instancia singleton inicializada con el ApplicationContext.
+     * Thread-safe mediante double-checked locking.
+     */
+    @NonNull
+    public static SecureSessionManager getInstance(@NonNull Context context) {
+        if (instance == null) {
+            synchronized (SecureSessionManager.class) {
+                if (instance == null) {
+                    instance = new SecureSessionManager(context.getApplicationContext());
+                }
+            }
+        }
+        return instance;
+    }
+
     private final SharedPreferences prefs;
 
-    public SecureSessionManager(Context context) {
+    private SecureSessionManager(Context context) {
         Context appContext = context.getApplicationContext();
         this.prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            throw new IllegalStateException("SecureSessionManager requiere minSdk 23+ (Android 6.0)");
-        }
     }
 
     /**

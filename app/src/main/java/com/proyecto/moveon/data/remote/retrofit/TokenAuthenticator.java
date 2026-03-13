@@ -27,7 +27,7 @@ public class TokenAuthenticator implements Authenticator {
 
     public TokenAuthenticator(Context context) {
         this.context = context.getApplicationContext();
-        this.sessionManager = new SecureSessionManager(this.context);
+        this.sessionManager = SecureSessionManager.getInstance(this.context);
     }
 
     @Nullable

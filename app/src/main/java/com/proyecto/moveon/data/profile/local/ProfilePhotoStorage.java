@@ -104,7 +104,7 @@ public final class ProfilePhotoStorage {
 
         // Si la imagen se sirve desde el mismo backend, mandamos el bearer.
         if (backendBase != null && isSameOrigin(parsedUrl, backendBase)) {
-            String accessToken = new SecureSessionManager(context).getAccessToken();
+            String accessToken = SecureSessionManager.getInstance(context).getAccessToken();
             if (StringUtils.hasText(accessToken)) {
                 requestBuilder.header("Authorization", "Bearer " + accessToken);
             }

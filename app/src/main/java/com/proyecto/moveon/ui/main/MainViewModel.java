@@ -10,7 +10,6 @@ import androidx.lifecycle.MutableLiveData;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
-import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.data.session.AuthRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.domain.auth.LoginSession;
@@ -28,12 +27,18 @@ public class MainViewModel extends AndroidViewModel {
     public MainViewModel(@NonNull Application application) {
         super(application);
         authRepository = new AuthRepository(application);
-        sessionManager = new SecureSessionManager(application);
+        // BUG-08: Singleton en lugar de new para evitar múltiples instancias.
+        sessionManager = SecureSessionManager.getInstance(application);
     }
 
     public LiveData<Event<String>> getSessionExpiredEvent() { return sessionExpiredEvent; }
 
-    public boolean isLoggedIn() { return sessionManager.isLoggedIn(); }
+    /**
+     * Devuelve {@code true} si NO hay sesión activa.
+     * Renombrado desde isLoggedIn() para reflejar el uso real en los call sites
+     * y eliminar el warning "Calls to boolean method are always inverted".
+     */
+    public boolean isNotLoggedIn() { return !sessionManager.isLoggedIn(); }
 
     public void trySilentRefreshAtStartup() {
         if (silentRefreshAttempted) return;
@@ -42,27 +47,27 @@ public class MainViewModel extends AndroidViewModel {
         String refreshToken = sessionManager.getRefreshToken();
         if (!StringUtils.hasText(refreshToken)) return;
 
-        authRepository.refreshSession(refreshToken, new AuthRepository.Callback<LoginSession>() {
-            @Override
-            public void onResult(ApiResult<LoginSession> result) {
-                if (result.isSuccess()) {
-                    LoginSession s = result.data;
-                    if (s == null) return;
+        // Lambda en lugar de clase anónima; tipo inferido → import de ApiResult eliminado.
+        authRepository.refreshSession(refreshToken, result -> {
+            if (result.isSuccess()) {
+                LoginSession s = result.data;
+                if (s == null) return;
 
-                    String username = StringUtils.hasText(s.nombreUsuario)
-                            ? s.nombreUsuario
-                            : StringUtils.textOf(sessionManager.getUsername());
+                String username = StringUtils.hasText(s.nombreUsuario)
+                        ? s.nombreUsuario
+                        : StringUtils.textOf(sessionManager.getUsername());
 
-                    sessionManager.saveLogin(username, s.tokenAcceso, s.refreshToken);
-                    return;
-                }
+                sessionManager.saveLogin(username, s.tokenAcceso, s.refreshToken);
+                return;
+            }
 
-                ApiError error = result.error != null ? result.error : ApiError.local(getApplication().getString(R.string.vm_error_generico));
+            ApiError error = result.error != null
+                    ? result.error
+                    : ApiError.local(getApplication().getString(R.string.vm_error_generico));
 
-                // Offline-first: si es red/timeout => NO expulses
-                if (error.getType() == ApiErrorType.UNAUTHORIZED) {
-                    sessionExpiredEvent.postValue(new Event<>(error.getMessage()));
-                }
+            // Offline-first: solo expulsar si la sesión ha expirado definitivamente.
+            if (error.getType() == ApiErrorType.UNAUTHORIZED) {
+                sessionExpiredEvent.postValue(new Event<>(error.getMessage()));
             }
         });
     }
