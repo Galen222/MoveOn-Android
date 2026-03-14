@@ -2,6 +2,7 @@ package com.proyecto.moveon.core.api;
 
 import android.content.Context;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -27,10 +28,11 @@ public final class ApiErrorParser {
     /**
      * Parsea una respuesta de error de Retrofit (códigos HTTP 4xx o 5xx)
      * Prioridad de mensaje para el usuario:
-     *   1. Primer mensaje específico del array "detail" (FastAPI/Pydantic) — MAYOR prioridad
-     *   2. Mensajes de "errores_campos"
-     *   3. Campo "mensaje" / "message" / "error" genérico del backend
-     *   4. Fallback genérico por código HTTP
+     *   1. Primer mensaje específico de campo del array "detail" (preferiblemente por error_code)
+     *   2. Mensajes de "errores_campos" (preferiblemente por error_code)
+     *   3. Campo top-level "error_code" localizado en frontend
+     *   4. Campo "mensaje" / "message" / "error" genérico del backend
+     *   5. Fallback genérico por código HTTP
      */
     @NonNull
     public static ApiError fromHttp(@NonNull Context context, @NonNull Response<?> response) {
@@ -48,8 +50,10 @@ public final class ApiErrorParser {
 
         ApiErrorType type = mapHttpToType(code);
         String msg = context.getString(R.string.api_error_http, code);
+        String errorCode = null;
         boolean hasCustomMsg = false;
         Map<String, List<String>> fieldErrors = new HashMap<>();
+        String retryAfter = response.headers().get("Retry-After");
 
         if (type == ApiErrorType.PAYLOAD_TOO_LARGE) {
             msg = context.getString(R.string.api_error_payload_too_large);
@@ -62,21 +66,26 @@ public final class ApiErrorParser {
                 if (root != null && root.isJsonObject()) {
                     JsonObject obj = root.getAsJsonObject();
 
-                    // 1. Mensaje genérico del backend — fallback, puede ser sobreescrito por detail.
-                    if (obj.has("mensaje") && obj.get("mensaje").isJsonPrimitive()) {
-                        String m = cleanBackendMsg(obj.get("mensaje").getAsString());
-                        if (StringUtils.hasText(m)) { msg = m; hasCustomMsg = true; }
-                    }
-                    if (obj.has("message") && obj.get("message").isJsonPrimitive()) {
-                        String m = cleanBackendMsg(obj.get("message").getAsString());
-                        if (StringUtils.hasText(m) && !hasCustomMsg) { msg = m; hasCustomMsg = true; }
-                    }
-                    if (obj.has("error") && obj.get("error").isJsonPrimitive()) {
-                        String m = cleanBackendMsg(obj.get("error").getAsString());
-                        if (StringUtils.hasText(m) && !hasCustomMsg) { msg = m; hasCustomMsg = true; }
+                    errorCode = getString(obj, "error_code");
+                    String topLevelBackendMsg = firstNonEmpty(
+                            getString(obj, "mensaje"),
+                            getString(obj, "message"),
+                            getString(obj, "error")
+                    );
+
+                    String topLevelResolved = resolveDisplayMessage(
+                            context,
+                            errorCode,
+                            topLevelBackendMsg,
+                            retryAfter,
+                            code
+                    );
+                    if (StringUtils.hasText(topLevelResolved)) {
+                        msg = topLevelResolved;
+                        hasCustomMsg = true;
                     }
 
-                    // 2. Errores por campos (formato personalizado del backend).
+                    // 1. Errores por campos (formato personalizado del backend).
                     if (obj.has("errores_campos") && obj.get("errores_campos").isJsonObject()) {
                         JsonObject fe = obj.getAsJsonObject("errores_campos");
                         for (String key : fe.keySet()) {
@@ -88,11 +97,40 @@ public final class ApiErrorParser {
                             } else if (ve.isJsonArray()) {
                                 JsonArray arr = ve.getAsJsonArray();
                                 for (JsonElement it : arr) {
-                                    if (it != null && it.isJsonPrimitive()) {
+                                    if (it == null) continue;
+                                    if (it.isJsonPrimitive()) {
                                         String m = cleanBackendMsg(it.getAsString());
+                                        if (StringUtils.hasText(m)) addFieldError(fieldErrors, key, m);
+                                    } else if (it.isJsonObject()) {
+                                        JsonObject o = it.getAsJsonObject();
+                                        String m = resolveDisplayMessage(
+                                                context,
+                                                getString(o, "error_code"),
+                                                firstNonEmpty(
+                                                        getString(o, "mensaje"),
+                                                        getString(o, "message"),
+                                                        getString(o, "error")
+                                                ),
+                                                retryAfter,
+                                                code
+                                        );
                                         if (StringUtils.hasText(m)) addFieldError(fieldErrors, key, m);
                                     }
                                 }
+                            } else if (ve.isJsonObject()) {
+                                JsonObject o = ve.getAsJsonObject();
+                                String m = resolveDisplayMessage(
+                                        context,
+                                        getString(o, "error_code"),
+                                        firstNonEmpty(
+                                                getString(o, "mensaje"),
+                                                getString(o, "message"),
+                                                getString(o, "error")
+                                        ),
+                                        retryAfter,
+                                        code
+                                );
+                                if (StringUtils.hasText(m)) addFieldError(fieldErrors, key, m);
                             }
                         }
                         if (!fieldErrors.isEmpty() && (code == 400 || code == 422)) {
@@ -100,14 +138,23 @@ public final class ApiErrorParser {
                         }
                     }
 
-                    // 3. Errores formato FastAPI/Pydantic ("detail").
+                    // 2. Errores formato FastAPI/Pydantic ("detail").
                     //    El primer mensaje específico de campo SIEMPRE sobreescribe
-                    //    el "mensaje" genérico ("Solicitud inválida", etc.) del paso 1.
+                    //    el genérico del paso superior.
                     if (obj.has("detail")) {
                         JsonElement detail = obj.get("detail");
                         if (detail != null && detail.isJsonPrimitive()) {
-                            String d = cleanBackendMsg(detail.getAsString());
-                            if (StringUtils.hasText(d)) { msg = d; hasCustomMsg = true; }
+                            String d = resolveDisplayMessage(
+                                    context,
+                                    errorCode,
+                                    detail.getAsString(),
+                                    retryAfter,
+                                    code
+                            );
+                            if (StringUtils.hasText(d)) {
+                                msg = d;
+                                hasCustomMsg = true;
+                            }
 
                         } else if (detail != null && detail.isJsonArray()) {
                             JsonArray arr = detail.getAsJsonArray();
@@ -117,30 +164,50 @@ public final class ApiErrorParser {
                                 if (it == null || !it.isJsonObject()) continue;
                                 JsonObject o = it.getAsJsonObject();
 
-                                String col = o.has("columna") && o.get("columna").isJsonPrimitive()
-                                        ? o.get("columna").getAsString() : null;
-                                String m = o.has("mensaje") && o.get("mensaje").isJsonPrimitive()
-                                        ? cleanBackendMsg(o.get("mensaje").getAsString()) : null;
+                                String col = getString(o, "columna");
+                                String itemErrorCode = getString(o, "error_code");
+                                String backendMsg = firstNonEmpty(
+                                        getString(o, "mensaje"),
+                                        getString(o, "msg"),
+                                        getString(o, "message"),
+                                        getString(o, "error")
+                                );
 
-                                if (!StringUtils.hasText(m) && o.has("msg") && o.get("msg").isJsonPrimitive()) {
-                                    m = cleanBackendMsg(o.get("msg").getAsString());
-                                }
                                 if (!StringUtils.hasText(col) && o.has("loc") && o.get("loc").isJsonArray()) {
                                     col = lastLocAsFieldName(o.getAsJsonArray("loc"));
                                 }
+
+                                String m = resolveDisplayMessage(
+                                        context,
+                                        itemErrorCode,
+                                        backendMsg,
+                                        retryAfter,
+                                        code
+                                );
+
                                 if (StringUtils.hasText(col) && StringUtils.hasText(m)) {
                                     addFieldError(fieldErrors, col, m);
                                 }
-                                // Primer mensaje específico sobreescribe siempre el genérico
+                                // Primer mensaje específico sobreescribe siempre el genérico.
                                 if (StringUtils.hasText(m)) {
                                     msg = m;
+                                    if (StringUtils.hasText(itemErrorCode)) errorCode = itemErrorCode;
                                     hasCustomMsg = true;
                                     break;
                                 }
                             }
 
                             if (!hasCustomMsg && !arr.isEmpty()) {
-                                msg = context.getString(R.string.api_error_validacion_invalida);
+                                String validationMsg = resolveDisplayMessage(
+                                        context,
+                                        errorCode,
+                                        null,
+                                        retryAfter,
+                                        code
+                                );
+                                msg = StringUtils.hasText(validationMsg)
+                                        ? validationMsg
+                                        : context.getString(R.string.api_error_validacion_invalida);
                                 hasCustomMsg = true;
                             }
                         }
@@ -149,12 +216,12 @@ public final class ApiErrorParser {
             } catch (Exception e) {
                 type = ApiErrorType.PARSE;
                 msg = context.getString(R.string.api_error_respuesta_invalida);
+                errorCode = null;
                 hasCustomMsg = true;
             }
         }
 
         if (type == ApiErrorType.RATE_LIMIT && !hasCustomMsg) {
-            String retryAfter = response.headers().get("Retry-After");
             if (StringUtils.hasText(retryAfter)) {
                 msg = context.getString(R.string.api_error_rate_limit_retry, retryAfter);
             } else {
@@ -162,7 +229,7 @@ public final class ApiErrorParser {
             }
         }
 
-        return new ApiError(type, code, msg, fieldErrors, raw);
+        return new ApiError(type, code, msg, errorCode, fieldErrors, raw);
     }
 
     /**
@@ -180,22 +247,33 @@ public final class ApiErrorParser {
 
             int c = ex.getCode();
             String retryAfter = ex.getRetryAfter();
+            String backendErrorCode = ex.getErrorCode();
+            String backendMessage = ex.getBackendMessage();
             ApiErrorType type;
             String msg;
 
             if (c == 429) {
                 type = ApiErrorType.RATE_LIMIT;
-                msg = StringUtils.hasText(retryAfter)
-                        ? context.getString(R.string.api_error_rate_limit_retry, retryAfter)
-                        : context.getString(R.string.api_error_rate_limit);
+                msg = resolveDisplayMessage(context, backendErrorCode, backendMessage, retryAfter, c);
+                if (!StringUtils.hasText(msg)) {
+                    msg = StringUtils.hasText(retryAfter)
+                            ? context.getString(R.string.api_error_rate_limit_retry, retryAfter)
+                            : context.getString(R.string.api_error_rate_limit);
+                }
             } else if (c == 400 || c == 422) {
                 type = ApiErrorType.UNKNOWN;
-                msg = context.getString(R.string.api_error_refresh_invalido);
+                msg = resolveDisplayMessage(context, backendErrorCode, backendMessage, retryAfter, c);
+                if (!StringUtils.hasText(msg)) {
+                    msg = context.getString(R.string.api_error_refresh_invalido);
+                }
             } else {
-                type = ApiErrorType.SERVER;
-                msg = context.getString(R.string.api_error_inesperado);
+                type = c >= 500 ? ApiErrorType.SERVER : ApiErrorType.UNKNOWN;
+                msg = resolveDisplayMessage(context, backendErrorCode, backendMessage, retryAfter, c);
+                if (!StringUtils.hasText(msg)) {
+                    msg = context.getString(R.string.api_error_inesperado);
+                }
             }
-            return ApiError.typed(type, c, msg);
+            return ApiError.typed(type, c, msg, backendErrorCode);
         }
 
         if (t instanceof SocketTimeoutException) {
@@ -211,8 +289,7 @@ public final class ApiErrorParser {
 
     /**
      * Elimina el prefijo "Error:" que añade el backend en sus mensajes de validación,
-     * para que el toast al usuario sea más natural y limpio.
-     * Ej.: "Error: El nombre no puede contener números" → "El nombre no puede contener números"
+     * para que el texto al usuario sea más natural y limpio.
      */
     @NonNull
     private static String cleanBackendMsg(@NonNull String m) {
@@ -221,6 +298,43 @@ public final class ApiErrorParser {
             return trimmed.substring(7).trim();
         }
         return trimmed;
+    }
+
+    @Nullable
+    private static String resolveDisplayMessage(@NonNull Context context,
+                                                @Nullable String errorCode,
+                                                @Nullable String backendMessage,
+                                                @Nullable String retryAfter,
+                                                int httpCode) {
+        String localized = BackendErrorLocalizer.localize(context, errorCode, retryAfter);
+        if (StringUtils.hasText(localized)) return localized;
+
+        if (StringUtils.hasText(backendMessage)) {
+            return cleanBackendMsg(backendMessage);
+        }
+
+        if (httpCode == 429) {
+            return StringUtils.hasText(retryAfter)
+                    ? context.getString(R.string.api_error_rate_limit_retry, retryAfter)
+                    : context.getString(R.string.api_error_rate_limit);
+        }
+        return null;
+    }
+
+    @Nullable
+    private static String getString(@NonNull JsonObject obj, @NonNull String key) {
+        if (!obj.has(key) || obj.get(key) == null || !obj.get(key).isJsonPrimitive()) return null;
+        String value = obj.get(key).getAsString();
+        return StringUtils.hasText(value) ? value : null;
+    }
+
+    @Nullable
+    private static String firstNonEmpty(@Nullable String... values) {
+        if (values == null) return null;
+        for (String value : values) {
+            if (StringUtils.hasText(value)) return value;
+        }
+        return null;
     }
 
     private static ApiErrorType mapHttpToType(int code) {

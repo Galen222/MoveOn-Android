@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.core.api;
 
 import androidx.annotation.NonNull;
@@ -14,6 +15,7 @@ public final class ApiError {
     @NonNull private final ApiErrorType type;
     private final int httpCode;
     @NonNull private final String message;
+    @Nullable private final String errorCode;
 
     // fieldErrors: {"email": ["Email inválido"], "password": ["..."] }
     @NonNull private final Map<String, List<String>> fieldErrors;
@@ -23,11 +25,13 @@ public final class ApiError {
     public ApiError(@NonNull ApiErrorType type,
                     int httpCode,
                     @NonNull String message,
+                    @Nullable String errorCode,
                     @Nullable Map<String, List<String>> fieldErrors,
                     @Nullable String raw) {
         this.type = type;
         this.httpCode = httpCode;
         this.message = message;
+        this.errorCode = errorCode;
         this.fieldErrors = fieldErrors != null ? fieldErrors : Collections.emptyMap();
         this.raw = raw;
     }
@@ -35,6 +39,7 @@ public final class ApiError {
     @NonNull public ApiErrorType getType() { return type; }
     public int getHttpCode() { return httpCode; }
     @NonNull public String getMessage() { return message; }
+    @Nullable public String getErrorCode() { return errorCode; }
     @NonNull public Map<String, List<String>> getFieldErrors() { return fieldErrors; }
     @Nullable public String getRaw() { return raw; }
 
@@ -56,17 +61,25 @@ public final class ApiError {
 
     @NonNull
     public static ApiError local(@NonNull String message) {
-        return new ApiError(ApiErrorType.UNKNOWN, 0, message, null, null);
+        return new ApiError(ApiErrorType.UNKNOWN, 0, message, null, null, null);
     }
 
     @NonNull
     public static ApiError typed(@NonNull ApiErrorType type, @NonNull String message) {
-        return new ApiError(type, 0, message, null, null);
+        return new ApiError(type, 0, message, null, null, null);
     }
 
     @NonNull
     public static ApiError typed(@NonNull ApiErrorType type, int httpCode, @NonNull String message) {
-        return new ApiError(type, httpCode, message, null, null);
+        return new ApiError(type, httpCode, message, null, null, null);
+    }
+
+    @NonNull
+    public static ApiError typed(@NonNull ApiErrorType type,
+                                 int httpCode,
+                                 @NonNull String message,
+                                 @Nullable String errorCode) {
+        return new ApiError(type, httpCode, message, errorCode, null, null);
     }
 
     @NonNull
@@ -76,6 +89,6 @@ public final class ApiError {
         if (list == null) list = new ArrayList<>();
         list.add(value);
         m.put(key, list);
-        return new ApiError(this.type, this.httpCode, this.message, m, this.raw);
+        return new ApiError(this.type, this.httpCode, this.message, this.errorCode, m, this.raw);
     }
 }

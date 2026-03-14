@@ -3,17 +3,24 @@ package com.proyecto.moveon.data.remote.retrofit;
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.proyecto.moveon.core.auth.GlobalAuthManager;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.data.session.dto.LoginResponseDto;
 import com.proyecto.moveon.data.session.dto.RefreshRequestDto;
-import com.proyecto.moveon.core.auth.GlobalAuthManager;
 import com.proyecto.moveon.utils.StringUtils;
+
 import java.io.IOException;
+
 import okhttp3.Authenticator;
 import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
+import okhttp3.ResponseBody;
 
 public class TokenAuthenticator implements Authenticator {
 
@@ -95,11 +102,34 @@ public class TokenAuthenticator implements Authenticator {
                         .header("Authorization", "Bearer " + newAccess)
                         .build();
             } else {
-                // 8. GESTIÓN DE RECURSOS: Cerramos el errorBody para evitar fugas y permitir reutilizar el socket
-                if (refreshResp.errorBody() != null) {
+                String backendErrorCode = null;
+                String backendMessage = null;
+                ResponseBody errorBody = refreshResp.errorBody();
+                if (errorBody != null) {
                     try {
-                        refreshResp.errorBody().close();
-                    } catch (Exception ignored) {}
+                        String raw = errorBody.string();
+                        if (StringUtils.hasText(raw)) {
+                            JsonElement root = JsonParser.parseString(raw);
+                            if (root != null && root.isJsonObject()) {
+                                JsonObject obj = root.getAsJsonObject();
+                                backendErrorCode = getString(obj, "error_code");
+                                backendMessage = firstNonEmpty(
+                                        getString(obj, "mensaje"),
+                                        getString(obj, "message"),
+                                        getString(obj, "error")
+                                );
+                                if (!StringUtils.hasText(backendMessage) && obj.has("detail") && obj.get("detail").isJsonPrimitive()) {
+                                    backendMessage = getString(obj, "detail");
+                                }
+                            }
+                        }
+                    } catch (Exception ignored) {
+                    } finally {
+                        try {
+                            errorBody.close();
+                        } catch (Exception ignored) {
+                        }
+                    }
                 }
 
                 int code = refreshResp.code();
@@ -113,7 +143,12 @@ public class TokenAuthenticator implements Authenticator {
 
                 // 9. EXCEPCIÓN DE FALLO TEMPORAL: Para errores como 5xx o 429 (Rate Limit),
                 // lanzamos la excepción que nuestro ApiErrorParser convertirá en un mensaje útil.
-                throw new RefreshFailedException(code, refreshResp.headers().get("Retry-After"));
+                throw new RefreshFailedException(
+                        code,
+                        refreshResp.headers().get("Retry-After"),
+                        backendErrorCode,
+                        backendMessage
+                );
             }
         }
     }
@@ -132,18 +167,43 @@ public class TokenAuthenticator implements Authenticator {
         return result;
     }
 
+    @Nullable
+    private static String getString(@NonNull JsonObject obj, @NonNull String key) {
+        if (!obj.has(key) || obj.get(key) == null || !obj.get(key).isJsonPrimitive()) return null;
+        String value = obj.get(key).getAsString();
+        return StringUtils.hasText(value) ? value : null;
+    }
+
+    @Nullable
+    private static String firstNonEmpty(@Nullable String... values) {
+        if (values == null) return null;
+        for (String value : values) {
+            if (StringUtils.hasText(value)) return value;
+        }
+        return null;
+    }
+
     // ENCAPSULACIÓN: Campos privados y getters
     public static class RefreshFailedException extends IOException {
         private final int code;
-        private final String retryAfter;
+        @Nullable private final String retryAfter;
+        @Nullable private final String errorCode;
+        @Nullable private final String backendMessage;
 
-        public RefreshFailedException(int code, String retryAfter) {
-            super("Refresh error: " + code);
+        public RefreshFailedException(int code,
+                                      @Nullable String retryAfter,
+                                      @Nullable String errorCode,
+                                      @Nullable String backendMessage) {
+            super("Refresh error: " + code + (StringUtils.hasText(errorCode) ? " / " + errorCode : ""));
             this.code = code;
             this.retryAfter = retryAfter;
+            this.errorCode = errorCode;
+            this.backendMessage = backendMessage;
         }
 
         public int getCode() { return code; }
-        public String getRetryAfter() { return retryAfter; }
+        @Nullable public String getRetryAfter() { return retryAfter; }
+        @Nullable public String getErrorCode() { return errorCode; }
+        @Nullable public String getBackendMessage() { return backendMessage; }
     }
 }

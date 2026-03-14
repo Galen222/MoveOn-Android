@@ -17,20 +17,37 @@ fun localProp(key: String, defaultValue: String = ""): String {
 }
 
 /**
- * Selector de backend para la app Android (LOCAL / PRODUCCION).
+ * Asegura que la BASE_URL termine con "/".
+ */
+fun ensureTrailingSlash(url: String): String {
+    val trimmed = url.trim()
+    return if (trimmed.endsWith("/")) trimmed else "$trimmed/"
+}
+
+/**
+ * Selector de backend para la app Android (LOCAL / LAN / PRODUCCION).
  * SOLO cambia a qué backend apunta la app (y por tanto, qué BD usa ese backend).
  */
 val moveonBackend = localProp("MOVEON_BACKEND", "LOCAL").trim().uppercase()
 
 /**
+ * URL LAN configurable desde local.properties.
+ * Pensado para usar el móvil físico contra el backend levantado en tu PC.
+ */
+val moveonLanBaseUrl = ensureTrailingSlash(
+    localProp("MOVEON_LAN_BASE_URL", "http://192.168.68.105:8000")
+)
+
+/**
  * URL del backend según selector.
- * - Emulador Android + backend local en tu PC -> http://10.0.2.2:8000
- * - Producción -> https://dominio.com
+ * - LOCAL: emulador Android Studio + backend local en tu PC -> http://10.0.2.2:8000/
+ * - LAN: móvil físico en la misma red Wi-Fi -> MOVEON_LAN_BASE_URL
+ * - PRODUCCION: backend desplegado
  */
 val moveonBaseUrl = when (moveonBackend) {
     "PRODUCCION" -> "https://moaning-vanessa-moveonapp-2268f000.koyeb.app/"
-    "LAN" -> "http://192.168.68.105:8000"
-    else -> "http://10.0.2.2:8000"
+    "LAN" -> moveonLanBaseUrl
+    else -> "http://10.0.2.2:8000/"
 }
 
 /**
@@ -148,7 +165,6 @@ dependencies {
     implementation(libs.play.services.maps)
 
     // FusedLocationProviderClient
-
     implementation(libs.play.services.location)
 
     // Maps Android SDK Utility Library (PolyUtil.encode para encoded polyline)
