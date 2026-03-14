@@ -110,6 +110,7 @@ public class ActividadRemoteDataSource {
 
     // BUG-11: Tipo de retorno cambiado de ApiResult<String> a ApiResult<BorrarActividadResponseDto>
     @NonNull
+    @SuppressWarnings("unused")
     public ApiResult<BorrarActividadResponseDto> deleteActividadBlocking(int remoteId) {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<ApiResult<BorrarActividadResponseDto>> ref = new AtomicReference<>();

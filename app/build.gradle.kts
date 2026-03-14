@@ -29,6 +29,7 @@ val moveonBackend = localProp("MOVEON_BACKEND", "LOCAL").trim().uppercase()
  */
 val moveonBaseUrl = when (moveonBackend) {
     "PRODUCCION" -> "https://moaning-vanessa-moveonapp-2268f000.koyeb.app/"
+    "LAN" -> "http://192.168.68.105:8000"
     else -> "http://10.0.2.2:8000"
 }
 

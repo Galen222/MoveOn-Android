@@ -243,9 +243,12 @@ public final class ActivityRepository {
 
                 io.execute(() -> {
                     local.deleteByLocalId(localId);
-                    // BUG-11: Usar directamente el DTO que ya viene parseado del backend
-                    // en lugar de fabricar uno manualmente con puntos forzados a 0.
-                    callback.onResult(ApiResult.success(result.data));
+                    BorrarActividadResponseDto responseDto = result.data;
+                    if (responseDto == null) {
+                        responseDto = new BorrarActividadResponseDto();
+                        responseDto.estatus = "success";
+                    }
+                    callback.onResult(ApiResult.success(responseDto));
                 });
             });
         });

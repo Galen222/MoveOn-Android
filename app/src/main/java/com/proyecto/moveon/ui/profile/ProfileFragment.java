@@ -60,20 +60,23 @@ public class ProfileFragment extends Fragment {
     @Nullable private String transientPhotoPreviewPath;
 
     private final ActivityResultLauncher<String> notificationPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
-                if (binding == null) return;
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(),
+                    this::onNotificationPermissionResult);
 
-                binding.switchNotifications.setOnCheckedChangeListener(null);
-                if (granted) {
-                    viewModel.setNotificationsEnabled(true);
-                    binding.switchNotifications.setChecked(true);
-                } else {
-                    viewModel.setNotificationsEnabled(false);
-                    binding.switchNotifications.setChecked(false);
-                }
-                binding.switchNotifications.setOnCheckedChangeListener(notificationToggleListener);
-                updateNotificationsUi();
-            });
+    private void onNotificationPermissionResult(boolean granted) {
+        if (binding == null) return;
+
+        binding.switchNotifications.setOnCheckedChangeListener(null);
+        if (granted) {
+            viewModel.setNotificationsEnabled(true);
+            binding.switchNotifications.setChecked(true);
+        } else {
+            viewModel.setNotificationsEnabled(false);
+            binding.switchNotifications.setChecked(false);
+        }
+        binding.switchNotifications.setOnCheckedChangeListener(notificationToggleListener);
+        updateNotificationsUi();
+    }
 
     private final CompoundButton.OnCheckedChangeListener notificationToggleListener =
             (buttonView, isChecked) -> {
@@ -668,14 +671,9 @@ public class ProfileFragment extends Fragment {
     }
 
     private void openNotificationSettings() {
-        Intent intent;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                    .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName());
-        } else {
-            intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    .setData(Uri.fromParts("package", requireContext().getPackageName(), null));
-        }
+        // CAMBIO 8: minSdk 29 >= O (26), el check Build.VERSION siempre era true — rama else eliminada.
+        Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName());
         startActivity(intent);
     }
 

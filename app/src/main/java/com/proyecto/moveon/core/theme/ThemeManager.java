@@ -9,7 +9,6 @@ import com.proyecto.moveon.core.settings.AppSettingsManager;
 
 /**
  * Responsable SOLO de la lógica del tema.
- *
  * - Lee/escribe el modo a través de AppSettingsManager
  * - Aplica el modo visual con AppCompatDelegate
  */
@@ -36,14 +35,17 @@ public final class ThemeManager {
         return AppSettingsManager.getThemeMode(context);
     }
 
+    @SuppressWarnings("unused")
     public static boolean isDarkMode(@NonNull Context context) {
         return MODE_DARK.equals(getSavedMode(context));
     }
 
+    @SuppressWarnings("unused")
     public static boolean isLightMode(@NonNull Context context) {
         return MODE_LIGHT.equals(getSavedMode(context));
     }
 
+    @SuppressWarnings("unused")
     public static boolean isSystemMode(@NonNull Context context) {
         return MODE_SYSTEM.equals(getSavedMode(context));
     }

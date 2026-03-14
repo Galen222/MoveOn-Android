@@ -35,13 +35,14 @@ public final class AppSettingsManager {
     @NonNull
     public static String getThemeMode(@NonNull Context context) {
         String mode = prefs(context).getString(KEY_THEME_MODE, ThemeManager.MODE_SYSTEM);
-        return mode != null ? mode : ThemeManager.MODE_SYSTEM;
+        return prefs(context).getString(KEY_THEME_MODE, ThemeManager.MODE_SYSTEM);
     }
 
     public static void setThemeMode(@NonNull Context context, @NonNull String mode) {
         prefs(context).edit().putString(KEY_THEME_MODE, mode).apply();
     }
 
+    @SuppressWarnings("unused")
     public static boolean hasThemeMode(@NonNull Context context) {
         return prefs(context).contains(KEY_THEME_MODE);
     }
@@ -62,10 +63,12 @@ public final class AppSettingsManager {
 
     // ── Utilidades opcionales ───────────────────────────────────────────────
 
+    @SuppressWarnings("unused")
     public static void clearNotificationsPreference(@NonNull Context context) {
         prefs(context).edit().remove(KEY_NOTIFICATIONS_ENABLED).apply();
     }
 
+    @SuppressWarnings("unused")
     public static void clearThemeMode(@NonNull Context context) {
         prefs(context).edit().remove(KEY_THEME_MODE).apply();
     }

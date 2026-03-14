@@ -165,11 +165,6 @@ public class ProfileViewModel extends AndroidViewModel {
             return;
         }
 
-        if (sessionManager.hasNotificationsPreference()) {
-            AppSettingsManager.setNotificationsEnabled(context, sessionManager.areNotificationsEnabled());
-            return;
-        }
-
         SharedPreferences legacyPrefs =
                 context.getApplicationContext().getSharedPreferences(LEGACY_PREFS_NAME, Context.MODE_PRIVATE);
 

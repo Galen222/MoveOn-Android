@@ -37,9 +37,6 @@ public final class SecureSessionManager {
     private static final String KEY_USER_ID_IV = "user_id_iv";
     private static final String KEY_REMEMBERED_ID_CT = "remembered_id_ct";
     private static final String KEY_REMEMBERED_ID_IV = "remembered_id_iv";
-    private static final String KEY_NOTIFICATIONS_CT = "notifications_enabled_ct";
-    private static final String KEY_NOTIFICATIONS_IV = "notifications_enabled_iv";
-
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int GCM_TAG_LENGTH_BITS = 128;
 
@@ -172,24 +169,6 @@ public final class SecureSessionManager {
         return getDecryptedValue(KEY_REMEMBERED_ID_CT, KEY_REMEMBERED_ID_IV);
     }
 
-    public void saveNotificationsEnabled(boolean enabled) {
-        try {
-            SharedPreferences.Editor editor = prefs.edit();
-            putEncrypted(editor, KEY_NOTIFICATIONS_CT, KEY_NOTIFICATIONS_IV, Boolean.toString(enabled));
-            editor.apply();
-        } catch (Exception e) {
-            throw new RuntimeException("Error guardando preferencia de notificaciones", e);
-        }
-    }
-
-    public boolean areNotificationsEnabled() {
-        String value = getDecryptedValue(KEY_NOTIFICATIONS_CT, KEY_NOTIFICATIONS_IV);
-        return Boolean.parseBoolean(StringUtils.textOf(value));
-    }
-
-    public boolean hasNotificationsPreference() {
-        return prefs.contains(KEY_NOTIFICATIONS_CT) && prefs.contains(KEY_NOTIFICATIONS_IV);
-    }
 
     private void persistUserIdQuietly(@NonNull String userId) {
         try {
