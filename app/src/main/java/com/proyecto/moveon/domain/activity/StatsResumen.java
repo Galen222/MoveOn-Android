@@ -102,28 +102,28 @@ public final class StatsResumen {
             int totalActivities,
             @NonNull List<MonthBlock> monthBlocks) {
 
-        this.todayDistanceMeters       = todayDistanceMeters;
-        this.todayDurationSeconds      = todayDurationSeconds;
-        this.todayCalories             = todayCalories;
-        this.weekDaysDistanceMeters    = weekDaysDistanceMeters;
-        this.weeklyDistanceMeters      = weeklyDistanceMeters;
-        this.weeklyGoalMeters          = weeklyGoalMeters;
+        this.todayDistanceMeters        = todayDistanceMeters;
+        this.todayDurationSeconds       = todayDurationSeconds;
+        this.todayCalories              = todayCalories;
+        this.weekDaysDistanceMeters     = weekDaysDistanceMeters;
+        this.weeklyDistanceMeters       = weeklyDistanceMeters;
+        this.weeklyGoalMeters           = weeklyGoalMeters;
         this.currentMonthDistanceMeters = currentMonthDistanceMeters;
-        this.monthlyGoalMeters         = monthlyGoalMeters;
-        this.yesterdayDistanceMeters   = yesterdayDistanceMeters;
-        this.twoDaysAgoDistanceMeters  = twoDaysAgoDistanceMeters;
+        this.monthlyGoalMeters          = monthlyGoalMeters;
+        this.yesterdayDistanceMeters    = yesterdayDistanceMeters;
+        this.twoDaysAgoDistanceMeters   = twoDaysAgoDistanceMeters;
         this.previousMonthDistanceMeters = previousMonthDistanceMeters;
-        this.currentMonthCalories      = currentMonthCalories;
-        this.previousMonthCalories     = previousMonthCalories;
-        this.weeklyCalories            = weeklyCalories;
+        this.currentMonthCalories       = currentMonthCalories;
+        this.previousMonthCalories      = previousMonthCalories;
+        this.weeklyCalories             = weeklyCalories;
         this.previousWeekDistanceMeters = previousWeekDistanceMeters;
-        this.previousWeekCalories      = previousWeekCalories;
-        this.totalDistanceMeters       = totalDistanceMeters;
-        this.totalDurationSeconds      = totalDurationSeconds;
-        this.totalCalories             = totalCalories;
-        this.streakDays                = streakDays;
-        this.totalActivities           = totalActivities;
-        this.monthBlocks               = monthBlocks;
+        this.previousWeekCalories       = previousWeekCalories;
+        this.totalDistanceMeters        = totalDistanceMeters;
+        this.totalDurationSeconds       = totalDurationSeconds;
+        this.totalCalories              = totalCalories;
+        this.streakDays                 = streakDays;
+        this.totalActivities            = totalActivities;
+        this.monthBlocks                = monthBlocks;
     }
 
     // -------------------------------------------------------------------------
@@ -160,18 +160,21 @@ public final class StatsResumen {
         public final long distanceMeters;
         /** Calorías totales del mes. */
         public final long calories;
+        /** Duración total del mes en segundos. */
+        public final long durationSeconds;
         /** Semanas ISO que componen este mes. */
         @NonNull
         public final List<WeekBlock> weeks;
 
         public MonthBlock(int year, int month,
-                          long distanceMeters, long calories,
+                          long distanceMeters, long calories, long durationSeconds,
                           @NonNull List<WeekBlock> weeks) {
-            this.year           = year;
-            this.month          = month;
-            this.distanceMeters = distanceMeters;
-            this.calories       = calories;
-            this.weeks          = weeks;
+            this.year            = year;
+            this.month           = month;
+            this.distanceMeters  = distanceMeters;
+            this.calories        = calories;
+            this.durationSeconds = durationSeconds;
+            this.weeks           = weeks;
         }
     }
 
@@ -179,19 +182,22 @@ public final class StatsResumen {
     public static final class WeekBlock {
         /** Día del mes en que empieza la semana (lunes). */
         public final int startDay;
-        /** Día del mes en que termina la semana (domingo), puede superar el mes. */
+        /** Día del mes en que termina la semana (domingo). */
         public final int endDay;
         /** Distancia total de la semana en metros. */
         public final long distanceMeters;
         /** Calorías totales de la semana. */
         public final long calories;
+        /** Duración total de la semana en segundos. */
+        public final long durationSeconds;
 
         public WeekBlock(int startDay, int endDay,
-                         long distanceMeters, long calories) {
-            this.startDay       = startDay;
-            this.endDay         = endDay;
-            this.distanceMeters = distanceMeters;
-            this.calories       = calories;
+                         long distanceMeters, long calories, long durationSeconds) {
+            this.startDay        = startDay;
+            this.endDay          = endDay;
+            this.distanceMeters  = distanceMeters;
+            this.calories        = calories;
+            this.durationSeconds = durationSeconds;
         }
     }
 }

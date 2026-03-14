@@ -268,6 +268,12 @@
     <string name="stats_label_activities">Actividades</string>
     <string name="stats_format_kcal_total">%1$d kcal</string>
     <string name="stats_format_activities">%1$d</string>
+    <string name="stats_historial_title">Historial</string>
+    <string name="stats_historial_empty">Sin actividad registrada</string>
+    <string name="stats_historial_mes_anio">%1$s %2$d</string>
+    <string name="stats_historial_totales">%1$s  ·  %2$s  ·  %3$s</string>
+    <string name="stats_historial_semana_rango">%1$d–%2$d %3$s</string>
+    <string name="stats_historial_tiempo_kcal">%1$s  ·  %2$s</string>
 
     <!-- Card Hoy -->
     <string name="stats_section_today">Hoy</string>

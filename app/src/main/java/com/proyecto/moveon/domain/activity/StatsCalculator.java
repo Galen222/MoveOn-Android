@@ -22,10 +22,8 @@ import java.util.TreeMap;
 /**
  * Clase de utilidad pura para calcular agregados estadísticos a partir
  * de una lista de {@link ActividadItem}.
-
  * Todos los métodos son estáticos y no tienen efectos secundarios.
  * No depende de ningún framework Android — es 100% testeable con JUnit.
-
  * Las semanas son siempre lunes–domingo (ISO 8601).
  * La racha cuenta días consecutivos hacia atrás desde hoy inclusive.
  * Si hoy no tiene actividad, la racha es 0.
@@ -35,8 +33,6 @@ public final class StatsCalculator {
     public static final long DEFAULT_WEEKLY_GOAL_METERS  = 50_000L;
     public static final long DEFAULT_MONTHLY_GOAL_METERS = 150_000L;
 
-
-
     private StatsCalculator() {
         // Clase utilitaria — no instanciar
     }
@@ -44,11 +40,6 @@ public final class StatsCalculator {
     /**
      * Calcula el resumen completo de estadísticas a partir de la lista de actividades
      * y los objetivos del usuario.
-     *
-     * @param items             lista de actividades (nunca null, puede estar vacía)
-     * @param weeklyGoalMeters  objetivo semanal en metros
-     * @param monthlyGoalMeters objetivo mensual en metros
-     * @return {@link StatsResumen} con todos los agregados calculados
      */
     @NonNull
     public static StatsResumen calcular(@NonNull List<ActividadItem> items,
@@ -63,11 +54,11 @@ public final class StatsCalculator {
         final LocalDate haceDos = hoy.minusDays(2);
 
         // Semana actual (ISO: lunes–domingo)
-        final LocalDate lunesActual    = hoy.minusDays(hoy.getDayOfWeek().getValue() - 1L);
-        final LocalDate domingoActual  = lunesActual.plusDays(6);
+        final LocalDate lunesActual     = hoy.minusDays(hoy.getDayOfWeek().getValue() - 1L);
+        final LocalDate domingoActual   = lunesActual.plusDays(6);
 
         // Semana anterior
-        final LocalDate lunesAnterior  = lunesActual.minusDays(7);
+        final LocalDate lunesAnterior   = lunesActual.minusDays(7);
         final LocalDate domingoAnterior = lunesAnterior.plusDays(6);
 
         // Mes actual y anterior
@@ -78,32 +69,32 @@ public final class StatsCalculator {
         final int anioMesAnterior    = primerMesAnt.getYear();
 
         // Acumuladores
-        long totalDistancia         = 0L;
-        long totalDuracion          = 0L;
-        long totalCalorias          = 0L;
+        long totalDistancia       = 0L;
+        long totalDuracion        = 0L;
+        long totalCalorias        = 0L;
 
-        long distanciaHoy           = 0L;
-        long duracionHoy            = 0L;
-        long caloriasHoy            = 0L;
+        long distanciaHoy         = 0L;
+        long duracionHoy          = 0L;
+        long caloriasHoy          = 0L;
 
-        long distanciaAyer          = 0L;
-        long distanciaHaceDos       = 0L;
+        long distanciaAyer        = 0L;
+        long distanciaHaceDos     = 0L;
 
-        long distanciaSemana        = 0L;
-        long caloriasSemana         = 0L;
-        long distanciaSemanaAnt     = 0L;
-        long caloriasSemanaAnt      = 0L;
+        long distanciaSemana      = 0L;
+        long caloriasSemana       = 0L;
+        long distanciaSemanaAnt   = 0L;
+        long caloriasSemanaAnt    = 0L;
 
-        long distanciaMesActual     = 0L;
-        long caloriasMesActual      = 0L;
-        long distanciaMesAnterior   = 0L;
-        long caloriasMesAnterior    = 0L;
+        long distanciaMesActual   = 0L;
+        long caloriasMesActual    = 0L;
+        long distanciaMesAnterior = 0L;
+        long caloriasMesAnterior  = 0L;
 
-        long[] porDia               = new long[7];
+        long[] porDia             = new long[7];
 
         Set<LocalDate> diasConActividad = new HashSet<>();
 
-        // Mapa para historial: clave = "YYYY-MM" → [distancia, calorias]
+        // Mapa para historial: clave = "YYYY-MM" → [distancia, calorias, duracion]
         Map<String, long[]> porMes = new TreeMap<>(Collections.reverseOrder());
 
         for (ActividadItem item : items) {
@@ -130,12 +121,11 @@ public final class StatsCalculator {
                 distanciaHaceDos += metros;
             }
 
-            // Semana actual (lunes–domingo ISO)
+            // Semana actual
             if (!fecha.isBefore(lunesActual) && !fecha.isAfter(domingoActual)) {
                 distanciaSemana += metros;
                 caloriasSemana  += kcal;
 
-                // Gráfico semanal: índice 0=lunes, 6=domingo
                 int idx = (int) ChronoUnit.DAYS.between(lunesActual, fecha);
                 if (idx >= 0 && idx < 7) {
                     porDia[idx] += metros;
@@ -160,11 +150,12 @@ public final class StatsCalculator {
                 caloriasMesAnterior  += kcal;
             }
 
-            // Historial por mes (Card 9)
+            // Historial por mes (Card 9) — [distancia, calorias, duracion]
             String mesKey = fecha.getYear() + "-" + String.format(Locale.US, "%02d", fecha.getMonthValue());
-            long[] totalesMes = porMes.computeIfAbsent(mesKey, k -> new long[2]);
+            long[] totalesMes = porMes.computeIfAbsent(mesKey, k -> new long[3]);
             totalesMes[0] += metros;
             totalesMes[1] += kcal;
+            totalesMes[2] += segundos;
         }
 
         int streak = calcularStreak(diasConActividad, hoy);
@@ -199,7 +190,6 @@ public final class StatsCalculator {
     /**
      * Calcula la racha de días consecutivos con al menos una actividad,
      * contando hacia atrás desde hoy inclusive.
-     * Si hoy no tiene actividad, la racha es 0.
      */
     public static int calcularStreak(@NonNull Set<LocalDate> diasConActividad,
                                      @NonNull LocalDate hoy) {
@@ -216,10 +206,6 @@ public final class StatsCalculator {
 
     // ── Privados ──────────────────────────────────────────────────────────────
 
-    /**
-     * Construye los bloques de historial (Card 9) agrupados por mes → semana ISO.
-     * Devuelve los últimos 3 meses en orden descendente (más reciente primero).
-     */
     @NonNull
     private static List<StatsResumen.MonthBlock> buildMonthBlocks(
             @NonNull List<ActividadItem> items,
@@ -227,25 +213,23 @@ public final class StatsCalculator {
 
         if (porMes.isEmpty()) return Collections.emptyList();
 
-        // Construir mapa de actividades por fecha para las semanas
+        // Mapa de actividades por fecha: [distancia, calorias, duracion]
         Map<LocalDate, long[]> porFecha = new HashMap<>();
         for (ActividadItem item : items) {
             LocalDate fecha = parseFecha(item.fechaRutaIso);
             if (fecha == null) continue;
-            long[] totales = porFecha.computeIfAbsent(fecha, k -> new long[2]);
+            long[] totales = porFecha.computeIfAbsent(fecha, k -> new long[3]);
             totales[0] += item.distanciaMetros;
             totales[1] += item.caloriasQuemadas;
+            totales[2] += item.duracionSegundos;
         }
 
         List<StatsResumen.MonthBlock> result = new ArrayList<>();
-        int count = 0;
 
         for (Map.Entry<String, long[]> entry : porMes.entrySet()) {
-            if (count >= 3) break;
-
-            String[] parts = entry.getKey().split("-");
-            int year  = Integer.parseInt(parts[0]);
-            int month = Integer.parseInt(parts[1]);
+            String[] parts    = entry.getKey().split("-");
+            int year          = Integer.parseInt(parts[0]);
+            int month         = Integer.parseInt(parts[1]);
             long[] totalesMes = entry.getValue();
 
             List<StatsResumen.WeekBlock> weekBlocks =
@@ -253,17 +237,13 @@ public final class StatsCalculator {
 
             result.add(new StatsResumen.MonthBlock(
                     year, month,
-                    totalesMes[0], totalesMes[1],
+                    totalesMes[0], totalesMes[1], totalesMes[2],
                     weekBlocks));
-            count++;
         }
 
         return result;
     }
 
-    /**
-     * Divide un mes en semanas ISO (lunes–domingo) y calcula distancia/kcal de cada una.
-     */
     @NonNull
     private static List<StatsResumen.WeekBlock> buildWeekBlocks(
             int year, int month,
@@ -274,37 +254,34 @@ public final class StatsCalculator {
         LocalDate primerDia = LocalDate.of(year, month, 1);
         LocalDate ultimoDia = YearMonth.of(year, month).atEndOfMonth();
 
-        // Avanzar al lunes de la semana que contiene el primer día del mes
         LocalDate cursor = primerDia.minusDays(primerDia.getDayOfWeek().getValue() - 1L);
 
         while (!cursor.isAfter(ultimoDia)) {
             LocalDate lunes   = cursor;
             LocalDate domingo = cursor.plusDays(6);
 
-            long distSemana  = 0L;
-            long kcalSemana  = 0L;
+            long distSemana = 0L;
+            long kcalSemana = 0L;
+            long durSemana  = 0L;
 
             for (LocalDate d = lunes; !d.isAfter(domingo); d = d.plusDays(1)) {
-                // Solo contar días que pertenecen al mes en cuestión
                 if (d.getMonthValue() == month && d.getYear() == year) {
                     long[] totales = porFecha.get(d);
                     if (totales != null) {
                         distSemana += totales[0];
                         kcalSemana += totales[1];
+                        durSemana  += totales[2];
                     }
                 }
             }
 
-            // startDay y endDay en días del mes (puede quedar truncado al mes)
-            int startDay = Math.max(lunes.getDayOfMonth(),   primerDia.getDayOfMonth());
-            int endDay   = Math.min(domingo.getDayOfMonth(), ultimoDia.getDayOfMonth());
+            int startDay = lunes.getMonthValue() != month || lunes.getYear() != year
+                    ? 1
+                    : lunes.getDayOfMonth();
+            int endDay = Math.min(domingo.getDayOfMonth(), ultimoDia.getDayOfMonth());
 
-            // Ajustar startDay si el lunes cae en el mes anterior
-            if (lunes.getMonthValue() != month || lunes.getYear() != year) {
-                startDay = 1;
-            }
-
-            blocks.add(new StatsResumen.WeekBlock(startDay, endDay, distSemana, kcalSemana));
+            blocks.add(new StatsResumen.WeekBlock(
+                    startDay, endDay, distSemana, kcalSemana, durSemana));
 
             cursor = cursor.plusDays(7);
         }
