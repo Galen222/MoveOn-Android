@@ -74,7 +74,7 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
 
     // ── ViewHolder ────────────────────────────────────────────────────────────
 
-    final class ViewHolder extends RecyclerView.ViewHolder {
+    public final class ViewHolder extends RecyclerView.ViewHolder {
 
         private final ItemActividadBinding binding;
 
