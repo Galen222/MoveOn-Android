@@ -110,15 +110,17 @@
         <!-- Fila: Recordar cuenta + ¿Olvidaste contraseña? -->
         <CheckBox
             android:id="@+id/cbRecordarCuenta"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/auth_margin_horizontal"
             android:layout_marginTop="4dp"
+            android:layout_marginEnd="8dp"
             android:text="@string/login_recordar_cuenta"
             android:textColor="@color/textSecondary"
             android:textSize="@dimen/auth_forgot_text_size"
             android:buttonTint="@color/greenPrimary"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnOlvidarPassword"
             app:layout_constraintTop_toBottomOf="@+id/tilPassword"
             app:layout_constraintBottom_toBottomOf="@+id/btnOlvidarPassword" />
 
