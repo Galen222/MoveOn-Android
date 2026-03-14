@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
+import android.widget.NumberPicker;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -328,49 +329,86 @@ public class ProfileFragment extends Fragment {
         binding.itemProvincia.setOnClickListener(v -> showEditProvinciaDialog());
         binding.itemGenero.setOnClickListener(v -> showGeneroDialog());
 
-        binding.itemAltura.setOnClickListener(v -> showEditNumberDialog(
-                getString(R.string.profile_label_altura),
-                perfilActual != null && perfilActual.altura != null
-                        ? String.valueOf(perfilActual.altura) : null,
-                true,
-                value -> {
-                    if (value.isEmpty()) {
-                        viewModel.updatePerfil(new ProfilePatchPayload().altura(null).toJson());
-                        return true;
-                    }
-                    try {
-                        int altura = Integer.parseInt(value);
-                        viewModel.updatePerfil(new ProfilePatchPayload().altura(altura).toJson());
-                        return true;
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(requireContext(),
-                                R.string.dialog_error_invalid_number, Toast.LENGTH_SHORT).show();
-                        return false;
-                    }
-                }
-        ));
+        binding.itemAltura.setOnClickListener(v -> showAlturaPickerDialog());
+        binding.itemPeso.setOnClickListener(v -> showPesoPickerDialog());
+    }
 
-        binding.itemPeso.setOnClickListener(v -> showEditNumberDialog(
-                getString(R.string.profile_label_peso),
-                perfilActual != null && perfilActual.peso != null
-                        ? String.valueOf(perfilActual.peso) : null,
-                false,
-                value -> {
-                    if (value.isEmpty()) {
-                        viewModel.updatePerfil(new ProfilePatchPayload().peso(null).toJson());
-                        return true;
-                    }
-                    try {
-                        double peso = Double.parseDouble(value);
-                        viewModel.updatePerfil(new ProfilePatchPayload().peso(peso).toJson());
-                        return true;
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(requireContext(),
-                                R.string.dialog_error_invalid_number, Toast.LENGTH_SHORT).show();
-                        return false;
-                    }
-                }
-        ));
+    // ── Picker de Altura (100–220 cm, enteros) ────────────────────────────────
+
+    private void showAlturaPickerDialog() {
+        final int minAltura = 50;
+        final int maxAltura = 300;
+
+        NumberPicker picker = new NumberPicker(requireContext());
+        picker.setMinValue(minAltura);
+        picker.setMaxValue(maxAltura);
+        picker.setWrapSelectorWheel(false);
+
+        int initialAltura = 170; // dentro del nuevo rango 50–300
+        if (perfilActual != null && perfilActual.altura != null) {
+            int current = perfilActual.altura;
+            if (current >= minAltura && current <= maxAltura) {
+                initialAltura = current;
+            }
+        }
+        picker.setValue(initialAltura);
+
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        picker.setPadding(pad, pad, pad, pad);
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.profile_label_altura)
+                .setView(picker)
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .setPositiveButton(R.string.dialog_btn_save, (dialog, which) -> {
+                    int altura = picker.getValue();
+                    viewModel.updatePerfil(new ProfilePatchPayload().altura(altura).toJson());
+                })
+                .show();
+    }
+
+    // ── Picker de Peso (40–200 kg, pasos de 0.5) ─────────────────────────────
+
+    private void showPesoPickerDialog() {
+        final double pesoMin  = 20.0;
+        final double pesoMax  = 300.0;
+        final double pesoStep = 0.5;
+        final int totalItems  = (int) ((pesoMax - pesoMin) / pesoStep) + 1;
+
+        String[] labels = new String[totalItems];
+        for (int i = 0; i < totalItems; i++) {
+            double val = pesoMin + i * pesoStep;
+            labels[i] = String.format(Locale.getDefault(), "%.1f kg", val);
+        }
+
+        NumberPicker picker = new NumberPicker(requireContext());
+        picker.setMinValue(0);
+        picker.setMaxValue(totalItems - 1);
+        picker.setDisplayedValues(labels);
+        picker.setWrapSelectorWheel(false);
+
+        int initialIndex = (int) ((70.0 - pesoMin) / pesoStep); // 70 kg, dentro del nuevo rango 20–300
+        if (perfilActual != null && perfilActual.peso != null) {
+            double current = perfilActual.peso;
+            if (current >= pesoMin && current <= pesoMax) {
+                initialIndex = (int) Math.round((current - pesoMin) / pesoStep);
+            }
+        }
+        picker.setValue(initialIndex);
+
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        picker.setPadding(pad, pad, pad, pad);
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.profile_label_peso)
+                .setView(picker)
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .setPositiveButton(R.string.dialog_btn_save, (dialog, which) -> {
+                    double peso = pesoMin + picker.getValue() * pesoStep;
+                    peso = Math.round(peso * 10.0) / 10.0;
+                    viewModel.updatePerfil(new ProfilePatchPayload().peso(peso).toJson());
+                })
+                .show();
     }
 
     private void showEditTextDialog(@NonNull String label,
@@ -671,7 +709,6 @@ public class ProfileFragment extends Fragment {
     }
 
     private void openNotificationSettings() {
-        // CAMBIO 8: minSdk 29 >= O (26), el check Build.VERSION siempre era true — rama else eliminada.
         Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                 .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName());
         startActivity(intent);
