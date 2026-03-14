@@ -14,6 +14,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.google.gson.JsonObject;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
+import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.data.profile.PerfilRepository;
 import com.proyecto.moveon.data.session.AuthRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
@@ -124,11 +125,11 @@ public class ProfileViewModel extends AndroidViewModel {
     public void resetPhotoState()  { photoState.setValue(null); }
 
     public boolean areNotificationsEnabled() {
-        return sessionManager.areNotificationsEnabled();
+        return AppSettingsManager.areNotificationsEnabled(getApplication());
     }
 
     public void setNotificationsEnabled(boolean enabled) {
-        sessionManager.saveNotificationsEnabled(enabled);
+        AppSettingsManager.setNotificationsEnabled(getApplication(), enabled);
     }
 
     public void logout() {
@@ -160,17 +161,22 @@ public class ProfileViewModel extends AndroidViewModel {
     }
 
     private void migrateLegacyNotificationsPreference(@NonNull Context context) {
+        if (AppSettingsManager.hasNotificationsPreference(context)) {
+            return;
+        }
+
+        if (sessionManager.hasNotificationsPreference()) {
+            AppSettingsManager.setNotificationsEnabled(context, sessionManager.areNotificationsEnabled());
+            return;
+        }
+
         SharedPreferences legacyPrefs =
                 context.getApplicationContext().getSharedPreferences(LEGACY_PREFS_NAME, Context.MODE_PRIVATE);
 
         if (!legacyPrefs.contains(KEY_NOTIFICATIONS)) return;
-        if (sessionManager.hasNotificationsPreference()) {
-            legacyPrefs.edit().remove(KEY_NOTIFICATIONS).apply();
-            return;
-        }
 
         boolean enabled = legacyPrefs.getBoolean(KEY_NOTIFICATIONS, false);
-        sessionManager.saveNotificationsEnabled(enabled);
+        AppSettingsManager.setNotificationsEnabled(context, enabled);
         legacyPrefs.edit().remove(KEY_NOTIFICATIONS).apply();
     }
 

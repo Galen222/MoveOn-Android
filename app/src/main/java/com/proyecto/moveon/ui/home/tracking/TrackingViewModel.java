@@ -10,6 +10,7 @@ import android.os.IBinder;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
@@ -36,15 +37,7 @@ import java.time.format.DateTimeFormatter;
  */
 public final class TrackingViewModel extends AndroidViewModel {
 
-    // -------------------------------------------------------------------------
-    // Repository
-    // -------------------------------------------------------------------------
-
     private final ActivityRepository repository;
-
-    // -------------------------------------------------------------------------
-    // LiveData expuesta a la UI
-    // -------------------------------------------------------------------------
 
     /** Estado en tiempo real del tracking (refleja lo que publica TrackingService). */
     private final MediatorLiveData<TrackingState> trackingState = new MediatorLiveData<>();
@@ -65,40 +58,46 @@ public final class TrackingViewModel extends AndroidViewModel {
     @NonNull
     public LiveData<Event<String>> getErrorEvent() { return errorEvent; }
 
-    // -------------------------------------------------------------------------
-    // Conexión al servicio
-    // -------------------------------------------------------------------------
-
     @SuppressLint("StaticFieldLeak")
     @Nullable private TrackingService service;
+    @Nullable private LiveData<TrackingState> serviceStateSource;
     private boolean bound = false;
+    private boolean bindRequested = false;
+    private boolean pendingStartAfterBind = false;
 
     private final ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(@NonNull ComponentName name, @NonNull IBinder binder) {
             TrackingService.LocalBinder localBinder = (TrackingService.LocalBinder) binder;
             service = localBinder.getService();
-            bound   = true;
+            bound = true;
+            bindRequested = false;
 
-            // Conectar el LiveData del servicio al MediatorLiveData
-            trackingState.addSource(
-                    service.getStateLiveData(),
-                    trackingState::setValue);
+            if (serviceStateSource != null) {
+                trackingState.removeSource(serviceStateSource);
+            }
+            serviceStateSource = service.getStateLiveData();
+            trackingState.addSource(serviceStateSource, trackingState::setValue);
 
-            // Cargar peso aquí, cuando service ya no es null
             loadUserWeight();
+
+            if (pendingStartAfterBind) {
+                pendingStartAfterBind = false;
+                service.startTracking();
+            }
         }
 
         @Override
         public void onServiceDisconnected(@NonNull ComponentName name) {
-            bound   = false;
+            if (serviceStateSource != null) {
+                trackingState.removeSource(serviceStateSource);
+                serviceStateSource = null;
+            }
+            bound = false;
+            bindRequested = false;
             service = null;
         }
     };
-
-    // -------------------------------------------------------------------------
-    // Constructor
-    // -------------------------------------------------------------------------
 
     public TrackingViewModel(@NonNull Application application) {
         super(application);
@@ -107,14 +106,12 @@ public final class TrackingViewModel extends AndroidViewModel {
         bindTrackingService();
     }
 
-    // -------------------------------------------------------------------------
-    // Bind / Unbind
-    // -------------------------------------------------------------------------
-
     private void bindTrackingService() {
-        Context ctx    = getApplication();
-        Intent  intent = new Intent(ctx, TrackingService.class);
-        ctx.startForegroundService(intent);
+        if (bound || bindRequested) return;
+
+        Context ctx = getApplication();
+        Intent intent = new Intent(ctx, TrackingService.class);
+        bindRequested = true;
         ctx.bindService(intent, connection, Context.BIND_AUTO_CREATE);
     }
 
@@ -128,13 +125,23 @@ public final class TrackingViewModel extends AndroidViewModel {
         repository.cancelAll();
     }
 
-    // -------------------------------------------------------------------------
-    // Comandos de tracking
-    // -------------------------------------------------------------------------
-
     /** Inicia o reanuda la grabación. */
     public void startTracking() {
-        if (service != null) service.startTracking();
+        Context ctx = getApplication();
+        Intent intent = new Intent(ctx, TrackingService.class);
+        TrackingState currentState = trackingState.getValue();
+
+        if (service != null) {
+            if (currentState == null || currentState.isIdle() || currentState.isFinished()) {
+                ContextCompat.startForegroundService(ctx, intent);
+            }
+            service.startTracking();
+            return;
+        }
+
+        ContextCompat.startForegroundService(ctx, intent);
+        pendingStartAfterBind = true;
+        bindTrackingService();
     }
 
     /** Pausa la grabación. */
@@ -165,10 +172,6 @@ public final class TrackingViewModel extends AndroidViewModel {
         saveState.setValue(UiState.success(null));
     }
 
-    // -------------------------------------------------------------------------
-    // Peso del usuario
-    // -------------------------------------------------------------------------
-
     private void loadUserWeight() {
         repository.obtenerPerfil(result -> {
             if (result.isSuccess() && result.data != null) {
@@ -177,13 +180,8 @@ public final class TrackingViewModel extends AndroidViewModel {
                     service.setUserWeight(perfil.peso);
                 }
             }
-            // Si falla, el servicio usa el peso por defecto (70 kg). No bloqueamos el flujo.
         });
     }
-
-    // -------------------------------------------------------------------------
-    // Guardar actividad en API
-    // -------------------------------------------------------------------------
 
     private void guardarActividad(@NonNull TrackingState state) {
         saveState.setValue(UiState.loading());
@@ -195,9 +193,7 @@ public final class TrackingViewModel extends AndroidViewModel {
         String fechaRuta = OffsetDateTime.now(ZoneOffset.UTC)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
-        // Clampear calorías al máximo que acepta el backend (10000)
         int calorias = Math.min(state.getCalories(), 10000);
-        // El backend requiere calorias > 0
         if (calorias <= 0) calorias = 1;
 
         GuardarActividadRequestDto request = new GuardarActividadRequestDto(
@@ -220,10 +216,6 @@ public final class TrackingViewModel extends AndroidViewModel {
             }
         });
     }
-
-    // -------------------------------------------------------------------------
-    // Helpers para el Fragment
-    // -------------------------------------------------------------------------
 
     /** true si hay una actividad en curso (RUNNING o PAUSED). */
     public boolean isTrackingActive() {

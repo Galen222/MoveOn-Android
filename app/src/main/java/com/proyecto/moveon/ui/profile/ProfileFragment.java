@@ -1,13 +1,18 @@
 package com.proyecto.moveon.ui.profile;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -15,6 +20,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -47,10 +54,52 @@ import java.util.Locale;
 public class ProfileFragment extends Fragment {
 
     private FragmentProfileBinding binding;
-    private ProfileViewModel        viewModel;
+    private ProfileViewModel viewModel;
 
     @Nullable private PerfilUsuario perfilActual;
     @Nullable private String transientPhotoPreviewPath;
+
+    private final ActivityResultLauncher<String> notificationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+                if (binding == null) return;
+
+                binding.switchNotifications.setOnCheckedChangeListener(null);
+                if (granted) {
+                    viewModel.setNotificationsEnabled(true);
+                    binding.switchNotifications.setChecked(true);
+                } else {
+                    viewModel.setNotificationsEnabled(false);
+                    binding.switchNotifications.setChecked(false);
+                }
+                binding.switchNotifications.setOnCheckedChangeListener(notificationToggleListener);
+                updateNotificationsUi();
+            });
+
+    private final CompoundButton.OnCheckedChangeListener notificationToggleListener =
+            (buttonView, isChecked) -> {
+                if (!buttonView.isPressed()) return;
+
+                if (!isChecked) {
+                    viewModel.setNotificationsEnabled(false);
+                    updateNotificationsUi();
+                    return;
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (ContextCompat.checkSelfPermission(
+                            requireContext(),
+                            Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED) {
+                        viewModel.setNotificationsEnabled(true);
+                        updateNotificationsUi();
+                    } else {
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                    }
+                } else {
+                    viewModel.setNotificationsEnabled(true);
+                    updateNotificationsUi();
+                }
+            };
 
     private final ActivityResultLauncher<Intent> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -73,7 +122,7 @@ public class ProfileFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        binding   = FragmentProfileBinding.inflate(inflater, container, false);
+        binding = FragmentProfileBinding.inflate(inflater, container, false);
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
 
         bindLocalData();
@@ -89,6 +138,7 @@ public class ProfileFragment extends Fragment {
     public void onResume() {
         super.onResume();
         syncThemeToggleWithSavedMode();
+        updateNotificationsUi();
     }
 
     @Override
@@ -103,7 +153,11 @@ public class ProfileFragment extends Fragment {
             username = getString(R.string.profile_default_username);
         }
         binding.tvUserName.setText(username);
+
+        binding.switchNotifications.setOnCheckedChangeListener(null);
         binding.switchNotifications.setChecked(viewModel.areNotificationsEnabled());
+        binding.switchNotifications.setOnCheckedChangeListener(notificationToggleListener);
+        updateNotificationsUi();
     }
 
     private void bindPerfilData(@NonNull PerfilUsuario perfil) {
@@ -229,11 +283,8 @@ public class ProfileFragment extends Fragment {
         binding.itemShareRoutes.setOnClickListener(v ->
                 Toast.makeText(requireContext(), R.string.common_proximamente, Toast.LENGTH_SHORT).show());
 
-        binding.switchNotifications.setOnCheckedChangeListener((btn, isChecked) -> {
-            if (btn.isPressed()) {
-                viewModel.setNotificationsEnabled(isChecked);
-            }
-        });
+        binding.switchNotifications.setOnCheckedChangeListener(notificationToggleListener);
+        binding.tvNotificationsOpenSettings.setOnClickListener(v -> openNotificationSettings());
 
         binding.fabChangePhoto.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -603,6 +654,29 @@ public class ProfileFragment extends Fragment {
         if (binding.toggleThemeMode.getCheckedButtonId() != checkedId) {
             binding.toggleThemeMode.check(checkedId);
         }
+    }
+
+    private void updateNotificationsUi() {
+        if (binding == null || !isAdded()) return;
+
+        boolean enabledInApp = viewModel.areNotificationsEnabled();
+        boolean enabledInSystem = NotificationManagerCompat.from(requireContext()).areNotificationsEnabled();
+        boolean showBlocked = enabledInApp && !enabledInSystem;
+
+        binding.tvNotificationsBlocked.setVisibility(showBlocked ? View.VISIBLE : View.GONE);
+        binding.tvNotificationsOpenSettings.setVisibility(showBlocked ? View.VISIBLE : View.GONE);
+    }
+
+    private void openNotificationSettings() {
+        Intent intent;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName());
+        } else {
+            intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    .setData(Uri.fromParts("package", requireContext().getPackageName(), null));
+        }
+        startActivity(intent);
     }
 
     private void goToLogin() {

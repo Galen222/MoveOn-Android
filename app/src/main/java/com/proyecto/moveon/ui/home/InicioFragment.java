@@ -1,5 +1,8 @@
 package com.proyecto.moveon.ui.home;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,10 +34,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.os.Build;
-
 /**
  * Fragmento principal de tracking.
  * Flujo de estados:
@@ -43,23 +42,11 @@ import android.os.Build;
  */
 public class InicioFragment extends Fragment implements OnMapReadyCallback {
 
-    // -------------------------------------------------------------------------
-    // ViewBinding y ViewModel
-    // -------------------------------------------------------------------------
-
     private FragmentInicioBinding binding;
-    private TrackingViewModel      viewModel;
-
-    // -------------------------------------------------------------------------
-    // Mapa
-    // -------------------------------------------------------------------------
+    private TrackingViewModel viewModel;
 
     @Nullable private GoogleMap googleMap;
-    @Nullable private Polyline  routePolyline;
-
-    // -------------------------------------------------------------------------
-    // Permisos
-    // -------------------------------------------------------------------------
+    @Nullable private Polyline routePolyline;
 
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(
@@ -68,7 +55,12 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
                         boolean locationGranted =
                                 Boolean.TRUE.equals(permissions.get(Manifest.permission.ACCESS_FINE_LOCATION))
                                         || Boolean.TRUE.equals(permissions.get(Manifest.permission.ACCESS_COARSE_LOCATION));
-                        if (locationGranted) {
+
+                        boolean activityGranted =
+                                Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+                                        || Boolean.TRUE.equals(permissions.get(Manifest.permission.ACTIVITY_RECOGNITION));
+
+                        if (locationGranted && activityGranted) {
                             enableMapMyLocation();
                             viewModel.startTracking();
                         } else {
@@ -76,10 +68,6 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
                                     R.string.tracking_permission_denied, Toast.LENGTH_LONG).show();
                         }
                     });
-
-    // -------------------------------------------------------------------------
-    // Ciclo de vida
-    // -------------------------------------------------------------------------
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -105,10 +93,6 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
         super.onDestroyView();
         binding = null;
     }
-
-    // -------------------------------------------------------------------------
-    // Mapa
-    // -------------------------------------------------------------------------
 
     private void setupMap() {
         SupportMapFragment mapFragment = (SupportMapFragment)
@@ -136,10 +120,6 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
             googleMap.setMyLocationEnabled(true);
         }
     }
-
-    // -------------------------------------------------------------------------
-    // Click listeners
-    // -------------------------------------------------------------------------
 
     private void setupClickListeners() {
         binding.btnPlay.setOnClickListener(v  -> onPlayClicked());
@@ -206,10 +186,6 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Observadores
-    // -------------------------------------------------------------------------
-
     private void observeViewModel() {
         viewModel.getTrackingState().observe(getViewLifecycleOwner(),
                 this::renderTrackingState);
@@ -235,10 +211,6 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
             }
         });
     }
-
-    // -------------------------------------------------------------------------
-    // Renderizado de estado
-    // -------------------------------------------------------------------------
 
     private void renderTrackingState(@NonNull TrackingState state) {
         updateActivityIndicator(state.getActivityType());
@@ -285,10 +257,6 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
                 getString(R.string.tracking_calories_format, state.getCalories()));
     }
 
-    // -------------------------------------------------------------------------
-    // Mapa — polilínea de ruta
-    // -------------------------------------------------------------------------
-
     private void updateMapRoute(@NonNull List<LatLng> points) {
         if (googleMap == null || points.isEmpty()) return;
 
@@ -314,10 +282,6 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Permisos
-    // -------------------------------------------------------------------------
-
     private void requestPermissionsAndStart() {
         if (hasLocationPermission() && hasActivityRecognitionPermission()) {
             viewModel.startTracking();
@@ -334,30 +298,25 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private boolean hasActivityRecognitionPermission() {
-        return ContextCompat.checkSelfPermission(requireContext(),
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+                || ContextCompat.checkSelfPermission(requireContext(),
                 Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
     }
 
     @NonNull
     private String[] buildRequiredPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             return new String[]{
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.ACTIVITY_RECOGNITION,
-                    Manifest.permission.POST_NOTIFICATIONS
+                    Manifest.permission.ACTIVITY_RECOGNITION
             };
         }
         return new String[]{
                 Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACTIVITY_RECOGNITION
+                Manifest.permission.ACCESS_COARSE_LOCATION
         };
     }
-
-    // -------------------------------------------------------------------------
-    // Indicadores de actividad (conservados del original)
-    // -------------------------------------------------------------------------
 
     private void showWalkingStatus() {
         if (binding == null) return;
@@ -394,10 +353,6 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
         binding.ivWalking.setColorFilter(
                 ContextCompat.getColor(requireContext(), R.color.textSecondary));
     }
-
-    // -------------------------------------------------------------------------
-    // Formatters
-    // -------------------------------------------------------------------------
 
     @NonNull
     private String formatElapsed(long seconds) {

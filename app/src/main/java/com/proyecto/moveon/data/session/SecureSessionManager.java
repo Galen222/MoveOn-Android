@@ -43,15 +43,9 @@ public final class SecureSessionManager {
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int GCM_TAG_LENGTH_BITS = 128;
 
-    // ── Singleton ─────────────────────────────────────────────────────────────
-
-    @SuppressWarnings("StaticFieldLeak") // ApplicationContext — no hay leak
+    @SuppressWarnings("StaticFieldLeak")
     private static volatile SecureSessionManager instance;
 
-    /**
-     * Devuelve la instancia singleton inicializada con el ApplicationContext.
-     * Thread-safe mediante double-checked locking.
-     */
     @NonNull
     public static SecureSessionManager getInstance(@NonNull Context context) {
         if (instance == null) {
@@ -71,10 +65,6 @@ public final class SecureSessionManager {
         this.prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
 
-    /**
-     * Guarda la sesión cifrada y deriva el userId inmutable desde el claim "sub"
-     * del access token.
-     */
     public void saveLogin(String username, String accessToken, String refreshToken) {
         try {
             SharedPreferences.Editor editor = prefs.edit();
@@ -100,9 +90,6 @@ public final class SecureSessionManager {
         saveLogin(username, accessToken, refreshToken);
     }
 
-    /**
-     * La sesión solo es válida si existen ambos tokens.
-     */
     public boolean isLoggedIn() {
         return StringUtils.hasText(getAccessToken()) && StringUtils.hasText(getRefreshToken());
     }
@@ -122,9 +109,6 @@ public final class SecureSessionManager {
         return getDecryptedValue(KEY_USERNAME_CT, KEY_USERNAME_IV);
     }
 
-    /**
-     * Devuelve el userId estable. Si aún no estaba cacheado, lo recupera desde el JWT.
-     */
     @Nullable
     public String getUserId() {
         String stored = getDecryptedValue(KEY_USER_ID_CT, KEY_USER_ID_IV);
@@ -140,9 +124,6 @@ public final class SecureSessionManager {
         return null;
     }
 
-    /**
-     * Clave estable para particionar caché/offline por usuario.
-     */
     @Nullable
     public String getAccountKey() {
         return buildAccountKeyFromUserId(getUserId());
@@ -160,16 +141,9 @@ public final class SecureSessionManager {
                 .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
                 .remove(KEY_REFRESH_TOKEN_CT).remove(KEY_REFRESH_TOKEN_IV)
                 .remove(KEY_USER_ID_CT).remove(KEY_USER_ID_IV)
-                .remove(KEY_NOTIFICATIONS_CT).remove(KEY_NOTIFICATIONS_IV)
                 .apply();
     }
 
-    /**
-     * Invalida solo el access token.
-     * Se usa cuando falla el refresh en background para cortar el ciclo de 401,
-     * pero conservando el refresh token para que el logout explícito del usuario
-     * todavía pueda intentar revocar en backend.
-     */
     public void clearAccessTokenOnly() {
         prefs.edit()
                 .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
