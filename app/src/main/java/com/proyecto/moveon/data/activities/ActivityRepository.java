@@ -230,9 +230,10 @@ public final class ActivityRepository {
 
             int remoteId = entity.remoteId;
 
+            // BUG-11: deleteActividad ahora devuelve BorrarActividadResponseDto completo
+            // con estatus, mensaje y nuevo_total_puntos reales del backend.
             remote.deleteActividad(remoteId, result -> {
                 if (!result.isSuccess()) {
-                    // BUG-07: String hardcodeado sustituido por R.string.
                     callback.onResult(ApiResult.failure(
                             result.error != null
                                     ? result.error
@@ -242,12 +243,9 @@ public final class ActivityRepository {
 
                 io.execute(() -> {
                     local.deleteByLocalId(localId);
-
-                    BorrarActividadResponseDto dto = new BorrarActividadResponseDto();
-                    dto.estatus          = "success";
-                    dto.mensaje          = result.data;
-                    dto.nuevoTotalPuntos = 0; // El endpoint delete devuelve mensaje, no puntos directamente
-                    callback.onResult(ApiResult.success(dto));
+                    // BUG-11: Usar directamente el DTO que ya viene parseado del backend
+                    // en lugar de fabricar uno manualmente con puntos forzados a 0.
+                    callback.onResult(ApiResult.success(result.data));
                 });
             });
         });

@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.api.ApiResult;
@@ -34,9 +35,11 @@ public class PerfilRemoteDataSource {
 
     private final AuthenticatedApiClient api;
     private final Gson gson = new Gson();
+    private final Context appContext; // BUG-07: Almacenar contexto para acceder a R.string
 
     public PerfilRemoteDataSource(@NonNull Context context) {
-        this.api = new AuthenticatedApiClient(context.getApplicationContext());
+        this.appContext = context.getApplicationContext(); // BUG-07
+        this.api = new AuthenticatedApiClient(appContext);
     }
 
     public void fetchPerfil(@NonNull Callback<ProfileInfoDto> callback) {
@@ -109,19 +112,24 @@ public class PerfilRemoteDataSource {
             if (!completed) {
                 return ApiResult.failure(ApiError.typed(
                         ApiErrorType.TIMEOUT,
-                        "Tiempo de espera agotado durante la sincronización del perfil"
+                        // BUG-07: String hardcodeado sustituido por R.string
+                        appContext.getString(R.string.error_timeout_sync_perfil)
                 ));
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return ApiResult.failure(ApiError.typed(
                     ApiErrorType.CANCELED,
-                    "Sincronización del perfil interrumpida"
+                    // BUG-07: String hardcodeado sustituido por R.string
+                    appContext.getString(R.string.error_sync_perfil_interrumpida)
             ));
         }
 
         ApiResult<T> result = ref.get();
-        return result != null ? result : ApiResult.failure(ApiError.local("Sin respuesta del servidor"));
+        // BUG-07: String hardcodeado sustituido por R.string
+        return result != null ? result
+                : ApiResult.failure(ApiError.local(
+                appContext.getString(R.string.error_sin_respuesta_servidor)));
     }
 
     @NonNull

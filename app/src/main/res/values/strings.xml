@@ -433,6 +433,13 @@
     <string name="error_polilinea_invalida">La ruta polilínea no es válida</string>
     <string name="error_fecha_futura">La fecha de la actividad no puede estar en el futuro</string>
     <string name="error_formato_fecha_invalido">El formato de fecha no es válido</string>
+    <string name="error_sin_respuesta_servidor">Sin respuesta del servidor</string>
+    <string name="error_sync_actividades_interrumpida">Sincronización de actividades interrumpida</string>
+    <string name="error_sync_perfil_interrumpida">Sincronización del perfil interrumpida</string>
+    <string name="error_timeout_sync_actividad">Tiempo de espera agotado durante la sincronización de actividad</string>
+    <string name="error_timeout_borrar_actividad">Tiempo de espera agotado al borrar la actividad</string>
+    <string name="error_timeout_cargando_actividades">Tiempo de espera agotado cargando actividades</string>
+    <string name="error_timeout_sync_perfil">Tiempo de espera agotado durante la sincronización del perfil</string>
 
 
     <!-- ══════════════════════════════════════════════════════════════════════ -->
