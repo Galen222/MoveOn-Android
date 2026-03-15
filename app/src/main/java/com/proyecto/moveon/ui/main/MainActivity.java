@@ -59,16 +59,6 @@ public class MainActivity extends AppCompatActivity {
 
         fragmentManager = getSupportFragmentManager();
 
-        // 1. Manejador de sesión de arranque (Silent Refresh)
-        viewModel.getSessionExpiredEvent().observe(this, ev -> {
-            if (ev == null) return;
-            String msg = ev.getContentIfNotHandled();
-            if (msg != null) {
-                SessionUiHelper.handleSessionExpired(this, msg);
-            }
-        });
-
-        // 2. Escuchador GLOBAL para cualquier petición fallida en cualquier momento.
         GlobalAuthManager.getInstance().getSessionExpiredEvent().observe(this, ev -> {
             if (ev == null) return;
             String token = ev.getContentIfNotHandled();
@@ -117,7 +107,8 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        viewModel.trySilentRefreshAtStartup();
+        // Disparador proactivo unificado: mismo motor que usa el Authenticator.
+        viewModel.ensureSessionFresh();
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
@@ -194,10 +185,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Si el usuario vuelve a la app desde el fondo y la sesión ha muerto, lo expulsamos.
         if (viewModel.isNotLoggedIn()) {
             goToLoginAndFinish();
+            return;
         }
+
+        // Segundo disparador proactivo: al volver del fondo usamos el mismo coordinador.
+        viewModel.ensureSessionFresh();
     }
 
     @Override

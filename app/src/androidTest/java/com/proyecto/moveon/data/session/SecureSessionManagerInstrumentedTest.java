@@ -28,7 +28,7 @@ public class SecureSessionManagerInstrumentedTest {
     @Before
     public void setUp() {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        manager = new SecureSessionManager(context);
+        manager = SecureSessionManager.getInstance(context);
         manager.logout();
     }
 

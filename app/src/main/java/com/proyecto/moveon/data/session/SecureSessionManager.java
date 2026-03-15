@@ -91,6 +91,25 @@ public final class SecureSessionManager {
         return StringUtils.hasText(getAccessToken()) && StringUtils.hasText(getRefreshToken());
     }
 
+    public boolean hasRecoverableSession() {
+        return StringUtils.hasText(getAccessToken()) || StringUtils.hasText(getRefreshToken());
+    }
+
+    public boolean hasRefreshToken() {
+        return StringUtils.hasText(getRefreshToken());
+    }
+
+    public boolean isAccessTokenExpiringWithinSeconds(long leewaySeconds) {
+        String accessToken = getAccessToken();
+        if (!StringUtils.hasText(accessToken)) return true;
+
+        Long expEpochSeconds = extractExpFromAccessToken(accessToken);
+        if (expEpochSeconds == null) return true;
+
+        long nowSeconds = System.currentTimeMillis() / 1000L;
+        return expEpochSeconds <= (nowSeconds + Math.max(0L, leewaySeconds));
+    }
+
     @Nullable
     public String getAccessToken() {
         return getDecryptedValue(KEY_ACCESS_TOKEN_CT, KEY_ACCESS_TOKEN_IV);
@@ -181,18 +200,33 @@ public final class SecureSessionManager {
 
     @Nullable
     private String extractUserIdFromAccessToken(@Nullable String accessToken) {
-        if (!StringUtils.hasText(accessToken)) return null;
+        JSONObject payload = decodeJwtPayload(accessToken);
+        if (payload == null) return null;
+
+        String sub = payload.optString("sub", null);
+        return StringUtils.hasText(sub) ? sub.trim() : null;
+    }
+
+    @Nullable
+    private Long extractExpFromAccessToken(@Nullable String accessToken) {
+        JSONObject payload = decodeJwtPayload(accessToken);
+        if (payload == null || !payload.has("exp")) return null;
+
+        long exp = payload.optLong("exp", -1L);
+        return exp > 0L ? exp : null;
+    }
+
+    @Nullable
+    private JSONObject decodeJwtPayload(@Nullable String token) {
+        if (!StringUtils.hasText(token)) return null;
 
         try {
-            String[] parts = accessToken.split("\\.");
+            String[] parts = token.split("\\.");
             if (parts.length < 2) return null;
 
             byte[] payloadBytes = Base64.decode(parts[1], Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
             String payloadJson = new String(payloadBytes, StandardCharsets.UTF_8);
-            JSONObject payload = new JSONObject(payloadJson);
-
-            String sub = payload.optString("sub", null);
-            return StringUtils.hasText(sub) ? sub.trim() : null;
+            return new JSONObject(payloadJson);
         } catch (Exception ignored) {
             return null;
         }
