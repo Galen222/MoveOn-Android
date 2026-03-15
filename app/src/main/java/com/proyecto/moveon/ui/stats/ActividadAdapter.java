@@ -1,5 +1,6 @@
 package com.proyecto.moveon.ui.stats;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,13 +10,14 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
+import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
 import com.proyecto.moveon.databinding.ItemActividadBinding;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Locale;
 
 /**
  * Adapter para el historial de actividades en {@link StatsFragment}.
@@ -29,9 +31,6 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
     public interface OnDeleteClickListener {
         void onDeleteClick(@NonNull ActividadItem item);
     }
-
-    private static final DateTimeFormatter FORMATTER_DISPLAY =
-            DateTimeFormatter.ofPattern("d MMM yyyy", Locale.forLanguageTag("es-ES"));
 
     private static final DiffUtil.ItemCallback<ActividadItem> DIFF_CALLBACK =
             new DiffUtil.ItemCallback<>() {
@@ -84,18 +83,20 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
         }
 
         void bind(@NonNull ActividadItem item) {
-            // Icono según tipo de actividad
-            boolean esCaminar = "Caminar".equals(item.tipo);
+            Context context = binding.getRoot().getContext();
+
+            // Tipo canónico + label localizado para UI
+            String canonicalTipo = ProfileValueLocalizer.canonicalActivityTypeFromLabel(context, item.tipo);
+            boolean esCaminar = "Caminar".equals(canonicalTipo);
             binding.ivActivityIcon.setImageResource(
                     esCaminar
                             ? com.proyecto.moveon.R.drawable.walk_icon
                             : com.proyecto.moveon.R.drawable.play_icon);
 
-            // Tipo
-            binding.tvActivityType.setText(item.tipo);
+            binding.tvActivityType.setText(ProfileValueLocalizer.displayActivityType(context, canonicalTipo));
 
             // Fecha formateada
-            binding.tvActivityDate.setText(formatFecha(item.fechaRutaIso));
+            binding.tvActivityDate.setText(formatFecha(item.fechaRutaIso, context));
 
             // Badge pendiente
             boolean pendiente = item.isPendingSync();
@@ -103,15 +104,14 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
 
             // Métricas
             binding.tvActivityDistance.setText(
-                    binding.getRoot().getContext().getString(
+                    context.getString(
                             com.proyecto.moveon.R.string.stats_format_km,
                             item.distanciaMetros / 1000.0f));
 
-            binding.tvActivityDuration.setText(formatDuracion(item.duracionSegundos,
-                    binding.getRoot().getContext()));
+            binding.tvActivityDuration.setText(formatDuracion(item.duracionSegundos, context));
 
             binding.tvActivityCalories.setText(
-                    binding.getRoot().getContext().getString(
+                    context.getString(
                             com.proyecto.moveon.R.string.stats_format_kcal,
                             item.caloriasQuemadas));
 
@@ -122,18 +122,22 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
         }
 
         @NonNull
-        private String formatFecha(@NonNull String fechaIso) {
+        private String formatFecha(@NonNull String fechaIso, @NonNull Context context) {
             try {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+                        "d MMM yyyy",
+                        AppLanguageManager.getActiveLocale(context)
+                );
                 return OffsetDateTime.parse(fechaIso)
                         .toLocalDate()
-                        .format(FORMATTER_DISPLAY);
+                        .format(formatter);
             } catch (DateTimeParseException e) {
                 return fechaIso.length() >= 10 ? fechaIso.substring(0, 10) : fechaIso;
             }
         }
 
         @NonNull
-        private String formatDuracion(int segundos, @NonNull android.content.Context context) {
+        private String formatDuracion(int segundos, @NonNull Context context) {
             long horas = segundos / 3600L;
             long minutos = (segundos % 3600L) / 60L;
             if (horas > 0) {

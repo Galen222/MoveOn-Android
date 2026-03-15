@@ -301,25 +301,74 @@ public final class ApiErrorParser {
     }
 
     @Nullable
-    private static String resolveDisplayMessage(@NonNull Context context,
-                                                @Nullable String errorCode,
-                                                @Nullable String backendMessage,
-                                                @Nullable String retryAfter,
-                                                int httpCode) {
-        String localized = BackendErrorLocalizer.localize(context, errorCode, retryAfter);
-        if (StringUtils.hasText(localized)) return localized;
+private static String resolveDisplayMessage(@NonNull Context context,
+                                            @Nullable String errorCode,
+                                            @Nullable String backendMessage,
+                                            @Nullable String retryAfter,
+                                            int httpCode) {
+    String localized = BackendErrorLocalizer.localize(context, errorCode, retryAfter);
+    if (StringUtils.hasText(localized)) return localized;
 
-        if (StringUtils.hasText(backendMessage)) {
-            return cleanBackendMsg(backendMessage);
-        }
+    String cleanedBackend = StringUtils.hasText(backendMessage)
+            ? cleanBackendMsg(backendMessage)
+            : null;
 
-        if (httpCode == 429) {
+    String httpLocalized = localizedHttpFallback(context, httpCode, retryAfter);
+
+    if (StringUtils.hasText(cleanedBackend) && !isGenericFrameworkMessage(cleanedBackend)) {
+        return cleanedBackend;
+    }
+
+    if (StringUtils.hasText(httpLocalized)) {
+        return httpLocalized;
+    }
+
+    return cleanedBackend;
+}
+
+@Nullable
+private static String localizedHttpFallback(@NonNull Context context,
+                                            int httpCode,
+                                            @Nullable String retryAfter) {
+    switch (httpCode) {
+        case 401:
+            return context.getString(R.string.api_error_unauthorized);
+        case 403:
+            return context.getString(R.string.api_error_forbidden);
+        case 404:
+            return context.getString(R.string.api_error_not_found);
+        case 409:
+            return context.getString(R.string.api_error_conflict);
+        case 413:
+            return context.getString(R.string.api_error_payload_too_large);
+        case 429:
             return StringUtils.hasText(retryAfter)
                     ? context.getString(R.string.api_error_rate_limit_retry, retryAfter)
                     : context.getString(R.string.api_error_rate_limit);
-        }
-        return null;
+        default:
+            if (httpCode >= 500) {
+                return context.getString(R.string.api_error_server);
+            }
+            return null;
     }
+}
+
+private static boolean isGenericFrameworkMessage(@Nullable String message) {
+    if (!StringUtils.hasText(message)) return true;
+
+    String normalized = message.trim().toLowerCase(java.util.Locale.US);
+    return normalized.equals("not found")
+            || normalized.equals("not found.")
+            || normalized.equals("not_found")
+            || normalized.equals("forbidden")
+            || normalized.equals("forbidden.")
+            || normalized.equals("unauthorized")
+            || normalized.equals("unauthorized.")
+            || normalized.equals("internal server error")
+            || normalized.equals("bad request")
+            || normalized.equals("unprocessable entity")
+            || normalized.equals("method not allowed");
+}
 
     @Nullable
     private static String getString(@NonNull JsonObject obj, @NonNull String key) {

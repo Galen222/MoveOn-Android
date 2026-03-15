@@ -1,6 +1,8 @@
 package com.proyecto.moveon.data.remote.retrofit;
 
 import android.content.Context;
+
+import androidx.annotation.NonNull;
 import com.proyecto.moveon.BuildConfig;
 import java.util.concurrent.TimeUnit;
 import okhttp3.ConnectionPool;
@@ -32,7 +34,7 @@ public final class RetrofitProvider {
         if (moveOnApi != null && protectedApi != null) return;
         synchronized (RetrofitProvider.class) {
             if (moveOnApi != null && protectedApi != null) return;
-            String baseUrl = BuildConfig.BASE_URL + "/";
+            String baseUrl = normalizeBaseUrl(BuildConfig.BASE_URL);
 
             // 1. Configuración del Logger
             HttpLoggingInterceptor log = null;
@@ -100,5 +102,16 @@ public final class RetrofitProvider {
             moveOnApi = publicRetrofit.create(MoveOnApi.class);
             protectedApi = protectedRetrofit.create(ProtectedApi.class);
         }
+    }
+
+
+    @NonNull
+    private static String normalizeBaseUrl(@NonNull String raw) {
+        String trimmed = raw.trim();
+        int end = trimmed.length();
+        while (end > 0 && trimmed.charAt(end - 1) == '/') {
+            end--;
+        }
+        return trimmed.substring(0, end) + "/";
     }
 }

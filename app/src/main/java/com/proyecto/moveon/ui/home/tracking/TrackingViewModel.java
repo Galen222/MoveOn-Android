@@ -20,6 +20,7 @@ import com.proyecto.moveon.data.activities.ActivityRepository;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadRequestDto;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadResponseDto;
 import com.proyecto.moveon.data.profile.dto.ProfileInfoDto;
+import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
 import com.proyecto.moveon.ui.common.Event;
 import com.proyecto.moveon.ui.common.UiState;
 
@@ -186,9 +187,14 @@ public final class TrackingViewModel extends AndroidViewModel {
     private void guardarActividad(@NonNull TrackingState state) {
         saveState.setValue(UiState.loading());
 
-        String tipo = (state.getActivityType() == TrackingState.ActivityType.RUNNING_ACTIVITY)
-                ? "Correr"
-                : "Caminar";
+        String activityTypeLabel = (state.getActivityType() == TrackingState.ActivityType.RUNNING_ACTIVITY)
+                ? getApplication().getString(com.proyecto.moveon.R.string.activity_type_run)
+                : getApplication().getString(com.proyecto.moveon.R.string.activity_type_walk);
+
+        String tipo = ProfileValueLocalizer.canonicalActivityTypeFromLabel(getApplication(), activityTypeLabel);
+        if (tipo == null) {
+            tipo = "Caminar";
+        }
 
         String fechaRuta = OffsetDateTime.now(ZoneOffset.UTC)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);

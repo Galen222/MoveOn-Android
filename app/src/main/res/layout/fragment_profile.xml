@@ -791,6 +791,60 @@
                                 tools:ignore="ButtonStyle" />
 
                         </com.google.android.material.button.MaterialButtonToggleGroup>
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="12dp"
+                        android:background="@color/dividerColor" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/item_language"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="@dimen/profile_item_min_height"
+                        android:paddingVertical="@dimen/profile_item_padding_vertical"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground">
+
+                        <TextView
+                            android:id="@+id/tv_language_label"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="@string/profile_item_language"
+                            android:textSize="12sp"
+                            android:textColor="@color/textTertiary"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/iv_arrow_language"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toTopOf="@id/tv_language_value"
+                            app:layout_constraintVertical_chainStyle="packed" />
+
+                        <TextView
+                            android:id="@+id/tv_language_value"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textSize="15sp"
+                            android:textColor="@color/textPrimary"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/iv_arrow_language"
+                            app:layout_constraintTop_toBottomOf="@id/tv_language_label"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            tools:text="English" />
+
+                        <ImageView
+                            android:id="@+id/iv_arrow_language"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/arrow_icon"
+                            android:contentDescription="@null"
+                            app:tint="@color/textTertiary"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
 
                     </LinearLayout>
 

@@ -125,4 +125,8 @@
     <string name="backend_error_user_id_must_be_integer">usuario_id debe ser un entero</string>
     <string name="backend_error_user_not_found">Usuario no encontrado</string>
     <string name="backend_error_validation_error">Solicitud inválida</string>
+    <string name="backend_error_not_found">Recurso no encontrado</string>
+    <string name="backend_error_unauthorized">No autorizado</string>
+    <string name="backend_error_forbidden">Acceso denegado</string>
+    <string name="backend_error_conflict">Conflicto en la solicitud</string>
 </resources>

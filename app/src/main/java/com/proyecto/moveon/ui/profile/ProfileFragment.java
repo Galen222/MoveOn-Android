@@ -34,6 +34,8 @@ import com.google.android.material.datepicker.DateValidatorPointBackward;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
+import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.data.profile.sync.ProfilePatchPayload;
 import com.proyecto.moveon.databinding.DialogEditFieldBinding;
@@ -49,6 +51,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.FormatStyle;
 import java.util.Calendar;
 import java.util.Locale;
 
@@ -67,15 +73,11 @@ public class ProfileFragment extends Fragment {
     private void onNotificationPermissionResult(boolean granted) {
         if (binding == null) return;
 
-        binding.switchNotifications.setOnCheckedChangeListener(null);
         if (granted) {
             viewModel.setNotificationsEnabled(true);
-            binding.switchNotifications.setChecked(true);
         } else {
             viewModel.setNotificationsEnabled(false);
-            binding.switchNotifications.setChecked(false);
         }
-        binding.switchNotifications.setOnCheckedChangeListener(notificationToggleListener);
         updateNotificationsUi();
     }
 
@@ -90,17 +92,22 @@ public class ProfileFragment extends Fragment {
                 }
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    if (ContextCompat.checkSelfPermission(
-                            requireContext(),
-                            Manifest.permission.POST_NOTIFICATIONS
-                    ) == PackageManager.PERMISSION_GRANTED) {
+                    if (hasRuntimeNotificationPermission()) {
                         viewModel.setNotificationsEnabled(true);
                         updateNotificationsUi();
-                    } else {
+                    } else if (canRequestNotificationPermissionAgain()) {
+                        viewModel.markNotificationsPermissionRequested();
                         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                    } else {
+                        viewModel.setNotificationsEnabled(false);
+                        updateNotificationsUi();
                     }
                 } else {
-                    viewModel.setNotificationsEnabled(true);
+                    if (areNotificationsEnabledInSystem()) {
+                        viewModel.setNotificationsEnabled(true);
+                    } else {
+                        viewModel.setNotificationsEnabled(false);
+                    }
                     updateNotificationsUi();
                 }
             };
@@ -133,6 +140,7 @@ public class ProfileFragment extends Fragment {
         setupListeners();
         observeViewModel();
         syncThemeToggleWithSavedMode();
+        syncLanguageSelectionText();
         viewModel.loadPerfil();
 
         return binding.getRoot();
@@ -142,6 +150,7 @@ public class ProfileFragment extends Fragment {
     public void onResume() {
         super.onResume();
         syncThemeToggleWithSavedMode();
+        syncLanguageSelectionText();
         updateNotificationsUi();
     }
 
@@ -158,9 +167,7 @@ public class ProfileFragment extends Fragment {
         }
         binding.tvUserName.setText(username);
 
-        binding.switchNotifications.setOnCheckedChangeListener(null);
-        binding.switchNotifications.setChecked(viewModel.areNotificationsEnabled());
-        binding.switchNotifications.setOnCheckedChangeListener(notificationToggleListener);
+        syncLanguageSelectionText();
         updateNotificationsUi();
     }
 
@@ -181,10 +188,8 @@ public class ProfileFragment extends Fragment {
         binding.tvBirthdate.setText(
                 StringUtils.hasText(perfil.fechaNacimiento)
                         ? formatFecha(perfil.fechaNacimiento) : notIndicated);
-        binding.tvProvincia.setText(
-                StringUtils.hasText(perfil.provincia) ? perfil.provincia : notIndicated);
-        binding.tvGenero.setText(
-                StringUtils.hasText(perfil.genero) ? perfil.genero : notIndicated);
+        binding.tvProvincia.setText(ProfileValueLocalizer.displayProvincia(requireContext(), perfil.provincia));
+        binding.tvGenero.setText(ProfileValueLocalizer.displayGenero(requireContext(), perfil.genero));
         binding.tvAltura.setText(
                 perfil.altura != null
                         ? getString(R.string.profile_altura_formato, perfil.altura)
@@ -254,11 +259,14 @@ public class ProfileFragment extends Fragment {
 
     @NonNull
     private String formatFecha(@NonNull String fecha) {
-        String[] partes = fecha.split("-");
-        if (partes.length == 3) {
-            return partes[2] + "-" + partes[1] + "-" + partes[0];
+        try {
+            Locale locale = AppLanguageManager.getActiveLocale(requireContext());
+            return LocalDate.parse(fecha).format(
+                    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).localizedBy(locale)
+            );
+        } catch (DateTimeParseException ignored) {
+            return fecha;
         }
-        return fecha;
     }
 
     @NonNull
@@ -287,7 +295,6 @@ public class ProfileFragment extends Fragment {
         binding.itemShareRoutes.setOnClickListener(v ->
                 Toast.makeText(requireContext(), R.string.common_proximamente, Toast.LENGTH_SHORT).show());
 
-        binding.switchNotifications.setOnCheckedChangeListener(notificationToggleListener);
         binding.tvNotificationsOpenSettings.setOnClickListener(v -> openNotificationSettings());
 
         binding.fabChangePhoto.setOnClickListener(v -> {
@@ -298,6 +305,7 @@ public class ProfileFragment extends Fragment {
         });
 
         binding.btnLogout.setOnClickListener(v -> viewModel.logout());
+        binding.itemLanguage.setOnClickListener(v -> showLanguageDialog());
 
         binding.itemFullName.setOnClickListener(v -> showEditTextDialog(
                 getString(R.string.profile_label_fullname),
@@ -545,14 +553,17 @@ public class ProfileFragment extends Fragment {
         DialogEditProvinciaBinding dialogBinding =
                 DialogEditProvinciaBinding.inflate(LayoutInflater.from(requireContext()));
 
-        String[] provincias = getResources().getStringArray(R.array.provincias);
+        String[] provincias = getResources().getStringArray(R.array.provincias_labels);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 requireContext(), android.R.layout.simple_dropdown_item_1line, provincias);
         dialogBinding.actvProvincia.setAdapter(adapter);
         dialogBinding.tilProvincia.setHint(getString(R.string.profile_label_provincia));
 
         if (perfilActual != null && StringUtils.hasText(perfilActual.provincia)) {
-            dialogBinding.actvProvincia.setText(perfilActual.provincia, false);
+            dialogBinding.actvProvincia.setText(
+                    ProfileValueLocalizer.displayProvincia(requireContext(), perfilActual.provincia),
+                    false
+            );
         }
 
         dialogBinding.actvProvincia.setOnFocusChangeListener((v, hasFocus) -> {
@@ -582,8 +593,7 @@ public class ProfileFragment extends Fragment {
                     return;
                 }
                 dialogBinding.tilProvincia.setError(null);
-                String provinciaValue = getString(R.string.profile_provincia_no_indicar).equals(value)
-                        ? null : value;
+                String provinciaValue = ProfileValueLocalizer.canonicalProvinciaFromLabel(requireContext(), value);
                 viewModel.updatePerfil(new ProfilePatchPayload()
                         .provincia(provinciaValue)
                         .toJson());
@@ -595,15 +605,55 @@ public class ProfileFragment extends Fragment {
     }
 
     private void showGeneroDialog() {
-        String[] opciones = getResources().getStringArray(R.array.generos);
+        String[] opciones = getResources().getStringArray(R.array.generos_labels);
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.profile_label_genero)
                 .setItems(opciones, (d, which) ->
                         viewModel.updatePerfil(new ProfilePatchPayload()
-                                .genero(opciones[which])
+                                .genero(ProfileValueLocalizer.canonicalGeneroFromLabel(requireContext(), opciones[which]))
                                 .toJson()))
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
                 .show();
+    }
+
+    private void syncLanguageSelectionText() {
+        if (binding == null) return;
+
+        String mode = viewModel.getAppLanguageMode();
+        int index = findLanguageModeIndex(mode);
+        String[] labels = getResources().getStringArray(R.array.app_language_labels);
+
+        if (index >= 0 && index < labels.length) {
+            binding.tvLanguageValue.setText(labels[index]);
+        }
+    }
+
+    private void showLanguageDialog() {
+        String[] modes = getResources().getStringArray(R.array.app_language_modes);
+        String[] labels = getResources().getStringArray(R.array.app_language_labels);
+
+        int checkedItem = findLanguageModeIndex(viewModel.getAppLanguageMode());
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.profile_language_selector_title)
+                .setSingleChoiceItems(labels, checkedItem, (dialog, which) -> {
+                    String selectedMode = modes[which];
+                    if (!selectedMode.equals(viewModel.getAppLanguageMode())) {
+                        AppLanguageManager.saveAndApply(requireContext(), selectedMode);
+                    }
+                    dialog.dismiss();
+                })
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .show();
+    }
+
+    private int findLanguageModeIndex(@Nullable String mode) {
+        String normalizedMode = AppLanguageManager.sanitizeSelectableMode(mode);
+        String[] modes = getResources().getStringArray(R.array.app_language_modes);
+        for (int i = 0; i < modes.length; i++) {
+            if (modes[i].equals(normalizedMode)) return i;
+        }
+        return 0;
     }
 
     private void observeViewModel() {
@@ -685,6 +735,48 @@ public class ProfileFragment extends Fragment {
         binding.loadingOverlay.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
+    private boolean areNotificationsEnabledInSystem() {
+        return NotificationManagerCompat.from(requireContext()).areNotificationsEnabled();
+    }
+
+    private boolean hasRuntimeNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return true;
+        }
+        return ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private boolean isNotificationPermissionBlocked() {
+        if (!isAdded()) return false;
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return !areNotificationsEnabledInSystem();
+        }
+
+        if (hasRuntimeNotificationPermission()) {
+            return !areNotificationsEnabledInSystem();
+        }
+
+        if (!viewModel.wasNotificationsPermissionRequested()) {
+            return false;
+        }
+
+        return !shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS);
+    }
+
+    private boolean canRequestNotificationPermissionAgain() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return false;
+        }
+        if (hasRuntimeNotificationPermission()) {
+            return false;
+        }
+        return !isNotificationPermissionBlocked();
+    }
+
     private void syncThemeToggleWithSavedMode() {
         if (binding == null) return;
         String mode = ThemeManager.getSavedMode(requireContext());
@@ -701,11 +793,18 @@ public class ProfileFragment extends Fragment {
         if (binding == null || !isAdded()) return;
 
         boolean enabledInApp = viewModel.areNotificationsEnabled();
-        boolean enabledInSystem = NotificationManagerCompat.from(requireContext()).areNotificationsEnabled();
-        boolean showBlocked = enabledInApp && !enabledInSystem;
+        boolean enabledInSystem = areNotificationsEnabledInSystem();
+        boolean hasPermission = hasRuntimeNotificationPermission();
+        boolean blocked = isNotificationPermissionBlocked();
+        boolean effectiveEnabled = enabledInApp && enabledInSystem && hasPermission;
 
-        binding.tvNotificationsBlocked.setVisibility(showBlocked ? View.VISIBLE : View.GONE);
-        binding.tvNotificationsOpenSettings.setVisibility(showBlocked ? View.VISIBLE : View.GONE);
+        binding.switchNotifications.setOnCheckedChangeListener(null);
+        binding.switchNotifications.setEnabled(!blocked);
+        binding.switchNotifications.setChecked(effectiveEnabled);
+        binding.switchNotifications.setOnCheckedChangeListener(notificationToggleListener);
+
+        binding.tvNotificationsBlocked.setVisibility(blocked ? View.VISIBLE : View.GONE);
+        binding.tvNotificationsOpenSettings.setVisibility(blocked ? View.VISIBLE : View.GONE);
     }
 
     private void openNotificationSettings() {
@@ -743,3 +842,4 @@ public class ProfileFragment extends Fragment {
         boolean onSaved(@NonNull String value);
     }
 }
+

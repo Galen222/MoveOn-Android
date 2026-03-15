@@ -370,6 +370,15 @@
 
     <!-- Errores -->
     <string name="profile_error_logout_server">No se pudo cerrar sesión en servidor, pero se cerrará localmente.</string>
+
+    <string name="profile_item_language">Idioma</string>
+    <string name="profile_language_selector_title">Selecciona idioma</string>
+    <string name="profile_language_system">Idioma del sistema</string>
+    <string name="profile_language_spanish">Español</string>
+    <string name="profile_language_english">English</string>
+
+    <string name="activity_type_walk">Caminar</string>
+    <string name="activity_type_run">Correr</string>
     <string name="error_cargando_perfil">Error cargando perfil</string>
     <string name="error_sincronizando_perfil">Error sincronizando perfil</string>
     <string name="error_subiendo_foto">Error subiendo la foto</string>
@@ -448,6 +457,14 @@
     <string name="error_timeout_sync_perfil">Tiempo de espera agotado durante la sincronización del perfil</string>
 
 
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!--  API / ERRORES HTTP                                                   -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<string name="api_error_unauthorized">No autorizado</string>
+<string name="api_error_forbidden">Acceso denegado</string>
+<string name="api_error_not_found">Recurso no encontrado</string>
+<string name="api_error_conflict">Conflicto en la solicitud</string>
+<string name="api_error_server">Error interno del servidor</string>
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <!--  COMÚN                                                                 -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->

@@ -14,6 +14,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.google.gson.JsonObject;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.data.profile.PerfilRepository;
 import com.proyecto.moveon.data.session.AuthRepository;
@@ -61,6 +62,19 @@ public class ProfileViewModel extends AndroidViewModel {
     public String getUsername() {
         String u = sessionManager.getUsername();
         return StringUtils.hasText(u) ? u : null;
+    }
+
+    @NonNull
+    public String getAppLanguageMode() {
+        return AppLanguageManager.getSelectedMode(getApplication());
+    }
+
+    public boolean hasManualAppLanguageSelection() {
+        return AppLanguageManager.hasManualSelection(getApplication());
+    }
+
+    public void setAppLanguageMode(@NonNull String mode) {
+        AppLanguageManager.saveAndApply(getApplication(), mode);
     }
 
     public void loadPerfil() {
@@ -132,6 +146,14 @@ public class ProfileViewModel extends AndroidViewModel {
         AppSettingsManager.setNotificationsEnabled(getApplication(), enabled);
     }
 
+    public boolean wasNotificationsPermissionRequested() {
+        return AppSettingsManager.wasNotificationsPermissionRequested(getApplication());
+    }
+
+    public void markNotificationsPermissionRequested() {
+        AppSettingsManager.setNotificationsPermissionRequested(getApplication(), true);
+    }
+
     public void logout() {
         String refreshToken = sessionManager.getRefreshToken();
         if (!StringUtils.hasText(refreshToken)) {
@@ -185,3 +207,4 @@ public class ProfileViewModel extends AndroidViewModel {
         super.onCleared();
     }
 }
+

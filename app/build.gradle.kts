@@ -1,4 +1,6 @@
 import java.util.Properties
+import org.gradle.api.tasks.compile.JavaCompile
+
 
 plugins {
     alias(libs.plugins.android.application)
@@ -133,6 +135,10 @@ android {
     sourceSets {
         getByName("androidTest").assets.directories.add("$projectDir/schemas")
     }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.add("-Xlint:deprecation")
 }
 
 dependencies {

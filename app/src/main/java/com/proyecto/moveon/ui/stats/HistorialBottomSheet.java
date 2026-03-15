@@ -22,6 +22,8 @@ import java.util.Locale;
 
 public class HistorialBottomSheet extends BottomSheetDialogFragment {
 
+    private static final Locale SPANISH_LOCALE = Locale.forLanguageTag("es-ES");
+
     @NonNull
     public static HistorialBottomSheet newInstance(@NonNull List<StatsResumen.MonthBlock> blocks) {
         HistorialBottomSheet sheet = new HistorialBottomSheet();
@@ -72,7 +74,7 @@ public class HistorialBottomSheet extends BottomSheetDialogFragment {
         section.setLayoutParams(params);
 
         String monthName = Month.of(block.month)
-                .getDisplayName(TextStyle.FULL, new Locale("es", "ES"));
+                .getDisplayName(TextStyle.FULL, SPANISH_LOCALE);
         monthName = Character.toUpperCase(monthName.charAt(0)) + monthName.substring(1);
 
         // Cabecera: "Marzo 2025"
@@ -105,8 +107,8 @@ public class HistorialBottomSheet extends BottomSheetDialogFragment {
         section.addView(divisor);
 
         String monthShort = Month.of(block.month)
-                .getDisplayName(TextStyle.SHORT, new Locale("es", "ES"))
-                .toLowerCase(new Locale("es", "ES"));
+                .getDisplayName(TextStyle.SHORT, SPANISH_LOCALE)
+                .toLowerCase(SPANISH_LOCALE);
 
         for (int i = 0; i < block.weeks.size(); i++) {
             StatsResumen.WeekBlock week = block.weeks.get(i);

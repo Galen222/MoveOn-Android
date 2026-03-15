@@ -57,7 +57,7 @@
     </string-array>
 
     <string-array name="provincias_labels">
-        <item>No indicar</item>
+        <item>Do not specify</item>
         <item>A Coruña</item>
         <item>Albacete</item>
         <item>Alicante</item>
@@ -82,7 +82,7 @@
         <item>Guipúzcoa</item>
         <item>Huelva</item>
         <item>Huesca</item>
-        <item>Islas Baleares</item>
+        <item>Balearic Islands</item>
         <item>Jaén</item>
         <item>La Rioja</item>
         <item>Las Palmas</item>
@@ -107,7 +107,7 @@
         <item>Toledo</item>
         <item>Valencia</item>
         <item>Valladolid</item>
-        <item>Vizcaya</item>
+        <item>Biscay</item>
         <item>Zamora</item>
         <item>Zaragoza</item>
     </string-array>
@@ -119,11 +119,10 @@
     </string-array>
 
     <string-array name="generos_labels">
-        <item>Hombre</item>
-        <item>Mujer</item>
-        <item>Otro</item>
+        <item>Male</item>
+        <item>Female</item>
+        <item>Other</item>
     </string-array>
-
     <string-array name="activity_types_backend_values">
         <item>Caminar</item>
         <item>Correr</item>
@@ -144,15 +143,14 @@
         <item>@string/profile_language_english</item>
     </string-array>
 
-    <!-- Stats — días cortos de la semana para el gráfico (Lun–Dom) -->
     <string-array name="stats_week_days_short">
-        <item>Lun</item>
-        <item>Mar</item>
-        <item>Mié</item>
-        <item>Jue</item>
-        <item>Vie</item>
-        <item>Sáb</item>
-        <item>Dom</item>
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
+        <item>Sun</item>
     </string-array>
 
 </resources>
