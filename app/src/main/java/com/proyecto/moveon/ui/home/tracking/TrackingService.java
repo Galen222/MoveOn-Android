@@ -53,12 +53,19 @@ import java.util.concurrent.TimeUnit;
  */
 public final class TrackingService extends Service implements SensorEventListener {
 
+    public static void stopService(@NonNull Context context) {
+        Context appContext = context.getApplicationContext();
+        Intent intent = new Intent(appContext, TrackingService.class);
+        appContext.stopService(intent);
+    }
+
     // -------------------------------------------------------------------------
     // Constantes de notificación
     // -------------------------------------------------------------------------
 
     private static final String CHANNEL_ID      = "moveon_tracking_channel";
     private static final int    NOTIFICATION_ID = 1001;
+    private static final String ACTION_RESTORE_NOTIFICATION = "com.proyecto.moveon.action.RESTORE_TRACKING_NOTIFICATION";
 
     // -------------------------------------------------------------------------
     // Constantes de acelerómetro
@@ -173,6 +180,15 @@ public final class TrackingService extends Service implements SensorEventListene
 
     @Override
     public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
+        String action = intent != null ? intent.getAction() : null;
+
+        if (ACTION_RESTORE_NOTIFICATION.equals(action)) {
+            if (currentStatus != TrackingState.Status.IDLE) {
+                startForeground(NOTIFICATION_ID, buildNotification());
+            }
+            return START_STICKY;
+        }
+
         startForeground(NOTIFICATION_ID, buildNotification());
         return START_STICKY;
     }
@@ -455,6 +471,13 @@ public final class TrackingService extends Service implements SensorEventListene
                 this, 0, tapIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
+        Intent restoreIntent = new Intent(this, TrackingService.class);
+        restoreIntent.setAction(ACTION_RESTORE_NOTIFICATION);
+
+        PendingIntent restorePendingIntent = PendingIntent.getService(
+                this, 1, restoreIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
         String contentText = formatElapsed(elapsedSeconds) + "  ·  " + distanceMeters + " m";
 
         return new NotificationCompat.Builder(this, CHANNEL_ID)
@@ -462,7 +485,12 @@ public final class TrackingService extends Service implements SensorEventListene
                 .setContentText(contentText)
                 .setSmallIcon(R.drawable.run_icon)
                 .setContentIntent(pendingIntent)
+                .setDeleteIntent(restorePendingIntent)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
                 .setOngoing(true)
+                .setAutoCancel(false)
                 .setOnlyAlertOnce(true)
                 .setSilent(true)
                 .build();

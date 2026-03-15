@@ -1,9 +1,6 @@
 package com.proyecto.moveon.ui.profile;
 
 import android.app.Application;
-import android.content.Context;
-import android.content.SharedPreferences;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
@@ -28,9 +25,6 @@ import java.io.File;
 
 public class ProfileViewModel extends AndroidViewModel {
 
-    private static final String LEGACY_PREFS_NAME = "user_prefs";
-    private static final String KEY_NOTIFICATIONS = "notifications_enabled";
-
     private final AuthRepository authRepository;
     private final SecureSessionManager sessionManager;
     private final PerfilRepository perfilRepository;
@@ -48,7 +42,6 @@ public class ProfileViewModel extends AndroidViewModel {
         authRepository = new AuthRepository(application);
         sessionManager = SecureSessionManager.getInstance(application);
         perfilRepository = new PerfilRepository(application);
-        migrateLegacyNotificationsPreference(application);
         accountKey = sessionManager.getAccountKey();
 
         attachPerfilSource();
@@ -138,22 +131,6 @@ public class ProfileViewModel extends AndroidViewModel {
     public void resetUpdateState() { updateState.setValue(null); }
     public void resetPhotoState()  { photoState.setValue(null); }
 
-    public boolean areNotificationsEnabled() {
-        return AppSettingsManager.areNotificationsEnabled(getApplication());
-    }
-
-    public void setNotificationsEnabled(boolean enabled) {
-        AppSettingsManager.setNotificationsEnabled(getApplication(), enabled);
-    }
-
-    public boolean wasNotificationsPermissionRequested() {
-        return AppSettingsManager.wasNotificationsPermissionRequested(getApplication());
-    }
-
-    public void markNotificationsPermissionRequested() {
-        AppSettingsManager.setNotificationsPermissionRequested(getApplication(), true);
-    }
-
     public void logout() {
         String refreshToken = sessionManager.getRefreshToken();
         if (!StringUtils.hasText(refreshToken)) {
@@ -180,21 +157,6 @@ public class ProfileViewModel extends AndroidViewModel {
         perfilState.addSource(perfilSource, perfil -> {
             if (perfil != null) perfilState.setValue(UiState.success(perfil));
         });
-    }
-
-    private void migrateLegacyNotificationsPreference(@NonNull Context context) {
-        if (AppSettingsManager.hasNotificationsPreference(context)) {
-            return;
-        }
-
-        SharedPreferences legacyPrefs =
-                context.getApplicationContext().getSharedPreferences(LEGACY_PREFS_NAME, Context.MODE_PRIVATE);
-
-        if (!legacyPrefs.contains(KEY_NOTIFICATIONS)) return;
-
-        boolean enabled = legacyPrefs.getBoolean(KEY_NOTIFICATIONS, false);
-        AppSettingsManager.setNotificationsEnabled(context, enabled);
-        legacyPrefs.edit().remove(KEY_NOTIFICATIONS).apply();
     }
 
     @Override

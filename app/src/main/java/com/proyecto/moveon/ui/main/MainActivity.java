@@ -19,6 +19,7 @@ import com.proyecto.moveon.databinding.ActivityMainBinding;
 import com.proyecto.moveon.ui.auth.LoginActivity;
 import com.proyecto.moveon.ui.common.SessionUiHelper;
 import com.proyecto.moveon.ui.home.InicioFragment;
+import com.proyecto.moveon.ui.home.tracking.TrackingService;
 import com.proyecto.moveon.ui.profile.ProfileFragment;
 import com.proyecto.moveon.ui.stats.StatsFragment;
 import com.proyecto.moveon.utils.NavigationUtils;
@@ -211,6 +212,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if (isFinishing() && !isChangingConfigurations()) {
+            TrackingService.stopService(this);
+        }
         super.onDestroy();
         binding = null;
     }

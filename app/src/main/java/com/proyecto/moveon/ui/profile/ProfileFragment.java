@@ -1,9 +1,11 @@
 package com.proyecto.moveon.ui.profile;
 
-import android.Manifest;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.IntentFilter;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,7 +14,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.CompoundButton;
 import android.widget.NumberPicker;
 import android.widget.Toast;
 
@@ -21,7 +22,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -37,6 +37,7 @@ import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
 import com.proyecto.moveon.core.theme.ThemeManager;
+import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.data.profile.sync.ProfilePatchPayload;
 import com.proyecto.moveon.databinding.DialogEditFieldBinding;
 import com.proyecto.moveon.databinding.DialogEditNumberBinding;
@@ -66,51 +67,6 @@ public class ProfileFragment extends Fragment {
     @Nullable private PerfilUsuario perfilActual;
     @Nullable private String transientPhotoPreviewPath;
 
-    private final ActivityResultLauncher<String> notificationPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(),
-                    this::onNotificationPermissionResult);
-
-    private void onNotificationPermissionResult(boolean granted) {
-        if (binding == null) return;
-
-        if (granted) {
-            viewModel.setNotificationsEnabled(true);
-        } else {
-            viewModel.setNotificationsEnabled(false);
-        }
-        updateNotificationsUi();
-    }
-
-    private final CompoundButton.OnCheckedChangeListener notificationToggleListener =
-            (buttonView, isChecked) -> {
-                if (!buttonView.isPressed()) return;
-
-                if (!isChecked) {
-                    viewModel.setNotificationsEnabled(false);
-                    updateNotificationsUi();
-                    return;
-                }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    if (hasRuntimeNotificationPermission()) {
-                        viewModel.setNotificationsEnabled(true);
-                        updateNotificationsUi();
-                    } else if (canRequestNotificationPermissionAgain()) {
-                        viewModel.markNotificationsPermissionRequested();
-                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
-                    } else {
-                        viewModel.setNotificationsEnabled(false);
-                        updateNotificationsUi();
-                    }
-                } else {
-                    if (areNotificationsEnabledInSystem()) {
-                        viewModel.setNotificationsEnabled(true);
-                    } else {
-                        viewModel.setNotificationsEnabled(false);
-                    }
-                    updateNotificationsUi();
-                }
-            };
 
     private final ActivityResultLauncher<Intent> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -128,6 +84,19 @@ public class ProfileFragment extends Fragment {
                 viewModel.uploadPhoto(file);
             });
 
+    private final ActivityResultLauncher<String[]> trackingRequirementPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(),
+                    result -> updateTrackingRequirementsUi());
+
+    private final BroadcastReceiver deviceLocationStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateTrackingRequirementsUi();
+        }
+    };
+
+    private boolean deviceLocationReceiverRegistered = false;
+
     public ProfileFragment() {}
 
     @Override
@@ -136,8 +105,7 @@ public class ProfileFragment extends Fragment {
         binding = FragmentProfileBinding.inflate(inflater, container, false);
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
 
-        bindLocalData();
-        setupListeners();
+        bindLocalData();        setupListeners();
         observeViewModel();
         syncThemeToggleWithSavedMode();
         syncLanguageSelectionText();
@@ -147,11 +115,23 @@ public class ProfileFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        registerDeviceLocationReceiver();
+    }
+
+    @Override
+    public void onStop() {
+        unregisterDeviceLocationReceiver();
+        super.onStop();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         syncThemeToggleWithSavedMode();
         syncLanguageSelectionText();
-        updateNotificationsUi();
+        updateTrackingRequirementsUi();
     }
 
     @Override
@@ -168,7 +148,7 @@ public class ProfileFragment extends Fragment {
         binding.tvUserName.setText(username);
 
         syncLanguageSelectionText();
-        updateNotificationsUi();
+        updateTrackingRequirementsUi();
     }
 
     private void bindPerfilData(@NonNull PerfilUsuario perfil) {
@@ -262,7 +242,7 @@ public class ProfileFragment extends Fragment {
         try {
             Locale locale = AppLanguageManager.getActiveLocale(requireContext());
             return LocalDate.parse(fecha).format(
-                    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).localizedBy(locale)
+                    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
             );
         } catch (DateTimeParseException ignored) {
             return fecha;
@@ -295,7 +275,14 @@ public class ProfileFragment extends Fragment {
         binding.itemShareRoutes.setOnClickListener(v ->
                 Toast.makeText(requireContext(), R.string.common_proximamente, Toast.LENGTH_SHORT).show());
 
-        binding.tvNotificationsOpenSettings.setOnClickListener(v -> openNotificationSettings());
+        binding.tvTrackingLocationAction.setOnClickListener(
+                v -> handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.LOCATION));
+        binding.tvTrackingActivityAction.setOnClickListener(
+                v -> handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
+        binding.tvTrackingNotificationsAction.setOnClickListener(
+                v -> handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.NOTIFICATIONS));
+        binding.tvTrackingDeviceLocationAction.setOnClickListener(
+                v -> handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.GPS));
 
         binding.fabChangePhoto.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -616,6 +603,24 @@ public class ProfileFragment extends Fragment {
                 .show();
     }
 
+    private void syncThemeToggleWithSavedMode() {
+        if (binding == null) return;
+
+        String mode = ThemeManager.getSavedMode(requireContext());
+        int targetButtonId;
+        if (ThemeManager.MODE_LIGHT.equals(mode)) {
+            targetButtonId = R.id.btn_theme_light;
+        } else if (ThemeManager.MODE_DARK.equals(mode)) {
+            targetButtonId = R.id.btn_theme_dark;
+        } else {
+            targetButtonId = R.id.btn_theme_system;
+        }
+
+        if (binding.toggleThemeMode.getCheckedButtonId() != targetButtonId) {
+            binding.toggleThemeMode.check(targetButtonId);
+        }
+    }
+
     private void syncLanguageSelectionText() {
         if (binding == null) return;
 
@@ -735,82 +740,179 @@ public class ProfileFragment extends Fragment {
         binding.loadingOverlay.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
-    private boolean areNotificationsEnabledInSystem() {
-        return NotificationManagerCompat.from(requireContext()).areNotificationsEnabled();
-    }
-
-    private boolean hasRuntimeNotificationPermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            return true;
-        }
-        return ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.POST_NOTIFICATIONS
-        ) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private boolean isNotificationPermissionBlocked() {
-        if (!isAdded()) return false;
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            return !areNotificationsEnabledInSystem();
-        }
-
-        if (hasRuntimeNotificationPermission()) {
-            return !areNotificationsEnabledInSystem();
-        }
-
-        if (!viewModel.wasNotificationsPermissionRequested()) {
-            return false;
-        }
-
-        return !shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS);
-    }
-
-    private boolean canRequestNotificationPermissionAgain() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            return false;
-        }
-        if (hasRuntimeNotificationPermission()) {
-            return false;
-        }
-        return !isNotificationPermissionBlocked();
-    }
-
-    private void syncThemeToggleWithSavedMode() {
-        if (binding == null) return;
-        String mode = ThemeManager.getSavedMode(requireContext());
-        int checkedId;
-        if      (ThemeManager.MODE_LIGHT.equals(mode))  checkedId = R.id.btn_theme_light;
-        else if (ThemeManager.MODE_DARK.equals(mode))   checkedId = R.id.btn_theme_dark;
-        else                                            checkedId = R.id.btn_theme_system;
-        if (binding.toggleThemeMode.getCheckedButtonId() != checkedId) {
-            binding.toggleThemeMode.check(checkedId);
-        }
-    }
-
-    private void updateNotificationsUi() {
+    private void updateTrackingRequirementsUi() {
         if (binding == null || !isAdded()) return;
 
-        boolean enabledInApp = viewModel.areNotificationsEnabled();
-        boolean enabledInSystem = areNotificationsEnabledInSystem();
-        boolean hasPermission = hasRuntimeNotificationPermission();
-        boolean blocked = isNotificationPermissionBlocked();
-        boolean effectiveEnabled = enabledInApp && enabledInSystem && hasPermission;
+        bindTrackingRequirementRow(
+                binding.tvTrackingLocationStatus,
+                binding.tvTrackingLocationAction,
+                TrackingRequirementsManager.Requirement.LOCATION,
+                TrackingRequirementsManager.getLocationStatus(this)
+        );
 
-        binding.switchNotifications.setOnCheckedChangeListener(null);
-        binding.switchNotifications.setEnabled(!blocked);
-        binding.switchNotifications.setChecked(effectiveEnabled);
-        binding.switchNotifications.setOnCheckedChangeListener(notificationToggleListener);
+        bindTrackingRequirementRow(
+                binding.tvTrackingActivityStatus,
+                binding.tvTrackingActivityAction,
+                TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION,
+                TrackingRequirementsManager.getActivityRecognitionStatus(this)
+        );
 
-        binding.tvNotificationsBlocked.setVisibility(blocked ? View.VISIBLE : View.GONE);
-        binding.tvNotificationsOpenSettings.setVisibility(blocked ? View.VISIBLE : View.GONE);
+        bindTrackingRequirementRow(
+                binding.tvTrackingNotificationsStatus,
+                binding.tvTrackingNotificationsAction,
+                TrackingRequirementsManager.Requirement.NOTIFICATIONS,
+                TrackingRequirementsManager.getNotificationsStatus(this)
+        );
+
+        bindTrackingRequirementRow(
+                binding.tvTrackingDeviceLocationStatus,
+                binding.tvTrackingDeviceLocationAction,
+                TrackingRequirementsManager.Requirement.GPS,
+                TrackingRequirementsManager.getDeviceLocationStatus(requireContext())
+        );
+    }
+
+    private void bindTrackingRequirementRow(@NonNull android.widget.TextView statusView,
+                                            @NonNull android.widget.TextView actionView,
+                                            @NonNull TrackingRequirementsManager.Requirement requirement,
+                                            @NonNull TrackingRequirementsManager.Status status) {
+        statusView.setText(getTrackingRequirementStatusText(requirement, status));
+
+        Integer actionTextRes = getTrackingRequirementActionTextRes(requirement, status);
+        if (actionTextRes == null) {
+            actionView.setVisibility(View.GONE);
+            return;
+        }
+
+        actionView.setVisibility(View.VISIBLE);
+        actionView.setText(actionTextRes);
+    }
+
+    @Nullable
+    private Integer getTrackingRequirementActionTextRes(
+            @NonNull TrackingRequirementsManager.Requirement requirement,
+            @NonNull TrackingRequirementsManager.Status status) {
+        switch (status) {
+            case ENABLED:
+                return null;
+            case NEEDS_ACTIVATION:
+                return requirement == TrackingRequirementsManager.Requirement.GPS
+                        ? R.string.profile_tracking_status_activate
+                        : R.string.profile_tracking_status_request;
+            case BLOCKED:
+            default:
+                return R.string.profile_tracking_status_open_settings;
+        }
+    }
+
+    @NonNull
+    private String getTrackingRequirementStatusText(
+            @NonNull TrackingRequirementsManager.Requirement requirement,
+            @NonNull TrackingRequirementsManager.Status status) {
+        switch (status) {
+            case ENABLED:
+                return getString(R.string.profile_tracking_status_enabled);
+            case NEEDS_ACTIVATION:
+                return requirement == TrackingRequirementsManager.Requirement.GPS
+                        ? getString(R.string.profile_tracking_status_disabled)
+                        : getString(R.string.profile_tracking_status_needs_activation);
+            case BLOCKED:
+            default:
+                return getString(R.string.profile_tracking_status_blocked);
+        }
+    }
+
+    private void handleTrackingRequirementAction(
+            @NonNull TrackingRequirementsManager.Requirement requirement) {
+        TrackingRequirementsManager.Status status = getTrackingRequirementStatus(requirement);
+        if (status == TrackingRequirementsManager.Status.ENABLED) {
+            return;
+        }
+
+        if (status == TrackingRequirementsManager.Status.BLOCKED) {
+            openSettingsForRequirement(requirement);
+            return;
+        }
+
+        if (requirement == TrackingRequirementsManager.Requirement.GPS) {
+            openLocationSettings();
+            return;
+        }
+
+        String[] permissions = TrackingRequirementsManager
+                .buildRequestablePermissionsForRequirement(this, requirement);
+        if (permissions.length == 0) {
+            updateTrackingRequirementsUi();
+            return;
+        }
+
+        TrackingRequirementsManager.markPermissionsRequested(requireContext(), permissions);
+        trackingRequirementPermissionLauncher.launch(permissions);
+    }
+
+    @NonNull
+    private TrackingRequirementsManager.Status getTrackingRequirementStatus(
+            @NonNull TrackingRequirementsManager.Requirement requirement) {
+        switch (requirement) {
+            case LOCATION:
+                return TrackingRequirementsManager.getLocationStatus(this);
+            case ACTIVITY_RECOGNITION:
+                return TrackingRequirementsManager.getActivityRecognitionStatus(this);
+            case NOTIFICATIONS:
+                return TrackingRequirementsManager.getNotificationsStatus(this);
+            case GPS:
+            default:
+                return TrackingRequirementsManager.getDeviceLocationStatus(requireContext());
+        }
+    }
+
+    private void openSettingsForRequirement(
+            @NonNull TrackingRequirementsManager.Requirement requirement) {
+        if (requirement == TrackingRequirementsManager.Requirement.NOTIFICATIONS) {
+            openNotificationSettings();
+        } else if (requirement == TrackingRequirementsManager.Requirement.GPS) {
+            openLocationSettings();
+        } else {
+            openAppSettings();
+        }
+    }
+
+    private void registerDeviceLocationReceiver() {
+        if (deviceLocationReceiverRegistered || !isAdded()) return;
+
+        IntentFilter filter = new IntentFilter(LocationManager.MODE_CHANGED_ACTION);
+        filter.addAction(LocationManager.PROVIDERS_CHANGED_ACTION);
+
+        Context context = requireContext();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(deviceLocationStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            context.registerReceiver(deviceLocationStateReceiver, filter);
+        }
+        deviceLocationReceiverRegistered = true;
+    }
+
+    private void unregisterDeviceLocationReceiver() {
+        if (!deviceLocationReceiverRegistered || !isAdded()) return;
+        requireContext().unregisterReceiver(deviceLocationStateReceiver);
+        deviceLocationReceiverRegistered = false;
+    }
+
+    private void openAppSettings() {
+
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                .setData(Uri.fromParts("package", requireContext().getPackageName(), null));
+        startActivity(intent);
     }
 
     private void openNotificationSettings() {
         Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                 .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName());
         startActivity(intent);
+    }
+
+    private void openLocationSettings() {
+        startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
     }
 
     private void goToLogin() {
@@ -842,4 +944,3 @@ public class ProfileFragment extends Fragment {
         boolean onSaved(@NonNull String value);
     }
 }
-

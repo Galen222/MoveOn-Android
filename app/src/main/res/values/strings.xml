@@ -11,7 +11,7 @@
     <!--  NAVEGACIÓN                                                            -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="nav_inicio">Inicio</string>
-    <string name="nav_stats">Stats</string>
+    <string name="nav_stats">Estadisticas</string>
     <string name="nav_perfil">Perfil</string>
 
 
@@ -50,7 +50,7 @@
     <string name="login_btn_registrar">Crear cuenta</string>
     <string name="login_olvidaste_password">¿Olvidaste tu contraseña?</string>
     <string name="login_divisor">O</string>
-    <string name="login_bienvenido">Bienvenido, %1$s</string>
+    <string name="login_bienvenido">Bienvenido %1$s</string>
     <string name="login_recordar_cuenta">Recordar cuenta</string>
 
     <!-- Errores -->
@@ -196,6 +196,20 @@
     <!-- Feedback -->
     <string name="tracking_activity_saved_ok">¡Actividad guardada correctamente!</string>
     <string name="tracking_permission_denied">Se necesita permiso de ubicación para registrar la actividad.</string>
+    <string name="tracking_requirements_needed_title">Requisitos necesarios</string>
+    <string name="tracking_requirements_needed_message">Para iniciar una actividad debes activar estos requisitos:
+%1$s</string>
+    <string name="tracking_requirements_blocked_title">Requisitos bloqueados</string>
+    <string name="tracking_requirements_blocked_message">Estos requisitos están bloqueados por el sistema. Debes activarlos desde ajustes para iniciar una actividad:
+%1$s</string>
+    <string name="tracking_requirements_go_settings">Ir a ajustes</string>
+    <string name="tracking_device_location_disabled_title">GPS desactivado</string>
+    <string name="tracking_device_location_disabled_message">Para iniciar una actividad debes activar el GPS.</string>
+    <string name="tracking_requirement_location_name">Ubicación</string>
+    <string name="tracking_requirement_activity_name">Actividad física</string>
+    <string name="tracking_requirement_notifications_name">Notificaciones</string>
+    <string name="tracking_requirement_device_location_name">GPS</string>
+    <string name="common_accept">Aceptar</string>
 
 
     <!-- ══════════════════════════════════════════════════════════════════════ -->
@@ -364,6 +378,18 @@
     <!-- Notificaciones -->
     <string name="profile_notifications_blocked_system">Las notificaciones están bloqueadas en los ajustes del sistema</string>
     <string name="profile_notifications_open_settings">Abrir ajustes</string>
+    <string name="profile_section_tracking_requirements">Requisitos de actividades</string>
+    <string name="profile_tracking_requirement_location">Ubicación</string>
+    <string name="profile_tracking_requirement_activity">Actividad física</string>
+    <string name="profile_tracking_requirement_notifications">Notificaciones</string>
+    <string name="profile_tracking_requirement_device_location">GPS</string>
+    <string name="profile_tracking_status_enabled">Activado</string>
+    <string name="profile_tracking_status_needs_activation">Necesita activarse</string>
+    <string name="profile_tracking_status_blocked">Bloqueado</string>
+    <string name="profile_tracking_status_open_settings">Abrir ajustes</string>
+    <string name="profile_tracking_status_request">Solicitar</string>
+    <string name="profile_tracking_status_activate">Activar</string>
+    <string name="profile_tracking_status_disabled">Desactivado</string>
 
     <!-- DatePicker -->
     <string name="profile_error_birthdate_min_age">Debes ser mayor de 18 años</string>

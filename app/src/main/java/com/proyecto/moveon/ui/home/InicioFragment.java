@@ -1,9 +1,12 @@
 package com.proyecto.moveon.ui.home;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +29,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.databinding.FragmentInicioBinding;
 import com.proyecto.moveon.ui.home.tracking.TrackingState;
 import com.proyecto.moveon.ui.home.tracking.TrackingViewModel;
@@ -51,23 +55,7 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(
                     new ActivityResultContracts.RequestMultiplePermissions(),
-                    permissions -> {
-                        boolean locationGranted =
-                                Boolean.TRUE.equals(permissions.get(Manifest.permission.ACCESS_FINE_LOCATION))
-                                        || Boolean.TRUE.equals(permissions.get(Manifest.permission.ACCESS_COARSE_LOCATION));
-
-                        boolean activityGranted =
-                                Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
-                                        || Boolean.TRUE.equals(permissions.get(Manifest.permission.ACTIVITY_RECOGNITION));
-
-                        if (locationGranted && activityGranted) {
-                            enableMapMyLocation();
-                            viewModel.startTracking();
-                        } else {
-                            Toast.makeText(requireContext(),
-                                    R.string.tracking_permission_denied, Toast.LENGTH_LONG).show();
-                        }
-                    });
+                    permissions -> onPermissionsRequestCompleted());
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -109,14 +97,14 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
         googleMap.getUiSettings().setCompassEnabled(true);
         googleMap.getUiSettings().setMyLocationButtonEnabled(false);
 
-        if (hasLocationPermission()) {
+        if (TrackingRequirementsManager.hasLocationPermission(requireContext())) {
             enableMapMyLocation();
         }
     }
 
     @SuppressWarnings("MissingPermission")
     private void enableMapMyLocation() {
-        if (googleMap != null) {
+        if (googleMap != null && TrackingRequirementsManager.hasLocationPermission(requireContext())) {
             googleMap.setMyLocationEnabled(true);
         }
     }
@@ -133,11 +121,11 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
         if (state == null) return;
 
         if (state.isIdle() || state.isFinished()) {
-            requestPermissionsAndStart();
+            ensureTrackingRequirementsAndStart();
         } else if (state.isRunning()) {
             viewModel.pauseTracking();
         } else if (state.isPaused()) {
-            viewModel.startTracking();
+            ensureTrackingRequirementsAndStart();
         }
     }
 
@@ -177,12 +165,12 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
                     .setPositiveButton(R.string.tracking_dialog_new_activity_confirm, (d, w) -> {
                         viewModel.resetTracking();
                         clearMapRoute();
-                        requestPermissionsAndStart();
+                        ensureTrackingRequirementsAndStart();
                     })
                     .setNegativeButton(R.string.tracking_dialog_new_activity_cancel, null)
                     .show();
         } else {
-            requestPermissionsAndStart();
+            ensureTrackingRequirementsAndStart();
         }
     }
 
@@ -282,40 +270,143 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
-    private void requestPermissionsAndStart() {
-        if (hasLocationPermission() && hasActivityRecognitionPermission()) {
-            viewModel.startTracking();
-        } else {
-            permissionLauncher.launch(buildRequiredPermissions());
+    private void ensureTrackingRequirementsAndStart() {
+        List<TrackingRequirementsManager.Requirement> blockedRequirements =
+                TrackingRequirementsManager.getBlockedRuntimeRequirements(this);
+        if (!blockedRequirements.isEmpty()) {
+            showBlockedRequirementsDialog(blockedRequirements);
+            return;
         }
+
+        String[] permissionsToRequest = TrackingRequirementsManager.buildRequestablePermissions(this);
+        if (permissionsToRequest.length > 0) {
+            TrackingRequirementsManager.markPermissionsRequested(requireContext(), permissionsToRequest);
+            permissionLauncher.launch(permissionsToRequest);
+            return;
+        }
+
+        if (!TrackingRequirementsManager.isDeviceLocationEnabled(requireContext())) {
+            showDeviceLocationDisabledDialog();
+            return;
+        }
+
+        enableMapMyLocation();
+        viewModel.startTracking();
     }
 
-    private boolean hasLocationPermission() {
-        return ContextCompat.checkSelfPermission(requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                || ContextCompat.checkSelfPermission(requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    private void onPermissionsRequestCompleted() {
+        if (!isAdded()) return;
+
+        if (TrackingRequirementsManager.hasLocationPermission(requireContext())) {
+            enableMapMyLocation();
+        }
+
+        List<TrackingRequirementsManager.Requirement> blockedRequirements =
+                TrackingRequirementsManager.getBlockedRuntimeRequirements(this);
+        if (!blockedRequirements.isEmpty()) {
+            showBlockedRequirementsDialog(blockedRequirements);
+            return;
+        }
+
+        List<TrackingRequirementsManager.Requirement> missingRequestable =
+                TrackingRequirementsManager.getRequestableMissingRequirements(this);
+        if (!missingRequestable.isEmpty()) {
+            showNeedsActivationDialog(missingRequestable);
+            return;
+        }
+
+        if (!TrackingRequirementsManager.isDeviceLocationEnabled(requireContext())) {
+            showDeviceLocationDisabledDialog();
+            return;
+        }
+
+        viewModel.startTracking();
     }
 
-    private boolean hasActivityRecognitionPermission() {
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
-                || ContextCompat.checkSelfPermission(requireContext(),
-                Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
+    private void showNeedsActivationDialog(
+            @NonNull List<TrackingRequirementsManager.Requirement> requirements) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.tracking_requirements_needed_title)
+                .setMessage(getString(
+                        R.string.tracking_requirements_needed_message,
+                        buildRequirementsBulletList(requirements)))
+                .setPositiveButton(R.string.common_accept, null)
+                .show();
+    }
+
+    private void showBlockedRequirementsDialog(
+            @NonNull List<TrackingRequirementsManager.Requirement> requirements) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.tracking_requirements_blocked_title)
+                .setMessage(getString(
+                        R.string.tracking_requirements_blocked_message,
+                        buildRequirementsBulletList(requirements)))
+                .setPositiveButton(R.string.common_accept, null)
+                .setNegativeButton(R.string.tracking_requirements_go_settings,
+                        (dialog, which) -> openBestSettingsForRequirements(requirements))
+                .show();
+    }
+
+    private void showDeviceLocationDisabledDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.tracking_device_location_disabled_title)
+                .setMessage(R.string.tracking_device_location_disabled_message)
+                .setPositiveButton(R.string.common_accept, null)
+                .setNegativeButton(R.string.tracking_requirements_go_settings,
+                        (dialog, which) -> openLocationSettings())
+                .show();
     }
 
     @NonNull
-    private String[] buildRequiredPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            return new String[]{
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.ACTIVITY_RECOGNITION
-            };
+    private String buildRequirementsBulletList(
+            @NonNull List<TrackingRequirementsManager.Requirement> requirements) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < requirements.size(); i++) {
+            if (i > 0) builder.append("\n");
+            builder.append("• ").append(getRequirementLabel(requirements.get(i)));
         }
-        return new String[]{
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-        };
+        return builder.toString();
+    }
+
+    @NonNull
+    private String getRequirementLabel(@NonNull TrackingRequirementsManager.Requirement requirement) {
+        switch (requirement) {
+            case LOCATION:
+                return getString(R.string.tracking_requirement_location_name);
+            case ACTIVITY_RECOGNITION:
+                return getString(R.string.tracking_requirement_activity_name);
+            case NOTIFICATIONS:
+                return getString(R.string.tracking_requirement_notifications_name);
+            case GPS:
+            default:
+                return getString(R.string.tracking_requirement_device_location_name);
+        }
+    }
+
+    private void openBestSettingsForRequirements(
+            @NonNull List<TrackingRequirementsManager.Requirement> requirements) {
+        if (requirements.size() == 1
+                && requirements.get(0) == TrackingRequirementsManager.Requirement.NOTIFICATIONS) {
+            openNotificationSettings();
+            return;
+        }
+        openAppSettings();
+    }
+
+    private void openAppSettings() {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", requireContext().getPackageName(), null));
+        startActivity(intent);
+    }
+
+    private void openNotificationSettings() {
+        Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName());
+        startActivity(intent);
+    }
+
+    private void openLocationSettings() {
+        startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
     }
 
     private void showWalkingStatus() {

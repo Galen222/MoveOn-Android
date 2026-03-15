@@ -663,64 +663,203 @@
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:background="@color/dividerColor" />
-
-                    <androidx.constraintlayout.widget.ConstraintLayout
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:minHeight="@dimen/profile_item_min_height"
+                        android:orientation="vertical"
                         android:paddingVertical="@dimen/profile_item_padding_vertical">
 
                         <TextView
-                            android:id="@+id/tv_notifications_label"
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/profile_item_notifications"
-                            android:textSize="15sp"
+                            android:text="@string/profile_section_tracking_requirements"
                             android:textColor="@color/textPrimary"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintEnd_toStartOf="@id/switch_notifications"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="@id/switch_notifications" />
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
 
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switch_notifications"
-                            android:layout_width="wrap_content"
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            app:thumbTint="@color/switch_thumb_color"
-                            app:trackTint="@color/switch_track_color"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintTop_toTopOf="parent" />
+                            android:layout_marginTop="12dp">
 
-                        <TextView
-                            android:id="@+id/tv_notifications_blocked"
-                            android:layout_width="0dp"
+                            <TextView
+                                android:id="@+id/tv_tracking_location_label"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:text="@string/profile_tracking_requirement_location"
+                                android:textColor="@color/textPrimary"
+                                android:textSize="14sp"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintEnd_toStartOf="@id/tv_tracking_location_status"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <TextView
+                                android:id="@+id/tv_tracking_location_status"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/textSecondary"
+                                android:textSize="13sp"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <TextView
+                                android:id="@+id/tv_tracking_location_action"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?attr/selectableItemBackgroundBorderless"
+                                android:text="@string/profile_tracking_status_open_settings"
+                                android:textColor="@color/greenPrimary"
+                                android:textSize="13sp"
+                                android:visibility="gone"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toBottomOf="@id/tv_tracking_location_status" />
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="10dp"
+                            android:background="@color/dividerColor" />
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="@string/profile_notifications_blocked_system"
-                            android:textColor="@color/textSecondary"
-                            android:textSize="13sp"
-                            android:visibility="gone"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintEnd_toStartOf="@id/switch_notifications"
-                            app:layout_constraintTop_toBottomOf="@id/tv_notifications_label" />
+                            android:layout_marginTop="10dp">
 
-                        <TextView
-                            android:id="@+id/tv_notifications_open_settings"
-                            android:layout_width="wrap_content"
+                            <TextView
+                                android:id="@+id/tv_tracking_activity_label"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:text="@string/profile_tracking_requirement_activity"
+                                android:textColor="@color/textPrimary"
+                                android:textSize="14sp"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintEnd_toStartOf="@id/tv_tracking_activity_status"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <TextView
+                                android:id="@+id/tv_tracking_activity_status"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/textSecondary"
+                                android:textSize="13sp"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <TextView
+                                android:id="@+id/tv_tracking_activity_action"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?attr/selectableItemBackgroundBorderless"
+                                android:text="@string/profile_tracking_status_open_settings"
+                                android:textColor="@color/greenPrimary"
+                                android:textSize="13sp"
+                                android:visibility="gone"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toBottomOf="@id/tv_tracking_activity_status" />
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="10dp"
+                            android:background="@color/dividerColor" />
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="@string/profile_notifications_open_settings"
-                            android:textColor="@color/greenPrimary"
-                            android:textSize="13sp"
-                            android:visibility="gone"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:foreground="?attr/selectableItemBackgroundBorderless"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/tv_notifications_blocked"
-                            app:layout_constraintBottom_toBottomOf="parent" />
+                            android:layout_marginTop="10dp">
 
-                    </androidx.constraintlayout.widget.ConstraintLayout>
+                            <TextView
+                                android:id="@+id/tv_tracking_notifications_label"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:text="@string/profile_tracking_requirement_notifications"
+                                android:textColor="@color/textPrimary"
+                                android:textSize="14sp"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintEnd_toStartOf="@id/tv_tracking_notifications_status"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <TextView
+                                android:id="@+id/tv_tracking_notifications_status"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/textSecondary"
+                                android:textSize="13sp"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <TextView
+                                android:id="@+id/tv_tracking_notifications_action"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?attr/selectableItemBackgroundBorderless"
+                                android:text="@string/profile_tracking_status_open_settings"
+                                android:textColor="@color/greenPrimary"
+                                android:textSize="13sp"
+                                android:visibility="gone"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toBottomOf="@id/tv_tracking_notifications_status" />
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="10dp"
+                            android:background="@color/dividerColor" />
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp">
+
+                            <TextView
+                                android:id="@+id/tv_tracking_device_location_label"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:text="@string/profile_tracking_requirement_device_location"
+                                android:textColor="@color/textPrimary"
+                                android:textSize="14sp"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintEnd_toStartOf="@id/tv_tracking_device_location_status"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <TextView
+                                android:id="@+id/tv_tracking_device_location_status"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/textSecondary"
+                                android:textSize="13sp"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <TextView
+                                android:id="@+id/tv_tracking_device_location_action"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?attr/selectableItemBackgroundBorderless"
+                                android:text="@string/profile_tracking_status_open_settings"
+                                android:textColor="@color/greenPrimary"
+                                android:textSize="13sp"
+                                android:visibility="gone"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toBottomOf="@id/tv_tracking_device_location_status" />
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"

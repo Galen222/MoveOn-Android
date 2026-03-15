@@ -25,7 +25,7 @@
     <string name="login_btn_registrar">Create account</string>
     <string name="login_olvidaste_password">Forgot your password?</string>
     <string name="login_divisor">OR</string>
-    <string name="login_bienvenido">Welcome, %1$s</string>
+    <string name="login_bienvenido">Welcome %1$s</string>
     <string name="login_recordar_cuenta">Remember account</string>
     <string name="login_error_identificador_vacio">Enter your email or username</string>
     <string name="login_error_password_vacio">Enter your password</string>
@@ -118,6 +118,20 @@
     <string name="tracking_dialog_new_activity_cancel">Cancel</string>
     <string name="tracking_activity_saved_ok">Activity saved successfully!</string>
     <string name="tracking_permission_denied">Location permission is required to record the activity.</string>
+    <string name="tracking_requirements_needed_title">Required requirements</string>
+    <string name="tracking_requirements_needed_message">To start an activity you must enable these requirements:
+%1$s</string>
+    <string name="tracking_requirements_blocked_title">Blocked requirements</string>
+    <string name="tracking_requirements_blocked_message">These requirements are blocked by the system. You must enable them in settings to start an activity:
+%1$s</string>
+    <string name="tracking_requirements_go_settings">Open settings</string>
+    <string name="tracking_device_location_disabled_title">GPS is turned off</string>
+    <string name="tracking_device_location_disabled_message">To start an activity you must enable GPS.</string>
+    <string name="tracking_requirement_location_name">Location</string>
+    <string name="tracking_requirement_activity_name">Physical activity</string>
+    <string name="tracking_requirement_notifications_name">Notifications</string>
+    <string name="tracking_requirement_device_location_name">GPS</string>
+    <string name="common_accept">Accept</string>
     <string name="stats_title">Stats</string>
     <string name="stats_label_distance">Distance</string>
     <string name="stats_label_time">Time</string>
@@ -222,6 +236,18 @@
     <string name="profile_photo_queued">Photo saved locally. It will upload when the connection returns.</string>
     <string name="profile_notifications_blocked_system">Notifications are blocked in the system settings</string>
     <string name="profile_notifications_open_settings">Open settings</string>
+    <string name="profile_section_tracking_requirements">Activity requirements</string>
+    <string name="profile_tracking_requirement_location">Location</string>
+    <string name="profile_tracking_requirement_activity">Physical activity</string>
+    <string name="profile_tracking_requirement_notifications">Notifications</string>
+    <string name="profile_tracking_requirement_device_location">GPS</string>
+    <string name="profile_tracking_status_enabled">Enabled</string>
+    <string name="profile_tracking_status_needs_activation">Needs activation</string>
+    <string name="profile_tracking_status_blocked">Blocked</string>
+    <string name="profile_tracking_status_open_settings">Open settings</string>
+    <string name="profile_tracking_status_request">Request</string>
+    <string name="profile_tracking_status_activate">Enable</string>
+    <string name="profile_tracking_status_disabled">Disabled</string>
     <string name="profile_error_birthdate_min_age">You must be over 18 years old</string>
     <string name="profile_error_logout_server">Could not sign out on the server, but you will be signed out locally.</string>
     <string name="profile_item_language">Language</string>
@@ -289,3 +315,4 @@
     <string name="api_error_server">Internal server error</string>
     <string name="common_proximamente">Coming soon</string>
 </resources>
+
