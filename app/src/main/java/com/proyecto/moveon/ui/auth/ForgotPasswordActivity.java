@@ -1,7 +1,6 @@
 package com.proyecto.moveon.ui.auth;
 
 import android.os.Bundle;
-import android.util.Patterns;
 import android.view.View;
 import android.widget.Toast;
 
@@ -12,6 +11,7 @@ import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityForgotPasswordBinding;
+import com.proyecto.moveon.core.validation.AppInputValidator;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
 
@@ -141,21 +141,17 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     private void attemptSolicitarCodigo() {
         binding.tilEmail.setError(null);
 
-        String email = StringUtils.textOf(binding.etEmail.getText());
+        AppInputValidator.ValidationResult<String> emailResult =
+                AppInputValidator.validateEmail(this, StringUtils.textOf(binding.etEmail.getText()), true);
 
-        if (email.isEmpty()) {
-            binding.tilEmail.setError(getString(R.string.forgot_error_email_vacio));
-            binding.etEmail.requestFocus();
-            return;
-        }
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            binding.tilEmail.setError(getString(R.string.forgot_error_email_formato));
+        if (!emailResult.isValid()) {
+            binding.tilEmail.setError(emailResult.getErrorMessage());
             binding.etEmail.requestFocus();
             return;
         }
 
-        emailConfirmado = email;
-        viewModel.solicitarRecuperacion(email);
+        emailConfirmado = emailResult.getValue();
+        viewModel.solicitarRecuperacion(emailConfirmado);
     }
 
     // -------------------------------------------------------------------------
@@ -167,33 +163,38 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         binding.tilPasswordNueva.setError(null);
         binding.tilPasswordConfirmar.setError(null);
 
-        String codigo           = StringUtils.textOf(binding.etCodigo.getText());
-        String passwordNueva    = StringUtils.textOf(binding.etPasswordNueva.getText());
-        String passwordConfirma = StringUtils.textOf(binding.etPasswordConfirmar.getText());
+        AppInputValidator.ValidationResult<String> codigoResult =
+                AppInputValidator.validateRecoveryCode(this, StringUtils.textOf(binding.etCodigo.getText()));
+        AppInputValidator.ValidationResult<String> passwordResult =
+                AppInputValidator.validatePassword(this, StringUtils.textOf(binding.etPasswordNueva.getText()), true, true);
+        AppInputValidator.ValidationResult<String> confirmarPasswordResult =
+                AppInputValidator.validatePasswordConfirmation(
+                        this,
+                        passwordResult.getValue(),
+                        StringUtils.textOf(binding.etPasswordConfirmar.getText()),
+                        R.string.forgot_error_passwords_distintas
+                );
 
         boolean valid = true;
 
-        if (codigo.isEmpty()) {
-            binding.tilCodigo.setError(getString(R.string.forgot_error_codigo_vacio));
+        if (!codigoResult.isValid()) {
+            binding.tilCodigo.setError(codigoResult.getErrorMessage());
             valid = false;
         }
 
-        if (passwordNueva.isEmpty()) {
-            binding.tilPasswordNueva.setError(getString(R.string.forgot_error_password_vacia));
-            valid = false;
-        } else if (passwordNueva.length() < 8) {
-            binding.tilPasswordNueva.setError(getString(R.string.forgot_error_password_corta));
+        if (!passwordResult.isValid()) {
+            binding.tilPasswordNueva.setError(passwordResult.getErrorMessage());
             valid = false;
         }
 
-        if (!passwordConfirma.equals(passwordNueva)) {
-            binding.tilPasswordConfirmar.setError(getString(R.string.forgot_error_passwords_distintas));
+        if (!confirmarPasswordResult.isValid()) {
+            binding.tilPasswordConfirmar.setError(confirmarPasswordResult.getErrorMessage());
             valid = false;
         }
 
         if (!valid) return;
 
-        viewModel.resetearPassword(emailConfirmado, codigo, passwordNueva);
+        viewModel.resetearPassword(emailConfirmado, codigoResult.getValue(), passwordResult.getValue());
     }
 
     // -------------------------------------------------------------------------

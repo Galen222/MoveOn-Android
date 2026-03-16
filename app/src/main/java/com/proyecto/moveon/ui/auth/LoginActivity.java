@@ -10,6 +10,7 @@ import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityLoginBinding;
+import com.proyecto.moveon.core.validation.AppInputValidator;
 import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
@@ -107,24 +108,28 @@ public class LoginActivity extends AppCompatActivity {
 
     private void attemptLogin() {
         clearErrors();
-        String identificador = StringUtils.textOf(binding.etUsuarioCorreo.getText());
-        String password      = StringUtils.textOf(binding.etPassword.getText());
+
+        AppInputValidator.ValidationResult<String> identificadorResult =
+                AppInputValidator.validateLoginIdentifier(this, StringUtils.textOf(binding.etUsuarioCorreo.getText()));
+        AppInputValidator.ValidationResult<String> passwordResult =
+                AppInputValidator.validateLoginPassword(this, StringUtils.textOf(binding.etPassword.getText()));
 
         boolean valid = true;
-        if (identificador.isEmpty()) {
-            binding.tilUsuarioCorreo.setError(getString(R.string.login_error_identificador_vacio));
+        if (!identificadorResult.isValid()) {
+            binding.tilUsuarioCorreo.setError(identificadorResult.getErrorMessage());
+            binding.etUsuarioCorreo.requestFocus();
             valid = false;
         }
-        if (password.isEmpty()) {
-            binding.tilPassword.setError(getString(R.string.login_error_password_vacio));
+        if (!passwordResult.isValid()) {
+            binding.tilPassword.setError(passwordResult.getErrorMessage());
             if (valid) binding.etPassword.requestFocus();
             valid = false;
         }
 
-        if (!valid) {
-            if (identificador.isEmpty()) binding.etUsuarioCorreo.requestFocus();
-            return;
-        }
+        if (!valid) return;
+
+        String identificador = identificadorResult.getValue();
+        String password = passwordResult.getValue();
 
         viewModel.saveRememberedIdentifier(identificador, binding.cbRecordarCuenta.isChecked());
         viewModel.login(identificador, password);

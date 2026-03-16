@@ -46,6 +46,13 @@ public class ProfileViewModel extends AndroidViewModel {
         perfilRepository = new PerfilRepository(application);
         accountKey = sessionManager.getAccountKey();
 
+        if (accountKey != null) {
+            PerfilUsuario cached = perfilRepository.getCachedPerfilNow(accountKey);
+            if (cached != null) {
+                perfilState.setValue(UiState.success(cached));
+            }
+        }
+
         attachPerfilSource();
     }
 
@@ -190,3 +197,4 @@ public class ProfileViewModel extends AndroidViewModel {
         super.onCleared();
     }
 }
+

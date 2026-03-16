@@ -1,6 +1,7 @@
 package com.proyecto.moveon.ui.main;
 
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -14,6 +15,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.auth.GlobalAuthManager;
+import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityMainBinding;
 import com.proyecto.moveon.ui.auth.LoginActivity;
@@ -40,22 +42,37 @@ public class MainActivity extends AppCompatActivity {
 
     private int selectedItemId = R.id.nav_inicio;
     private MainViewModel viewModel;
+    private boolean keepSystemSplashVisible = false;
+    private boolean pendingUiTransitionSplash = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        SplashScreen.installSplashScreen(this);
+        pendingUiTransitionSplash = AppSettingsManager.isUiTransitionSplashRequested(this);
+
+        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
+        if (pendingUiTransitionSplash) {
+            keepSystemSplashVisible = true;
+            splashScreen.setKeepOnScreenCondition(() -> keepSystemSplashVisible);
+        }
+
         ThemeManager.applySavedTheme(this);
         super.onCreate(savedInstanceState);
 
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
         if (viewModel.isNotLoggedIn()) {
+            keepSystemSplashVisible = false;
             goToLoginAndFinish();
             return;
         }
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        if (pendingUiTransitionSplash) {
+            AppSettingsManager.clearUiTransitionSplashRequest(this);
+            showUiTransitionSplashNow();
+        }
 
         fragmentManager = getSupportFragmentManager();
 
@@ -107,7 +124,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        // Disparador proactivo unificado: mismo motor que usa el Authenticator.
         viewModel.ensureSessionFresh();
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -122,6 +138,34 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        if (pendingUiTransitionSplash) {
+            binding.getRoot().post(this::hideUiTransitionSplashWhenReady);
+        } else {
+            keepSystemSplashVisible = false;
+        }
+    }
+
+    public void showUiTransitionSplashNow() {
+        if (binding == null) return;
+        binding.transitionSplashOverlay.animate().cancel();
+        binding.transitionSplashOverlay.setAlpha(1f);
+        binding.transitionSplashOverlay.setVisibility(View.VISIBLE);
+    }
+
+    private void hideUiTransitionSplashWhenReady() {
+        keepSystemSplashVisible = false;
+        if (binding == null) return;
+
+        binding.transitionSplashOverlay.animate()
+                .alpha(0f)
+                .setDuration(150L)
+                .withEndAction(() -> {
+                    if (binding == null) return;
+                    binding.transitionSplashOverlay.setVisibility(View.GONE);
+                    binding.transitionSplashOverlay.setAlpha(1f);
+                })
+                .start();
     }
 
     private void switchTo(int itemId) {
@@ -190,7 +234,6 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // Segundo disparador proactivo: al volver del fondo usamos el mismo coordinador.
         viewModel.ensureSessionFresh();
     }
 

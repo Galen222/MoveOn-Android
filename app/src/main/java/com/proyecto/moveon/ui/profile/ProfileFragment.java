@@ -39,7 +39,9 @@ import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
+import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
+import com.proyecto.moveon.core.validation.AppInputValidator;
 import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.data.profile.sync.ProfilePatchPayload;
 import com.proyecto.moveon.data.profile.PerfilRepository;
@@ -49,6 +51,7 @@ import com.proyecto.moveon.databinding.DialogEditProvinciaBinding;
 import com.proyecto.moveon.databinding.FragmentProfileBinding;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
 import com.proyecto.moveon.ui.auth.LoginActivity;
+import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
 
@@ -269,8 +272,10 @@ public class ProfileFragment extends Fragment {
 
             String currentMode = ThemeManager.getSavedMode(requireContext());
             if (newMode.equals(currentMode)) return;
-            ThemeManager.saveAndApply(requireContext(), newMode);
-            requireActivity().recreate();
+            startUiRecreationWithSplash(() -> {
+                ThemeManager.saveAndApply(requireContext(), newMode);
+                requireActivity().recreate();
+            });
         });
 
         binding.itemRanking.setOnClickListener(v ->
@@ -303,8 +308,21 @@ public class ProfileFragment extends Fragment {
                 android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS,
                 false,
                 value -> {
+                    AppInputValidator.ValidationResult<String> validation =
+                            AppInputValidator.validateRealName(requireContext(), value, false);
+                    if (!validation.isValid()) {
+                        showFeedbackMessage(validation.getErrorMessage());
+                        return false;
+                    }
+
+                    String normalizedValue = validation.getValue();
+                    String currentValue = perfilActual != null ? perfilActual.nombreReal : null;
+                    if (AppInputValidator.sameText(currentValue, normalizedValue)) {
+                        return true;
+                    }
+
                     viewModel.updatePerfil(new ProfilePatchPayload()
-                            .nombreReal(value.isEmpty() ? null : value)
+                            .nombreReal(StringUtils.hasText(normalizedValue) ? normalizedValue : null)
                             .toJson());
                     return true;
                 }
@@ -316,8 +334,21 @@ public class ProfileFragment extends Fragment {
                 android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,
                 true,
                 value -> {
+                    AppInputValidator.ValidationResult<String> validation =
+                            AppInputValidator.validateEmail(requireContext(), value, true);
+                    if (!validation.isValid()) {
+                        showFeedbackMessage(validation.getErrorMessage());
+                        return false;
+                    }
+
+                    String normalizedValue = validation.getValue();
+                    String currentValue = perfilActual != null ? perfilActual.email : null;
+                    if (AppInputValidator.sameText(currentValue, normalizedValue)) {
+                        return true;
+                    }
+
                     viewModel.updatePerfil(new ProfilePatchPayload()
-                            .email(value)
+                            .email(normalizedValue)
                             .toJson());
                     return true;
                 }
@@ -360,7 +391,13 @@ public class ProfileFragment extends Fragment {
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
                 .setPositiveButton(R.string.dialog_btn_save, (dialog, which) -> {
                     int altura = picker.getValue();
-                    viewModel.updatePerfil(new ProfilePatchPayload().altura(altura).toJson());
+                    AppInputValidator.ValidationResult<Integer> validation =
+                            AppInputValidator.validateHeight(requireContext(), altura);
+                    if (!validation.isValid()) {
+                        showFeedbackMessage(validation.getErrorMessage());
+                        return;
+                    }
+                    viewModel.updatePerfil(new ProfilePatchPayload().altura(validation.getValue()).toJson());
                 })
                 .show();
     }
@@ -404,7 +441,13 @@ public class ProfileFragment extends Fragment {
                 .setPositiveButton(R.string.dialog_btn_save, (dialog, which) -> {
                     double peso = pesoMin + picker.getValue() * pesoStep;
                     peso = Math.round(peso * 10.0) / 10.0;
-                    viewModel.updatePerfil(new ProfilePatchPayload().peso(peso).toJson());
+                    AppInputValidator.ValidationResult<Double> validation =
+                            AppInputValidator.validateWeight(requireContext(), peso);
+                    if (!validation.isValid()) {
+                        showFeedbackMessage(validation.getErrorMessage());
+                        return;
+                    }
+                    viewModel.updatePerfil(new ProfilePatchPayload().peso(validation.getValue()).toJson());
                 })
                 .show();
     }
@@ -518,17 +561,24 @@ public class ProfileFragment extends Fragment {
             Calendar selected = Calendar.getInstance();
             selected.setTimeInMillis(selection);
 
-            Calendar minRequired = Calendar.getInstance();
-            minRequired.add(Calendar.YEAR, -18);
-            if (selected.after(minRequired)) {
-                showFeedbackMessage(getString(R.string.profile_error_birthdate_min_age));
+            LocalDate selectedDate = LocalDate.of(
+                    selected.get(Calendar.YEAR),
+                    selected.get(Calendar.MONTH) + 1,
+                    selected.get(Calendar.DAY_OF_MONTH)
+            );
+
+            AppInputValidator.ValidationResult<String> validation =
+                    AppInputValidator.validateBirthDate(requireContext(), selectedDate);
+            if (!validation.isValid()) {
+                showFeedbackMessage(validation.getErrorMessage());
                 return;
             }
 
-            String fecha = String.format(Locale.getDefault(), "%04d-%02d-%02d",
-                    selected.get(Calendar.YEAR),
-                    selected.get(Calendar.MONTH) + 1,
-                    selected.get(Calendar.DAY_OF_MONTH));
+            String fecha = validation.getValue();
+            String currentValue = perfilActual != null ? perfilActual.fechaNacimiento : null;
+            if (AppInputValidator.sameText(currentValue, fecha)) {
+                return;
+            }
 
             viewModel.updatePerfil(new ProfilePatchPayload()
                     .fechaNacimiento(fecha)
@@ -646,12 +696,26 @@ public class ProfileFragment extends Fragment {
                 .setSingleChoiceItems(labels, checkedItem, (dialog, which) -> {
                     String selectedMode = modes[which];
                     if (!selectedMode.equals(viewModel.getAppLanguageMode())) {
-                        AppLanguageManager.saveAndApply(requireContext(), selectedMode);
+                        startUiRecreationWithSplash(() ->
+                                AppLanguageManager.saveAndApply(requireContext(), selectedMode));
                     }
                     dialog.dismiss();
                 })
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
                 .show();
+    }
+
+
+    private void startUiRecreationWithSplash(@NonNull Runnable action) {
+        Context context = requireContext();
+        AppSettingsManager.requestUiTransitionSplash(context);
+
+        Activity activity = requireActivity();
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).showUiTransitionSplashNow();
+        }
+
+        action.run();
     }
 
     private int findLanguageModeIndex(@Nullable String mode) {
@@ -964,3 +1028,4 @@ public class ProfileFragment extends Fragment {
         boolean onSaved(@NonNull String value);
     }
 }
+

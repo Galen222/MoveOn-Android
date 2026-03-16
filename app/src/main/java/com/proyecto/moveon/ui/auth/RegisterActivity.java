@@ -12,7 +12,6 @@ import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
-import android.util.Patterns;
 import android.view.View;
 import android.widget.Toast;
 
@@ -20,6 +19,7 @@ import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityRegisterBinding;
+import com.proyecto.moveon.core.validation.AppInputValidator;
 import com.proyecto.moveon.domain.auth.RegisterInput;
 import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
@@ -210,49 +210,47 @@ public class RegisterActivity extends AppCompatActivity {
     private void attemptRegister() {
         clearErrors();
 
-        String nombreUsuario     = StringUtils.textOf(binding.etUsuario.getText());
-        String correo            = StringUtils.textOf(binding.etUsuarioCorreo.getText());
-        String fechaNacimiento   = StringUtils.textOf(binding.etFechaNacimiento.getText());
-        String password          = StringUtils.textOf(binding.etPassword.getText());
-        String confirmarPassword = StringUtils.textOf(binding.etConfirmarPassword.getText());
-        boolean eulaAceptado     = binding.cbEula.isChecked();
+        AppInputValidator.ValidationResult<String> nombreUsuarioResult =
+                AppInputValidator.validateUsername(this, StringUtils.textOf(binding.etUsuario.getText()), true);
+        AppInputValidator.ValidationResult<String> correoResult =
+                AppInputValidator.validateEmail(this, StringUtils.textOf(binding.etUsuarioCorreo.getText()), true);
+        AppInputValidator.ValidationResult<String> fechaNacimientoResult =
+                AppInputValidator.validateBirthDate(this, StringUtils.textOf(binding.etFechaNacimiento.getText()), true);
+        AppInputValidator.ValidationResult<String> passwordResult =
+                AppInputValidator.validatePassword(this, StringUtils.textOf(binding.etPassword.getText()), true, false);
+        AppInputValidator.ValidationResult<String> confirmarPasswordResult =
+                AppInputValidator.validatePasswordConfirmation(
+                        this,
+                        passwordResult.getValue(),
+                        StringUtils.textOf(binding.etConfirmarPassword.getText()),
+                        R.string.registro_error_passwords_distintas
+                );
+        boolean eulaAceptado = binding.cbEula.isChecked();
 
         boolean valid = true;
 
-        if (nombreUsuario.isEmpty()) {
-            binding.tilUsuario.setError(getString(R.string.registro_error_usuario_vacio));
-            valid = false;
-        } else if (nombreUsuario.length() < 5) {
-            binding.tilUsuario.setError(getString(R.string.registro_error_usuario_corto));
-            valid = false;
-        } else if (!nombreUsuario.matches("^[a-zA-Z0-9]+$")) {
-            binding.tilUsuario.setError(getString(R.string.registro_error_usuario_formato));
+        if (!nombreUsuarioResult.isValid()) {
+            binding.tilUsuario.setError(nombreUsuarioResult.getErrorMessage());
             valid = false;
         }
 
-        if (correo.isEmpty()) {
-            binding.tilUsuarioCorreo.setError(getString(R.string.registro_error_correo_vacio));
-            valid = false;
-        } else if (!Patterns.EMAIL_ADDRESS.matcher(correo).matches()) {
-            binding.tilUsuarioCorreo.setError(getString(R.string.registro_error_correo_formato));
+        if (!correoResult.isValid()) {
+            binding.tilUsuarioCorreo.setError(correoResult.getErrorMessage());
             valid = false;
         }
 
-        if (fechaNacimiento.isEmpty()) {
-            binding.tilFechaNacimiento.setError(getString(R.string.registro_error_fecha_vacia));
+        if (!fechaNacimientoResult.isValid()) {
+            binding.tilFechaNacimiento.setError(fechaNacimientoResult.getErrorMessage());
             valid = false;
         }
 
-        if (password.isEmpty()) {
-            binding.tilPassword.setError(getString(R.string.registro_error_password_vacio));
-            valid = false;
-        } else if (password.length() < 8) {
-            binding.tilPassword.setError(getString(R.string.registro_error_password_corta));
+        if (!passwordResult.isValid()) {
+            binding.tilPassword.setError(passwordResult.getErrorMessage());
             valid = false;
         }
 
-        if (!confirmarPassword.equals(password)) {
-            binding.tilConfirmarPassword.setError(getString(R.string.registro_error_passwords_distintas));
+        if (!confirmarPasswordResult.isValid()) {
+            binding.tilConfirmarPassword.setError(confirmarPasswordResult.getErrorMessage());
             valid = false;
         }
 
@@ -268,10 +266,10 @@ public class RegisterActivity extends AppCompatActivity {
                 .format(Instant.now());
 
         RegisterInput input = new RegisterInput(
-                nombreUsuario,
-                correo,
-                password,
-                fechaNacimiento,
+                nombreUsuarioResult.getValue(),
+                correoResult.getValue(),
+                passwordResult.getValue(),
+                fechaNacimientoResult.getValue(),
                 true,
                 fechaAceptacion,
                 EULA_VERSION

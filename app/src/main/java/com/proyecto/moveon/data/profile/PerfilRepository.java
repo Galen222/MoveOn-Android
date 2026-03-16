@@ -78,6 +78,12 @@ public class PerfilRepository {
         return result;
     }
 
+    @Nullable
+    public PerfilUsuario getCachedPerfilNow(@NonNull String accountKey) {
+        PerfilCacheEntity entity = local.getCacheNow(accountKey);
+        return entity != null ? mapEntityToDomain(entity) : null;
+    }
+
     public void refreshPerfil(@NonNull String accountKey, @Nullable RefreshCallback callback) {
         remote.fetchPerfil(result -> {
             if (!result.isSuccess() || result.data == null) {
@@ -117,10 +123,14 @@ public class PerfilRepository {
             op.state       = "PENDING";
             local.enqueuePatch(op);
 
-            PerfilCacheEntity current = getOrCreateCache(accountKey);
-            applyPatchToCache(current, patchJson);
-            current.dirty = true;
-            local.saveCache(current);
+            boolean applyOptimistically = shouldApplyPatchOptimistically(patchJson);
+
+            if (applyOptimistically) {
+                PerfilCacheEntity current = getOrCreateCache(accountKey);
+                applyPatchToCache(current, patchJson);
+                current.dirty = true;
+                local.saveCache(current);
+            }
 
             ApiResult<String> result = remote.patchPerfilBlocking(patchJson);
             if (result.isSuccess()) {
@@ -131,6 +141,9 @@ public class PerfilRepository {
                 } else {
                     PerfilCacheEntity updated = local.getCacheNow(accountKey);
                     if (updated != null) {
+                        if (!applyOptimistically) {
+                            applyPatchToCache(updated, patchJson);
+                        }
                         updated.dirty = hasPendingTextChanges(accountKey)
                                 || PHOTO_STATE_PENDING.equals(updated.photoSyncState);
                         updated.lastSyncedAtMs = System.currentTimeMillis();
@@ -540,6 +553,12 @@ public class PerfilRepository {
         );
     }
 
+    private boolean shouldApplyPatchOptimistically(@NonNull JsonObject patch) {
+        return !patch.has("nombre_real")
+                && !patch.has("email")
+                && !patch.has("fecha_nacimiento");
+    }
+
     private void applyPatchToCache(@NonNull PerfilCacheEntity cache, @NonNull JsonObject patch) {
         if (patch.has("nombre_real")) {
             cache.nombreReal = readNullableString(patch.get("nombre_real"));
@@ -619,3 +638,4 @@ public class PerfilRepository {
         public static SyncResult retry()   { return new SyncResult(true); }
     }
 }
+

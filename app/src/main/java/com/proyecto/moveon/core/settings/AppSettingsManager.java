@@ -22,6 +22,7 @@ public final class AppSettingsManager {
 
     private static final String KEY_THEME_MODE = "theme_mode";
     private static final String KEY_APP_LANGUAGE = "app_language";
+    private static final String KEY_PENDING_UI_TRANSITION_SPLASH = "pending_ui_transition_splash";
 
     private static final String KEY_TRACKING_LOCATION_PERMISSION_REQUESTED =
             "tracking_location_permission_requested";
@@ -85,6 +86,19 @@ public final class AppSettingsManager {
     public static void clearAppLanguage(@NonNull Context context) {
         prefs(context).edit().remove(KEY_APP_LANGUAGE).apply();
     }
+
+    public static void requestUiTransitionSplash(@NonNull Context context) {
+        prefs(context).edit().putBoolean(KEY_PENDING_UI_TRANSITION_SPLASH, true).apply();
+    }
+
+    public static boolean isUiTransitionSplashRequested(@NonNull Context context) {
+        return prefs(context).getBoolean(KEY_PENDING_UI_TRANSITION_SPLASH, false);
+    }
+
+    public static void clearUiTransitionSplashRequest(@NonNull Context context) {
+        prefs(context).edit().remove(KEY_PENDING_UI_TRANSITION_SPLASH).apply();
+    }
+
 
     // ── Tracking: flags internos del flujo de permisos ─────────────────────
 

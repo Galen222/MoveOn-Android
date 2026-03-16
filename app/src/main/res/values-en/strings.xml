@@ -314,5 +314,19 @@
     <string name="api_error_conflict">Request conflict</string>
     <string name="api_error_server">Internal server error</string>
     <string name="common_proximamente">Coming soon</string>
+    <string name="validation_username_too_long">The username cannot exceed 50 characters</string>
+    <string name="validation_real_name_too_short">The real name is too short</string>
+    <string name="validation_real_name_too_long">The real name cannot exceed 80 characters</string>
+    <string name="validation_real_name_invalid_characters">The name cannot contain numbers or special symbols</string>
+    <string name="validation_username_inappropriate_or_not_allowed">The username contains inappropriate or disallowed language</string>
+    <string name="validation_real_name_inappropriate_or_not_allowed">The real name contains inappropriate or disallowed language</string>
+    <string name="validation_content_unavailable">Content could not be validated right now</string>
+    <string name="validation_password_too_long_bytes">The password cannot exceed 72 bytes in UTF-8</string>
+    <string name="validation_password_missing_uppercase">The password must include at least one uppercase letter</string>
+    <string name="validation_password_missing_number">The password must include at least one number</string>
+    <string name="validation_recovery_code_invalid_length">The code must be 6 digits long</string>
+    <string name="validation_recovery_code_must_be_numeric">The code can only contain numbers</string>
+    <string name="validation_height_out_of_range">Height must be between 50cm and 300cm</string>
+    <string name="validation_weight_out_of_range">Weight must be between 20kg and 300kg</string>
 </resources>
 
