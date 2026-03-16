@@ -3,6 +3,8 @@ package com.proyecto.moveon.domain.activity;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.proyecto.moveon.data.activities.ActivitySyncState;
+
 public final class ActividadItem {
 
     @NonNull public final String localId;
@@ -42,6 +44,6 @@ public final class ActividadItem {
     }
 
     public boolean isPendingSync() {
-        return !"SYNCED".equals(syncState);
+        return ActivitySyncState.isPending(syncState);
     }
 }

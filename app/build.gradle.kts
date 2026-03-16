@@ -1,6 +1,6 @@
 import java.util.Properties
+import org.gradle.api.GradleException
 import org.gradle.api.tasks.compile.JavaCompile
-
 
 plugins {
     alias(libs.plugins.android.application)
@@ -19,7 +19,23 @@ fun localProp(key: String, defaultValue: String = ""): String {
 }
 
 /**
- * Asegura que la BASE_URL termine con "/".
+ * Exige una propiedad no vacía en local.properties.
+ */
+fun requiredLocalProp(key: String): String {
+    val value = localProp(key, "").trim()
+    if (value.isEmpty()) {
+        throw GradleException("Falta la propiedad obligatoria '$key' en local.properties")
+    }
+    return value
+}
+
+/**
+ * Exige una URL no vacía en local.properties y garantiza que termine con '/'.
+ */
+fun requiredUrlProp(key: String): String = ensureTrailingSlash(requiredLocalProp(key))
+
+/**
+ * Asegura que la BASE_URL termine con '/'.
  */
 fun ensureTrailingSlash(url: String): String {
     val trimmed = url.trim()
@@ -32,31 +48,49 @@ fun ensureTrailingSlash(url: String): String {
  */
 val moveonBackend = localProp("MOVEON_BACKEND", "LOCAL").trim().uppercase()
 
+private val allowedBackends = setOf("LOCAL", "LAN", "PRODUCCION")
+
+if (moveonBackend !in allowedBackends) {
+    throw GradleException(
+        "MOVEON_BACKEND='$moveonBackend' no es válido. Usa uno de: ${allowedBackends.joinToString(", ")}" 
+    )
+}
+
 /**
  * URL LAN configurable desde local.properties.
  * Pensado para usar el móvil físico contra el backend levantado en tu PC.
+ * Se permite HTTP en desarrollo para no romper el flujo LAN existente.
  */
 val moveonLanBaseUrl = ensureTrailingSlash(
     localProp("MOVEON_LAN_BASE_URL", "http://192.168.68.105:8000")
 )
 
 /**
+ * URL de producción configurable desde local.properties.
+ * Solo es obligatoria cuando MOVEON_BACKEND=PRODUCCION.
+ */
+val moveonProdBaseUrl = when (moveonBackend) {
+    "PRODUCCION" -> requiredUrlProp("MOVEON_PROD_BASE_URL")
+    else -> ""
+}
+
+/**
  * URL del backend según selector.
  * - LOCAL: emulador Android Studio + backend local en tu PC -> http://10.0.2.2:8000/
- * - LAN: móvil físico en la misma red Wi-Fi -> MOVEON_LAN_BASE_URL
- * - PRODUCCION: backend desplegado
+ * - LAN: móvil físico en la misma red Wi‑Fi -> MOVEON_LAN_BASE_URL
+ * - PRODUCCION: backend desplegado -> MOVEON_PROD_BASE_URL
  */
 val moveonBaseUrl = when (moveonBackend) {
-    "PRODUCCION" -> "https://moaning-vanessa-moveonapp-2268f000.koyeb.app/"
+    "PRODUCCION" -> moveonProdBaseUrl
     "LAN" -> moveonLanBaseUrl
     else -> "http://10.0.2.2:8000/"
 }
 
 /**
  * APP_ID para handshake del backend.
- * (se saca de local.properties para no hardcodearlo en el código Java)
+ * Obligatorio: si falta, el build falla antes de llegar a runtime.
  */
-val appId = localProp("APP_ID", "")
+val appId = requiredLocalProp("APP_ID")
 
 /**
  * TTL de caché para app-session (ms).
@@ -164,16 +198,12 @@ dependencies {
 
     // Persistencia local / Sincronización offline-first y Trabajo en Background
     implementation(libs.room.runtime)
-    annotationProcessor(libs.room.compiler) // Nota: Si usas Kotlin, considera cambiar a ksp(libs.room.compiler)
+    annotationProcessor(libs.room.compiler)
     implementation(libs.work.runtime)
 
     // Google Maps SDK y Localización
     implementation(libs.play.services.maps)
-
-    // FusedLocationProviderClient
     implementation(libs.play.services.location)
-
-    // Maps Android SDK Utility Library (PolyUtil.encode para encoded polyline)
     implementation(libs.android.maps.utils)
 
     // Pruebas (Testing Unitario y de Interfaz)

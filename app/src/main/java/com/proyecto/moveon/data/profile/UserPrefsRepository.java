@@ -6,12 +6,12 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 
 import com.google.gson.JsonObject;
+import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
 import com.proyecto.moveon.data.local.db.AppDatabase;
 import com.proyecto.moveon.data.local.entity.UserPrefsEntity;
 import com.proyecto.moveon.data.profile.remote.PerfilRemoteDataSource;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Repositorio para las preferencias del usuario (objetivos semanal y mensual).
@@ -28,7 +28,7 @@ public class UserPrefsRepository {
 
     private final AppDatabase db;
     private final PerfilRemoteDataSource remote;
-    private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private final ExecutorService io = MoveOnExecutors.io();
 
     public UserPrefsRepository(@NonNull Context context) {
         Context appContext = context.getApplicationContext();

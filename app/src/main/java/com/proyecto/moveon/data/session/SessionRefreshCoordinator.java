@@ -187,8 +187,8 @@ public final class SessionRefreshCoordinator {
             return RefreshOutcome.skipped();
         }
 
-        String refreshToken = sessionManager.getRefreshToken();
-        if (!StringUtils.hasText(refreshToken)) {
+        SecureSessionManager.SessionSnapshot snapshot = sessionManager.getSessionSnapshot();
+        if (!snapshot.hasRefreshToken()) {
             sessionManager.logout();
             return RefreshOutcome.unauthorized(401, null, "No refresh token available");
         }
@@ -215,7 +215,8 @@ public final class SessionRefreshCoordinator {
             }
         }
 
-        if (!StringUtils.hasText(sessionManager.getRefreshToken())) {
+        SecureSessionManager.SessionSnapshot snapshot = sessionManager.getSessionSnapshot();
+        if (!snapshot.hasRefreshToken()) {
             return RefreshOutcome.unauthorized(401, null, "No refresh token available");
         }
 
@@ -249,19 +250,23 @@ public final class SessionRefreshCoordinator {
     private RefreshOutcome tryReuseStoredSessionLocked(@Nullable String failedAuthorizationHeader) {
         if (!StringUtils.hasText(failedAuthorizationHeader)) return null;
 
-        String currentAccess = sessionManager.getAccessToken();
-        String currentRefresh = sessionManager.getRefreshToken();
+        SecureSessionManager.SessionSnapshot snapshot = sessionManager.getSessionSnapshot();
+        String currentAccess = snapshot.getAccessToken();
+        String currentRefresh = snapshot.getRefreshToken();
         if (!StringUtils.hasText(currentAccess) || !StringUtils.hasText(currentRefresh)) return null;
 
         String expected = "Bearer " + currentAccess;
-        if (!expected.equals(failedAuthorizationHeader)) return RefreshOutcome.success(currentAccess, currentRefresh);
+        if (!expected.equals(failedAuthorizationHeader)) {
+            return RefreshOutcome.success(currentAccess, currentRefresh);
+        }
         return null;
     }
 
     @Nullable
     private RefreshOutcome buildSuccessFromStoredSession() {
-        String currentAccess = sessionManager.getAccessToken();
-        String currentRefresh = sessionManager.getRefreshToken();
+        SecureSessionManager.SessionSnapshot snapshot = sessionManager.getSessionSnapshot();
+        String currentAccess = snapshot.getAccessToken();
+        String currentRefresh = snapshot.getRefreshToken();
         if (!StringUtils.hasText(currentAccess) || !StringUtils.hasText(currentRefresh)) {
             return null;
         }
@@ -281,7 +286,8 @@ public final class SessionRefreshCoordinator {
 
     @NonNull
     private RefreshOutcome executeRefreshNow() {
-        String refreshToken = sessionManager.getRefreshToken();
+        SecureSessionManager.SessionSnapshot snapshot = sessionManager.getSessionSnapshot();
+        String refreshToken = snapshot.getRefreshToken();
         if (!StringUtils.hasText(refreshToken)) {
             sessionManager.logout();
             return RefreshOutcome.unauthorized(401, null, "No refresh token available");
@@ -304,7 +310,7 @@ public final class SessionRefreshCoordinator {
 
                 String username = StringUtils.hasText(body.nombreUsuario)
                         ? body.nombreUsuario
-                        : StringUtils.textOf(sessionManager.getUsername());
+                        : StringUtils.textOf(snapshot.getUsername());
 
                 sessionManager.saveLogin(username, newAccess, newRefresh);
                 return RefreshOutcome.success(newAccess, newRefresh);
@@ -317,82 +323,89 @@ public final class SessionRefreshCoordinator {
                 return RefreshOutcome.unauthorized(code, parsed.errorCode, parsed.backendMessage);
             }
 
-            return RefreshOutcome.transientError(
-                    code,
-                    refreshResp.headers().get("Retry-After"),
-                    parsed.errorCode,
-                    parsed.backendMessage
-            );
-        } catch (IOException e) {
-            return RefreshOutcome.transientError(-1, null, null, e.getMessage());
+            if (code == 429 || code >= 500) {
+                return RefreshOutcome.transientError(code, parsed.retryAfter, parsed.errorCode, parsed.backendMessage);
+            }
+
+            return RefreshOutcome.unauthorized(code, parsed.errorCode, parsed.backendMessage);
+        } catch (IOException ioException) {
+            return RefreshOutcome.transientError(0, null, null, ioException.getMessage());
+        } catch (Exception e) {
+            return RefreshOutcome.transientError(0, null, null, e.getMessage());
         }
     }
 
     @NonNull
-    private ParsedRefreshError parseError(@NonNull Response<LoginResponseDto> refreshResp) {
-        String backendErrorCode = null;
-        String backendMessage = null;
-
-        ResponseBody errorBody = refreshResp.errorBody();
+    private ParsedRefreshError parseError(@NonNull Response<?> response) {
+        String retryAfter = response.headers().get("Retry-After");
+        ResponseBody errorBody = response.errorBody();
         if (errorBody == null) {
-            return new ParsedRefreshError(null, null);
+            return new ParsedRefreshError(retryAfter, null, null);
         }
 
         try {
             String raw = errorBody.string();
             if (!StringUtils.hasText(raw)) {
-                return new ParsedRefreshError(null, null);
+                return new ParsedRefreshError(retryAfter, null, null);
             }
 
             JsonElement root = JsonParser.parseString(raw);
             if (root == null || !root.isJsonObject()) {
-                return new ParsedRefreshError(null, null);
+                return new ParsedRefreshError(retryAfter, null, raw);
             }
 
             JsonObject obj = root.getAsJsonObject();
-            backendErrorCode = getString(obj, "error_code");
-            backendMessage = firstNonEmpty(
-                    getString(obj, "mensaje"),
-                    getString(obj, "message"),
-                    getString(obj, "error")
+            String errorCode = getAsString(obj, "error_code");
+            String message = firstNonEmpty(
+                    getAsString(obj, "mensaje"),
+                    getAsString(obj, "message"),
+                    getAsString(obj, "error")
             );
-            if (!StringUtils.hasText(backendMessage)
-                    && obj.has("detail")
-                    && obj.get("detail").isJsonPrimitive()) {
-                backendMessage = getString(obj, "detail");
-            }
-        } catch (Exception ignored) {
-        } finally {
-            try {
-                errorBody.close();
-            } catch (Exception ignored) {
-            }
-        }
 
-        return new ParsedRefreshError(backendErrorCode, backendMessage);
+            if (!StringUtils.hasText(message) && obj.has("detail")) {
+                JsonElement detail = obj.get("detail");
+                if (detail != null && detail.isJsonPrimitive()) {
+                    message = detail.getAsString();
+                }
+            }
+
+            return new ParsedRefreshError(retryAfter, errorCode, message);
+        } catch (Exception ignored) {
+            return new ParsedRefreshError(retryAfter, null, null);
+        } finally {
+            errorBody.close();
+        }
     }
 
     @Nullable
-    private static String getString(@NonNull JsonObject obj, @NonNull String key) {
-        if (!obj.has(key) || obj.get(key) == null || !obj.get(key).isJsonPrimitive()) return null;
+    private String getAsString(@NonNull JsonObject obj, @NonNull String key) {
+        if (!obj.has(key) || obj.get(key) == null || !obj.get(key).isJsonPrimitive()) {
+            return null;
+        }
         String value = obj.get(key).getAsString();
         return StringUtils.hasText(value) ? value : null;
     }
 
     @Nullable
-    private static String firstNonEmpty(@Nullable String... values) {
+    private String firstNonEmpty(@Nullable String... values) {
         if (values == null) return null;
         for (String value : values) {
-            if (StringUtils.hasText(value)) return value;
+            if (StringUtils.hasText(value)) {
+                return value;
+            }
         }
         return null;
     }
 
     private static final class ParsedRefreshError {
+        @Nullable final String retryAfter;
         @Nullable final String errorCode;
         @Nullable final String backendMessage;
 
-        ParsedRefreshError(@Nullable String errorCode, @Nullable String backendMessage) {
+        private ParsedRefreshError(@Nullable String retryAfter,
+                                   @Nullable String errorCode,
+                                   @Nullable String backendMessage) {
+            this.retryAfter = retryAfter;
             this.errorCode = errorCode;
             this.backendMessage = backendMessage;
         }

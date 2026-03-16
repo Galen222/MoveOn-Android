@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.data.session;
 
 import static org.junit.Assert.assertEquals;
@@ -61,6 +62,20 @@ public class SecureSessionManagerInstrumentedTest {
         assertEquals("uid_987", manager.getAccountKey());
     }
 
+
+    @Test
+    public void updateTokens_preservesUsernameAndRefreshesDerivedIdentity() {
+        manager.saveLogin("alice", fakeJwtWithSub("111"), "refresh_old");
+
+        manager.updateTokens(fakeJwtWithSub("222"), "refresh_new");
+
+        assertTrue(manager.isLoggedIn());
+        assertEquals("alice", manager.getUsername());
+        assertEquals("222", manager.getUserId());
+        assertEquals("uid_222", manager.getAccountKey());
+        assertEquals("refresh_new", manager.getRefreshToken());
+    }
+
     @Test
     public void getUserId_recoversFromStoredAccessTokenWhenUserIdWasNotCached() throws Exception {
         manager.saveLogin("alice", fakeJwtWithSub("456"), "refresh_456");
@@ -98,3 +113,4 @@ public class SecureSessionManagerInstrumentedTest {
         );
     }
 }
+

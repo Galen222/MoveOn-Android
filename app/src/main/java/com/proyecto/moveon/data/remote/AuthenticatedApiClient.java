@@ -13,6 +13,8 @@ import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.data.common.BaseRepository;
 import com.proyecto.moveon.data.remote.retrofit.RetrofitProvider;
 
+import java.io.IOException;
+
 import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -56,12 +58,26 @@ public final class AuthenticatedApiClient extends BaseRepository {
         enqueueCall(RetrofitProvider.protectedApi(appContext).get(sanitizeUrl(url)), mapper, callback);
     }
 
+    public <T> ApiResult<T> getBlocking(String url, Mapper<JsonElement, T> mapper) {
+        if (isInvalidUrl(url)) {
+            return ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida)));
+        }
+        return executeCall(RetrofitProvider.protectedApi(appContext).get(sanitizeUrl(url)), mapper);
+    }
+
     public <T> void postJson(String url, JsonElement body, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
             callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida))));
             return;
         }
         enqueueCall(RetrofitProvider.protectedApi(appContext).post(sanitizeUrl(url), body), mapper, callback);
+    }
+
+    public <T> ApiResult<T> postJsonBlocking(String url, JsonElement body, Mapper<JsonElement, T> mapper) {
+        if (isInvalidUrl(url)) {
+            return ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida)));
+        }
+        return executeCall(RetrofitProvider.protectedApi(appContext).post(sanitizeUrl(url), body), mapper);
     }
 
     public <T> void patchJson(String url, JsonElement body, Mapper<JsonElement, T> mapper, Callback<T> callback) {
@@ -72,6 +88,13 @@ public final class AuthenticatedApiClient extends BaseRepository {
         enqueueCall(RetrofitProvider.protectedApi(appContext).patch(sanitizeUrl(url), body), mapper, callback);
     }
 
+    public <T> ApiResult<T> patchJsonBlocking(String url, JsonElement body, Mapper<JsonElement, T> mapper) {
+        if (isInvalidUrl(url)) {
+            return ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida)));
+        }
+        return executeCall(RetrofitProvider.protectedApi(appContext).patch(sanitizeUrl(url), body), mapper);
+    }
+
     public <T> void delete(String url, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
             callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida))));
@@ -80,12 +103,26 @@ public final class AuthenticatedApiClient extends BaseRepository {
         enqueueCall(RetrofitProvider.protectedApi(appContext).delete(sanitizeUrl(url)), mapper, callback);
     }
 
+    public <T> ApiResult<T> deleteBlocking(String url, Mapper<JsonElement, T> mapper) {
+        if (isInvalidUrl(url)) {
+            return ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida)));
+        }
+        return executeCall(RetrofitProvider.protectedApi(appContext).delete(sanitizeUrl(url)), mapper);
+    }
+
     public <T> void postMultipart(String url, MultipartBody.Part file, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
             callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida))));
             return;
         }
         enqueueCall(RetrofitProvider.protectedApi(appContext).postMultipart(sanitizeUrl(url), file), mapper, callback);
+    }
+
+    public <T> ApiResult<T> postMultipartBlocking(String url, MultipartBody.Part file, Mapper<JsonElement, T> mapper) {
+        if (isInvalidUrl(url)) {
+            return ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida)));
+        }
+        return executeCall(RetrofitProvider.protectedApi(appContext).postMultipart(sanitizeUrl(url), file), mapper);
     }
 
     private <T> void enqueueCall(Call<JsonElement> call,
@@ -114,5 +151,26 @@ public final class AuthenticatedApiClient extends BaseRepository {
                 callback.onResult(ApiResult.failure(ApiErrorParser.fromThrowable(appContext, t, false)));
             }
         });
+    }
+
+    private <T> ApiResult<T> executeCall(@NonNull Call<JsonElement> call,
+                                         @NonNull Mapper<JsonElement, T> mapper) {
+        trackCall(call);
+        try {
+            Response<JsonElement> response = call.execute();
+            if (!response.isSuccessful()) {
+                return ApiResult.failure(ApiErrorParser.fromHttp(appContext, response));
+            }
+
+            JsonElement body = response.body();
+            if (body == null) body = JsonParser.parseString("{}");
+            return ApiResult.success(mapper.map(body));
+        } catch (IOException e) {
+            return ApiResult.failure(ApiErrorParser.fromThrowable(appContext, e, call.isCanceled()));
+        } catch (Exception e) {
+            return ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_respuesta_invalida)));
+        } finally {
+            untrackCall(call);
+        }
     }
 }

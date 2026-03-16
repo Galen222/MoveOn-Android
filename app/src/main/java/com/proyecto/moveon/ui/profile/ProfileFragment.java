@@ -17,12 +17,13 @@ import android.widget.ArrayAdapter;
 import android.widget.NumberPicker;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -34,11 +35,14 @@ import com.google.android.material.datepicker.DateValidatorPointBackward;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.api.ApiError;
+import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.data.profile.sync.ProfilePatchPayload;
+import com.proyecto.moveon.data.profile.PerfilRepository;
 import com.proyecto.moveon.databinding.DialogEditFieldBinding;
 import com.proyecto.moveon.databinding.DialogEditNumberBinding;
 import com.proyecto.moveon.databinding.DialogEditProvinciaBinding;
@@ -76,8 +80,7 @@ public class ProfileFragment extends Fragment {
 
                 File file = uriToFile(uri);
                 if (file == null) {
-                    Toast.makeText(requireContext(),
-                            getString(R.string.profile_error_photo_read), Toast.LENGTH_SHORT).show();
+                    showFeedbackMessage(getString(R.string.profile_error_photo_read));
                     return;
                 }
                 showTransientPhotoPreview(file);
@@ -518,8 +521,7 @@ public class ProfileFragment extends Fragment {
             Calendar minRequired = Calendar.getInstance();
             minRequired.add(Calendar.YEAR, -18);
             if (selected.after(minRequired)) {
-                Toast.makeText(requireContext(),
-                        R.string.profile_error_birthdate_min_age, Toast.LENGTH_SHORT).show();
+                showFeedbackMessage(getString(R.string.profile_error_birthdate_min_age));
                 return;
             }
 
@@ -668,8 +670,7 @@ public class ProfileFragment extends Fragment {
             if (state.data != null) {
                 bindPerfilData(state.data);
             } else if (state.error != null) {
-                Toast.makeText(requireContext(),
-                        state.error.getMessage(), Toast.LENGTH_SHORT).show();
+                showErrorMessage(state.error, viewModel::loadPerfil);
             }
         });
 
@@ -678,18 +679,14 @@ public class ProfileFragment extends Fragment {
             showOverlay(state.loading);
             if (state.data != null) {
                 String updateStatus = state.data;
-                if ("SYNCED".equals(updateStatus)) {
-                    Toast.makeText(requireContext(),
-                            R.string.profile_update_ok, Toast.LENGTH_SHORT).show();
-                } else if ("QUEUED".equals(updateStatus)) {
-                    Toast.makeText(requireContext(),
-                            getString(R.string.profile_update_queued),
-                            Toast.LENGTH_SHORT).show();
+                if (PerfilRepository.UpdateResult.STATUS_SYNCED.equals(updateStatus)) {
+                    showFeedbackMessage(getString(R.string.profile_update_ok));
+                } else if (PerfilRepository.UpdateResult.STATUS_QUEUED.equals(updateStatus)) {
+                    showFeedbackMessage(getString(R.string.profile_update_queued));
                 }
                 viewModel.resetUpdateState();
             } else if (state.error != null) {
-                Toast.makeText(requireContext(),
-                        state.error.getMessage(), Toast.LENGTH_SHORT).show();
+                showErrorMessage(state.error, viewModel::retryLastUpdate);
                 viewModel.resetUpdateState();
             }
         });
@@ -698,14 +695,11 @@ public class ProfileFragment extends Fragment {
             if (state == null || binding == null) return;
             showOverlay(state.loading);
             if (state.data != null) {
-                if ("SYNCED".equals(state.data)) {
+                if (PerfilRepository.UpdateResult.STATUS_SYNCED.equals(state.data)) {
                     transientPhotoPreviewPath = null;
-                    Toast.makeText(requireContext(),
-                            R.string.profile_photo_ok, Toast.LENGTH_SHORT).show();
-                } else if ("QUEUED".equals(state.data)) {
-                    Toast.makeText(requireContext(),
-                            getString(R.string.profile_photo_queued),
-                            Toast.LENGTH_SHORT).show();
+                    showFeedbackMessage(getString(R.string.profile_photo_ok));
+                } else if (PerfilRepository.UpdateResult.STATUS_QUEUED.equals(state.data)) {
+                    showFeedbackMessage(getString(R.string.profile_photo_queued));
                 }
                 viewModel.resetPhotoState();
             } else if (state.error != null) {
@@ -713,8 +707,7 @@ public class ProfileFragment extends Fragment {
                 if (perfilActual != null) {
                     bindPerfilData(perfilActual);
                 }
-                Toast.makeText(requireContext(),
-                        state.error.getMessage(), Toast.LENGTH_SHORT).show();
+                showErrorMessage(state.error, viewModel::retryLastPhotoUpload);
                 viewModel.resetPhotoState();
             }
         });
@@ -729,10 +722,37 @@ public class ProfileFragment extends Fragment {
             if (state.error != null) {
                 Toast.makeText(requireContext(),
                         getString(R.string.profile_error_logout_server),
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_LONG).show();
             }
             goToLogin();
         });
+    }
+
+
+    private void showFeedbackMessage(@NonNull CharSequence message) {
+        if (binding == null) return;
+        Snackbar.make(binding.getRoot(), message, Snackbar.LENGTH_LONG).show();
+    }
+
+    private void showErrorMessage(@NonNull ApiError error, @Nullable Runnable retryAction) {
+        if (binding == null) return;
+
+        Snackbar snackbar = Snackbar.make(binding.getRoot(), error.getMessage(), Snackbar.LENGTH_LONG);
+        if (retryAction != null && isRetryable(error)) {
+            snackbar.setAction(R.string.stats_btn_retry, v -> retryAction.run());
+        }
+        snackbar.show();
+    }
+
+    private boolean isRetryable(@Nullable ApiError error) {
+        if (error == null) return false;
+
+        ApiErrorType type = error.getType();
+        return type == ApiErrorType.NETWORK
+                || type == ApiErrorType.TIMEOUT
+                || type == ApiErrorType.SERVER
+                || type == ApiErrorType.RATE_LIMIT
+                || type == ApiErrorType.CANCELED;
     }
 
     private void showOverlay(boolean show) {

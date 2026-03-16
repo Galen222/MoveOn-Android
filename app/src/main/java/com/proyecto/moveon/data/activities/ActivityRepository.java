@@ -16,6 +16,7 @@ import androidx.work.WorkManager;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.api.ApiResult;
+import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
 import com.proyecto.moveon.data.activities.dto.ActividadResponseDto;
 import com.proyecto.moveon.data.activities.dto.BorrarActividadResponseDto;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadRequestDto;
@@ -40,7 +41,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -75,11 +75,10 @@ public final class ActivityRepository {
     private final AuthenticatedApiClient apiClient;
     private final ActividadLocalDataSource local;
     private final ActividadRemoteDataSource remote;
-    private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private final ExecutorService io = MoveOnExecutors.io();
 
     public ActivityRepository(@NonNull Context context) {
         this.appContext     = context.getApplicationContext();
-        // BUG-08: Singleton en lugar de new para evitar múltiples instancias.
         this.sessionManager = SecureSessionManager.getInstance(appContext);
         this.apiClient      = new AuthenticatedApiClient(appContext);
         AppDatabase db      = AppDatabase.getInstance(appContext);
@@ -123,7 +122,7 @@ public final class ActivityRepository {
             entity.rutaPolilinea     = request.rutaPolilinea;
             entity.rutaMapaUrl       = null;
             entity.fechaRuta         = request.fechaRuta;
-            entity.syncState         = "PENDING_CREATE";
+            entity.syncState         = ActivitySyncState.PENDING_CREATE;
             entity.lastError         = null;
             entity.createdAtMs       = now;
             entity.updatedAtMs       = now;
@@ -165,7 +164,6 @@ public final class ActivityRepository {
 
     // ── Observar / Refresh ────────────────────────────────────────────────────
 
-    // BUG-10: Transformations.map() deprecado desde Lifecycle 2.6 → MediatorLiveData.
     public LiveData<List<ActividadItem>> observeActividades(@NonNull String accountKey) {
         MediatorLiveData<List<ActividadItem>> result = new MediatorLiveData<>();
         result.addSource(local.observeVisible(accountKey), list -> {
@@ -221,7 +219,7 @@ public final class ActivityRepository {
                 return;
             }
 
-            if (entity.remoteId == null || !"SYNCED".equals(entity.syncState)) {
+            if (entity.remoteId == null || !ActivitySyncState.SYNCED.equals(entity.syncState)) {
                 callback.onResult(ApiResult.failure(
                         ApiError.typed(ApiErrorType.VALIDATION,
                                 appContext.getString(R.string.error_actividad_pendiente_sync))));
@@ -230,8 +228,6 @@ public final class ActivityRepository {
 
             int remoteId = entity.remoteId;
 
-            // BUG-11: deleteActividad ahora devuelve BorrarActividadResponseDto completo
-            // con estatus, mensaje y nuevo_total_puntos reales del backend.
             remote.deleteActividad(remoteId, result -> {
                 if (!result.isSuccess()) {
                     callback.onResult(ApiResult.failure(
@@ -273,7 +269,7 @@ public final class ActivityRepository {
                 entity.rutaPolilinea    = dto.rutaPolilinea;
                 entity.rutaMapaUrl      = dto.rutaMapaUrl;
                 entity.fechaRuta        = dto.fechaRuta;
-                entity.syncState        = "SYNCED";
+                entity.syncState        = ActivitySyncState.SYNCED;
                 entity.lastError        = null;
                 entity.updatedAtMs      = System.currentTimeMillis();
                 local.save(entity);
@@ -291,7 +287,7 @@ public final class ActivityRepository {
                 return SyncResult.retry();
             }
 
-            entity.syncState   = "FAILED_CREATE";
+            entity.syncState   = ActivitySyncState.FAILED_CREATE;
             entity.lastError   = error.getMessage();
             entity.updatedAtMs = System.currentTimeMillis();
             local.save(entity);
@@ -348,7 +344,7 @@ public final class ActivityRepository {
             }
 
             mapDtoIntoEntity(entity, dto);
-            entity.syncState   = "SYNCED";
+            entity.syncState   = ActivitySyncState.SYNCED;
             entity.lastError   = null;
             entity.updatedAtMs = System.currentTimeMillis();
             local.save(entity);
@@ -356,7 +352,7 @@ public final class ActivityRepository {
 
         for (ActividadEntity entity : current) {
             if (entity.remoteId == null) continue;
-            if (!"SYNCED".equals(entity.syncState)) continue;
+            if (!ActivitySyncState.SYNCED.equals(entity.syncState)) continue;
             if (!remoteIds.contains(entity.remoteId)) {
                 local.deleteByLocalId(entity.localId);
             }
@@ -391,7 +387,6 @@ public final class ActivityRepository {
         );
     }
 
-    // BUG-07: Todos los strings de validación sustituidos por R.string.
     @Nullable
     private ApiError validateRequest(@NonNull GuardarActividadRequestDto request) {
         if (!VALID_TIPOS.contains(request.tipo)) {

@@ -20,6 +20,7 @@ import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.api.ApiResult;
+import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
 import com.proyecto.moveon.data.local.db.AppDatabase;
 import com.proyecto.moveon.data.local.entity.PerfilCacheEntity;
 import com.proyecto.moveon.data.local.entity.PerfilPendingPatchEntity;
@@ -37,7 +38,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class PerfilRepository {
@@ -60,7 +60,7 @@ public class PerfilRepository {
     private final PerfilLocalDataSource local;
     private final PerfilRemoteDataSource remote;
     private final UserPrefsRepository userPrefsRepository;
-    private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private final ExecutorService io = MoveOnExecutors.io();
     private final Gson gson = new Gson();
 
     public PerfilRepository(@NonNull Context context) {
@@ -72,7 +72,6 @@ public class PerfilRepository {
     }
 
     public LiveData<PerfilUsuario> observePerfil(@NonNull String accountKey) {
-        // BUG-10: Transformations.map() deprecado desde Lifecycle 2.6 → MediatorLiveData
         MediatorLiveData<PerfilUsuario> result = new MediatorLiveData<>();
         result.addSource(local.observeCache(accountKey), entity ->
                 result.setValue(entity != null ? mapEntityToDomain(entity) : null));

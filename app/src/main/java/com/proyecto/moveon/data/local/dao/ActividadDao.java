@@ -6,6 +6,7 @@ import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
+import com.proyecto.moveon.data.activities.ActivitySyncState;
 import com.proyecto.moveon.data.local.entity.ActividadEntity;
 
 import java.util.List;
@@ -17,24 +18,28 @@ import java.util.List;
 public interface ActividadDao {
 
     @Query("SELECT * FROM actividades_locales " +
-            "WHERE accountKey = :accountKey AND sync_state != 'PENDING_DELETE' " +
+            "WHERE accountKey = :accountKey AND sync_state != '" + ActivitySyncState.PENDING_DELETE + "' " +
             "ORDER BY fecha_ruta DESC, created_at_ms DESC")
     LiveData<List<ActividadEntity>> observeVisible(String accountKey);
 
     @Query("SELECT COUNT(*) FROM actividades_locales " +
-            "WHERE accountKey = :accountKey AND sync_state != 'PENDING_DELETE'")
+            "WHERE accountKey = :accountKey AND sync_state != '" + ActivitySyncState.PENDING_DELETE + "'")
     int countVisibleNow(String accountKey);
 
     @Query("SELECT * FROM actividades_locales WHERE accountKey = :accountKey")
     List<ActividadEntity> getAllNow(String accountKey);
 
     @Query("SELECT * FROM actividades_locales " +
-            "WHERE accountKey = :accountKey AND sync_state IN ('PENDING_CREATE', 'FAILED_CREATE') " +
+            "WHERE accountKey = :accountKey AND sync_state IN ('"
+            + ActivitySyncState.PENDING_CREATE + "', '"
+            + ActivitySyncState.FAILED_CREATE + "') " +
             "ORDER BY created_at_ms ASC")
     List<ActividadEntity> getPendingCreates(String accountKey);
 
     @Query("SELECT * FROM actividades_locales " +
-            "WHERE accountKey = :accountKey AND sync_state IN ('PENDING_DELETE', 'FAILED_DELETE') " +
+            "WHERE accountKey = :accountKey AND sync_state IN ('"
+            + ActivitySyncState.PENDING_DELETE + "', '"
+            + ActivitySyncState.FAILED_DELETE + "') " +
             "ORDER BY updated_at_ms ASC")
     List<ActividadEntity> getPendingDeletes(String accountKey);
 

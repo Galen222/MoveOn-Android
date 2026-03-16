@@ -36,6 +36,8 @@ public class ProfileViewModel extends AndroidViewModel {
 
     @Nullable private final String accountKey;
     @Nullable private LiveData<PerfilUsuario> perfilSource;
+    @Nullable private JsonObject lastFailedPatchJson;
+    @Nullable private String lastFailedPhotoPath;
 
     public ProfileViewModel(@NonNull Application application) {
         super(application);
@@ -100,12 +102,14 @@ public class ProfileViewModel extends AndroidViewModel {
             return;
         }
 
+        lastFailedPatchJson = patchJson.deepCopy();
         updateState.setValue(UiState.loading());
         perfilRepository.applyLocalPatchAndEnqueue(accountKey, patchJson, result -> {
             if (PerfilRepository.UpdateResult.STATUS_FAILED.equals(result.status)) {
                 updateState.postValue(UiState.error(
                         result.error != null ? result.error : ApiError.local(getApplication().getString(R.string.vm_error_generico))));
             } else {
+                lastFailedPatchJson = null;
                 updateState.postValue(UiState.success(result.status));
             }
         });
@@ -117,15 +121,32 @@ public class ProfileViewModel extends AndroidViewModel {
             return;
         }
 
+        lastFailedPhotoPath = file.getAbsolutePath();
         photoState.setValue(UiState.loading());
         perfilRepository.uploadPhotoLocalFirst(accountKey, file, result -> {
             if (PerfilRepository.UpdateResult.STATUS_FAILED.equals(result.status)) {
                 photoState.postValue(UiState.error(
                         result.error != null ? result.error : ApiError.local(getApplication().getString(R.string.vm_error_generico))));
             } else {
+                lastFailedPhotoPath = null;
                 photoState.postValue(UiState.success(result.status));
             }
         });
+    }
+
+
+    public void retryLastUpdate() {
+        if (lastFailedPatchJson != null) {
+            updatePerfil(lastFailedPatchJson.deepCopy());
+        }
+    }
+
+    public void retryLastPhotoUpload() {
+        if (lastFailedPhotoPath == null) return;
+        File file = new File(lastFailedPhotoPath);
+        if (file.exists()) {
+            uploadPhoto(file);
+        }
     }
 
     public void resetUpdateState() { updateState.setValue(null); }
@@ -169,4 +190,3 @@ public class ProfileViewModel extends AndroidViewModel {
         super.onCleared();
     }
 }
-

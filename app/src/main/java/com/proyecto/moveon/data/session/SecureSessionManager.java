@@ -55,14 +55,195 @@ public final class SecureSessionManager {
         return instance;
     }
 
+    public static final class SessionSnapshot {
+        @Nullable private final String username;
+        @Nullable private final String accessToken;
+        @Nullable private final String refreshToken;
+        @Nullable private final String userId;
+
+        private SessionSnapshot(@Nullable String username,
+                                @Nullable String accessToken,
+                                @Nullable String refreshToken,
+                                @Nullable String userId) {
+            this.username = username;
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
+            this.userId = userId;
+        }
+
+        @Nullable public String getUsername() { return username; }
+        @Nullable public String getAccessToken() { return accessToken; }
+        @Nullable public String getRefreshToken() { return refreshToken; }
+        @Nullable public String getUserId() { return userId; }
+
+        public boolean hasCompleteSession() {
+            return StringUtils.hasText(accessToken) && StringUtils.hasText(refreshToken);
+        }
+
+        public boolean hasRecoverableSession() {
+            return StringUtils.hasText(accessToken) || StringUtils.hasText(refreshToken);
+        }
+
+        public boolean hasRefreshToken() {
+            return StringUtils.hasText(refreshToken);
+        }
+
+        @Nullable
+        public String getAccountKey() {
+            return buildAccountKeyFromUserId(userId);
+        }
+    }
+
     private final SharedPreferences prefs;
+    private final Object sessionLock = new Object();
 
     private SecureSessionManager(Context context) {
         Context appContext = context.getApplicationContext();
         this.prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
 
-    public void saveLogin(String username, String accessToken, String refreshToken) {
+    public void saveLogin(@Nullable String username,
+                          @Nullable String accessToken,
+                          @Nullable String refreshToken) {
+        synchronized (sessionLock) {
+            saveLoginLocked(username, accessToken, refreshToken);
+        }
+    }
+
+    public void updateTokens(@Nullable String accessToken, @Nullable String refreshToken) {
+        synchronized (sessionLock) {
+            String username = getDecryptedValueLocked(KEY_USERNAME_CT, KEY_USERNAME_IV);
+            saveLoginLocked(username, accessToken, refreshToken);
+        }
+    }
+
+    public boolean isLoggedIn() {
+        synchronized (sessionLock) {
+            return readSessionSnapshotLocked().hasCompleteSession();
+        }
+    }
+
+    public boolean hasRecoverableSession() {
+        synchronized (sessionLock) {
+            return readSessionSnapshotLocked().hasRecoverableSession();
+        }
+    }
+
+    public boolean hasRefreshToken() {
+        synchronized (sessionLock) {
+            return readSessionSnapshotLocked().hasRefreshToken();
+        }
+    }
+
+    public boolean isAccessTokenExpiringWithinSeconds(long leewaySeconds) {
+        synchronized (sessionLock) {
+            String accessToken = readSessionSnapshotLocked().getAccessToken();
+            if (!StringUtils.hasText(accessToken)) return true;
+
+            Long expEpochSeconds = extractExpFromAccessToken(accessToken);
+            if (expEpochSeconds == null) return true;
+
+            long nowSeconds = System.currentTimeMillis() / 1000L;
+            return expEpochSeconds <= (nowSeconds + Math.max(0L, leewaySeconds));
+        }
+    }
+
+    @Nullable
+    public String getAccessToken() {
+        synchronized (sessionLock) {
+            return readSessionSnapshotLocked().getAccessToken();
+        }
+    }
+
+    @Nullable
+    public String getRefreshToken() {
+        synchronized (sessionLock) {
+            return readSessionSnapshotLocked().getRefreshToken();
+        }
+    }
+
+    @Nullable
+    public String getUsername() {
+        synchronized (sessionLock) {
+            return readSessionSnapshotLocked().getUsername();
+        }
+    }
+
+    @Nullable
+    public String getUserId() {
+        synchronized (sessionLock) {
+            return readSessionSnapshotLocked().getUserId();
+        }
+    }
+
+    @Nullable
+    public String getAccountKey() {
+        synchronized (sessionLock) {
+            return readSessionSnapshotLocked().getAccountKey();
+        }
+    }
+
+    @NonNull
+    public SessionSnapshot getSessionSnapshot() {
+        synchronized (sessionLock) {
+            return readSessionSnapshotLocked();
+        }
+    }
+
+    @Nullable
+    public static String buildAccountKeyFromUserId(@Nullable String userId) {
+        if (!StringUtils.hasText(userId)) return null;
+        return "uid_" + userId.trim();
+    }
+
+    public void logout() {
+        synchronized (sessionLock) {
+            prefs.edit()
+                    .remove(KEY_USERNAME_CT).remove(KEY_USERNAME_IV)
+                    .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
+                    .remove(KEY_REFRESH_TOKEN_CT).remove(KEY_REFRESH_TOKEN_IV)
+                    .remove(KEY_USER_ID_CT).remove(KEY_USER_ID_IV)
+                    .apply();
+        }
+    }
+
+    public void clearAccessTokenOnly() {
+        synchronized (sessionLock) {
+            prefs.edit()
+                    .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
+                    .apply();
+        }
+    }
+
+    public void saveRememberedIdentifier(@Nullable String identifier) {
+        synchronized (sessionLock) {
+            try {
+                SharedPreferences.Editor editor = prefs.edit();
+
+                String safeIdentifier = StringUtils.textOf(identifier);
+                if (safeIdentifier.isEmpty()) {
+                    editor.remove(KEY_REMEMBERED_ID_CT).remove(KEY_REMEMBERED_ID_IV);
+                } else {
+                    putEncrypted(editor, KEY_REMEMBERED_ID_CT, KEY_REMEMBERED_ID_IV, safeIdentifier);
+                }
+
+                editor.apply();
+            } catch (Exception e) {
+                throw new RuntimeException("Error guardando identificador recordado", e);
+            }
+        }
+    }
+
+    @Nullable
+    public String getRememberedIdentifier() {
+        synchronized (sessionLock) {
+            return getDecryptedValueLocked(KEY_REMEMBERED_ID_CT, KEY_REMEMBERED_ID_IV);
+        }
+    }
+
+    private void saveLoginLocked(@Nullable String username,
+                                 @Nullable String accessToken,
+                                 @Nullable String refreshToken) {
         try {
             SharedPreferences.Editor editor = prefs.edit();
             putEncrypted(editor, KEY_USERNAME_CT, KEY_USERNAME_IV, StringUtils.textOf(username));
@@ -82,114 +263,24 @@ public final class SecureSessionManager {
         }
     }
 
-    public void updateTokens(String accessToken, String refreshToken) {
-        String username = getUsername();
-        saveLogin(username, accessToken, refreshToken);
-    }
+    @NonNull
+    private SessionSnapshot readSessionSnapshotLocked() {
+        String username = getDecryptedValueLocked(KEY_USERNAME_CT, KEY_USERNAME_IV);
+        String accessToken = getDecryptedValueLocked(KEY_ACCESS_TOKEN_CT, KEY_ACCESS_TOKEN_IV);
+        String refreshToken = getDecryptedValueLocked(KEY_REFRESH_TOKEN_CT, KEY_REFRESH_TOKEN_IV);
 
-    public boolean isLoggedIn() {
-        return StringUtils.hasText(getAccessToken()) && StringUtils.hasText(getRefreshToken());
-    }
-
-    public boolean hasRecoverableSession() {
-        return StringUtils.hasText(getAccessToken()) || StringUtils.hasText(getRefreshToken());
-    }
-
-    public boolean hasRefreshToken() {
-        return StringUtils.hasText(getRefreshToken());
-    }
-
-    public boolean isAccessTokenExpiringWithinSeconds(long leewaySeconds) {
-        String accessToken = getAccessToken();
-        if (!StringUtils.hasText(accessToken)) return true;
-
-        Long expEpochSeconds = extractExpFromAccessToken(accessToken);
-        if (expEpochSeconds == null) return true;
-
-        long nowSeconds = System.currentTimeMillis() / 1000L;
-        return expEpochSeconds <= (nowSeconds + Math.max(0L, leewaySeconds));
-    }
-
-    @Nullable
-    public String getAccessToken() {
-        return getDecryptedValue(KEY_ACCESS_TOKEN_CT, KEY_ACCESS_TOKEN_IV);
-    }
-
-    @Nullable
-    public String getRefreshToken() {
-        return getDecryptedValue(KEY_REFRESH_TOKEN_CT, KEY_REFRESH_TOKEN_IV);
-    }
-
-    @Nullable
-    public String getUsername() {
-        return getDecryptedValue(KEY_USERNAME_CT, KEY_USERNAME_IV);
-    }
-
-    @Nullable
-    public String getUserId() {
-        String stored = getDecryptedValue(KEY_USER_ID_CT, KEY_USER_ID_IV);
-        if (StringUtils.hasText(stored)) {
-            return stored;
-        }
-
-        String parsed = extractUserIdFromAccessToken(getAccessToken());
-        if (StringUtils.hasText(parsed)) {
-            persistUserIdQuietly(parsed);
-            return parsed;
-        }
-        return null;
-    }
-
-    @Nullable
-    public String getAccountKey() {
-        return buildAccountKeyFromUserId(getUserId());
-    }
-
-    @Nullable
-    public static String buildAccountKeyFromUserId(@Nullable String userId) {
-        if (!StringUtils.hasText(userId)) return null;
-        return "uid_" + userId.trim();
-    }
-
-    public void logout() {
-        prefs.edit()
-                .remove(KEY_USERNAME_CT).remove(KEY_USERNAME_IV)
-                .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
-                .remove(KEY_REFRESH_TOKEN_CT).remove(KEY_REFRESH_TOKEN_IV)
-                .remove(KEY_USER_ID_CT).remove(KEY_USER_ID_IV)
-                .apply();
-    }
-
-    public void clearAccessTokenOnly() {
-        prefs.edit()
-                .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
-                .apply();
-    }
-
-    public void saveRememberedIdentifier(@Nullable String identifier) {
-        try {
-            SharedPreferences.Editor editor = prefs.edit();
-
-            String safeIdentifier = StringUtils.textOf(identifier);
-            if (safeIdentifier.isEmpty()) {
-                editor.remove(KEY_REMEMBERED_ID_CT).remove(KEY_REMEMBERED_ID_IV);
-            } else {
-                putEncrypted(editor, KEY_REMEMBERED_ID_CT, KEY_REMEMBERED_ID_IV, safeIdentifier);
+        String userId = getDecryptedValueLocked(KEY_USER_ID_CT, KEY_USER_ID_IV);
+        if (!StringUtils.hasText(userId)) {
+            userId = extractUserIdFromAccessToken(accessToken);
+            if (StringUtils.hasText(userId)) {
+                persistUserIdQuietlyLocked(userId);
             }
-
-            editor.apply();
-        } catch (Exception e) {
-            throw new RuntimeException("Error guardando identificador recordado", e);
         }
+
+        return new SessionSnapshot(username, accessToken, refreshToken, userId);
     }
 
-    @Nullable
-    public String getRememberedIdentifier() {
-        return getDecryptedValue(KEY_REMEMBERED_ID_CT, KEY_REMEMBERED_ID_IV);
-    }
-
-
-    private void persistUserIdQuietly(@NonNull String userId) {
+    private void persistUserIdQuietlyLocked(@NonNull String userId) {
         try {
             SharedPreferences.Editor editor = prefs.edit();
             putEncrypted(editor, KEY_USER_ID_CT, KEY_USER_ID_IV, userId);
@@ -232,14 +323,17 @@ public final class SecureSessionManager {
         }
     }
 
-    private void putEncrypted(SharedPreferences.Editor editor, String ctKey, String ivKey, String plainText) throws Exception {
+    private void putEncrypted(SharedPreferences.Editor editor,
+                              String ctKey,
+                              String ivKey,
+                              String plainText) throws Exception {
         EncryptedValue enc = encrypt(plainText);
         editor.putString(ctKey, enc.cipherTextBase64);
         editor.putString(ivKey, enc.ivBase64);
     }
 
     @Nullable
-    private String getDecryptedValue(String ctKey, String ivKey) {
+    private String getDecryptedValueLocked(String ctKey, String ivKey) {
         String ctBase64 = prefs.getString(ctKey, null);
         String ivBase64 = prefs.getString(ivKey, null);
         if (ctBase64 == null || ivBase64 == null) return null;
