@@ -11,6 +11,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.google.gson.JsonObject;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
+import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.data.profile.PerfilRepository;
@@ -46,11 +47,17 @@ public class ProfileViewModel extends AndroidViewModel {
         perfilRepository = new PerfilRepository(application);
         accountKey = sessionManager.getAccountKey();
 
+        // FIX: Carga inicial del caché movida a hilo IO para evitar
+        // IllegalStateException por acceso síncrono a Room en el main thread.
+        // En instalación limpia, Room necesita crear las tablas dentro de esta
+        // llamada, lo que agrava el problema y provoca el crash tras el login.
         if (accountKey != null) {
-            PerfilUsuario cached = perfilRepository.getCachedPerfilNow(accountKey);
-            if (cached != null) {
-                perfilState.setValue(UiState.success(cached));
-            }
+            MoveOnExecutors.io().execute(() -> {
+                PerfilUsuario cached = perfilRepository.getCachedPerfilNow(accountKey);
+                if (cached != null) {
+                    perfilState.postValue(UiState.success(cached));
+                }
+            });
         }
 
         attachPerfilSource();
@@ -197,4 +204,3 @@ public class ProfileViewModel extends AndroidViewModel {
         super.onCleared();
     }
 }
-
