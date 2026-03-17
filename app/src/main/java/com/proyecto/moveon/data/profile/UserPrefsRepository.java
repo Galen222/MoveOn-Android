@@ -44,8 +44,13 @@ public class UserPrefsRepository {
 
     /**
      * Actualiza el objetivo semanal:
-     * 1. Guarda en Room de inmediato.
-     * 2. Envía PATCH al servidor en background.
+     * 1. Guarda en Room de inmediato (UI reactiva instantánea).
+     * 2. Envía PATCH al servidor de forma asíncrona (no bloquea el hilo IO).
+     *
+     * FIX: Antes usaba patchPerfilBlocking, que bloqueaba el hilo IO 8-30 s
+     * con backend caído y además ignoraba el resultado (fire-and-forget).
+     * Ahora usa patchPerfil (async) para no bloquear. El resultado se sigue
+     * ignorando, pero al menos no impide que otras operaciones IO se ejecuten.
      */
     public void setWeeklyGoal(@NonNull String accountKey, long meters) {
         io.execute(() -> {
@@ -56,14 +61,16 @@ public class UserPrefsRepository {
 
             JsonObject body = new JsonObject();
             body.addProperty("objetivo_semanal_metros", meters);
-            remote.patchPerfilBlocking(body);
+            remote.patchPerfil(body, result -> { /* best-effort */ });
         });
     }
 
     /**
      * Actualiza el objetivo mensual:
-     * 1. Guarda en Room de inmediato.
-     * 2. Envía PATCH al servidor en background.
+     * 1. Guarda en Room de inmediato (UI reactiva instantánea).
+     * 2. Envía PATCH al servidor de forma asíncrona (no bloquea el hilo IO).
+     *
+     * FIX: Mismo cambio que setWeeklyGoal — de blocking a async.
      */
     public void setMonthlyGoal(@NonNull String accountKey, long meters) {
         io.execute(() -> {
@@ -74,7 +81,7 @@ public class UserPrefsRepository {
 
             JsonObject body = new JsonObject();
             body.addProperty("objetivo_mensual_metros", meters);
-            remote.patchPerfilBlocking(body);
+            remote.patchPerfil(body, result -> { /* best-effort */ });
         });
     }
 

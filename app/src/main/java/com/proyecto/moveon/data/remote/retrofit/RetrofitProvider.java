@@ -64,9 +64,14 @@ public final class RetrofitProvider {
                     .build();
 
             // 3. Cliente PROTEGIDO
-            // Punto 3: Gestión de Timeouts más amplios para el cliente protegido
+            // FIX: connectTimeout reducido de 20 s a 8 s.
+            // 8 s es generoso para producción (con proxy: TCP connect ~200 ms,
+            // sin proxy: ~1 s). Con backend caído, 20 s bloqueaba el hilo IO
+            // y congelaba la UI. writeTimeout(60 s) se mantiene para subida de
+            // rutas GPS pesadas. readTimeout(30 s) se mantiene para respuestas
+            // grandes (historial de actividades).
             OkHttpClient.Builder protectedBuilder = baseClientPure.newBuilder()
-                    .connectTimeout(20, TimeUnit.SECONDS) // Más margen de conexión
+                    .connectTimeout(8, TimeUnit.SECONDS)
                     .writeTimeout(60, TimeUnit.SECONDS)   // 1 minuto para subir rutas pesadas
                     .readTimeout(30, TimeUnit.SECONDS)
                     .dispatcher(new Dispatcher())

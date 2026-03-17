@@ -12,13 +12,30 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * <p>Los repositorios se recrean con frecuencia junto con sus ViewModels; por eso
  * no deben crear un ExecutorService propio en cada instancia. Este ejecutor
- * serial compartido conserva el orden de las operaciones de datos y evita fugas
- * de hilos entre recreaciones de pantalla o ciclos de login/logout.</p>
+ * compartido evita fugas de hilos entre recreaciones de pantalla o ciclos de
+ * login/logout.</p>
+ *
+ * <h3>¿Por qué un pool de 3 hilos y no 1?</h3>
+ * <p>Con un solo hilo, cualquier llamada de red bloqueante (timeout de 8-30 s
+ * con backend caído) impedía que las demás operaciones se ejecutaran. Ejemplo
+ * real: {@code setWeeklyGoal} bloqueaba el hilo 30 s con un
+ * {@code patchPerfilBlocking} cuyo resultado ni siquiera se usaba, y detrás
+ * se encolaba el {@code applyLocalPatchAndEnqueue} del toggle de perfil
+ * visible, que tardaba otros 30 s más. Total: 1 minuto de hilo IO bloqueado
+ * y la app congelada.</p>
+ *
+ * <p>Con 3 hilos, un patch, una subida de foto y una lectura de Room pueden
+ * correr en paralelo. Room usa WAL mode y es thread-safe. No se sube más
+ * de 4 porque la contención de SQLite crece sin aportar beneficio.</p>
  */
 public final class MoveOnExecutors {
 
-    private static final ExecutorService IO = Executors.newSingleThreadExecutor(
-            new NamedThreadFactory("moveon-io")
+    // FIX: de newSingleThreadExecutor a newFixedThreadPool(3).
+    // Evita que una llamada de red bloqueante (ej. patchPerfilBlocking con
+    // backend caído → connectTimeout 8-20 s) bloquee TODAS las demás
+    // operaciones de IO encoladas detrás.
+    private static final ExecutorService IO = Executors.newFixedThreadPool(
+            3, new NamedThreadFactory("moveon-io")
     );
 
     private MoveOnExecutors() {}

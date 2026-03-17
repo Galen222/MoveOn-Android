@@ -117,7 +117,13 @@ public class ProfileViewModel extends AndroidViewModel {
         }
 
         lastFailedPatchJson = patchJson.deepCopy();
-        updateState.setValue(UiState.loading());
+        // FIX: Eliminado updateState.setValue(UiState.loading()).
+        // Todos los campos se aplican ahora de forma optimista en Room, y la UI
+        // se actualiza instantáneamente vía perfilState (Room LiveData).
+        // Poner loading aquí activaba el overlay fullscreen (clickable=true),
+        // que se cancelaba 5 ms después por la emisión de perfilState y luego
+        // no se quitaba hasta que el timeout de red terminaba (8-30 s con
+        // backend caído). Resultado: overlay bloqueante o parpadeo confuso.
         perfilRepository.applyLocalPatchAndEnqueue(accountKey, patchJson, result -> {
             if (PerfilRepository.UpdateResult.STATUS_FAILED.equals(result.status)) {
                 updateState.postValue(UiState.error(
@@ -136,7 +142,11 @@ public class ProfileViewModel extends AndroidViewModel {
         }
 
         lastFailedPhotoPath = file.getAbsolutePath();
-        photoState.setValue(UiState.loading());
+        // FIX: Eliminado photoState.setValue(UiState.loading()).
+        // La foto preview se muestra instantáneamente desde pendingLocalPhotoPath
+        // gracias al patch optimista en uploadPhotoLocalFirst → savePendingPhoto
+        // → saveCache → Room emite → bindPerfilData muestra la preview.
+        // El overlay bloqueaba la UI 8-60 s (writeTimeout) con backend caído.
         perfilRepository.uploadPhotoLocalFirst(accountKey, file, result -> {
             if (PerfilRepository.UpdateResult.STATUS_FAILED.equals(result.status)) {
                 photoState.postValue(UiState.error(

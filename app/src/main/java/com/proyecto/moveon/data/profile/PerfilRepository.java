@@ -553,10 +553,19 @@ public class PerfilRepository {
         );
     }
 
+    // FIX: Siempre aplicar optimistamente. Antes, nombre_real, email y
+    // fecha_nacimiento NO se aplicaban al instante, lo que causaba que el
+    // overlay bloqueara la UI 8-30 s esperando al backend.
+    //
+    // Es seguro porque:
+    // 1. El cliente ya valida con AppInputValidator antes de llamar aquí.
+    // 2. Si el servidor rechaza (email duplicado, 400/422), el path FAILED
+    //    ejecuta fetchPerfilBlocking → mergeRemoteSnapshot que revierte el
+    //    caché automáticamente vía Room LiveData.
+    // 3. El usuario ve el valor nuevo ~200 ms y luego el error + reversión,
+    //    que es infinitamente mejor que bloquear 30 s con overlay.
     private boolean shouldApplyPatchOptimistically(@NonNull JsonObject patch) {
-        return !patch.has("nombre_real")
-                && !patch.has("email")
-                && !patch.has("fecha_nacimiento");
+        return true;
     }
 
     private void applyPatchToCache(@NonNull PerfilCacheEntity cache, @NonNull JsonObject patch) {
@@ -638,4 +647,3 @@ public class PerfilRepository {
         public static SyncResult retry()   { return new SyncResult(true); }
     }
 }
-

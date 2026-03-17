@@ -729,9 +729,16 @@ public class ProfileFragment extends Fragment {
     }
 
     private void observeViewModel() {
+        // ── perfilState: ÚNICO observer que controla el overlay ──
+        // Solo se muestra durante la carga inicial del perfil (loadPerfil).
+        // Los patches optimistas y subidas de foto nunca activan el overlay.
         viewModel.getPerfilState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
-            showOverlay(state.loading);
+            if (state.loading) {
+                showOverlay(true);
+            } else {
+                showOverlay(false);
+            }
             if (state.data != null) {
                 bindPerfilData(state.data);
             } else if (state.error != null) {
@@ -739,9 +746,14 @@ public class ProfileFragment extends Fragment {
             }
         });
 
+        // ── updateState: solo feedback (snackbar), NUNCA overlay ──
+        // FIX: Eliminado showOverlay(state.loading).
+        // Con el overlay aquí, dos LiveData competían por mostrarlo/ocultarlo:
+        // updateState lo ponía y perfilState lo quitaba 5 ms después (por la
+        // emisión optimista de Room). El overlay parpadeaba y luego desaparecía,
+        // pero el hilo IO seguía bloqueado 8-30 s con backend caído.
         viewModel.getUpdateState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
-            showOverlay(state.loading);
             if (state.data != null) {
                 String updateStatus = state.data;
                 if (PerfilRepository.UpdateResult.STATUS_SYNCED.equals(updateStatus)) {
@@ -751,14 +763,27 @@ public class ProfileFragment extends Fragment {
                 }
                 viewModel.resetUpdateState();
             } else if (state.error != null) {
+                // FIX: Recargar datos para revertir cambios optimistas.
+                // Si el servidor rechazó (422, 400), el path FAILED del repository
+                // ya hizo fetchPerfilBlocking → mergeRemoteSnapshot, así que Room
+                // ya emitió los datos reales. Pero si eso también falló (backend
+                // caído), perfilActual tiene el último estado confirmado y
+                // bindPerfilData revierte el switch/campo al valor correcto.
+                if (perfilActual != null) {
+                    bindPerfilData(perfilActual);
+                }
                 showApiError(state.error, viewModel::retryLastUpdate);
                 viewModel.resetUpdateState();
             }
         });
 
+        // ── photoState: solo feedback (snackbar), NUNCA overlay ──
+        // FIX: Eliminado showOverlay(state.loading).
+        // La foto preview se muestra instantáneamente desde pendingLocalPhotoPath
+        // (Room emite → bindPerfilData → Glide carga el archivo local).
+        // El overlay bloqueaba la UI 8-60 s con backend caído.
         viewModel.getPhotoState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
-            showOverlay(state.loading);
             if (state.data != null) {
                 if (PerfilRepository.UpdateResult.STATUS_SYNCED.equals(state.data)) {
                     transientPhotoPreviewPath = null;
