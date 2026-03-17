@@ -495,7 +495,6 @@
     <!--  COMÚN                                                                 -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="common_proximamente">Próximamente</string>
-
     <string name="validation_username_too_long">El nombre de usuario no puede superar los 50 caracteres</string>
     <string name="validation_real_name_too_short">El nombre real es demasiado corto</string>
     <string name="validation_real_name_too_long">El nombre real no puede superar los 80 caracteres</string>
@@ -510,4 +509,21 @@
     <string name="validation_recovery_code_must_be_numeric">El código solo puede contener números</string>
     <string name="validation_height_out_of_range">La altura debe estar entre 50cm y 300cm</string>
     <string name="validation_weight_out_of_range">El peso debe estar entre 20kg y 300kg</string>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  ELIMINAR CUENTA                                                       -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <string name="profile_section_account">Cuenta</string>
+    <string name="profile_btn_delete_account">Eliminar cuenta</string>
+    <string name="profile_delete_account_dialog_title">¿Eliminar tu cuenta?</string>
+    <string name="profile_delete_account_dialog_message">Esta acción es permanente e irreversible. Se eliminarán tu perfil, todas tus actividades, rutas y progreso. No hay vuelta atrás.</string>
+    <string name="profile_delete_account_dialog_continue">Continuar</string>
+    <string name="profile_delete_account_step2_title">Confirma la eliminación</string>
+    <string name="profile_delete_account_step2_message">Escribe ELIMINAR en el campo de texto para confirmar.</string>
+    <string name="profile_delete_account_step2_hint">ELIMINAR</string>
+    <string name="profile_delete_confirm_word">ELIMINAR</string>
+    <string name="profile_delete_account_dialog_confirm">Eliminar definitivamente</string>
+    <string name="profile_delete_account_deleting">Eliminando cuenta…</string>
+    <string name="profile_error_delete_account">No se pudo eliminar la cuenta. Inténtalo de nuevo.</string>
+
 </resources>

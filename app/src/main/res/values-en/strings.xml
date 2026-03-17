@@ -328,5 +328,19 @@
     <string name="validation_recovery_code_must_be_numeric">The code can only contain numbers</string>
     <string name="validation_height_out_of_range">Height must be between 50cm and 300cm</string>
     <string name="validation_weight_out_of_range">Weight must be between 20kg and 300kg</string>
+
+    <!-- Delete account -->
+    <string name="profile_section_account">Account</string>
+    <string name="profile_btn_delete_account">Delete account</string>
+    <string name="profile_delete_account_dialog_title">Delete your account?</string>
+    <string name="profile_delete_account_dialog_message">This action is permanent and irreversible. Your profile, all your activities, routes and progress will be deleted. There is no going back.</string>
+    <string name="profile_delete_account_dialog_continue">Continue</string>
+    <string name="profile_delete_account_step2_title">Confirm deletion</string>
+    <string name="profile_delete_account_step2_message">Type DELETE in the text field to confirm.</string>
+    <string name="profile_delete_account_step2_hint">DELETE</string>
+    <string name="profile_delete_confirm_word">DELETE</string>
+    <string name="profile_delete_account_dialog_confirm">Delete permanently</string>
+    <string name="profile_delete_account_deleting">Deleting account…</string>
+    <string name="profile_error_delete_account">Could not delete the account. Please try again.</string>
 </resources>
 

@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.NumberPicker;
 import android.widget.Toast;
 
@@ -44,7 +45,6 @@ import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.data.profile.sync.ProfilePatchPayload;
 import com.proyecto.moveon.data.profile.PerfilRepository;
 import com.proyecto.moveon.databinding.DialogEditFieldBinding;
-import com.proyecto.moveon.databinding.DialogEditNumberBinding;
 import com.proyecto.moveon.databinding.DialogEditProvinciaBinding;
 import com.proyecto.moveon.databinding.FragmentProfileBinding;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
@@ -299,6 +299,7 @@ public class ProfileFragment extends Fragment {
         });
 
         binding.btnLogout.setOnClickListener(v -> viewModel.logout());
+        binding.btnDeleteAccount.setOnClickListener(v -> showDeleteAccountConfirmationDialog());
         binding.itemLanguage.setOnClickListener(v -> showLanguageDialog());
 
         binding.itemFullName.setOnClickListener(v -> showEditTextDialog(
@@ -310,7 +311,7 @@ public class ProfileFragment extends Fragment {
                     AppInputValidator.ValidationResult<String> validation =
                             AppInputValidator.validateRealName(requireContext(), value, false);
                     if (!validation.isValid()) {
-                        showErrorFeedback(validation.getErrorMessage());
+                        showErrorFeedback(validationError(validation));
                         return false;
                     }
 
@@ -336,7 +337,7 @@ public class ProfileFragment extends Fragment {
                     AppInputValidator.ValidationResult<String> validation =
                             AppInputValidator.validateEmail(requireContext(), value, true);
                     if (!validation.isValid()) {
-                        showErrorFeedback(validation.getErrorMessage());
+                        showErrorFeedback(validationError(validation));
                         return false;
                     }
 
@@ -393,7 +394,7 @@ public class ProfileFragment extends Fragment {
                     AppInputValidator.ValidationResult<Integer> validation =
                             AppInputValidator.validateHeight(requireContext(), altura);
                     if (!validation.isValid()) {
-                        showErrorFeedback(validation.getErrorMessage());
+                        showErrorFeedback(validationError(validation));
                         return;
                     }
                     viewModel.updatePerfil(new ProfilePatchPayload().altura(validation.getValue()).toJson());
@@ -443,7 +444,7 @@ public class ProfileFragment extends Fragment {
                     AppInputValidator.ValidationResult<Double> validation =
                             AppInputValidator.validateWeight(requireContext(), peso);
                     if (!validation.isValid()) {
-                        showErrorFeedback(validation.getErrorMessage());
+                        showErrorFeedback(validationError(validation));
                         return;
                     }
                     viewModel.updatePerfil(new ProfilePatchPayload().peso(validation.getValue()).toJson());
@@ -483,40 +484,6 @@ public class ProfileFragment extends Fragment {
                 return;
             }
 
-            boolean close = listener.onSaved(value);
-            if (close) dialog.dismiss();
-        }));
-
-        dialog.show();
-    }
-
-    private void showEditNumberDialog(@NonNull String label,
-                                      @Nullable String currentValue,
-                                      boolean isInteger,
-                                      @NonNull OnValueSavedListener listener) {
-        DialogEditNumberBinding dialogBinding =
-                DialogEditNumberBinding.inflate(LayoutInflater.from(requireContext()));
-
-        dialogBinding.tilNumber.setHint(label);
-        if (StringUtils.hasText(currentValue)) {
-            dialogBinding.etNumber.setText(currentValue);
-            dialogBinding.etNumber.setSelection(currentValue.length());
-        }
-        dialogBinding.etNumber.setInputType(isInteger
-                ? android.text.InputType.TYPE_CLASS_NUMBER
-                : android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(label)
-                .setView(dialogBinding.getRoot())
-                .setPositiveButton(R.string.dialog_btn_save, null)
-                .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .create();
-
-        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String value = dialogBinding.etNumber.getText() != null
-                    ? dialogBinding.etNumber.getText().toString().trim() : "";
-            dialogBinding.tilNumber.setError(null);
             boolean close = listener.onSaved(value);
             if (close) dialog.dismiss();
         }));
@@ -569,7 +536,7 @@ public class ProfileFragment extends Fragment {
             AppInputValidator.ValidationResult<String> validation =
                     AppInputValidator.validateBirthDate(requireContext(), selectedDate);
             if (!validation.isValid()) {
-                showErrorFeedback(validation.getErrorMessage());
+                showErrorFeedback(validationError(validation));
                 return;
             }
 
@@ -734,11 +701,7 @@ public class ProfileFragment extends Fragment {
         // Los patches optimistas y subidas de foto nunca activan el overlay.
         viewModel.getPerfilState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
-            if (state.loading) {
-                showOverlay(true);
-            } else {
-                showOverlay(false);
-            }
+            showOverlay(state.loading);
             if (state.data != null) {
                 bindPerfilData(state.data);
             } else if (state.error != null) {
@@ -813,6 +776,24 @@ public class ProfileFragment extends Fragment {
                 Toast.makeText(requireContext(),
                         getString(R.string.profile_error_logout_server),
                         Toast.LENGTH_LONG).show();
+            }
+            goToLogin();
+        });
+
+        viewModel.getDeleteAccountState().observe(getViewLifecycleOwner(), state -> {
+            if (state == null || binding == null) return;
+            if (state.loading) {
+                binding.btnDeleteAccount.setEnabled(false);
+                binding.btnDeleteAccount.setText(R.string.profile_delete_account_deleting);
+                showOverlay(true);
+                return;
+            }
+            showOverlay(false);
+            if (state.error != null) {
+                binding.btnDeleteAccount.setEnabled(true);
+                binding.btnDeleteAccount.setText(R.string.profile_btn_delete_account);
+                showErrorFeedback(getString(R.string.profile_error_delete_account));
+                return;
             }
             goToLogin();
         });
@@ -1040,6 +1021,61 @@ public class ProfileFragment extends Fragment {
     private void goToLogin() {
         if (!isAdded()) return;
         NavigationUtils.goToActivityAndClearTask(requireActivity(), LoginActivity.class);
+    }
+
+    // ── Eliminar cuenta ─────────────────────────────────────────────────────────
+
+    private void showDeleteAccountConfirmationDialog() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.profile_delete_account_dialog_title)
+                .setMessage(R.string.profile_delete_account_dialog_message)
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .setPositiveButton(R.string.profile_delete_account_dialog_continue,
+                        (dialog, which) -> showDeleteAccountStep2Dialog())
+                .show();
+    }
+
+    private void showDeleteAccountStep2Dialog() {
+        DialogEditFieldBinding dialogBinding =
+                DialogEditFieldBinding.inflate(LayoutInflater.from(requireContext()));
+
+        String confirmWord = getString(R.string.profile_delete_confirm_word);
+        dialogBinding.tilField.setHint(R.string.profile_delete_account_step2_hint);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.profile_delete_account_step2_title)
+                .setMessage(R.string.profile_delete_account_step2_message)
+                .setView(dialogBinding.getRoot())
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .setPositiveButton(R.string.profile_delete_account_dialog_confirm, null)
+                .create();
+
+        dialog.setOnShowListener(d -> {
+            Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            positiveButton.setEnabled(false);
+
+            dialogBinding.etField.addTextChangedListener(new android.text.TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                @Override
+                public void afterTextChanged(android.text.Editable s) {
+                    positiveButton.setEnabled(confirmWord.equals(s.toString()));
+                }
+            });
+
+            positiveButton.setOnClickListener(v -> {
+                dialog.dismiss();
+                viewModel.deleteAccount();
+            });
+        });
+
+        dialog.show();
+    }
+
+    @NonNull
+    private String validationError(@NonNull AppInputValidator.ValidationResult<?> result) {
+        String msg = result.getErrorMessage();
+        return msg != null ? msg : getString(R.string.vm_error_generico);
     }
 
     @Nullable

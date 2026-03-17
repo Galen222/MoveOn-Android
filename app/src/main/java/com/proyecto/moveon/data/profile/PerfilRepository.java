@@ -29,6 +29,7 @@ import com.proyecto.moveon.data.profile.UserPrefsRepository;
 import com.proyecto.moveon.data.profile.local.PerfilLocalDataSource;
 import com.proyecto.moveon.data.profile.local.ProfilePhotoStorage;
 import com.proyecto.moveon.data.profile.remote.PerfilRemoteDataSource;
+import com.proyecto.moveon.data.session.AuthRepository;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
 import com.proyecto.moveon.utils.StringUtils;
 import com.proyecto.moveon.workers.SyncPerfilWorker;
@@ -255,8 +256,6 @@ public class PerfilRepository {
                 op.lastError  = error.getMessage();
 
                 if (isRetryable(error)) {
-                    // Mantener FIFO real: si una operación reintentable falla,
-                    // no avanzamos con parches posteriores para no alterar el orden lógico.
                     local.updatePatch(op);
                     retryNeeded = true;
                     break;
@@ -319,6 +318,18 @@ public class PerfilRepository {
                 .enqueueUniqueWork(UNIQUE_SYNC_WORK_NAME, ExistingWorkPolicy.KEEP, request);
     }
 
+    public void eliminarCuenta(@NonNull AuthRepository.Callback<String> callback) {
+        io.execute(() -> remote.eliminarCuenta(result -> {
+            if (result.isSuccess()) {
+                callback.onResult(ApiResult.success(result.data != null ? result.data : "OK"));
+            } else {
+                callback.onResult(ApiResult.failure(
+                        result.error != null ? result.error
+                                : ApiError.local(appContext.getString(R.string.vm_error_generico))));
+            }
+        }));
+    }
+
     public void cancelOngoing() {
         remote.cancelAll();
     }
@@ -367,7 +378,6 @@ public class PerfilRepository {
         } else if (!PHOTO_STATE_PENDING.equals(entity.photoSyncState)
                 || !StringUtils.hasText(entity.pendingLocalPhotoPath)
                 || !ProfilePhotoStorage.exists(entity.pendingLocalPhotoPath)) {
-            // Solo actualizamos la foto si no hay una subida pendiente en curso.
             if (!StringUtils.hasText(dto.fotoPerfil)) {
                 if (StringUtils.hasText(entity.localPhotoPath)) {
                     ProfilePhotoStorage.deleteFileSilently(entity.localPhotoPath);
@@ -425,7 +435,6 @@ public class PerfilRepository {
             entity.lastSyncedAtMs = entity.lastFetchedAtMs;
         }
 
-        // Sincronizar objetivos con UserPrefsRepository para que StatsViewModel los reciba
         userPrefsRepository.syncFromServer(
                 accountKey,
                 entity.objetivoSemanalMetros,

@@ -13,7 +13,6 @@ import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
-import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.data.profile.PerfilRepository;
 import com.proyecto.moveon.data.session.AuthRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
@@ -30,10 +29,11 @@ public class ProfileViewModel extends AndroidViewModel {
     private final SecureSessionManager sessionManager;
     private final PerfilRepository perfilRepository;
 
-    private final MediatorLiveData<UiState<PerfilUsuario>> perfilState = new MediatorLiveData<>();
-    private final MutableLiveData<UiState<String>> updateState = new MutableLiveData<>();
-    private final MutableLiveData<UiState<String>> photoState  = new MutableLiveData<>();
-    private final MutableLiveData<UiState<String>> logoutState = new MutableLiveData<>();
+    private final MediatorLiveData<UiState<PerfilUsuario>> perfilState       = new MediatorLiveData<>();
+    private final MutableLiveData<UiState<String>>         updateState       = new MutableLiveData<>();
+    private final MutableLiveData<UiState<String>>         photoState        = new MutableLiveData<>();
+    private final MutableLiveData<UiState<String>>         logoutState       = new MutableLiveData<>();
+    private final MutableLiveData<UiState<String>>         deleteAccountState = new MutableLiveData<>();
 
     @Nullable private final String accountKey;
     @Nullable private LiveData<PerfilUsuario> perfilSource;
@@ -52,6 +52,7 @@ public class ProfileViewModel extends AndroidViewModel {
         // En instalación limpia, Room necesita crear las tablas dentro de esta
         // llamada, lo que agrava el problema y provoca el crash tras el login.
         if (accountKey != null) {
+            //noinspection resource
             MoveOnExecutors.io().execute(() -> {
                 PerfilUsuario cached = perfilRepository.getCachedPerfilNow(accountKey);
                 if (cached != null) {
@@ -63,10 +64,11 @@ public class ProfileViewModel extends AndroidViewModel {
         attachPerfilSource();
     }
 
-    public LiveData<UiState<PerfilUsuario>> getPerfilState() { return perfilState; }
-    public LiveData<UiState<String>> getUpdateState() { return updateState; }
-    public LiveData<UiState<String>> getPhotoState()  { return photoState; }
-    public LiveData<UiState<String>> getLogoutState() { return logoutState; }
+    public LiveData<UiState<PerfilUsuario>> getPerfilState()        { return perfilState; }
+    public LiveData<UiState<String>>        getUpdateState()        { return updateState; }
+    public LiveData<UiState<String>>        getPhotoState()         { return photoState; }
+    public LiveData<UiState<String>>        getLogoutState()        { return logoutState; }
+    public LiveData<UiState<String>>        getDeleteAccountState() { return deleteAccountState; }
 
     public String getUsername() {
         String u = sessionManager.getUsername();
@@ -78,10 +80,12 @@ public class ProfileViewModel extends AndroidViewModel {
         return AppLanguageManager.getSelectedMode(getApplication());
     }
 
+    @SuppressWarnings("unused")
     public boolean hasManualAppLanguageSelection() {
         return AppLanguageManager.hasManualSelection(getApplication());
     }
 
+    @SuppressWarnings("unused")
     public void setAppLanguageMode(@NonNull String mode) {
         AppLanguageManager.saveAndApply(getApplication(), mode);
     }
@@ -158,7 +162,6 @@ public class ProfileViewModel extends AndroidViewModel {
         });
     }
 
-
     public void retryLastUpdate() {
         if (lastFailedPatchJson != null) {
             updatePerfil(lastFailedPatchJson.deepCopy());
@@ -192,6 +195,24 @@ public class ProfileViewModel extends AndroidViewModel {
             } else {
                 logoutState.postValue(UiState.error(
                         result.error != null ? result.error : ApiError.local(getApplication().getString(R.string.vm_error_generico))));
+            }
+        });
+    }
+
+    public void deleteAccount() {
+        deleteAccountState.setValue(UiState.loading());
+        perfilRepository.eliminarCuenta(result -> {
+            if (result.isSuccess()) {
+                // Solo limpiamos la sesión local cuando el servidor confirma el borrado.
+                // Si falla (red, servidor), la cuenta sigue existiendo y el usuario
+                // necesita la sesión intacta para poder reintentar.
+                OfflineSessionCleaner.clearSessionAndLocalDataBlocking(getApplication());
+                deleteAccountState.postValue(UiState.success(
+                        result.data != null ? result.data : "OK"));
+            } else {
+                deleteAccountState.postValue(UiState.error(
+                        result.error != null ? result.error
+                                : ApiError.local(getApplication().getString(R.string.vm_error_generico))));
             }
         });
     }

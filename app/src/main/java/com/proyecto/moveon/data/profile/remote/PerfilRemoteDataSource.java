@@ -21,9 +21,10 @@ public class PerfilRemoteDataSource {
         void onResult(com.proyecto.moveon.core.api.ApiResult<T> result);
     }
 
-    private static final String ENDPOINT_PROFILE = "perfil/informacion";
-    private static final String ENDPOINT_UPDATE  = "perfil/actualizar";
-    private static final String ENDPOINT_PHOTO   = "perfil/foto";
+    private static final String ENDPOINT_PROFILE        = "perfil/informacion";
+    private static final String ENDPOINT_UPDATE         = "perfil/actualizar";
+    private static final String ENDPOINT_PHOTO          = "perfil/foto";
+    private static final String ENDPOINT_DELETE_ACCOUNT = "perfil/borrar";
 
     private final AuthenticatedApiClient api;
     private final Gson gson = new Gson();
@@ -48,13 +49,8 @@ public class PerfilRemoteDataSource {
                 callback::onResult);
     }
 
-    public void uploadPhoto(@NonNull File file, @NonNull Callback<String> callback) {
-        MediaType mediaType = MediaType.parse(guessMimeType(file.getName()));
-        RequestBody requestBody = RequestBody.create(file, mediaType);
-        MultipartBody.Part part = MultipartBody.Part.createFormData(
-                "archivo", file.getName(), requestBody);
-
-        api.postMultipart(ENDPOINT_PHOTO, part,
+    public void eliminarCuenta(@NonNull Callback<String> callback) {
+        api.delete(ENDPOINT_DELETE_ACCOUNT,
                 json -> {
                     JsonObject obj = json.getAsJsonObject();
                     return obj.has("mensaje") ? obj.get("mensaje").getAsString() : "OK";
