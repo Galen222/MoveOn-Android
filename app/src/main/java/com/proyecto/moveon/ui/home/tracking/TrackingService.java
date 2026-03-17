@@ -73,8 +73,16 @@ public final class TrackingService extends Service implements SensorEventListene
     // -------------------------------------------------------------------------
 
     private static final float ACCEL_RUN_THRESHOLD  = 15.0f;
-    private static final int   ACCEL_SAMPLE_WINDOW  = 15;
+    // Ventana ampliada de 15 a 30 muestras (~6 s con SENSOR_DELAY_NORMAL).
+    // Con la ventana anterior de 15 (~3 s) los cambios Walking↔Running eran demasiado
+    // bruscos y afectaban el cálculo de calorías.
+    private static final int   ACCEL_SAMPLE_WINDOW  = 30;
     private static final int   CONFIRM_STEPS        = 3;
+    // Factor α del filtro de paso bajo (EMA - Exponential Moving Average).
+    // Un valor bajo (0.2) suaviza picos puntuales del acelerómetro (ej. baches, gestos
+    // bruscos del brazo) sin añadir un retardo perceptible en la detección real de
+    // cambios de ritmo.
+    private static final float ACCEL_ALPHA          = 0.2f;
 
     // -------------------------------------------------------------------------
     // Constantes de localización
@@ -132,7 +140,7 @@ public final class TrackingService extends Service implements SensorEventListene
 
     // -------------------------------------------------------------------------
     // Cronómetro
-    // BUG-02: Handler en main looper para centralizar todo el estado mutable
+    // Handler en main looper para centralizar todo el estado mutable
     // en el hilo principal y eliminar la condición de carrera con onNewLocation().
     // -------------------------------------------------------------------------
 
@@ -168,6 +176,10 @@ public final class TrackingService extends Service implements SensorEventListene
     private int accelTotalSamples   = 0;
     private int runningConfirmCount = 0;
     private int walkingConfirmCount = 0;
+    // Magnitud filtrada con EMA. Se inicializa en gravedad terrestre
+    // (≈9.81 m/s²) para que la primera muestra no arranque desde 0 y genere un
+    // falso positivo de running.
+    private float accelFilteredMag  = SensorManager.GRAVITY_EARTH;
 
     // -------------------------------------------------------------------------
     // Ciclo de vida del servicio
@@ -208,7 +220,13 @@ public final class TrackingService extends Service implements SensorEventListene
     @Override
     public void onDestroy() {
         stopTrackingInternal();
-        scheduler.shutdownNow();
+        // Envolver shutdownNow() en try-catch para que una excepción
+        // inesperada (ej. SecurityException en ciertos OEMs, o estado corrupto tras
+        // una recreación por START_STICKY) no interrumpa la cadena de limpieza y
+        // permita que super.onDestroy() se ejecute siempre.
+        try {
+            scheduler.shutdownNow();
+        } catch (Exception ignored) {}
         super.onDestroy();
     }
 
@@ -255,7 +273,7 @@ public final class TrackingService extends Service implements SensorEventListene
         stopLocationUpdates();
         stopAccelerometer();
         publishState();
-        // BUG-03: Detener el foreground service para eliminar la notificación persistente
+        // Detener el foreground service para eliminar la notificación persistente
         // y liberar los recursos del servicio.
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
@@ -267,7 +285,7 @@ public final class TrackingService extends Service implements SensorEventListene
         resetInternalState();
         currentStatus = TrackingState.Status.IDLE;
         publishState();
-        // BUG-03: Ídem — resetear también detiene el foreground service.
+        // Ídem — resetear también detiene el foreground service.
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
     }
@@ -338,8 +356,19 @@ public final class TrackingService extends Service implements SensorEventListene
         float z = event.values[2];
         float magnitude = (float) Math.sqrt(x * x + y * y + z * z);
 
+        // Filtro de paso bajo (EMA) para suavizar picos puntuales del
+        // acelerómetro. Sin este filtro, un bache, un gesto brusco del brazo o una
+        // vibración del dispositivo pueden disparar un pico de magnitud >15 m/s²
+        // que se contabiliza como muestra de running, contaminando la ventana.
+        //
+        // EMA: filteredMag = α·raw + (1−α)·filteredMag_prev
+        // Con α=0.2, el filtro atenúa picos aislados un 80% y converge en ~5
+        // muestras (~1 s) ante un cambio real y sostenido de ritmo.
+        accelFilteredMag = ACCEL_ALPHA * magnitude + (1f - ACCEL_ALPHA) * accelFilteredMag;
+
         accelTotalSamples++;
-        if (magnitude > ACCEL_RUN_THRESHOLD) {
+        // Comparar con la magnitud filtrada en vez de la cruda.
+        if (accelFilteredMag > ACCEL_RUN_THRESHOLD) {
             accelRunSamples++;
         }
 
@@ -378,10 +407,14 @@ public final class TrackingService extends Service implements SensorEventListene
 
     private void startTimer() {
         stopTimer();
-        // BUG-02: El tick se despacha al main looper via mainHandler.post() para que
+        // Guardia para evitar operar sobre un scheduler ya cerrado.
+        // Puede ocurrir si el sistema recrea el servicio vía START_STICKY y el
+        // scheduler del ciclo anterior quedó en estado shutdown.
+        if (scheduler.isShutdown()) return;
+        // El tick se despacha al main looper via mainHandler.post() para que
         // elapsedSeconds, calories y publishState() se ejecuten en el mismo hilo que
         // onNewLocation() y onSensorChanged(), eliminando la condición de carrera.
-        // BUG-12: Se recalculan las calorías en cada tick para que avancen aunque el
+        // Se recalculan las calorías en cada tick para que avancen aunque el
         // GPS no envíe actualizaciones (usuario lento / filtro de 5 m no superado).
         timerFuture = scheduler.scheduleWithFixedDelay(
                 () -> mainHandler.post(() -> {
@@ -476,6 +509,9 @@ public final class TrackingService extends Service implements SensorEventListene
         accelTotalSamples   = 0;
         runningConfirmCount = 0;
         walkingConfirmCount = 0;
+        // FIX BUG-11: Reiniciar también la magnitud filtrada a gravedad terrestre
+        // para que la siguiente sesión no arrastre el estado del filtro EMA.
+        accelFilteredMag    = SensorManager.GRAVITY_EARTH;
         activityType        = TrackingState.ActivityType.WALKING;
     }
 
