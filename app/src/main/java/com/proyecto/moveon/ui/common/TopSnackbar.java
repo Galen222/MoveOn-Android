@@ -3,12 +3,14 @@ package com.proyecto.moveon.ui.common;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -81,10 +83,30 @@ public final class TopSnackbar {
         View snackView = snackbar.getView();
 
         // ── Posición arriba ──
-        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) snackView.getLayoutParams();
-        params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-        params.topMargin = 24;
-        snackView.setLayoutParams(params);
+        // El parent del Snackbar puede ser FrameLayout o CoordinatorLayout
+        // dependiendo del root del layout que invoca. Ambos soportan gravity.
+        ViewGroup.LayoutParams rawParams = snackView.getLayoutParams();
+        int topGravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+
+        if (rawParams instanceof CoordinatorLayout.LayoutParams) {
+            CoordinatorLayout.LayoutParams clp = (CoordinatorLayout.LayoutParams) rawParams;
+            clp.gravity = topGravity;
+            clp.topMargin = 24;
+            clp.leftMargin = 32;
+            clp.rightMargin = 32;
+        } else if (rawParams instanceof FrameLayout.LayoutParams) {
+            FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) rawParams;
+            flp.gravity = topGravity;
+            flp.topMargin = 24;
+            flp.leftMargin = 32;
+            flp.rightMargin = 32;
+        } else if (rawParams instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) rawParams;
+            mlp.topMargin = 24;
+            mlp.leftMargin = 32;
+            mlp.rightMargin = 32;
+        }
+        snackView.setLayoutParams(rawParams);
 
         // ── Fondo redondeado ──
         int resolvedBg = ContextCompat.getColor(root.getContext(), bgColor);
@@ -92,11 +114,8 @@ public final class TopSnackbar {
         shape.setShape(GradientDrawable.RECTANGLE);
         shape.setCornerRadius(32f);
         shape.setColor(resolvedBg);
+        snackView.setBackgroundTintList(null);
         snackView.setBackground(shape);
-
-        // Margen horizontal para que no toque los bordes
-        params.leftMargin = 32;
-        params.rightMargin = 32;
 
         // ── Texto ──
         int resolvedText = ContextCompat.getColor(root.getContext(), textColor);

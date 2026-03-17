@@ -40,11 +40,11 @@
     <color name="transparent">#00000000</color>
 
     <!-- Snackbar backgrounds -->
-    <color name="snackbarSuccessBg">#D1CECE</color>
-    <color name="snackbarSuccessText">#1B5E20</color>
-    <color name="snackbarWarningBg">#D1CECE</color>
-    <color name="snackbarWarningText">#E65100</color>
-    <color name="snackbarErrorBg">#D1CECE</color>
-    <color name="snackbarErrorText">#B71C1C</color>
+    <color name="snackbarSuccessBg">#DCD9D9</color>
+    <color name="snackbarSuccessText">#15803D</color>
+    <color name="snackbarWarningBg">#DCD9D9</color>
+    <color name="snackbarWarningText">#C7571A</color>
+    <color name="snackbarErrorBg">#DCD9D9</color>
+    <color name="snackbarErrorText">#DC2626</color>
 
 </resources>
