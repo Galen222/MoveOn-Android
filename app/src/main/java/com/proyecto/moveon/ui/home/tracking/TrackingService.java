@@ -71,10 +71,12 @@ public final class TrackingService extends Service implements SensorEventListene
     // Constantes de acelerómetro
     // -------------------------------------------------------------------------
 
-    /** Umbral de magnitud (m/s²) para distinguir correr de caminar. */
-    private static final float ACCEL_RUN_THRESHOLD = 13.0f;
+    /** Umbral de magnitud (m/s²) para detectar corriendo. */
+    private static final float ACCEL_RUN_THRESHOLD  = 15.0f;
     /** Muestras totales por ventana de análisis. */
-    private static final int   ACCEL_SAMPLE_WINDOW = 10;
+    private static final int   ACCEL_SAMPLE_WINDOW  = 15;
+    /** Ventanas consecutivas necesarias para cambiar de estado. */
+    private static final int   CONFIRM_STEPS        = 3;
 
     // -------------------------------------------------------------------------
     // Constantes de localización
@@ -131,7 +133,6 @@ public final class TrackingService extends Service implements SensorEventListene
     // en el hilo principal y eliminar la condición de carrera con onNewLocation().
     // -------------------------------------------------------------------------
 
-    // BUG-02: Handler anclado al main looper — todos los ticks se ejecutan en el hilo principal.
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -160,8 +161,10 @@ public final class TrackingService extends Service implements SensorEventListene
     private SensorManager    sensorManager;
     @Nullable private Sensor accelerometer;
 
-    private int accelRunSamples   = 0;
-    private int accelTotalSamples = 0;
+    private int accelRunSamples     = 0;
+    private int accelTotalSamples   = 0;
+    private int runningConfirmCount = 0;
+    private int walkingConfirmCount = 0;
 
     // -------------------------------------------------------------------------
     // Ciclo de vida del servicio
@@ -338,13 +341,23 @@ public final class TrackingService extends Service implements SensorEventListene
         }
 
         if (accelTotalSamples >= ACCEL_SAMPLE_WINDOW) {
-            TrackingState.ActivityType detected =
-                    (accelRunSamples >= ACCEL_SAMPLE_WINDOW / 2)
-                            ? TrackingState.ActivityType.RUNNING_ACTIVITY
-                            : TrackingState.ActivityType.WALKING;
+            boolean mayoriaCorrer = accelRunSamples >= ACCEL_SAMPLE_WINDOW / 2;
 
-            if (detected != activityType) {
-                activityType = detected;
+            if (mayoriaCorrer) {
+                runningConfirmCount++;
+                walkingConfirmCount = 0;
+            } else {
+                walkingConfirmCount++;
+                runningConfirmCount = 0;
+            }
+
+            if (runningConfirmCount >= CONFIRM_STEPS
+                    && activityType != TrackingState.ActivityType.RUNNING_ACTIVITY) {
+                activityType = TrackingState.ActivityType.RUNNING_ACTIVITY;
+                publishState();
+            } else if (walkingConfirmCount >= CONFIRM_STEPS
+                    && activityType != TrackingState.ActivityType.WALKING) {
+                activityType = TrackingState.ActivityType.WALKING;
                 publishState();
             }
 
@@ -435,14 +448,16 @@ public final class TrackingService extends Service implements SensorEventListene
     }
 
     private void resetInternalState() {
-        elapsedSeconds    = 0L;
-        distanceMeters    = 0;
-        calories          = 0;
+        elapsedSeconds      = 0L;
+        distanceMeters      = 0;
+        calories            = 0;
         routePoints.clear();
-        lastLocation      = null;
-        accelRunSamples   = 0;
-        accelTotalSamples = 0;
-        activityType      = TrackingState.ActivityType.WALKING;
+        lastLocation        = null;
+        accelRunSamples     = 0;
+        accelTotalSamples   = 0;
+        runningConfirmCount = 0;
+        walkingConfirmCount = 0;
+        activityType        = TrackingState.ActivityType.WALKING;
     }
 
     // -------------------------------------------------------------------------

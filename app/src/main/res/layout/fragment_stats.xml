@@ -25,22 +25,6 @@
 
             <!-- Título -->
             <TextView
-                android:id="@+id/tv_monthly_goal_header"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginBottom="8dp"
-                android:background="?attr/selectableItemBackground"
-                android:contentDescription="@string/stats_goal_chevron_desc"
-                android:drawablePadding="8dp"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center_vertical"
-                android:text="@string/stats_section_monthly_goal"
-                android:textColor="@color/textPrimary"
-                android:textSize="16sp"
-                app:drawableEndCompat="@drawable/ic_chevron_right"
-                app:drawableTint="@color/textTertiary" />
-
-            <TextView
                 android:id="@+id/tv_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -295,6 +279,22 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_monthly_goal_header"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:contentDescription="@string/stats_goal_chevron_desc"
+                        android:drawablePadding="8dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:gravity="center_vertical"
+                        android:text="@string/stats_section_monthly_goal"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="16sp"
+                        app:drawableEndCompat="@drawable/ic_chevron_right"
+                        app:drawableTint="@color/textTertiary" />
 
                     <TextView
                         android:id="@+id/tv_monthly_goal_remaining"

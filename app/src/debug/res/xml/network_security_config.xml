@@ -17,5 +17,6 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">192.168.1.10</domain>
         <domain includeSubdomains="false">192.168.40.64</domain>
+        <domain includeSubdomains="false">192.168.68.105</domain>  <!-- ← añadir esta -->
     </domain-config>
 </network-security-config>

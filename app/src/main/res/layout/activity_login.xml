@@ -76,7 +76,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textNoSuggestions"
-                android:textColor="@color/textPrimary" />
+                android:textColor="@color/textPrimary"
+                tools:ignore="TextContrastCheck"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Campo Contraseña -->
@@ -104,25 +105,23 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPassword"
-                android:textColor="@color/textPrimary" />
+                android:textColor="@color/textPrimary"
+                tools:ignore="TextContrastCheck"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Fila: Recordar cuenta + ¿Olvidaste contraseña? -->
+        <!-- Recordar cuenta -->
         <CheckBox
             android:id="@+id/cbRecordarCuenta"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/auth_margin_horizontal"
             android:layout_marginTop="4dp"
-            android:layout_marginEnd="8dp"
             android:text="@string/login_recordar_cuenta"
             android:textColor="@color/textSecondary"
             android:textSize="@dimen/auth_forgot_text_size"
             android:buttonTint="@color/greenPrimary"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btnOlvidarPassword"
-            app:layout_constraintTop_toBottomOf="@+id/tilPassword"
-            app:layout_constraintBottom_toBottomOf="@+id/btnOlvidarPassword" />
+            app:layout_constraintTop_toBottomOf="@+id/tilPassword" />
 
         <!-- ¿Olvidaste tu contraseña? -->
         <com.google.android.material.button.MaterialButton
@@ -136,7 +135,7 @@
             android:textColor="@color/greenPrimary"
             android:textSize="@dimen/auth_forgot_text_size"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tilPassword" />
+            app:layout_constraintTop_toBottomOf="@+id/cbRecordarCuenta" />
 
         <!-- Botón Iniciar Sesión -->
         <com.google.android.material.button.MaterialButton
