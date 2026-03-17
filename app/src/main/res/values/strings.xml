@@ -259,7 +259,7 @@
 
     <!-- Eliminar actividad -->
     <string name="stats_delete_title">Eliminar actividad</string>
-    <string name="stats_delete_message">¿Estás seguro de que quieres eliminar esta actividad? Esta acción no se puede deshacer.</string>
+    <string name="stats_delete_message">¿Eliminar esta actividad? Se restará de tus estadísticas y no podrás recuperarla.</string>
     <string name="stats_delete_confirm">Eliminar</string>
     <string name="stats_delete_ok">Actividad eliminada correctamente</string>
     <string name="stats_delete_no_sync">No se puede eliminar una actividad pendiente de sincronizar</string>
