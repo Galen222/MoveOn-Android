@@ -40,4 +40,12 @@
     <color name="scrim">#80000000</color>
     <color name="transparent">#00000000</color>
 
+    <!-- Snackbar backgrounds -->
+    <color name="snackbarSuccessBg">#2C2A2A</color>
+    <color name="snackbarSuccessText">#1B5E20</color>
+    <color name="snackbarWarningBg">#2C2A2A</color>
+    <color name="snackbarWarningText">#E65100</color>
+    <color name="snackbarErrorBg">#2C2A2A</color>
+    <color name="snackbarErrorText">#B71C1C</color>
+
 </resources>

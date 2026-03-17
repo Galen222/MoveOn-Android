@@ -1,6 +1,7 @@
 package com.proyecto.moveon.core.i18n;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 
 import androidx.annotation.NonNull;
@@ -35,15 +36,53 @@ public final class AppLanguageManager {
 
     private AppLanguageManager() {}
 
+    /**
+     * Aplica el idioma guardado usando {@code setApplicationLocales}.
+     * Usar SOLO en {@code Application.onCreate()} (arranque en frío, sin Activity visible).
+     * NO usar durante cambios interactivos de idioma — causa pantalla negra en API 33+.
+     */
     public static void applySavedLanguage(@NonNull Context context) {
         cleanupLegacyStoredMode(context);
         applyResolvedLanguage(context);
     }
 
+    /**
+     * Guarda el idioma Y llama a {@code setApplicationLocales}.
+     * Usar SOLO cuando NO hay Activity visible (ej: Application.onCreate).
+     */
     public static void saveAndApply(@NonNull Context context, @NonNull String mode) {
         String safeMode = sanitizeSelectableMode(mode);
         AppSettingsManager.setAppLanguage(context, safeMode);
         applyResolvedLanguage(context);
+    }
+
+    /**
+     * Guarda el idioma SIN llamar a {@code setApplicationLocales}.
+     * Diseñado para cambios interactivos: guardar → recreate() → attachBaseContext
+     * aplica el nuevo idioma sin pasar por LocaleManager del sistema.
+     */
+    public static void saveOnly(@NonNull Context context, @NonNull String mode) {
+        String safeMode = sanitizeSelectableMode(mode);
+        AppSettingsManager.setAppLanguage(context, safeMode);
+    }
+
+    /**
+     * Envuelve un contexto base con el idioma resuelto.
+     * Llamar desde {@code Activity.attachBaseContext()} para aplicar el idioma
+     * sin usar setApplicationLocales (evita la recreación del sistema en API 33+).
+     */
+    @NonNull
+    public static Context wrapContext(@NonNull Context baseContext) {
+        String tag = getResolvedLanguageTag(baseContext);
+        Locale locale = Locale.forLanguageTag(tag);
+        Locale currentLocale = baseContext.getResources().getConfiguration().getLocales().get(0);
+        if (locale.equals(currentLocale)) {
+            return baseContext;
+        }
+        Configuration config = new Configuration(baseContext.getResources().getConfiguration());
+        config.setLocale(locale);
+        config.setLayoutDirection(locale);
+        return baseContext.createConfigurationContext(config);
     }
 
     /**

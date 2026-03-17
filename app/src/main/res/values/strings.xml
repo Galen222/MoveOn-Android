@@ -298,7 +298,7 @@
     <string name="stats_calendar_btn_more">Ver más meses</string>
     <string name="stats_calendar_distance_kcal">%1$s · %2$d kcal</string>
 
-    <!-- Diálogo cambio de objetivo -->
+    <!-- Diálogo cambió de objetivo -->
     <string name="stats_dialog_weekly_goal_title">Objetivo semanal</string>
     <string name="stats_dialog_monthly_goal_title">Objetivo mensual</string>
     <string name="stats_goal_chevron_desc">Cambiar objetivo</string>
@@ -377,8 +377,8 @@
 
     <!-- Notificaciones -->
     <string name="profile_notifications_blocked_system">Las notificaciones están bloqueadas en los ajustes del sistema</string>
+    <string name="profile_section_permissions_language">Permisos e idioma</string>
     <string name="profile_notifications_open_settings">Abrir ajustes</string>
-    <string name="profile_section_tracking_requirements">Requisitos de actividades</string>
     <string name="profile_tracking_requirement_location">Ubicación</string>
     <string name="profile_tracking_requirement_activity">Actividad física</string>
     <string name="profile_tracking_requirement_notifications">Notificaciones</string>

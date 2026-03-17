@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.app.DatePickerDialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -17,10 +18,12 @@ import android.widget.Toast;
 
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityRegisterBinding;
 import com.proyecto.moveon.core.validation.AppInputValidator;
 import com.proyecto.moveon.domain.auth.RegisterInput;
+import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
@@ -38,6 +41,11 @@ public class RegisterActivity extends AppCompatActivity {
 
     private ActivityRegisterBinding binding;
     private AuthViewModel viewModel;
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(AppLanguageManager.wrapContext(newBase));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,7 +139,7 @@ public class RegisterActivity extends AppCompatActivity {
                 setLoading(false);
                 applyBackendErrors(state.error);
                 if (!state.error.hasFieldErrors()) {
-                    Toast.makeText(this, state.error.getMessage(), Toast.LENGTH_LONG).show();
+                    TopSnackbar.error(binding.getRoot(), state.error.getMessage());
                 }
                 viewModel.resetRegisterState();
             }

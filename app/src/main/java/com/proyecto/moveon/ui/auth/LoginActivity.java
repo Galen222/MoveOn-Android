@@ -3,14 +3,17 @@ package com.proyecto.moveon.ui.auth;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.widget.Toast;
 
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityLoginBinding;
 import com.proyecto.moveon.core.validation.AppInputValidator;
+import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
@@ -19,6 +22,11 @@ public class LoginActivity extends AppCompatActivity {
 
     private ActivityLoginBinding binding;
     private AuthViewModel viewModel;
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(AppLanguageManager.wrapContext(newBase));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +66,6 @@ public class LoginActivity extends AppCompatActivity {
         binding.etUsuarioCorreo.setOnFocusChangeListener((v, f) -> { if (f) binding.tilUsuarioCorreo.setError(null); });
         binding.etPassword.setOnFocusChangeListener((v, f) -> { if (f) binding.tilPassword.setError(null); });
 
-        // Navega a ForgotPasswordActivity (antes era un Toast provisional)
         binding.btnOlvidarPassword.setOnClickListener(v ->
                 NavigationUtils.goToActivity(this, ForgotPasswordActivity.class)
         );
@@ -68,25 +75,22 @@ public class LoginActivity extends AppCompatActivity {
         viewModel.getLoginState().observe(this, state -> {
             if (state == null) return;
 
-            // 1. Si empieza a cargar, bloqueamos y ponemos "Entrando..."
             if (state.loading) {
                 setLoading(true);
             }
 
-            // 2. Si hay ERROR, restauramos el botón y mostramos el fallo
             if (state.error != null) {
                 setLoading(false);
 
                 applyBackendErrors(state.error);
 
                 if (!state.error.hasFieldErrors()) {
-                    Toast.makeText(this, state.error.getMessage(), Toast.LENGTH_LONG).show();
+                    TopSnackbar.error(binding.getRoot(), state.error.getMessage());
                 }
 
                 viewModel.resetLoginState();
             }
 
-            // 3. Si hay ÉXITO, NO quitamos el loading. Dejamos que la pantalla cambie suavemente.
             if (state.data != null) {
                 Toast.makeText(this,
                         getString(R.string.login_bienvenido, state.data.nombreUsuario),

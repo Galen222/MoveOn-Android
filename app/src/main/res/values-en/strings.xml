@@ -236,7 +236,7 @@
     <string name="profile_photo_queued">Photo saved locally. It will upload when the connection returns.</string>
     <string name="profile_notifications_blocked_system">Notifications are blocked in the system settings</string>
     <string name="profile_notifications_open_settings">Open settings</string>
-    <string name="profile_section_tracking_requirements">Activity requirements</string>
+    <string name="profile_section_permissions_language">Permissions and language</string>
     <string name="profile_tracking_requirement_location">Location</string>
     <string name="profile_tracking_requirement_activity">Physical activity</string>
     <string name="profile_tracking_requirement_notifications">Notifications</string>

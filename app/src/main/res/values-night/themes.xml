@@ -63,6 +63,13 @@
 
         <!-- Widgets -->
         <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigationView</item>
+
+    </style>
+
+    <style name="Theme.MoveOn.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/darkBackground</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.MoveOn</item>
     </style>
 
     <style name="Theme.MoveOn" parent="Base.Theme.MoveOn" />

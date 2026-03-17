@@ -374,6 +374,7 @@ public final class TrackingService extends Service implements SensorEventListene
                     elapsedSeconds++;
                     calories = calculateCalories(); // BUG-12
                     publishState();
+                    updateNotification();
                 }),
                 1L, 1L, TimeUnit.SECONDS);
     }
@@ -478,7 +479,10 @@ public final class TrackingService extends Service implements SensorEventListene
                 this, 1, restoreIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        String contentText = formatElapsed(elapsedSeconds) + "  ·  " + distanceMeters + " m";
+        String distText = distanceMeters >= 1000
+                ? String.format(Locale.US, "%.2f km", distanceMeters / 1000.0)
+                : distanceMeters + " m";
+        String contentText = formatElapsed(elapsedSeconds) + "  ·  " + distText;
 
         return new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(getString(R.string.tracking_notification_title))

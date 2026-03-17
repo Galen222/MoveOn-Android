@@ -17,8 +17,6 @@ import android.widget.ArrayAdapter;
 import android.widget.NumberPicker;
 import android.widget.Toast;
 
-import com.google.android.material.snackbar.Snackbar;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -51,6 +49,7 @@ import com.proyecto.moveon.databinding.DialogEditProvinciaBinding;
 import com.proyecto.moveon.databinding.FragmentProfileBinding;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
 import com.proyecto.moveon.ui.auth.LoginActivity;
+import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
@@ -83,7 +82,7 @@ public class ProfileFragment extends Fragment {
 
                 File file = uriToFile(uri);
                 if (file == null) {
-                    showFeedbackMessage(getString(R.string.profile_error_photo_read));
+                    showErrorFeedback(getString(R.string.profile_error_photo_read));
                     return;
                 }
                 showTransientPhotoPreview(file);
@@ -311,7 +310,7 @@ public class ProfileFragment extends Fragment {
                     AppInputValidator.ValidationResult<String> validation =
                             AppInputValidator.validateRealName(requireContext(), value, false);
                     if (!validation.isValid()) {
-                        showFeedbackMessage(validation.getErrorMessage());
+                        showErrorFeedback(validation.getErrorMessage());
                         return false;
                     }
 
@@ -337,7 +336,7 @@ public class ProfileFragment extends Fragment {
                     AppInputValidator.ValidationResult<String> validation =
                             AppInputValidator.validateEmail(requireContext(), value, true);
                     if (!validation.isValid()) {
-                        showFeedbackMessage(validation.getErrorMessage());
+                        showErrorFeedback(validation.getErrorMessage());
                         return false;
                     }
 
@@ -394,7 +393,7 @@ public class ProfileFragment extends Fragment {
                     AppInputValidator.ValidationResult<Integer> validation =
                             AppInputValidator.validateHeight(requireContext(), altura);
                     if (!validation.isValid()) {
-                        showFeedbackMessage(validation.getErrorMessage());
+                        showErrorFeedback(validation.getErrorMessage());
                         return;
                     }
                     viewModel.updatePerfil(new ProfilePatchPayload().altura(validation.getValue()).toJson());
@@ -444,7 +443,7 @@ public class ProfileFragment extends Fragment {
                     AppInputValidator.ValidationResult<Double> validation =
                             AppInputValidator.validateWeight(requireContext(), peso);
                     if (!validation.isValid()) {
-                        showFeedbackMessage(validation.getErrorMessage());
+                        showErrorFeedback(validation.getErrorMessage());
                         return;
                     }
                     viewModel.updatePerfil(new ProfilePatchPayload().peso(validation.getValue()).toJson());
@@ -570,7 +569,7 @@ public class ProfileFragment extends Fragment {
             AppInputValidator.ValidationResult<String> validation =
                     AppInputValidator.validateBirthDate(requireContext(), selectedDate);
             if (!validation.isValid()) {
-                showFeedbackMessage(validation.getErrorMessage());
+                showErrorFeedback(validation.getErrorMessage());
                 return;
             }
 
@@ -696,8 +695,10 @@ public class ProfileFragment extends Fragment {
                 .setSingleChoiceItems(labels, checkedItem, (dialog, which) -> {
                     String selectedMode = modes[which];
                     if (!selectedMode.equals(viewModel.getAppLanguageMode())) {
-                        startUiRecreationWithSplash(() ->
-                                AppLanguageManager.saveAndApply(requireContext(), selectedMode));
+                        startUiRecreationWithSplash(() -> {
+                            AppLanguageManager.saveOnly(requireContext(), selectedMode);
+                            requireActivity().recreate();
+                        });
                     }
                     dialog.dismiss();
                 })
@@ -734,7 +735,7 @@ public class ProfileFragment extends Fragment {
             if (state.data != null) {
                 bindPerfilData(state.data);
             } else if (state.error != null) {
-                showErrorMessage(state.error, viewModel::loadPerfil);
+                showApiError(state.error, viewModel::loadPerfil);
             }
         });
 
@@ -744,13 +745,13 @@ public class ProfileFragment extends Fragment {
             if (state.data != null) {
                 String updateStatus = state.data;
                 if (PerfilRepository.UpdateResult.STATUS_SYNCED.equals(updateStatus)) {
-                    showFeedbackMessage(getString(R.string.profile_update_ok));
+                    showSuccessFeedback(getString(R.string.profile_update_ok));
                 } else if (PerfilRepository.UpdateResult.STATUS_QUEUED.equals(updateStatus)) {
-                    showFeedbackMessage(getString(R.string.profile_update_queued));
+                    showWarningFeedback(getString(R.string.profile_update_queued));
                 }
                 viewModel.resetUpdateState();
             } else if (state.error != null) {
-                showErrorMessage(state.error, viewModel::retryLastUpdate);
+                showApiError(state.error, viewModel::retryLastUpdate);
                 viewModel.resetUpdateState();
             }
         });
@@ -761,9 +762,9 @@ public class ProfileFragment extends Fragment {
             if (state.data != null) {
                 if (PerfilRepository.UpdateResult.STATUS_SYNCED.equals(state.data)) {
                     transientPhotoPreviewPath = null;
-                    showFeedbackMessage(getString(R.string.profile_photo_ok));
+                    showSuccessFeedback(getString(R.string.profile_photo_ok));
                 } else if (PerfilRepository.UpdateResult.STATUS_QUEUED.equals(state.data)) {
-                    showFeedbackMessage(getString(R.string.profile_photo_queued));
+                    showWarningFeedback(getString(R.string.profile_photo_queued));
                 }
                 viewModel.resetPhotoState();
             } else if (state.error != null) {
@@ -771,7 +772,7 @@ public class ProfileFragment extends Fragment {
                 if (perfilActual != null) {
                     bindPerfilData(perfilActual);
                 }
-                showErrorMessage(state.error, viewModel::retryLastPhotoUpload);
+                showApiError(state.error, viewModel::retryLastPhotoUpload);
                 viewModel.resetPhotoState();
             }
         });
@@ -793,19 +794,31 @@ public class ProfileFragment extends Fragment {
     }
 
 
-    private void showFeedbackMessage(@NonNull CharSequence message) {
+    // ── TopSnackbar helpers ─────────────────────────────────────────────────────
+
+    private void showSuccessFeedback(@NonNull CharSequence message) {
         if (binding == null) return;
-        Snackbar.make(binding.getRoot(), message, Snackbar.LENGTH_LONG).show();
+        TopSnackbar.success(binding.getRoot(), message);
     }
 
-    private void showErrorMessage(@NonNull ApiError error, @Nullable Runnable retryAction) {
+    private void showWarningFeedback(@NonNull CharSequence message) {
         if (binding == null) return;
+        TopSnackbar.warning(binding.getRoot(), message);
+    }
 
-        Snackbar snackbar = Snackbar.make(binding.getRoot(), error.getMessage(), Snackbar.LENGTH_LONG);
+    private void showErrorFeedback(@NonNull CharSequence message) {
+        if (binding == null) return;
+        TopSnackbar.error(binding.getRoot(), message);
+    }
+
+    private void showApiError(@NonNull ApiError error, @Nullable Runnable retryAction) {
+        if (binding == null) return;
         if (retryAction != null && isRetryable(error)) {
-            snackbar.setAction(R.string.stats_btn_retry, v -> retryAction.run());
+            TopSnackbar.error(binding.getRoot(), error.getMessage(),
+                    getString(R.string.stats_btn_retry), retryAction);
+        } else {
+            TopSnackbar.error(binding.getRoot(), error.getMessage());
         }
-        snackbar.show();
     }
 
     private boolean isRetryable(@Nullable ApiError error) {
@@ -1028,4 +1041,3 @@ public class ProfileFragment extends Fragment {
         boolean onSaved(@NonNull String value);
     }
 }
-

@@ -76,15 +76,24 @@
 
         <!-- ── Servicios ── -->
 
-        <!--
-            TrackingService: servicio en primer plano de localización.
-            foregroundServiceType="location" es obligatorio en API 34+
-            para servicios que acceden a ubicación en primer plano.
-        -->
         <service
             android:name=".ui.home.tracking.TrackingService"
             android:exported="false"
             android:foregroundServiceType="location" />
+
+        <!--
+            Fuerza a AppCompat a gestionar el idioma internamente con
+            Activity.recreate() en vez de delegar a LocaleManager del sistema
+            (que destruye la ventana y causa pantalla negra en Android 13+).
+        -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
 
     </application>
 

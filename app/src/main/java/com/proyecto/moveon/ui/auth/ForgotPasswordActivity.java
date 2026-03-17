@@ -1,5 +1,6 @@
 package com.proyecto.moveon.ui.auth;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
@@ -9,9 +10,11 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityForgotPasswordBinding;
 import com.proyecto.moveon.core.validation.AppInputValidator;
+import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
 
@@ -27,6 +30,11 @@ public class ForgotPasswordActivity extends AppCompatActivity {
 
     /** Email confirmado en el paso 1; se reutiliza en el paso 2. */
     private String emailConfirmado = "";
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(AppLanguageManager.wrapContext(newBase));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,7 +100,7 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                 setLoadingPaso1(false);
                 applyBackendErrorsPaso1(state.error);
                 if (!state.error.hasFieldErrors()) {
-                    Toast.makeText(this, state.error.getMessage(), Toast.LENGTH_LONG).show();
+                    TopSnackbar.error(binding.getRoot(), state.error.getMessage());
                 }
                 viewModel.resetForgotState();
                 return;
@@ -100,7 +108,8 @@ public class ForgotPasswordActivity extends AppCompatActivity {
 
             if (state.data != null) {
                 setLoadingPaso1(false);
-                Toast.makeText(this, getString(R.string.forgot_toast_codigo_enviado), Toast.LENGTH_LONG).show();
+                TopSnackbar.success(binding.getRoot(),
+                        getString(R.string.forgot_toast_codigo_enviado));
                 viewModel.resetForgotState();
                 mostrarPaso2();
             }
@@ -119,16 +128,16 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                 setLoadingPaso2(false);
                 applyBackendErrorsPaso2(state.error);
                 if (!state.error.hasFieldErrors()) {
-                    Toast.makeText(this, state.error.getMessage(), Toast.LENGTH_LONG).show();
+                    TopSnackbar.error(binding.getRoot(), state.error.getMessage());
                 }
                 viewModel.resetResetState();
                 return;
             }
 
             if (state.data != null) {
-                Toast.makeText(this, getString(R.string.forgot_toast_password_cambiada), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.forgot_toast_password_cambiada),
+                        Toast.LENGTH_LONG).show();
                 viewModel.resetResetState();
-                // Éxito: limpiamos el stack y volvemos al login
                 NavigationUtils.goToActivityAndClearTask(this, LoginActivity.class);
             }
         });
@@ -207,14 +216,13 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     }
 
     private void applyBackendErrorsPaso2(ApiError err) {
-        String codigoMsg = err.firstFieldMessage("codigo"); /* Warning por ortografía (no poner tilde) */
+        String codigoMsg = err.firstFieldMessage("codigo");
         String passwordMsg = err.firstFieldMessage("password");
         String emailMsg    = err.firstFieldMessage("email", "correo");
 
         if (StringUtils.hasText(codigoMsg))   binding.tilCodigo.setError(codigoMsg);
         if (StringUtils.hasText(passwordMsg)) binding.tilPasswordNueva.setError(passwordMsg);
-        // El email no es editable en paso 2 → mostramos como Toast
-        if (StringUtils.hasText(emailMsg))    Toast.makeText(this, emailMsg, Toast.LENGTH_LONG).show();
+        if (StringUtils.hasText(emailMsg))    TopSnackbar.error(binding.getRoot(), emailMsg);
     }
 
     // -------------------------------------------------------------------------
@@ -224,10 +232,8 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     private void mostrarPaso1() {
         binding.tvDescripcion.setText(getString(R.string.forgot_description_step1));
 
-        // Paso 1 visible
         binding.tilEmail.setVisibility(View.VISIBLE);
 
-        // Step 2 hidden
         binding.tilCodigo.setVisibility(View.GONE);
         binding.tilPasswordNueva.setVisibility(View.GONE);
         binding.tilPasswordConfirmar.setVisibility(View.GONE);
@@ -238,10 +244,8 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     private void mostrarPaso2() {
         binding.tvDescripcion.setText(getString(R.string.forgot_description_step2));
 
-        // Paso 1 oculto
         binding.tilEmail.setVisibility(View.GONE);
 
-        // Step 2 visible
         binding.tilCodigo.setVisibility(View.VISIBLE);
         binding.tilPasswordNueva.setVisibility(View.VISIBLE);
         binding.tilPasswordConfirmar.setVisibility(View.VISIBLE);

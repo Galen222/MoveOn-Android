@@ -16,11 +16,11 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.snackbar.Snackbar;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.databinding.FragmentStatsBinding;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 import com.proyecto.moveon.domain.activity.StatsResumen;
+import com.proyecto.moveon.ui.common.TopSnackbar;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -100,9 +100,9 @@ public class StatsFragment extends Fragment {
             var state = event.getContentIfNotHandled();
             if (state == null) return;
             if (state.data != null) {
-                Snackbar.make(binding.getRoot(), R.string.stats_delete_ok, Snackbar.LENGTH_SHORT).show();
+                TopSnackbar.success(binding.getRoot(), getString(R.string.stats_delete_ok));
             } else if (state.error != null) {
-                Snackbar.make(binding.getRoot(), state.error.getMessage(), Snackbar.LENGTH_LONG).show();
+                TopSnackbar.error(binding.getRoot(), state.error.getMessage());
             }
         });
     }
@@ -259,7 +259,7 @@ public class StatsFragment extends Fragment {
 
     private void onDeleteClick(@NonNull ActividadItem item) {
         if (item.isPendingSync()) {
-            Snackbar.make(binding.getRoot(), R.string.stats_delete_no_sync, Snackbar.LENGTH_LONG).show();
+            TopSnackbar.warning(binding.getRoot(), getString(R.string.stats_delete_no_sync));
             return;
         }
         new MaterialAlertDialogBuilder(requireContext())

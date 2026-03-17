@@ -1,5 +1,6 @@
 package com.proyecto.moveon.ui.main;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 
@@ -15,6 +16,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.auth.GlobalAuthManager;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityMainBinding;
@@ -46,8 +48,14 @@ public class MainActivity extends AppCompatActivity {
     private boolean pendingUiTransitionSplash = false;
 
     @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(AppLanguageManager.wrapContext(newBase));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         pendingUiTransitionSplash = AppSettingsManager.isUiTransitionSplashRequested(this);
+
 
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         if (pendingUiTransitionSplash) {

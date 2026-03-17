@@ -1,0 +1,124 @@
+package com.proyecto.moveon.ui.common;
+
+import android.graphics.drawable.GradientDrawable;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.core.content.ContextCompat;
+
+import com.google.android.material.snackbar.Snackbar;
+import com.proyecto.moveon.R;
+
+public final class TopSnackbar {
+
+    public enum Type { SUCCESS, WARNING, ERROR }
+
+    private TopSnackbar() {}
+
+    // ── Métodos principales ──
+
+    public static void success(@NonNull View root, @NonNull CharSequence msg) {
+        show(root, msg, Type.SUCCESS, Snackbar.LENGTH_LONG, null, null);
+    }
+
+    public static void success(@NonNull View root, @StringRes int msgRes) {
+        show(root, root.getContext().getString(msgRes), Type.SUCCESS, Snackbar.LENGTH_LONG, null, null);
+    }
+
+    public static void warning(@NonNull View root, @NonNull CharSequence msg) {
+        show(root, msg, Type.WARNING, Snackbar.LENGTH_LONG, null, null);
+    }
+
+    public static void warning(@NonNull View root, @StringRes int msgRes) {
+        show(root, root.getContext().getString(msgRes), Type.WARNING, Snackbar.LENGTH_LONG, null, null);
+    }
+
+    public static void error(@NonNull View root, @NonNull CharSequence msg) {
+        show(root, msg, Type.ERROR, Snackbar.LENGTH_LONG, null, null);
+    }
+
+    public static void error(@NonNull View root, @NonNull CharSequence msg,
+                             @Nullable String actionLabel, @Nullable Runnable action) {
+        show(root, msg, Type.ERROR, Snackbar.LENGTH_LONG, actionLabel, action);
+    }
+
+    // ── Lógica interna ──
+
+    private static void show(@NonNull View root,
+                             @NonNull CharSequence msg,
+                             @NonNull Type type,
+                             int duration,
+                             @Nullable String actionLabel,
+                             @Nullable Runnable action) {
+
+        Snackbar snackbar = Snackbar.make(root, msg, duration);
+
+        // ── Colores según tipo ──
+        int bgColor, textColor, iconRes;
+        switch (type) {
+            case SUCCESS:
+                bgColor   = R.color.snackbarSuccessBg;
+                textColor = R.color.snackbarSuccessText;
+                iconRes   = R.drawable.ic_snackbar_success;
+                break;
+            case WARNING:
+                bgColor   = R.color.snackbarWarningBg;
+                textColor = R.color.snackbarWarningText;
+                iconRes   = R.drawable.ic_snackbar_warning;
+                break;
+            default: // ERROR
+                bgColor   = R.color.snackbarErrorBg;
+                textColor = R.color.snackbarErrorText;
+                iconRes   = R.drawable.ic_snackbar_error;
+                break;
+        }
+
+        View snackView = snackbar.getView();
+
+        // ── Posición arriba ──
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) snackView.getLayoutParams();
+        params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+        params.topMargin = 24;
+        snackView.setLayoutParams(params);
+
+        // ── Fondo redondeado ──
+        int resolvedBg = ContextCompat.getColor(root.getContext(), bgColor);
+        GradientDrawable shape = new GradientDrawable();
+        shape.setShape(GradientDrawable.RECTANGLE);
+        shape.setCornerRadius(32f);
+        shape.setColor(resolvedBg);
+        snackView.setBackground(shape);
+
+        // Margen horizontal para que no toque los bordes
+        params.leftMargin = 32;
+        params.rightMargin = 32;
+
+        // ── Texto ──
+        int resolvedText = ContextCompat.getColor(root.getContext(), textColor);
+        TextView tv = snackView.findViewById(com.google.android.material.R.id.snackbar_text);
+        tv.setTextColor(resolvedText);
+        tv.setMaxLines(3);
+        tv.setCompoundDrawablePadding(24);
+
+        // ── Icono ──
+        tv.setCompoundDrawablesRelativeWithIntrinsicBounds(iconRes, 0, 0, 0);
+        // Tint del icono al color del texto
+        if (tv.getCompoundDrawablesRelative()[0] != null) {
+            tv.getCompoundDrawablesRelative()[0].setTint(resolvedText);
+        }
+
+        // ── Botón de acción (retry, etc.) ──
+        if (actionLabel != null && action != null) {
+            snackbar.setActionTextColor(resolvedText);
+            snackbar.setAction(actionLabel, v -> action.run());
+        }
+
+        snackbar.setAnimationMode(Snackbar.ANIMATION_MODE_FADE);
+        snackbar.show();
+    }
+}

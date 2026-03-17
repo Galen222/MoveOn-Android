@@ -1,10 +1,7 @@
 package com.proyecto.moveon.ui.home;
 
-import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.LayoutInflater;
@@ -21,6 +18,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -45,6 +44,11 @@ import java.util.concurrent.TimeUnit;
  *                        └──[Stop]──► FINISHED → guarda → IDLE
  */
 public class InicioFragment extends Fragment implements OnMapReadyCallback {
+
+    // ── Posición por defecto (España) cuando no hay permisos ──
+    private static final LatLng DEFAULT_LOCATION = new LatLng(40.4168, -3.7038);
+    private static final float  DEFAULT_ZOOM     = 5.5f;
+    private static final float  USER_ZOOM        = 16f;
 
     private FragmentInicioBinding binding;
     private TrackingViewModel viewModel;
@@ -99,6 +103,10 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
 
         if (TrackingRequirementsManager.hasLocationPermission(requireContext())) {
             enableMapMyLocation();
+            moveCameraToCurrentLocation();
+        } else {
+            googleMap.moveCamera(
+                    CameraUpdateFactory.newLatLngZoom(DEFAULT_LOCATION, DEFAULT_ZOOM));
         }
     }
 
@@ -107,6 +115,29 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
         if (googleMap != null && TrackingRequirementsManager.hasLocationPermission(requireContext())) {
             googleMap.setMyLocationEnabled(true);
         }
+    }
+
+    @SuppressWarnings("MissingPermission")
+    private void moveCameraToCurrentLocation() {
+        if (googleMap == null
+                || !TrackingRequirementsManager.hasLocationPermission(requireContext())) return;
+
+        FusedLocationProviderClient fusedClient =
+                LocationServices.getFusedLocationProviderClient(requireContext());
+
+        fusedClient.getLastLocation().addOnSuccessListener(location -> {
+            if (!isAdded() || googleMap == null) return;
+
+            if (location != null) {
+                LatLng userLatLng = new LatLng(
+                        location.getLatitude(), location.getLongitude());
+                googleMap.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(userLatLng, USER_ZOOM));
+            } else {
+                googleMap.moveCamera(
+                        CameraUpdateFactory.newLatLngZoom(DEFAULT_LOCATION, DEFAULT_ZOOM));
+            }
+        });
     }
 
     private void setupClickListeners() {
@@ -299,6 +330,7 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
 
         if (TrackingRequirementsManager.hasLocationPermission(requireContext())) {
             enableMapMyLocation();
+            moveCameraToCurrentLocation();
         }
 
         List<TrackingRequirementsManager.Requirement> blockedRequirements =
