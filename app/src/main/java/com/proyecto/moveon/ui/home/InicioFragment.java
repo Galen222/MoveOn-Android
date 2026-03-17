@@ -37,15 +37,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Fragmento principal de tracking.
- * Flujo de estados:
- *   IDLE ──[Play]──► RUNNING ──[Pausa]──► PAUSED ──[Play]──► RUNNING
- *                        └──[Stop]──► FINISHED → guarda → IDLE
- */
 public class InicioFragment extends Fragment implements OnMapReadyCallback {
 
-    // ── Posición por defecto (España) cuando no hay permisos ──
     private static final LatLng DEFAULT_LOCATION = new LatLng(40.4168, -3.7038);
     private static final float  DEFAULT_ZOOM     = 5.5f;
     private static final float  USER_ZOOM        = 16f;
@@ -274,6 +267,9 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
         binding.tvDistance.setText(formatDistance(state.getDistanceMeters()));
         binding.tvCalories.setText(
                 getString(R.string.tracking_calories_format, state.getCalories()));
+
+        String pace = state.getPace();
+        binding.tvPace.setText(pace != null ? pace : getString(R.string.tracking_default_pace));
     }
 
     private void updateMapRoute(@NonNull List<LatLng> points) {

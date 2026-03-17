@@ -24,6 +24,8 @@
     <string name="Inicio_fragment_inicio_xml">Inicio</string>
     <string name="inicio_walking">Andando</string>
     <string name="inicio_running">Corriendo</string>
+    <string name="tracking_label_pace">RITMO</string>
+    <string name="tracking_default_pace">--\'--\"</string>
 
     <!-- ContentDescriptions -->
     <string name="inicio_desc_add">Añadir</string>

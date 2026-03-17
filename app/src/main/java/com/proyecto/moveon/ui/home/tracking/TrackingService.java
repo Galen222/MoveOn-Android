@@ -48,6 +48,7 @@ import java.util.concurrent.TimeUnit;
  * - Detección automática Caminar/Correr via acelerómetro
  * - Cronómetro interno con tick cada segundo
  * - Cálculo de distancia acumulada
+ * - Cálculo de ritmo (min/km)
  * - Codificación de la ruta en Encoded Polyline al finalizar
  * Se comunica con TrackingViewModel a través del patrón Binder local.
  */
@@ -71,11 +72,8 @@ public final class TrackingService extends Service implements SensorEventListene
     // Constantes de acelerómetro
     // -------------------------------------------------------------------------
 
-    /** Umbral de magnitud (m/s²) para detectar corriendo. */
     private static final float ACCEL_RUN_THRESHOLD  = 15.0f;
-    /** Muestras totales por ventana de análisis. */
     private static final int   ACCEL_SAMPLE_WINDOW  = 15;
-    /** Ventanas consecutivas necesarias para cambiar de estado. */
     private static final int   CONFIRM_STEPS        = 3;
 
     // -------------------------------------------------------------------------
@@ -86,6 +84,9 @@ public final class TrackingService extends Service implements SensorEventListene
     private static final long  LOCATION_FASTEST_MS     = 1_500L;
     private static final float LOCATION_MIN_DISTANCE_M = 5.0f;
     private static final float LOCATION_MIN_ACCURACY_M = 20.0f;
+
+    /** Distancia mínima (m) para mostrar ritmo — evita valores absurdos al inicio. */
+    private static final int PACE_MIN_DISTANCE_M = 200;
 
     // -------------------------------------------------------------------------
     // Binder local
@@ -119,10 +120,12 @@ public final class TrackingService extends Service implements SensorEventListene
     private TrackingState.Status       currentStatus = TrackingState.Status.IDLE;
     private TrackingState.ActivityType activityType  = TrackingState.ActivityType.WALKING;
 
-    private long   elapsedSeconds = 0L;
-    private int    distanceMeters = 0;
-    private int    calories       = 0;
-    private double userWeightKg   = 70.0;
+    private long   elapsedSeconds  = 0L;
+    /** Segundos en estado RUNNING — excluye pausas. Usado para el cálculo de ritmo. */
+    private long   activeSeconds   = 0L;
+    private int    distanceMeters  = 0;
+    private int    calories        = 0;
+    private double userWeightKg    = 70.0;
 
     private final List<LatLng> routePoints = new ArrayList<>();
     @Nullable private Location lastLocation = null;
@@ -273,7 +276,7 @@ public final class TrackingService extends Service implements SensorEventListene
     // Localización
     // -------------------------------------------------------------------------
 
-    @SuppressWarnings("MissingPermission") // El Fragment verifica permisos antes de iniciar
+    @SuppressWarnings("MissingPermission")
     private void startLocationUpdates() {
         LocationRequest request = new LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY, LOCATION_INTERVAL_MS)
@@ -309,7 +312,7 @@ public final class TrackingService extends Service implements SensorEventListene
     }
 
     // -------------------------------------------------------------------------
-    // Acelerómetro — detección Caminar / Correr
+    // Acelerómetro
     // -------------------------------------------------------------------------
 
     private void startAccelerometer() {
@@ -367,9 +370,7 @@ public final class TrackingService extends Service implements SensorEventListene
     }
 
     @Override
-    public void onAccuracyChanged(@NonNull Sensor sensor, int accuracy) {
-        // No se requiere acción
-    }
+    public void onAccuracyChanged(@NonNull Sensor sensor, int accuracy) {}
 
     // -------------------------------------------------------------------------
     // Cronómetro
@@ -385,6 +386,7 @@ public final class TrackingService extends Service implements SensorEventListene
         timerFuture = scheduler.scheduleWithFixedDelay(
                 () -> mainHandler.post(() -> {
                     elapsedSeconds++;
+                    activeSeconds++; // solo cuenta cuando el timer está activo (RUNNING)
                     calories = calculateCalories(); // BUG-12
                     publishState();
                     updateNotification();
@@ -403,15 +405,30 @@ public final class TrackingService extends Service implements SensorEventListene
     // Cálculo de calorías (MET × peso × tiempo)
     // -------------------------------------------------------------------------
 
-    /**
-     * Estima calorías usando MET (Metabolic Equivalent of Task).
-     * Caminar: MET 3.5 — Correr: MET 8.0
-     */
     private int calculateCalories() {
         if (elapsedSeconds <= 0 || userWeightKg <= 0) return 0;
         double met         = (activityType == TrackingState.ActivityType.RUNNING_ACTIVITY) ? 8.0 : 3.5;
         double hoursActive = elapsedSeconds / 3600.0;
         return (int) Math.round(met * userWeightKg * hoursActive);
+    }
+
+    // -------------------------------------------------------------------------
+    // Cálculo de ritmo (min/km)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Devuelve el ritmo como "M'SS\"" o null si aún no hay suficiente distancia.
+     * Usa activeSeconds (excluye pausas) para un ritmo real.
+     * No se muestra hasta PACE_MIN_DISTANCE_M metros para evitar valores absurdos.
+     */
+    @Nullable
+    private String calculatePace() {
+        if (distanceMeters < PACE_MIN_DISTANCE_M || activeSeconds <= 0) return null;
+        double paceMinKm = (activeSeconds / 60.0) / (distanceMeters / 1000.0);
+        int mins = (int) paceMinKm;
+        int secs = (int) Math.round((paceMinKm - mins) * 60);
+        if (secs == 60) { mins++; secs = 0; }
+        return String.format(Locale.US, "%d'%02d\"", mins, secs);
     }
 
     // -------------------------------------------------------------------------
@@ -430,6 +447,7 @@ public final class TrackingService extends Service implements SensorEventListene
                 .elapsedSeconds(elapsedSeconds)
                 .distanceMeters(distanceMeters)
                 .calories(calories)
+                .pace(calculatePace())
                 .routePoints(new ArrayList<>(routePoints))
                 .encodedPolyline(polyline)
                 .build();
@@ -449,6 +467,7 @@ public final class TrackingService extends Service implements SensorEventListene
 
     private void resetInternalState() {
         elapsedSeconds      = 0L;
+        activeSeconds       = 0L;
         distanceMeters      = 0;
         calories            = 0;
         routePoints.clear();
@@ -497,7 +516,9 @@ public final class TrackingService extends Service implements SensorEventListene
         String distText = distanceMeters >= 1000
                 ? String.format(Locale.US, "%.2f km", distanceMeters / 1000.0)
                 : distanceMeters + " m";
-        String contentText = formatElapsed(elapsedSeconds) + "  ·  " + distText;
+        String paceText = calculatePace();
+        String contentText = formatElapsed(elapsedSeconds) + "  ·  " + distText
+                + (paceText != null ? "  ·  " + paceText + "/km" : "");
 
         return new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(getString(R.string.tracking_notification_title))

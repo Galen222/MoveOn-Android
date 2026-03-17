@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:background="@color/surfaceBackground"
     android:baselineAligned="false"
     android:orientation="vertical">
 
-    <!-- ── Header con fondo propio ── -->
+    <!-- Header con fondo propio  -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -43,7 +43,7 @@
 
     </LinearLayout>
 
-    <!-- ── Mapa (peso 1 para ocupar el espacio disponible) ── -->
+    <!--  Mapa (peso 1 para ocupar el espacio disponible) -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_map"
         android:layout_width="match_parent"
@@ -59,7 +59,8 @@
             android:id="@+id/map_fragment"
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            tools:ignore="UnknownFragment,InstantiationWarning" />
 
         <!-- Gradiente inferior sobre el mapa -->
         <View
@@ -195,6 +196,40 @@
                         android:layout_marginTop="2dp"
                         android:letterSpacing="0.12"
                         android:text="@string/tracking_label_cal"
+                        android:textColor="@color/textSecondary"
+                        android:textSize="11sp" />
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="32dp"
+                    android:background="@color/dividerColor" />
+
+                <!-- Ritmo -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:baselineAligned="false"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_pace"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/tracking_default_pace"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:letterSpacing="0.12"
+                        android:text="@string/tracking_label_pace"
                         android:textColor="@color/textSecondary"
                         android:textSize="11sp" />
 

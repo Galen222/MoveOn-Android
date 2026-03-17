@@ -10,9 +10,7 @@ import java.util.List;
 
 /**
  * Estado inmutable del módulo de tracking.
-
  * Para modificar el estado se usa el {@link Builder}.
-
  * Ciclo de vida: IDLE → RUNNING → PAUSED → RUNNING → FINISHED
  */
 @Keep
@@ -24,13 +22,9 @@ public final class TrackingState {
     // -------------------------------------------------------------------------
 
     public enum Status {
-        /** Sin actividad en curso. */
         IDLE,
-        /** Grabando ubicación y acelerómetro. */
         RUNNING,
-        /** Pausado por el usuario. */
         PAUSED,
-        /** Actividad finalizada, lista para guardar. */
         FINISHED
     }
 
@@ -48,6 +42,7 @@ public final class TrackingState {
     private   final long                 elapsedSeconds;
     private   final int                  distanceMeters;
     private   final int                  calories;
+    @Nullable private final String       pace;
     @NonNull  private final List<LatLng> routePoints;
     @Nullable private final String       encodedPolyline;
 
@@ -61,6 +56,7 @@ public final class TrackingState {
             long                   elapsedSeconds,
             int                    distanceMeters,
             int                    calories,
+            @Nullable String       pace,
             @NonNull  List<LatLng> routePoints,
             @Nullable String       encodedPolyline) {
 
@@ -69,6 +65,7 @@ public final class TrackingState {
         this.elapsedSeconds  = elapsedSeconds;
         this.distanceMeters  = distanceMeters;
         this.calories        = calories;
+        this.pace            = pace;
         this.routePoints     = Collections.unmodifiableList(routePoints);
         this.encodedPolyline = encodedPolyline;
     }
@@ -91,6 +88,7 @@ public final class TrackingState {
     public    long                getElapsedSeconds()  { return elapsedSeconds; }
     public    int                 getDistanceMeters()  { return distanceMeters; }
     public    int                 getCalories()        { return calories; }
+    @Nullable public String       getPace()            { return pace; }
     @NonNull  public List<LatLng> getRoutePoints()     { return routePoints; }
     @Nullable public String       getEncodedPolyline() { return encodedPolyline; }
 
@@ -103,7 +101,6 @@ public final class TrackingState {
     public boolean isPaused()   { return status == Status.PAUSED; }
     public boolean isFinished() { return status == Status.FINISHED; }
 
-    /** true si hay una actividad en curso (grabando o pausada). */
     public boolean isActive()   { return status == Status.RUNNING || status == Status.PAUSED; }
 
     // -------------------------------------------------------------------------
@@ -122,6 +119,7 @@ public final class TrackingState {
         private   long                 elapsedSeconds  = 0L;
         private   int                  distanceMeters  = 0;
         private   int                  calories        = 0;
+        @Nullable private String       pace            = null;
         @NonNull  private List<LatLng> routePoints     = Collections.emptyList();
         @Nullable private String       encodedPolyline = null;
 
@@ -133,6 +131,7 @@ public final class TrackingState {
             this.elapsedSeconds  = s.elapsedSeconds;
             this.distanceMeters  = s.distanceMeters;
             this.calories        = s.calories;
+            this.pace            = s.pace;
             this.routePoints     = s.routePoints;
             this.encodedPolyline = s.encodedPolyline;
         }
@@ -142,6 +141,7 @@ public final class TrackingState {
         public Builder elapsedSeconds(long v)                 { this.elapsedSeconds  = v; return this; }
         public Builder distanceMeters(int v)                  { this.distanceMeters  = v; return this; }
         public Builder calories(int v)                        { this.calories        = v; return this; }
+        public Builder pace(@Nullable String v)               { this.pace            = v; return this; }
         public Builder routePoints(@NonNull List<LatLng> v)   { this.routePoints     = v; return this; }
         public Builder encodedPolyline(@Nullable String v)    { this.encodedPolyline = v; return this; }
 
@@ -149,7 +149,7 @@ public final class TrackingState {
         public TrackingState build() {
             return new TrackingState(
                     status, activityType, elapsedSeconds,
-                    distanceMeters, calories, routePoints, encodedPolyline);
+                    distanceMeters, calories, pace, routePoints, encodedPolyline);
         }
     }
 }
