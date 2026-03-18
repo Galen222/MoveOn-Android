@@ -6,9 +6,7 @@ import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.network.ConnectivityObserver;
 import com.proyecto.moveon.core.theme.ThemeManager;
-import com.proyecto.moveon.data.activities.ActivityRepository;
 import com.proyecto.moveon.data.local.db.AppDatabase;
-import com.proyecto.moveon.data.profile.PerfilRepository;
 
 public class MoveOnApp extends Application {
 
@@ -28,9 +26,14 @@ public class MoveOnApp extends Application {
         // sin esperar a que el usuario haga otra acción.
         ConnectivityObserver connectivity = ConnectivityObserver.getInstance();
         connectivity.init(this);
-        connectivity.setOnReconnect(() -> {
-            new ActivityRepository(this).enqueueSync();
-            new PerfilRepository(this).enqueueSync();
+
+        // Usar ServiceLocator en vez de new para que
+        // PerfilRepository reutilice el UserPrefsRepository singleton.
+        // BUG-N05: addOnReconnectListener en vez de setOnReconnect.
+        connectivity.addOnReconnectListener(() -> {
+            ServiceLocator locator = ServiceLocator.getInstance(this);
+            locator.newActivityRepository().enqueueSync();
+            locator.newPerfilRepository().enqueueSync();
         });
     }
 }

@@ -7,7 +7,7 @@ import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
+import com.proyecto.moveon.ui.common.TopSnackbar;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -50,6 +50,10 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
     @Nullable private GoogleMap googleMap;
     @Nullable private Polyline routePolyline;
 
+    /** {@code true} tras centrar la cámara en la ubicación real del usuario.
+     *  Evita re-centrar innecesariamente en cada onResume (ej. al cambiar de tab). */
+    private boolean userLocated = false;
+
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(
                     new ActivityResultContracts.RequestMultiplePermissions(),
@@ -78,6 +82,21 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Si los permisos se concedieron desde otro sitio (ej. ProfileFragment o
+        // Ajustes del sistema) mientras este Fragment estaba oculto, onMapReady
+        // ya pasó y el mapa sigue centrado en España. Aquí detectamos esa situación
+        // y centramos la cámara en el usuario.
+        if (googleMap != null
+                && !userLocated
+                && TrackingRequirementsManager.hasLocationPermission(requireContext())) {
+            enableMapMyLocation();
+            moveCameraToCurrentLocation();
+        }
     }
 
     private void setupMap() {
@@ -127,6 +146,7 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
                         location.getLatitude(), location.getLongitude());
                 googleMap.animateCamera(
                         CameraUpdateFactory.newLatLngZoom(userLatLng, USER_ZOOM));
+                userLocated = true;
             } else {
                 googleMap.moveCamera(
                         CameraUpdateFactory.newLatLngZoom(DEFAULT_LOCATION, DEFAULT_ZOOM));
@@ -210,8 +230,8 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
                     uiState.loading ? View.VISIBLE : View.GONE);
 
             if (!uiState.loading && uiState.data != null) {
-                Toast.makeText(requireContext(),
-                        R.string.tracking_activity_saved_ok, Toast.LENGTH_SHORT).show();
+                TopSnackbar.success(binding.getRoot(),
+                        getString(R.string.tracking_activity_saved_ok));
                 clearMapRoute();
             }
         });
@@ -220,7 +240,7 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
             if (event == null) return;
             String msg = event.getContentIfNotHandled();
             if (msg != null) {
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
+                TopSnackbar.error(binding.getRoot(), msg);
             }
         });
 

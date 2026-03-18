@@ -13,6 +13,9 @@ import androidx.lifecycle.MutableLiveData;
 import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
 import com.proyecto.moveon.data.remote.retrofit.AppSessionProvider;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 /**
  * Observador de conectividad a nivel de proceso.
  *
@@ -22,7 +25,7 @@ import com.proyecto.moveon.data.remote.retrofit.AppSessionProvider;
  * <ol>
  *   <li>Resetea el cooldown de {@link AppSessionProvider} para que el próximo
  *       handshake se intente de verdad.</li>
- *   <li>Ejecuta un {@link Runnable} opcional (inyectado vía {@link #setOnReconnect})
+ *   <li>Ejecuta todos los listeners registrados vía {@link #addOnReconnectListener}
  *       para lanzar la sincronización de repos pendientes.</li>
  * </ol>
  *
@@ -33,7 +36,10 @@ public final class ConnectivityObserver {
     private static volatile ConnectivityObserver instance;
 
     private final MutableLiveData<Boolean> connected = new MutableLiveData<>(true);
-    private volatile Runnable onReconnect;
+    // BUG-N05: Lista de listeners en lugar de un único Runnable.
+    // CopyOnWriteArrayList es thread-safe y eficiente para listas pequeñas
+    // con lecturas frecuentes (cada reconexión) y escrituras raras (solo al arrancar).
+    private final List<Runnable> reconnectListeners = new CopyOnWriteArrayList<>();
 
     private ConnectivityObserver() {}
 
@@ -108,12 +114,21 @@ public final class ConnectivityObserver {
     }
 
     /**
-     * Inyecta la acción a ejecutar cuando la red vuelve.
-     * Típicamente: enqueueSync de todos los repositorios con patches pendientes.
+     * Registra una acción a ejecutar cuando la red vuelve.
+     * Típicamente: enqueueSync de repositorios con patches pendientes.
      * Se ejecuta en hilo IO para no bloquear el callback del sistema.
+     *
+     * <p>Soporta múltiples listeners: cada llamada añade sin sobrescribir.</p>
      */
-    public void setOnReconnect(@NonNull Runnable action) {
-        this.onReconnect = action;
+    public void addOnReconnectListener(@NonNull Runnable listener) {
+        reconnectListeners.add(listener);
+    }
+
+    /**
+     * Elimina un listener registrado previamente.
+     */
+    public void removeOnReconnectListener(@NonNull Runnable listener) {
+        reconnectListeners.remove(listener);
     }
 
     private void onNetworkRestored() {
@@ -121,9 +136,8 @@ public final class ConnectivityObserver {
         // tras reconectar no falle con "cooldown tras fallo reciente".
         AppSessionProvider.resetFailureCooldown();
 
-        Runnable action = onReconnect;
-        if (action != null) {
-            MoveOnExecutors.io().execute(action);
+        for (Runnable listener : reconnectListeners) {
+            MoveOnExecutors.io().execute(listener);
         }
     }
 

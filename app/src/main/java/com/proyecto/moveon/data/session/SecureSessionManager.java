@@ -40,6 +40,8 @@ public final class SecureSessionManager {
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int GCM_TAG_LENGTH_BITS = 128;
 
+    // Seguro: el singleton solo retiene appContext (Application), no una Activity.
+    // Application vive todo el proceso, así que no hay leak real.
     @SuppressWarnings("StaticFieldLeak")
     private static volatile SecureSessionManager instance;
 
@@ -198,20 +200,24 @@ public final class SecureSessionManager {
 
     public void logout() {
         synchronized (sessionLock) {
+            // BUG-N04: commit() en lugar de apply() para garantizar que los tokens
+            // se borran de disco antes de retornar. Si el proceso muere justo después,
+            // no quedarán tokens residuales en SharedPreferences.
             prefs.edit()
                     .remove(KEY_USERNAME_CT).remove(KEY_USERNAME_IV)
                     .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
                     .remove(KEY_REFRESH_TOKEN_CT).remove(KEY_REFRESH_TOKEN_IV)
                     .remove(KEY_USER_ID_CT).remove(KEY_USER_ID_IV)
-                    .apply();
+                    .commit();
         }
     }
 
     public void clearAccessTokenOnly() {
         synchronized (sessionLock) {
+            // BUG-N04: commit() — misma razón que logout().
             prefs.edit()
                     .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
-                    .apply();
+                    .commit();
         }
     }
 
