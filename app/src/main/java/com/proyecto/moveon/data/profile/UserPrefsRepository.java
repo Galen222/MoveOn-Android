@@ -101,12 +101,6 @@ public class UserPrefsRepository {
         });
     }
 
-    /** Limpia las preferencias al hacer logout. */
-    @SuppressWarnings("unused")
-    public void clearForAccount(@NonNull String accountKey) {
-        io.execute(() -> db.userPrefsDao().deleteByAccount(accountKey));
-    }
-
     @NonNull
     private UserPrefsEntity getOrCreate(@NonNull String accountKey) {
         UserPrefsEntity prefs = db.userPrefsDao().getNow(accountKey);

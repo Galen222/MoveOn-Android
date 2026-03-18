@@ -10,6 +10,7 @@ import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.app.ServiceLocator;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.data.activities.ActivityRepository;
 import com.proyecto.moveon.data.local.entity.UserPrefsEntity;
@@ -66,8 +67,10 @@ public class StatsViewModel extends AndroidViewModel {
 
     public StatsViewModel(@NonNull Application application) {
         super(application);
-        actividadRepository = new ActivityRepository(application);
-        userPrefsRepository = new UserPrefsRepository(application);
+        // MEJ-01: Creación centralizada vía ServiceLocator.
+        ServiceLocator locator = ServiceLocator.getInstance(application);
+        actividadRepository = locator.newActivityRepository();
+        userPrefsRepository = locator.getUserPrefsRepository();
         SecureSessionManager sessionManager = SecureSessionManager.getInstance(application);
         accountKey = sessionManager.getAccountKey();
 

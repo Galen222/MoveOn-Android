@@ -8,6 +8,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.proyecto.moveon.app.ServiceLocator;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
 import com.proyecto.moveon.data.activities.ActivityRepository;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadRequestDto;
@@ -54,7 +55,8 @@ public final class TrackingViewModel extends AndroidViewModel {
 
     public TrackingViewModel(@NonNull Application application) {
         super(application);
-        repository = new ActivityRepository(application);
+        // MEJ-01: Creación centralizada vía ServiceLocator.
+        repository = ServiceLocator.getInstance(application).newActivityRepository();
         trackingController = new TrackingServiceController(application);
         trackingState.setValue(TrackingState.idle());
         trackingState.addSource(trackingController.getTrackingState(), trackingState::setValue);

@@ -344,5 +344,11 @@
     <string name="profile_delete_account_dialog_confirm">Delete permanently</string>
     <string name="profile_delete_account_deleting">Deleting account…</string>
     <string name="profile_error_delete_account">Could not delete the account. Please try again.</string>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  OFFLINE                                                               -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <string name="offline_banner_text">No connection. Changes will sync automatically.</string>
+
 </resources>
 

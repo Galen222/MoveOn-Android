@@ -64,12 +64,26 @@ public class PerfilRepository {
     private final ExecutorService io = MoveOnExecutors.io();
     private final Gson gson = new Gson();
 
+    /**
+     * Constructor por defecto: crea su propio UserPrefsRepository.
+     * Usado por los Workers que necesitan instancias aisladas.
+     */
     public PerfilRepository(@NonNull Context context) {
+        this(context, new UserPrefsRepository(context));
+    }
+
+    /**
+     * MEJ-01: Constructor con inyección de UserPrefsRepository.
+     * Usado por ServiceLocator para compartir la instancia singleton
+     * y evitar duplicados entre ViewModels.
+     */
+    public PerfilRepository(@NonNull Context context,
+                            @NonNull UserPrefsRepository userPrefsRepository) {
         this.appContext = context.getApplicationContext();
         AppDatabase db = AppDatabase.getInstance(appContext);
         this.local = new PerfilLocalDataSource(db);
         this.remote = new PerfilRemoteDataSource(appContext);
-        this.userPrefsRepository = new UserPrefsRepository(appContext);
+        this.userPrefsRepository = userPrefsRepository;
     }
 
     public LiveData<PerfilUsuario> observePerfil(@NonNull String accountKey) {
@@ -315,7 +329,11 @@ public class PerfilRepository {
                 .build();
 
         WorkManager.getInstance(appContext)
-                .enqueueUniqueWork(UNIQUE_SYNC_WORK_NAME, ExistingWorkPolicy.KEEP, request);
+                // FIX: REPLACE en vez de KEEP para que cada acción nueva reprograme
+                // el Worker con backoff fresco. Con KEEP, un Worker dormido en backoff
+                // exponencial (hasta 30 s) bloqueaba la sincronización de patches
+                // nuevos hasta que el backoff anterior expirase.
+                .enqueueUniqueWork(UNIQUE_SYNC_WORK_NAME, ExistingWorkPolicy.REPLACE, request);
     }
 
     public void eliminarCuenta(@NonNull AuthRepository.Callback<String> callback) {

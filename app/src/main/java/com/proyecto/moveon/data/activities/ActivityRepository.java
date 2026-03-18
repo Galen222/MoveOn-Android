@@ -317,7 +317,11 @@ public final class ActivityRepository {
                 .build();
 
         WorkManager.getInstance(appContext)
-                .enqueueUniqueWork(UNIQUE_SYNC_WORK_NAME, ExistingWorkPolicy.KEEP, request);
+                // FIX: REPLACE en vez de KEEP para que cada acción nueva reprograme
+                // el Worker con backoff fresco. Con KEEP, un Worker dormido en backoff
+                // exponencial (hasta 30 s) bloqueaba la sincronización de patches
+                // nuevos hasta que el backoff anterior expirase.
+                .enqueueUniqueWork(UNIQUE_SYNC_WORK_NAME, ExistingWorkPolicy.REPLACE, request);
     }
 
     public void cancelAll() {

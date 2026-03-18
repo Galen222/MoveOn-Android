@@ -528,4 +528,9 @@
     <string name="profile_delete_account_deleting">Eliminando cuenta…</string>
     <string name="profile_error_delete_account">No se pudo eliminar la cuenta. Inténtalo de nuevo.</string>
 
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  OFFLINE                                                               -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <string name="offline_banner_text">Sin conexión. Los cambios se sincronizarán automáticamente.</string>
+
 </resources>

@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.auth.GlobalAuthManager;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
+import com.proyecto.moveon.core.network.ConnectivityObserver;
 import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityMainBinding;
@@ -90,6 +91,14 @@ public class MainActivity extends AppCompatActivity {
             if (token != null) {
                 GlobalAuthManager.getInstance().acknowledgeSessionExpired();
                 SessionUiHelper.handleSessionExpired(this, getString(R.string.auth_sesion_expirada));
+            }
+        });
+
+        // MEJ-11: Observar estado de red para mostrar/ocultar banner offline.
+        ConnectivityObserver.getInstance().isConnected().observe(this, online -> {
+            if (binding != null) {
+                binding.offlineBanner.setVisibility(
+                        Boolean.TRUE.equals(online) ? View.GONE : View.VISIBLE);
             }
         });
 

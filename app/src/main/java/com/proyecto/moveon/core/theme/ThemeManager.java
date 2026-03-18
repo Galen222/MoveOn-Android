@@ -35,21 +35,6 @@ public final class ThemeManager {
         return AppSettingsManager.getThemeMode(context);
     }
 
-    @SuppressWarnings("unused")
-    public static boolean isDarkMode(@NonNull Context context) {
-        return MODE_DARK.equals(getSavedMode(context));
-    }
-
-    @SuppressWarnings("unused")
-    public static boolean isLightMode(@NonNull Context context) {
-        return MODE_LIGHT.equals(getSavedMode(context));
-    }
-
-    @SuppressWarnings("unused")
-    public static boolean isSystemMode(@NonNull Context context) {
-        return MODE_SYSTEM.equals(getSavedMode(context));
-    }
-
     public static void applyMode(@NonNull String mode) {
         switch (sanitizeMode(mode)) {
             case MODE_DARK:

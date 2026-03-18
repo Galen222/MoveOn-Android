@@ -94,13 +94,6 @@ public class ActividadRemoteDataSource {
     }
 
     @NonNull
-    @SuppressWarnings("unused")
-    public ApiResult<BorrarActividadResponseDto> deleteActividadBlocking(int remoteId) {
-        return api.deleteBlocking(ENDPOINT_DELETE + remoteId,
-                json -> gson.fromJson(json, BorrarActividadResponseDto.class));
-    }
-
-    @NonNull
     public ApiResult<List<ActividadResponseDto>> fetchAllActividadesBlocking() {
         List<ActividadResponseDto> acc = new ArrayList<>();
         int skip = 0;

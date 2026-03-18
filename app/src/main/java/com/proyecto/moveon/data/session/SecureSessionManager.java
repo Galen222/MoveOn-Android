@@ -313,11 +313,19 @@ public final class SecureSessionManager {
 
         try {
             String[] parts = token.split("\\.");
-            if (parts.length < 2) return null;
+            // MEJ-06: Validación estructural del JWT.
+            // Un JWT válido tiene exactamente 3 segmentos: header.payload.signature.
+            // Con < 3 segmentos el token está malformado o manipulado.
+            if (parts.length != 3) return null;
 
             byte[] payloadBytes = Base64.decode(parts[1], Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
             String payloadJson = new String(payloadBytes, StandardCharsets.UTF_8);
-            return new JSONObject(payloadJson);
+            JSONObject payload = new JSONObject(payloadJson);
+
+            // Validar que el payload contenga los campos mínimos esperados.
+            if (!payload.has("sub") || !payload.has("exp")) return null;
+
+            return payload;
         } catch (Exception ignored) {
             return null;
         }

@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.google.gson.JsonObject;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.app.ServiceLocator;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
@@ -42,9 +43,11 @@ public class ProfileViewModel extends AndroidViewModel {
 
     public ProfileViewModel(@NonNull Application application) {
         super(application);
-        authRepository = new AuthRepository(application);
+        // MEJ-01: Creación centralizada vía ServiceLocator.
+        ServiceLocator locator = ServiceLocator.getInstance(application);
+        authRepository = locator.newAuthRepository();
         sessionManager = SecureSessionManager.getInstance(application);
-        perfilRepository = new PerfilRepository(application);
+        perfilRepository = locator.newPerfilRepository();
         accountKey = sessionManager.getAccountKey();
 
         // FIX: Carga inicial del caché movida a hilo IO para evitar
@@ -80,11 +83,13 @@ public class ProfileViewModel extends AndroidViewModel {
         return AppLanguageManager.getSelectedMode(getApplication());
     }
 
+    // API pública: selector de idioma en perfil (pendiente de UI)
     @SuppressWarnings("unused")
     public boolean hasManualAppLanguageSelection() {
         return AppLanguageManager.hasManualSelection(getApplication());
     }
 
+    // API pública: selector de idioma en perfil (pendiente de UI)
     @SuppressWarnings("unused")
     public void setAppLanguageMode(@NonNull String mode) {
         AppLanguageManager.saveAndApply(getApplication(), mode);

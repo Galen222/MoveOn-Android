@@ -66,6 +66,11 @@ public abstract class AppDatabase extends RoomDatabase {
                                     "moveon_local.db"
                             )
                             .addMigrations(MIGRATION_4_5)
+                            // MEJ-08: Si un usuario salta versiones y no existe migración
+                            // intermedia, Room destruye y recrea las tablas en vez de crashear.
+                            // Los datos locales son caché del servidor — se re-sincronizan al
+                            // abrir la app. Preferible a un crash irrecuperable.
+                            .fallbackToDestructiveMigration()
                             .build();
                 }
             }

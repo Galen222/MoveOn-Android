@@ -100,6 +100,17 @@ public final class AppSessionProvider {
         }
     }
 
+    /**
+     * MEJ-11: Resetea el cooldown de fallo para que la próxima operación
+     * intente el handshake real en vez de fallar instantáneamente.
+     * Llamado por {@code ConnectivityObserver} cuando la red vuelve tras
+     * una desconexión — si el backend estaba caído y ahora hay red, el
+     * cooldown del fallo anterior ya no es relevante.
+     */
+    public static void resetFailureCooldown() {
+        lastFailureTime = 0;
+    }
+
     private static String fetchNewSession() throws Exception {
         retrofit2.Response<AppSessionResponseDto> response =
                 getApi().getHandshake(BuildConfig.APP_ID).execute();
