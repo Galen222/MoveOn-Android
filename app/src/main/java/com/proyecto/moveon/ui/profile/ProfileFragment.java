@@ -1,56 +1,38 @@
 package com.proyecto.moveon.ui.profile;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.location.LocationManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.NumberPicker;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.ObjectKey;
-import com.google.android.material.datepicker.CalendarConstraints;
-import com.google.android.material.datepicker.DateValidatorPointBackward;
-import com.google.android.material.datepicker.MaterialDatePicker;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
-import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
-import com.proyecto.moveon.core.validation.AppInputValidator;
 import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
-import com.proyecto.moveon.data.profile.sync.ProfilePatchPayload;
+import com.proyecto.moveon.core.validation.AppInputValidator;
 import com.proyecto.moveon.data.profile.PerfilRepository;
-import com.proyecto.moveon.databinding.DialogEditFieldBinding;
-import com.proyecto.moveon.databinding.DialogEditProvinciaBinding;
+import com.proyecto.moveon.data.profile.sync.ProfilePatchPayload;
 import com.proyecto.moveon.databinding.FragmentProfileBinding;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
 import com.proyecto.moveon.ui.auth.LoginActivity;
 import com.proyecto.moveon.ui.common.TopSnackbar;
-import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
 
@@ -62,7 +44,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.FormatStyle;
-import java.util.Calendar;
 import java.util.Locale;
 
 public class ProfileFragment extends Fragment {
@@ -73,6 +54,8 @@ public class ProfileFragment extends Fragment {
     @Nullable private PerfilUsuario perfilActual;
     @Nullable private String transientPhotoPreviewPath;
 
+    private ProfileDialogHelper dialogHelper;
+    private ProfileTrackingHelper trackingHelper;
 
     private final ActivityResultLauncher<Intent> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -91,16 +74,9 @@ public class ProfileFragment extends Fragment {
 
     private final ActivityResultLauncher<String[]> trackingRequirementPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(),
-                    result -> updateTrackingRequirementsUi());
-
-    private final BroadcastReceiver deviceLocationStateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            updateTrackingRequirementsUi();
-        }
-    };
-
-    private boolean deviceLocationReceiverRegistered = false;
+                    result -> {
+                        if (trackingHelper != null) trackingHelper.updateTrackingRequirementsUi();
+                    });
 
     public ProfileFragment() {}
 
@@ -109,6 +85,12 @@ public class ProfileFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentProfileBinding.inflate(inflater, container, false);
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
+
+        // MEJ-04: Helpers para diálogos y requisitos de tracking.
+        dialogHelper = new ProfileDialogHelper(
+                this, viewModel, () -> perfilActual, this::showErrorFeedback);
+        trackingHelper = new ProfileTrackingHelper(
+                this, binding, trackingRequirementPermissionLauncher);
 
         bindLocalData();        setupListeners();
         observeViewModel();
@@ -122,12 +104,12 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        registerDeviceLocationReceiver();
+        trackingHelper.registerDeviceLocationReceiver();
     }
 
     @Override
     public void onStop() {
-        unregisterDeviceLocationReceiver();
+        trackingHelper.unregisterDeviceLocationReceiver();
         super.onStop();
     }
 
@@ -136,13 +118,15 @@ public class ProfileFragment extends Fragment {
         super.onResume();
         syncThemeToggleWithSavedMode();
         syncLanguageSelectionText();
-        updateTrackingRequirementsUi();
+        trackingHelper.updateTrackingRequirementsUi();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+        dialogHelper = null;
+        trackingHelper = null;
     }
 
     private void bindLocalData() {
@@ -153,7 +137,7 @@ public class ProfileFragment extends Fragment {
         binding.tvUserName.setText(username);
 
         syncLanguageSelectionText();
-        updateTrackingRequirementsUi();
+        trackingHelper.updateTrackingRequirementsUi();
     }
 
     private void bindPerfilData(@NonNull PerfilUsuario perfil) {
@@ -271,7 +255,7 @@ public class ProfileFragment extends Fragment {
 
             String currentMode = ThemeManager.getSavedMode(requireContext());
             if (newMode.equals(currentMode)) return;
-            startUiRecreationWithSplash(() -> {
+            dialogHelper.startUiRecreationWithSplash(() -> {
                 ThemeManager.saveAndApply(requireContext(), newMode);
                 requireActivity().recreate();
             });
@@ -283,13 +267,13 @@ public class ProfileFragment extends Fragment {
                 Toast.makeText(requireContext(), R.string.common_proximamente, Toast.LENGTH_SHORT).show());
 
         binding.tvTrackingLocationAction.setOnClickListener(
-                v -> handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.LOCATION));
+                v -> trackingHelper.handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.LOCATION));
         binding.tvTrackingActivityAction.setOnClickListener(
-                v -> handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
+                v -> trackingHelper.handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
         binding.tvTrackingNotificationsAction.setOnClickListener(
-                v -> handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.NOTIFICATIONS));
+                v -> trackingHelper.handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.NOTIFICATIONS));
         binding.tvTrackingDeviceLocationAction.setOnClickListener(
-                v -> handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.GPS));
+                v -> trackingHelper.handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.GPS));
 
         binding.fabChangePhoto.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -299,10 +283,10 @@ public class ProfileFragment extends Fragment {
         });
 
         binding.btnLogout.setOnClickListener(v -> viewModel.logout());
-        binding.btnDeleteAccount.setOnClickListener(v -> showDeleteAccountConfirmationDialog());
-        binding.itemLanguage.setOnClickListener(v -> showLanguageDialog());
+        binding.btnDeleteAccount.setOnClickListener(v -> dialogHelper.showDeleteAccountConfirmationDialog());
+        binding.itemLanguage.setOnClickListener(v -> dialogHelper.showLanguageDialog());
 
-        binding.itemFullName.setOnClickListener(v -> showEditTextDialog(
+        binding.itemFullName.setOnClickListener(v -> dialogHelper.showEditTextDialog(
                 getString(R.string.profile_label_fullname),
                 perfilActual != null ? perfilActual.nombreReal : null,
                 android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS,
@@ -328,7 +312,7 @@ public class ProfileFragment extends Fragment {
                 }
         ));
 
-        binding.itemEmail.setOnClickListener(v -> showEditTextDialog(
+        binding.itemEmail.setOnClickListener(v -> dialogHelper.showEditTextDialog(
                 getString(R.string.profile_label_email),
                 perfilActual != null ? perfilActual.email : null,
                 android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,
@@ -354,271 +338,12 @@ public class ProfileFragment extends Fragment {
                 }
         ));
 
-        binding.itemBirthdate.setOnClickListener(v -> showBirthdatePicker());
-        binding.itemProvincia.setOnClickListener(v -> showEditProvinciaDialog());
-        binding.itemGenero.setOnClickListener(v -> showGeneroDialog());
+        binding.itemBirthdate.setOnClickListener(v -> dialogHelper.showBirthdatePicker());
+        binding.itemProvincia.setOnClickListener(v -> dialogHelper.showEditProvinciaDialog());
+        binding.itemGenero.setOnClickListener(v -> dialogHelper.showGeneroDialog());
 
-        binding.itemAltura.setOnClickListener(v -> showAlturaPickerDialog());
-        binding.itemPeso.setOnClickListener(v -> showPesoPickerDialog());
-    }
-
-    // ── Picker de Altura (100–220 cm, enteros) ────────────────────────────────
-
-    private void showAlturaPickerDialog() {
-        final int minAltura = 50;
-        final int maxAltura = 300;
-
-        NumberPicker picker = new NumberPicker(requireContext());
-        picker.setMinValue(minAltura);
-        picker.setMaxValue(maxAltura);
-        picker.setWrapSelectorWheel(false);
-
-        int initialAltura = 170; // dentro del nuevo rango 50–300
-        if (perfilActual != null && perfilActual.altura != null) {
-            int current = perfilActual.altura;
-            if (current >= minAltura && current <= maxAltura) {
-                initialAltura = current;
-            }
-        }
-        picker.setValue(initialAltura);
-
-        int pad = (int) (16 * getResources().getDisplayMetrics().density);
-        picker.setPadding(pad, pad, pad, pad);
-
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.profile_label_altura)
-                .setView(picker)
-                .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .setPositiveButton(R.string.dialog_btn_save, (dialog, which) -> {
-                    int altura = picker.getValue();
-                    AppInputValidator.ValidationResult<Integer> validation =
-                            AppInputValidator.validateHeight(requireContext(), altura);
-                    if (!validation.isValid()) {
-                        showErrorFeedback(validationError(validation));
-                        return;
-                    }
-                    viewModel.updatePerfil(new ProfilePatchPayload().altura(validation.getValue()).toJson());
-                })
-                .show();
-    }
-
-    // ── Picker de Peso (40–200 kg, pasos de 0.5) ─────────────────────────────
-
-    private void showPesoPickerDialog() {
-        final double pesoMin  = 20.0;
-        final double pesoMax  = 300.0;
-        final double pesoStep = 0.5;
-        final int totalItems  = (int) ((pesoMax - pesoMin) / pesoStep) + 1;
-
-        String[] labels = new String[totalItems];
-        for (int i = 0; i < totalItems; i++) {
-            double val = pesoMin + i * pesoStep;
-            labels[i] = String.format(Locale.getDefault(), "%.1f kg", val);
-        }
-
-        NumberPicker picker = new NumberPicker(requireContext());
-        picker.setMinValue(0);
-        picker.setMaxValue(totalItems - 1);
-        picker.setDisplayedValues(labels);
-        picker.setWrapSelectorWheel(false);
-
-        int initialIndex = (int) ((70.0 - pesoMin) / pesoStep); // 70 kg, dentro del nuevo rango 20–300
-        if (perfilActual != null && perfilActual.peso != null) {
-            double current = perfilActual.peso;
-            if (current >= pesoMin && current <= pesoMax) {
-                initialIndex = (int) Math.round((current - pesoMin) / pesoStep);
-            }
-        }
-        picker.setValue(initialIndex);
-
-        int pad = (int) (16 * getResources().getDisplayMetrics().density);
-        picker.setPadding(pad, pad, pad, pad);
-
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.profile_label_peso)
-                .setView(picker)
-                .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .setPositiveButton(R.string.dialog_btn_save, (dialog, which) -> {
-                    double peso = pesoMin + picker.getValue() * pesoStep;
-                    peso = Math.round(peso * 10.0) / 10.0;
-                    AppInputValidator.ValidationResult<Double> validation =
-                            AppInputValidator.validateWeight(requireContext(), peso);
-                    if (!validation.isValid()) {
-                        showErrorFeedback(validationError(validation));
-                        return;
-                    }
-                    viewModel.updatePerfil(new ProfilePatchPayload().peso(validation.getValue()).toJson());
-                })
-                .show();
-    }
-
-    private void showEditTextDialog(@NonNull String label,
-                                    @Nullable String currentValue,
-                                    int inputType,
-                                    boolean required,
-                                    @NonNull OnValueSavedListener listener) {
-        DialogEditFieldBinding dialogBinding =
-                DialogEditFieldBinding.inflate(LayoutInflater.from(requireContext()));
-
-        dialogBinding.tilField.setHint(label);
-        if (StringUtils.hasText(currentValue)) {
-            dialogBinding.etField.setText(currentValue);
-            dialogBinding.etField.setSelection(currentValue.length());
-        }
-        dialogBinding.etField.setInputType(inputType);
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(label)
-                .setView(dialogBinding.getRoot())
-                .setPositiveButton(R.string.dialog_btn_save, null)
-                .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .create();
-
-        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String value = dialogBinding.etField.getText() != null
-                    ? dialogBinding.etField.getText().toString().trim() : "";
-            dialogBinding.tilField.setError(null);
-
-            if (required && value.isEmpty()) {
-                dialogBinding.tilField.setError(getString(R.string.dialog_error_required));
-                return;
-            }
-
-            boolean close = listener.onSaved(value);
-            if (close) dialog.dismiss();
-        }));
-
-        dialog.show();
-    }
-
-    private void showBirthdatePicker() {
-        Calendar maxDate = Calendar.getInstance();
-        maxDate.add(Calendar.YEAR, -18);
-
-        CalendarConstraints constraints = new CalendarConstraints.Builder()
-                .setEnd(maxDate.getTimeInMillis())
-                .setValidator(DateValidatorPointBackward.before(maxDate.getTimeInMillis()))
-                .build();
-
-        long initialSelection;
-        if (perfilActual != null && StringUtils.hasText(perfilActual.fechaNacimiento)) {
-            try {
-                String[] parts = perfilActual.fechaNacimiento.split("-");
-                Calendar cal = Calendar.getInstance();
-                cal.set(Integer.parseInt(parts[0]),
-                        Integer.parseInt(parts[1]) - 1,
-                        Integer.parseInt(parts[2]));
-                initialSelection = cal.getTimeInMillis();
-            } catch (Exception e) {
-                initialSelection = maxDate.getTimeInMillis();
-            }
-        } else {
-            initialSelection = maxDate.getTimeInMillis();
-        }
-
-        MaterialDatePicker<Long> picker = MaterialDatePicker.Builder.datePicker()
-                .setTitleText(R.string.profile_label_birthdate)
-                .setInputMode(MaterialDatePicker.INPUT_MODE_CALENDAR)
-                .setCalendarConstraints(constraints)
-                .setSelection(initialSelection)
-                .build();
-
-        picker.addOnPositiveButtonClickListener(selection -> {
-            Calendar selected = Calendar.getInstance();
-            selected.setTimeInMillis(selection);
-
-            LocalDate selectedDate = LocalDate.of(
-                    selected.get(Calendar.YEAR),
-                    selected.get(Calendar.MONTH) + 1,
-                    selected.get(Calendar.DAY_OF_MONTH)
-            );
-
-            AppInputValidator.ValidationResult<String> validation =
-                    AppInputValidator.validateBirthDate(requireContext(), selectedDate);
-            if (!validation.isValid()) {
-                showErrorFeedback(validationError(validation));
-                return;
-            }
-
-            String fecha = validation.getValue();
-            String currentValue = perfilActual != null ? perfilActual.fechaNacimiento : null;
-            if (AppInputValidator.sameText(currentValue, fecha)) {
-                return;
-            }
-
-            viewModel.updatePerfil(new ProfilePatchPayload()
-                    .fechaNacimiento(fecha)
-                    .toJson());
-        });
-
-        picker.show(getParentFragmentManager(), "birthdate_picker");
-    }
-
-    private void showEditProvinciaDialog() {
-        DialogEditProvinciaBinding dialogBinding =
-                DialogEditProvinciaBinding.inflate(LayoutInflater.from(requireContext()));
-
-        String[] provincias = getResources().getStringArray(R.array.provincias_labels);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                requireContext(), android.R.layout.simple_dropdown_item_1line, provincias);
-        dialogBinding.actvProvincia.setAdapter(adapter);
-        dialogBinding.tilProvincia.setHint(getString(R.string.profile_label_provincia));
-
-        if (perfilActual != null && StringUtils.hasText(perfilActual.provincia)) {
-            dialogBinding.actvProvincia.setText(
-                    ProfileValueLocalizer.displayProvincia(requireContext(), perfilActual.provincia),
-                    false
-            );
-        }
-
-        dialogBinding.actvProvincia.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) dialogBinding.actvProvincia.showDropDown();
-        });
-        dialogBinding.actvProvincia.setOnClickListener(v ->
-                dialogBinding.actvProvincia.showDropDown());
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.profile_label_provincia)
-                .setView(dialogBinding.getRoot())
-                .setPositiveButton(R.string.dialog_btn_save, null)
-                .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .create();
-
-        dialog.setOnShowListener(d -> {
-            dialogBinding.actvProvincia.post(() -> {
-                dialogBinding.actvProvincia.requestFocus();
-                dialogBinding.actvProvincia.showDropDown();
-            });
-
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-                String value = dialogBinding.actvProvincia.getText() != null
-                        ? dialogBinding.actvProvincia.getText().toString().trim() : "";
-                if (value.isEmpty()) {
-                    dialogBinding.tilProvincia.setError(getString(R.string.dialog_error_required));
-                    return;
-                }
-                dialogBinding.tilProvincia.setError(null);
-                String provinciaValue = ProfileValueLocalizer.canonicalProvinciaFromLabel(requireContext(), value);
-                viewModel.updatePerfil(new ProfilePatchPayload()
-                        .provincia(provinciaValue)
-                        .toJson());
-                dialog.dismiss();
-            });
-        });
-
-        dialog.show();
-    }
-
-    private void showGeneroDialog() {
-        String[] opciones = getResources().getStringArray(R.array.generos_labels);
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.profile_label_genero)
-                .setItems(opciones, (d, which) ->
-                        viewModel.updatePerfil(new ProfilePatchPayload()
-                                .genero(ProfileValueLocalizer.canonicalGeneroFromLabel(requireContext(), opciones[which]))
-                                .toJson()))
-                .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .show();
+        binding.itemAltura.setOnClickListener(v -> dialogHelper.showAlturaPickerDialog());
+        binding.itemPeso.setOnClickListener(v -> dialogHelper.showPesoPickerDialog());
     }
 
     private void syncThemeToggleWithSavedMode() {
@@ -640,59 +365,15 @@ public class ProfileFragment extends Fragment {
     }
 
     private void syncLanguageSelectionText() {
-        if (binding == null) return;
+        if (binding == null || dialogHelper == null) return;
 
         String mode = viewModel.getAppLanguageMode();
-        int index = findLanguageModeIndex(mode);
+        int index = dialogHelper.findLanguageModeIndex(mode);
         String[] labels = getResources().getStringArray(R.array.app_language_labels);
 
         if (index >= 0 && index < labels.length) {
             binding.tvLanguageValue.setText(labels[index]);
         }
-    }
-
-    private void showLanguageDialog() {
-        String[] modes = getResources().getStringArray(R.array.app_language_modes);
-        String[] labels = getResources().getStringArray(R.array.app_language_labels);
-
-        int checkedItem = findLanguageModeIndex(viewModel.getAppLanguageMode());
-
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.profile_language_selector_title)
-                .setSingleChoiceItems(labels, checkedItem, (dialog, which) -> {
-                    String selectedMode = modes[which];
-                    if (!selectedMode.equals(viewModel.getAppLanguageMode())) {
-                        startUiRecreationWithSplash(() -> {
-                            AppLanguageManager.saveOnly(requireContext(), selectedMode);
-                            requireActivity().recreate();
-                        });
-                    }
-                    dialog.dismiss();
-                })
-                .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .show();
-    }
-
-
-    private void startUiRecreationWithSplash(@NonNull Runnable action) {
-        Context context = requireContext();
-        AppSettingsManager.requestUiTransitionSplash(context);
-
-        Activity activity = requireActivity();
-        if (activity instanceof MainActivity) {
-            ((MainActivity) activity).showUiTransitionSplashNow();
-        }
-
-        action.run();
-    }
-
-    private int findLanguageModeIndex(@Nullable String mode) {
-        String normalizedMode = AppLanguageManager.sanitizeSelectableMode(mode);
-        String[] modes = getResources().getStringArray(R.array.app_language_modes);
-        for (int i = 0; i < modes.length; i++) {
-            if (modes[i].equals(normalizedMode)) return i;
-        }
-        return 0;
     }
 
     private void observeViewModel() {
@@ -843,181 +524,6 @@ public class ProfileFragment extends Fragment {
         binding.loadingOverlay.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
-    private void updateTrackingRequirementsUi() {
-        if (binding == null || !isAdded()) return;
-
-        bindTrackingRequirementRow(
-                binding.tvTrackingLocationStatus,
-                binding.tvTrackingLocationAction,
-                TrackingRequirementsManager.Requirement.LOCATION,
-                TrackingRequirementsManager.getLocationStatus(this)
-        );
-
-        bindTrackingRequirementRow(
-                binding.tvTrackingActivityStatus,
-                binding.tvTrackingActivityAction,
-                TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION,
-                TrackingRequirementsManager.getActivityRecognitionStatus(this)
-        );
-
-        bindTrackingRequirementRow(
-                binding.tvTrackingNotificationsStatus,
-                binding.tvTrackingNotificationsAction,
-                TrackingRequirementsManager.Requirement.NOTIFICATIONS,
-                TrackingRequirementsManager.getNotificationsStatus(this)
-        );
-
-        bindTrackingRequirementRow(
-                binding.tvTrackingDeviceLocationStatus,
-                binding.tvTrackingDeviceLocationAction,
-                TrackingRequirementsManager.Requirement.GPS,
-                TrackingRequirementsManager.getDeviceLocationStatus(requireContext())
-        );
-    }
-
-    private void bindTrackingRequirementRow(@NonNull android.widget.TextView statusView,
-                                            @NonNull android.widget.TextView actionView,
-                                            @NonNull TrackingRequirementsManager.Requirement requirement,
-                                            @NonNull TrackingRequirementsManager.Status status) {
-        statusView.setText(getTrackingRequirementStatusText(requirement, status));
-
-        Integer actionTextRes = getTrackingRequirementActionTextRes(requirement, status);
-        if (actionTextRes == null) {
-            actionView.setVisibility(View.GONE);
-            return;
-        }
-
-        actionView.setVisibility(View.VISIBLE);
-        actionView.setText(actionTextRes);
-    }
-
-    @Nullable
-    private Integer getTrackingRequirementActionTextRes(
-            @NonNull TrackingRequirementsManager.Requirement requirement,
-            @NonNull TrackingRequirementsManager.Status status) {
-        switch (status) {
-            case ENABLED:
-                return null;
-            case NEEDS_ACTIVATION:
-                return requirement == TrackingRequirementsManager.Requirement.GPS
-                        ? R.string.profile_tracking_status_activate
-                        : R.string.profile_tracking_status_request;
-            case BLOCKED:
-            default:
-                return R.string.profile_tracking_status_open_settings;
-        }
-    }
-
-    @NonNull
-    private String getTrackingRequirementStatusText(
-            @NonNull TrackingRequirementsManager.Requirement requirement,
-            @NonNull TrackingRequirementsManager.Status status) {
-        switch (status) {
-            case ENABLED:
-                return getString(R.string.profile_tracking_status_enabled);
-            case NEEDS_ACTIVATION:
-                return requirement == TrackingRequirementsManager.Requirement.GPS
-                        ? getString(R.string.profile_tracking_status_disabled)
-                        : getString(R.string.profile_tracking_status_needs_activation);
-            case BLOCKED:
-            default:
-                return getString(R.string.profile_tracking_status_blocked);
-        }
-    }
-
-    private void handleTrackingRequirementAction(
-            @NonNull TrackingRequirementsManager.Requirement requirement) {
-        TrackingRequirementsManager.Status status = getTrackingRequirementStatus(requirement);
-        if (status == TrackingRequirementsManager.Status.ENABLED) {
-            return;
-        }
-
-        if (status == TrackingRequirementsManager.Status.BLOCKED) {
-            openSettingsForRequirement(requirement);
-            return;
-        }
-
-        if (requirement == TrackingRequirementsManager.Requirement.GPS) {
-            openLocationSettings();
-            return;
-        }
-
-        String[] permissions = TrackingRequirementsManager
-                .buildRequestablePermissionsForRequirement(this, requirement);
-        if (permissions.length == 0) {
-            updateTrackingRequirementsUi();
-            return;
-        }
-
-        TrackingRequirementsManager.markPermissionsRequested(requireContext(), permissions);
-        trackingRequirementPermissionLauncher.launch(permissions);
-    }
-
-    @NonNull
-    private TrackingRequirementsManager.Status getTrackingRequirementStatus(
-            @NonNull TrackingRequirementsManager.Requirement requirement) {
-        switch (requirement) {
-            case LOCATION:
-                return TrackingRequirementsManager.getLocationStatus(this);
-            case ACTIVITY_RECOGNITION:
-                return TrackingRequirementsManager.getActivityRecognitionStatus(this);
-            case NOTIFICATIONS:
-                return TrackingRequirementsManager.getNotificationsStatus(this);
-            case GPS:
-            default:
-                return TrackingRequirementsManager.getDeviceLocationStatus(requireContext());
-        }
-    }
-
-    private void openSettingsForRequirement(
-            @NonNull TrackingRequirementsManager.Requirement requirement) {
-        if (requirement == TrackingRequirementsManager.Requirement.NOTIFICATIONS) {
-            openNotificationSettings();
-        } else if (requirement == TrackingRequirementsManager.Requirement.GPS) {
-            openLocationSettings();
-        } else {
-            openAppSettings();
-        }
-    }
-
-    private void registerDeviceLocationReceiver() {
-        if (deviceLocationReceiverRegistered || !isAdded()) return;
-
-        IntentFilter filter = new IntentFilter(LocationManager.MODE_CHANGED_ACTION);
-        filter.addAction(LocationManager.PROVIDERS_CHANGED_ACTION);
-
-        Context context = requireContext();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(deviceLocationStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            context.registerReceiver(deviceLocationStateReceiver, filter);
-        }
-        deviceLocationReceiverRegistered = true;
-    }
-
-    private void unregisterDeviceLocationReceiver() {
-        if (!deviceLocationReceiverRegistered || !isAdded()) return;
-        requireContext().unregisterReceiver(deviceLocationStateReceiver);
-        deviceLocationReceiverRegistered = false;
-    }
-
-    private void openAppSettings() {
-
-        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                .setData(Uri.fromParts("package", requireContext().getPackageName(), null));
-        startActivity(intent);
-    }
-
-    private void openNotificationSettings() {
-        Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName());
-        startActivity(intent);
-    }
-
-    private void openLocationSettings() {
-        startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-    }
-
     private void goToLogin() {
         if (!isAdded()) return;
         NavigationUtils.goToActivityAndClearTask(requireActivity(), LoginActivity.class);
@@ -1025,54 +531,6 @@ public class ProfileFragment extends Fragment {
 
     // ── Eliminar cuenta ─────────────────────────────────────────────────────────
 
-    private void showDeleteAccountConfirmationDialog() {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.profile_delete_account_dialog_title)
-                .setMessage(R.string.profile_delete_account_dialog_message)
-                .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .setPositiveButton(R.string.profile_delete_account_dialog_continue,
-                        (dialog, which) -> showDeleteAccountStep2Dialog())
-                .show();
-    }
-
-    private void showDeleteAccountStep2Dialog() {
-        DialogEditFieldBinding dialogBinding =
-                DialogEditFieldBinding.inflate(LayoutInflater.from(requireContext()));
-
-        String confirmWord = getString(R.string.profile_delete_confirm_word);
-        dialogBinding.tilField.setHint(R.string.profile_delete_account_step2_hint);
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.profile_delete_account_step2_title)
-                .setMessage(R.string.profile_delete_account_step2_message)
-                .setView(dialogBinding.getRoot())
-                .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .setPositiveButton(R.string.profile_delete_account_dialog_confirm, null)
-                .create();
-
-        dialog.setOnShowListener(d -> {
-            Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            positiveButton.setEnabled(false);
-
-            dialogBinding.etField.addTextChangedListener(new android.text.TextWatcher() {
-                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-                @Override
-                public void afterTextChanged(android.text.Editable s) {
-                    positiveButton.setEnabled(confirmWord.equals(s.toString()));
-                }
-            });
-
-            positiveButton.setOnClickListener(v -> {
-                dialog.dismiss();
-                viewModel.deleteAccount();
-            });
-        });
-
-        dialog.show();
-    }
-
-    @NonNull
     private String validationError(@NonNull AppInputValidator.ValidationResult<?> result) {
         String msg = result.getErrorMessage();
         return msg != null ? msg : getString(R.string.vm_error_generico);
@@ -1098,7 +556,4 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    private interface OnValueSavedListener {
-        boolean onSaved(@NonNull String value);
-    }
 }

@@ -1,0 +1,421 @@
+package com.proyecto.moveon.ui.profile;
+
+import android.app.Activity;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.NumberPicker;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.material.datepicker.CalendarConstraints;
+import com.google.android.material.datepicker.DateValidatorPointBackward;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
+import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
+import com.proyecto.moveon.core.settings.AppSettingsManager;
+import com.proyecto.moveon.core.validation.AppInputValidator;
+import com.proyecto.moveon.data.profile.sync.ProfilePatchPayload;
+import com.proyecto.moveon.databinding.DialogEditFieldBinding;
+import com.proyecto.moveon.databinding.DialogEditProvinciaBinding;
+import com.proyecto.moveon.domain.profile.PerfilUsuario;
+import com.proyecto.moveon.ui.main.MainActivity;
+import com.proyecto.moveon.utils.StringUtils;
+
+import java.time.LocalDate;
+import java.util.Calendar;
+import java.util.Locale;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+/**
+ * MEJ-04: Diálogos de edición del perfil extraídos de ProfileFragment.
+ */
+public final class ProfileDialogHelper {
+
+    public interface OnValueSavedListener {
+        boolean onSaved(@NonNull String value);
+    }
+
+    private final Fragment fragment;
+    private final ProfileViewModel viewModel;
+    private final Supplier<PerfilUsuario> perfilSupplier;
+    private final Consumer<String> onError;
+
+    public ProfileDialogHelper(@NonNull Fragment fragment,
+                               @NonNull ProfileViewModel viewModel,
+                               @NonNull Supplier<PerfilUsuario> perfilSupplier,
+                               @NonNull Consumer<String> onError) {
+        this.fragment = fragment;
+        this.viewModel = viewModel;
+        this.perfilSupplier = perfilSupplier;
+        this.onError = onError;
+    }
+
+    // ── Picker de Altura (100–220 cm, enteros) ────────────────────────────────
+
+    public void showAlturaPickerDialog() {
+        final int minAltura = 50;
+        final int maxAltura = 300;
+
+        NumberPicker picker = new NumberPicker(fragment.requireContext());
+        picker.setMinValue(minAltura);
+        picker.setMaxValue(maxAltura);
+        picker.setWrapSelectorWheel(false);
+
+        int initialAltura = 170; // dentro del nuevo rango 50–300
+        if (perfilSupplier.get() != null && perfilSupplier.get().altura != null) {
+            int current = perfilSupplier.get().altura;
+            if (current >= minAltura && current <= maxAltura) {
+                initialAltura = current;
+            }
+        }
+        picker.setValue(initialAltura);
+
+        int pad = (int) (16 * fragment.getResources().getDisplayMetrics().density);
+        picker.setPadding(pad, pad, pad, pad);
+
+        new MaterialAlertDialogBuilder(fragment.requireContext())
+                .setTitle(R.string.profile_label_altura)
+                .setView(picker)
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .setPositiveButton(R.string.dialog_btn_save, (dialog, which) -> {
+                    int altura = picker.getValue();
+                    AppInputValidator.ValidationResult<Integer> validation =
+                            AppInputValidator.validateHeight(fragment.requireContext(), altura);
+                    if (!validation.isValid()) {
+                        onError.accept(validationError(validation));
+                        return;
+                    }
+                    viewModel.updatePerfil(new ProfilePatchPayload().altura(validation.getValue()).toJson());
+                })
+                .show();
+    }
+
+    // ── Picker de Peso (40–200 kg, pasos de 0.5) ─────────────────────────────
+
+    public void showPesoPickerDialog() {
+        final double pesoMin  = 20.0;
+        final double pesoMax  = 300.0;
+        final double pesoStep = 0.5;
+        final int totalItems  = (int) ((pesoMax - pesoMin) / pesoStep) + 1;
+
+        String[] labels = new String[totalItems];
+        for (int i = 0; i < totalItems; i++) {
+            double val = pesoMin + i * pesoStep;
+            labels[i] = String.format(Locale.getDefault(), "%.1f kg", val);
+        }
+
+        NumberPicker picker = new NumberPicker(fragment.requireContext());
+        picker.setMinValue(0);
+        picker.setMaxValue(totalItems - 1);
+        picker.setDisplayedValues(labels);
+        picker.setWrapSelectorWheel(false);
+
+        int initialIndex = (int) ((70.0 - pesoMin) / pesoStep); // 70 kg, dentro del nuevo rango 20–300
+        if (perfilSupplier.get() != null && perfilSupplier.get().peso != null) {
+            double current = perfilSupplier.get().peso;
+            if (current >= pesoMin && current <= pesoMax) {
+                initialIndex = (int) Math.round((current - pesoMin) / pesoStep);
+            }
+        }
+        picker.setValue(initialIndex);
+
+        int pad = (int) (16 * fragment.getResources().getDisplayMetrics().density);
+        picker.setPadding(pad, pad, pad, pad);
+
+        new MaterialAlertDialogBuilder(fragment.requireContext())
+                .setTitle(R.string.profile_label_peso)
+                .setView(picker)
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .setPositiveButton(R.string.dialog_btn_save, (dialog, which) -> {
+                    double peso = pesoMin + picker.getValue() * pesoStep;
+                    peso = Math.round(peso * 10.0) / 10.0;
+                    AppInputValidator.ValidationResult<Double> validation =
+                            AppInputValidator.validateWeight(fragment.requireContext(), peso);
+                    if (!validation.isValid()) {
+                        onError.accept(validationError(validation));
+                        return;
+                    }
+                    viewModel.updatePerfil(new ProfilePatchPayload().peso(validation.getValue()).toJson());
+                })
+                .show();
+    }
+
+    public void showEditTextDialog(@NonNull String label,
+                                   @Nullable String currentValue,
+                                   int inputType,
+                                   boolean required,
+                                   @NonNull OnValueSavedListener listener) {
+        DialogEditFieldBinding dialogBinding =
+                DialogEditFieldBinding.inflate(LayoutInflater.from(fragment.requireContext()));
+
+        dialogBinding.tilField.setHint(label);
+        if (StringUtils.hasText(currentValue)) {
+            dialogBinding.etField.setText(currentValue);
+            dialogBinding.etField.setSelection(currentValue.length());
+        }
+        dialogBinding.etField.setInputType(inputType);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(fragment.requireContext())
+                .setTitle(label)
+                .setView(dialogBinding.getRoot())
+                .setPositiveButton(R.string.dialog_btn_save, null)
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .create();
+
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String value = dialogBinding.etField.getText() != null
+                    ? dialogBinding.etField.getText().toString().trim() : "";
+            dialogBinding.tilField.setError(null);
+
+            if (required && value.isEmpty()) {
+                dialogBinding.tilField.setError(fragment.getString(R.string.dialog_error_required));
+                return;
+            }
+
+            boolean close = listener.onSaved(value);
+            if (close) dialog.dismiss();
+        }));
+
+        dialog.show();
+    }
+
+    public void showBirthdatePicker() {
+        Calendar maxDate = Calendar.getInstance();
+        maxDate.add(Calendar.YEAR, -18);
+
+        CalendarConstraints constraints = new CalendarConstraints.Builder()
+                .setEnd(maxDate.getTimeInMillis())
+                .setValidator(DateValidatorPointBackward.before(maxDate.getTimeInMillis()))
+                .build();
+
+        long initialSelection;
+        if (perfilSupplier.get() != null && StringUtils.hasText(perfilSupplier.get().fechaNacimiento)) {
+            try {
+                String[] parts = perfilSupplier.get().fechaNacimiento.split("-");
+                Calendar cal = Calendar.getInstance();
+                cal.set(Integer.parseInt(parts[0]),
+                        Integer.parseInt(parts[1]) - 1,
+                        Integer.parseInt(parts[2]));
+                initialSelection = cal.getTimeInMillis();
+            } catch (Exception e) {
+                initialSelection = maxDate.getTimeInMillis();
+            }
+        } else {
+            initialSelection = maxDate.getTimeInMillis();
+        }
+
+        MaterialDatePicker<Long> picker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText(R.string.profile_label_birthdate)
+                .setInputMode(MaterialDatePicker.INPUT_MODE_CALENDAR)
+                .setCalendarConstraints(constraints)
+                .setSelection(initialSelection)
+                .build();
+
+        picker.addOnPositiveButtonClickListener(selection -> {
+            Calendar selected = Calendar.getInstance();
+            selected.setTimeInMillis(selection);
+
+            LocalDate selectedDate = LocalDate.of(
+                    selected.get(Calendar.YEAR),
+                    selected.get(Calendar.MONTH) + 1,
+                    selected.get(Calendar.DAY_OF_MONTH)
+            );
+
+            AppInputValidator.ValidationResult<String> validation =
+                    AppInputValidator.validateBirthDate(fragment.requireContext(), selectedDate);
+            if (!validation.isValid()) {
+                onError.accept(validationError(validation));
+                return;
+            }
+
+            String fecha = validation.getValue();
+            String currentValue = perfilSupplier.get() != null ? perfilSupplier.get().fechaNacimiento : null;
+            if (AppInputValidator.sameText(currentValue, fecha)) {
+                return;
+            }
+
+            viewModel.updatePerfil(new ProfilePatchPayload()
+                    .fechaNacimiento(fecha)
+                    .toJson());
+        });
+
+        picker.show(fragment.getParentFragmentManager(), "birthdate_picker");
+    }
+
+    public void showEditProvinciaDialog() {
+        DialogEditProvinciaBinding dialogBinding =
+                DialogEditProvinciaBinding.inflate(LayoutInflater.from(fragment.requireContext()));
+
+        String[] provincias = fragment.getResources().getStringArray(R.array.provincias_labels);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                fragment.requireContext(), android.R.layout.simple_dropdown_item_1line, provincias);
+        dialogBinding.actvProvincia.setAdapter(adapter);
+        dialogBinding.tilProvincia.setHint(fragment.getString(R.string.profile_label_provincia));
+
+        if (perfilSupplier.get() != null && StringUtils.hasText(perfilSupplier.get().provincia)) {
+            dialogBinding.actvProvincia.setText(
+                    ProfileValueLocalizer.displayProvincia(fragment.requireContext(), perfilSupplier.get().provincia),
+                    false
+            );
+        }
+
+        dialogBinding.actvProvincia.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) dialogBinding.actvProvincia.showDropDown();
+        });
+        dialogBinding.actvProvincia.setOnClickListener(v ->
+                dialogBinding.actvProvincia.showDropDown());
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(fragment.requireContext())
+                .setTitle(R.string.profile_label_provincia)
+                .setView(dialogBinding.getRoot())
+                .setPositiveButton(R.string.dialog_btn_save, null)
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .create();
+
+        dialog.setOnShowListener(d -> {
+            dialogBinding.actvProvincia.post(() -> {
+                dialogBinding.actvProvincia.requestFocus();
+                dialogBinding.actvProvincia.showDropDown();
+            });
+
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                String value = dialogBinding.actvProvincia.getText() != null
+                        ? dialogBinding.actvProvincia.getText().toString().trim() : "";
+                if (value.isEmpty()) {
+                    dialogBinding.tilProvincia.setError(fragment.getString(R.string.dialog_error_required));
+                    return;
+                }
+                dialogBinding.tilProvincia.setError(null);
+                String provinciaValue = ProfileValueLocalizer.canonicalProvinciaFromLabel(fragment.requireContext(), value);
+                viewModel.updatePerfil(new ProfilePatchPayload()
+                        .provincia(provinciaValue)
+                        .toJson());
+                dialog.dismiss();
+            });
+        });
+
+        dialog.show();
+    }
+
+    public void showGeneroDialog() {
+        String[] opciones = fragment.getResources().getStringArray(R.array.generos_labels);
+        new MaterialAlertDialogBuilder(fragment.requireContext())
+                .setTitle(R.string.profile_label_genero)
+                .setItems(opciones, (d, which) ->
+                        viewModel.updatePerfil(new ProfilePatchPayload()
+                                .genero(ProfileValueLocalizer.canonicalGeneroFromLabel(fragment.requireContext(), opciones[which]))
+                                .toJson()))
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .show();
+    }
+
+
+    public void showLanguageDialog() {
+        String[] modes = fragment.getResources().getStringArray(R.array.app_language_modes);
+        String[] labels = fragment.getResources().getStringArray(R.array.app_language_labels);
+
+        int checkedItem = findLanguageModeIndex(viewModel.getAppLanguageMode());
+
+        new MaterialAlertDialogBuilder(fragment.requireContext())
+                .setTitle(R.string.profile_language_selector_title)
+                .setSingleChoiceItems(labels, checkedItem, (dialog, which) -> {
+                    String selectedMode = modes[which];
+                    if (!selectedMode.equals(viewModel.getAppLanguageMode())) {
+                        startUiRecreationWithSplash(() -> {
+                            AppLanguageManager.saveOnly(fragment.requireContext(), selectedMode);
+                            fragment.requireActivity().recreate();
+                        });
+                    }
+                    dialog.dismiss();
+                })
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .show();
+    }
+
+
+
+    public void startUiRecreationWithSplash(@NonNull Runnable action) {
+        Context context = fragment.requireContext();
+        AppSettingsManager.requestUiTransitionSplash(context);
+
+        Activity activity = fragment.requireActivity();
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).showUiTransitionSplashNow();
+        }
+
+        action.run();
+    }
+
+    public int findLanguageModeIndex(@Nullable String mode) {
+        String normalizedMode = AppLanguageManager.sanitizeSelectableMode(mode);
+        String[] modes = fragment.getResources().getStringArray(R.array.app_language_modes);
+        for (int i = 0; i < modes.length; i++) {
+            if (modes[i].equals(normalizedMode)) return i;
+        }
+        return 0;
+    }
+
+
+    // ── Eliminar cuenta ─────────────────────────────────────────────────────────
+
+    public void showDeleteAccountConfirmationDialog() {
+        new MaterialAlertDialogBuilder(fragment.requireContext())
+                .setTitle(R.string.profile_delete_account_dialog_title)
+                .setMessage(R.string.profile_delete_account_dialog_message)
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .setPositiveButton(R.string.profile_delete_account_dialog_continue,
+                        (dialog, which) -> showDeleteAccountStep2Dialog())
+                .show();
+    }
+
+    public void showDeleteAccountStep2Dialog() {
+        DialogEditFieldBinding dialogBinding =
+                DialogEditFieldBinding.inflate(LayoutInflater.from(fragment.requireContext()));
+
+        String confirmWord = fragment.getString(R.string.profile_delete_confirm_word);
+        dialogBinding.tilField.setHint(R.string.profile_delete_account_step2_hint);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(fragment.requireContext())
+                .setTitle(R.string.profile_delete_account_step2_title)
+                .setMessage(R.string.profile_delete_account_step2_message)
+                .setView(dialogBinding.getRoot())
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .setPositiveButton(R.string.profile_delete_account_dialog_confirm, null)
+                .create();
+
+        dialog.setOnShowListener(d -> {
+            Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            positiveButton.setEnabled(false);
+
+            dialogBinding.etField.addTextChangedListener(new android.text.TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                @Override
+                public void afterTextChanged(android.text.Editable s) {
+                    positiveButton.setEnabled(confirmWord.equals(s.toString()));
+                }
+            });
+
+            positiveButton.setOnClickListener(v -> {
+                dialog.dismiss();
+                viewModel.deleteAccount();
+            });
+        });
+
+        dialog.show();
+    }
+
+    @NonNull
+    public String validationError(@NonNull AppInputValidator.ValidationResult<?> result) {
+        String msg = result.getErrorMessage();
+        return msg != null ? msg : fragment.getString(R.string.vm_error_generico);
+    }
+}

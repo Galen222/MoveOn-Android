@@ -23,7 +23,7 @@ import com.proyecto.moveon.data.activities.dto.GuardarActividadRequestDto;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadResponseDto;
 import com.proyecto.moveon.data.activities.local.ActividadLocalDataSource;
 import com.proyecto.moveon.data.activities.remote.ActividadRemoteDataSource;
-import com.proyecto.moveon.data.activities.sync.ActividadCreatePayload;
+import com.proyecto.moveon.data.activities.sync.ActivitySyncManager;
 import com.proyecto.moveon.data.local.db.AppDatabase;
 import com.proyecto.moveon.data.local.entity.ActividadEntity;
 import com.proyecto.moveon.data.profile.dto.ProfileInfoDto;
@@ -44,11 +44,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Repositorio offline-first de actividades.
- * - guardarActividad(...) escribe primero en Room y luego encola sincronización.
- * - obtenerPerfil(...) mantiene el comportamiento actual por red para leer el peso.
- * - observeActividades()/refreshFromServer() permiten alimentar Stats desde local.
- * - borrarActividad(...) elimina en remoto y luego en local si el servidor confirma.
+ * MEJ-07: Coordinador delgado de actividades.
+ *
+ * <p>Responsabilidades: exponer LiveData, validar inputs, despachar trabajo
+ * al hilo IO, y programar WorkManager. La lógica de sync y merge vive
+ * en {@link ActivitySyncManager}.</p>
  */
 public final class ActivityRepository {
 
@@ -75,6 +75,7 @@ public final class ActivityRepository {
     private final AuthenticatedApiClient apiClient;
     private final ActividadLocalDataSource local;
     private final ActividadRemoteDataSource remote;
+    private final ActivitySyncManager syncManager;
     private final ExecutorService io = MoveOnExecutors.io();
 
     public ActivityRepository(@NonNull Context context) {
@@ -84,14 +85,11 @@ public final class ActivityRepository {
         AppDatabase db      = AppDatabase.getInstance(appContext);
         this.local          = new ActividadLocalDataSource(db);
         this.remote         = new ActividadRemoteDataSource(appContext);
+        this.syncManager    = new ActivitySyncManager(appContext, local, remote);
     }
 
     // ── Guardar ───────────────────────────────────────────────────────────────
 
-    /**
-     * Mantiene la misma firma que usa TrackingViewModel.
-     * Guarda primero en local y responde éxito inmediato si la validación es correcta.
-     */
     public void guardarActividad(
             @NonNull GuardarActividadRequestDto request,
             @NonNull Callback<GuardarActividadResponseDto> callback) {
@@ -147,10 +145,6 @@ public final class ActivityRepository {
 
     // ── Perfil ────────────────────────────────────────────────────────────────
 
-    /**
-     * Mantiene el contrato actual para leer el peso desde TrackingViewModel.
-     * Aquí se deja por red directa para no bloquear el hilo principal con consultas Room síncronas.
-     */
     public void obtenerPerfil(@NonNull Callback<ProfileInfoDto> callback) {
         apiClient.get(
                 ENDPOINT_PERFIL_INFO,
@@ -190,7 +184,7 @@ public final class ActivityRepository {
             }
 
             io.execute(() -> {
-                mergeRemoteSnapshot(accountKey, result.data);
+                syncManager.mergeRemoteSnapshot(accountKey, result.data);
                 if (callback != null) callback.onComplete(null);
             });
         });
@@ -198,14 +192,6 @@ public final class ActivityRepository {
 
     // ── Borrar ────────────────────────────────────────────────────────────────
 
-    /**
-     * Elimina una actividad en el servidor y, si confirma, la borra en local.
-     * Solo permite borrar actividades ya sincronizadas (remoteId != null, syncState == SYNCED).
-     * Las actividades PENDING_CREATE no se pueden borrar desde Stats — deben sincronizarse primero.
-     *
-     * @param localId  identificador local de la actividad en Room
-     * @param callback resultado con {@link BorrarActividadResponseDto} o error
-     */
     public void borrarActividad(
             @NonNull String localId,
             @NonNull Callback<BorrarActividadResponseDto> callback) {
@@ -250,60 +236,11 @@ public final class ActivityRepository {
         });
     }
 
-    // ── Sincronización ────────────────────────────────────────────────────────
+    // ── Sync (Worker) ────────────────────────────────────────────────────────
 
     @NonNull
     public SyncResult syncPendingNow(@NonNull String accountKey) {
-        List<ActividadEntity> creates = local.getPendingCreates(accountKey);
-        for (ActividadEntity entity : creates) {
-            ApiResult<ActividadResponseDto> result =
-                    remote.createActividadBlocking(ActividadCreatePayload.fromEntity(entity).toJson());
-
-            if (result.isSuccess() && result.data != null) {
-                ActividadResponseDto dto = result.data;
-                entity.remoteId         = dto.id;
-                entity.tipo             = dto.tipo;
-                entity.distancia        = dto.distancia;
-                entity.duracion         = dto.duracion;
-                entity.caloriasQuemadas = dto.caloriasQuemadas;
-                entity.rutaPolilinea    = dto.rutaPolilinea;
-                entity.rutaMapaUrl      = dto.rutaMapaUrl;
-                entity.fechaRuta        = dto.fechaRuta;
-                entity.syncState        = ActivitySyncState.SYNCED;
-                entity.lastError        = null;
-                entity.updatedAtMs      = System.currentTimeMillis();
-                local.save(entity);
-                continue;
-            }
-
-            ApiError error = result.error != null
-                    ? result.error
-                    : ApiError.local(appContext.getString(R.string.error_sincronizando_actividad));
-
-            if (isRetryable(error)) {
-                entity.lastError   = error.getMessage();
-                entity.updatedAtMs = System.currentTimeMillis();
-                local.save(entity);
-                return SyncResult.retry();
-            }
-
-            entity.syncState   = ActivitySyncState.FAILED_CREATE;
-            entity.lastError   = error.getMessage();
-            entity.updatedAtMs = System.currentTimeMillis();
-            local.save(entity);
-        }
-
-        ApiResult<List<ActividadResponseDto>> refreshResult = remote.fetchAllActividadesBlocking();
-        if (refreshResult.isSuccess() && refreshResult.data != null) {
-            mergeRemoteSnapshot(accountKey, refreshResult.data);
-            return SyncResult.success();
-        }
-
-        if (refreshResult.error != null && isRetryable(refreshResult.error)) {
-            return SyncResult.retry();
-        }
-
-        return SyncResult.success();
+        return syncManager.syncPendingNow(accountKey);
     }
 
     public void enqueueSync() {
@@ -317,10 +254,6 @@ public final class ActivityRepository {
                 .build();
 
         WorkManager.getInstance(appContext)
-                // FIX: REPLACE en vez de KEEP para que cada acción nueva reprograme
-                // el Worker con backoff fresco. Con KEEP, un Worker dormido en backoff
-                // exponencial (hasta 30 s) bloqueaba la sincronización de patches
-                // nuevos hasta que el backoff anterior expirase.
                 .enqueueUniqueWork(UNIQUE_SYNC_WORK_NAME, ExistingWorkPolicy.REPLACE, request);
     }
 
@@ -330,49 +263,6 @@ public final class ActivityRepository {
     }
 
     // ── Privados ──────────────────────────────────────────────────────────────
-
-    private void mergeRemoteSnapshot(@NonNull String accountKey,
-                                     @NonNull List<ActividadResponseDto> remoteItems) {
-        List<ActividadEntity> current = local.getAllNow(accountKey);
-        Set<Integer> remoteIds = new HashSet<>();
-
-        for (ActividadResponseDto dto : remoteItems) {
-            remoteIds.add(dto.id);
-
-            ActividadEntity existing = local.getByRemoteId(accountKey, dto.id);
-            ActividadEntity entity   = existing != null ? existing : new ActividadEntity();
-            if (existing == null) {
-                entity.localId     = "remote_" + dto.id;
-                entity.accountKey  = accountKey;
-                entity.createdAtMs = System.currentTimeMillis();
-            }
-
-            mapDtoIntoEntity(entity, dto);
-            entity.syncState   = ActivitySyncState.SYNCED;
-            entity.lastError   = null;
-            entity.updatedAtMs = System.currentTimeMillis();
-            local.save(entity);
-        }
-
-        for (ActividadEntity entity : current) {
-            if (entity.remoteId == null) continue;
-            if (!ActivitySyncState.SYNCED.equals(entity.syncState)) continue;
-            if (!remoteIds.contains(entity.remoteId)) {
-                local.deleteByLocalId(entity.localId);
-            }
-        }
-    }
-
-    private void mapDtoIntoEntity(@NonNull ActividadEntity entity, @NonNull ActividadResponseDto dto) {
-        entity.remoteId         = dto.id;
-        entity.tipo             = dto.tipo;
-        entity.distancia        = dto.distancia;
-        entity.duracion         = dto.duracion;
-        entity.caloriasQuemadas = dto.caloriasQuemadas;
-        entity.rutaPolilinea    = dto.rutaPolilinea;
-        entity.rutaMapaUrl      = dto.rutaMapaUrl;
-        entity.fechaRuta        = dto.fechaRuta;
-    }
 
     @NonNull
     private ActividadItem mapEntityToDomain(@NonNull ActividadEntity entity) {
@@ -424,15 +314,6 @@ public final class ActivityRepository {
                     appContext.getString(R.string.error_formato_fecha_invalido));
         }
         return null;
-    }
-
-    private boolean isRetryable(@NonNull ApiError error) {
-        ApiErrorType type = error.getType();
-        return type == ApiErrorType.NETWORK
-                || type == ApiErrorType.TIMEOUT
-                || type == ApiErrorType.RATE_LIMIT
-                || type == ApiErrorType.SERVER
-                || type == ApiErrorType.CANCELED;
     }
 
     // ── Inner classes ─────────────────────────────────────────────────────────
