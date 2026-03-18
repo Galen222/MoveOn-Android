@@ -45,10 +45,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * Servicio de primer plano que gestiona:
  * - Ubicación en tiempo real via FusedLocationProviderClient
- * - Detección automática Caminar/Correr via acelerómetro
+ * - Detección automática Caminar/Correr via acelerómetro (con filtro EMA)
  * - Cronómetro interno con tick cada segundo
  * - Cálculo de distancia acumulada
- * - Cálculo de ritmo (min/km)
+ * - Cálculo de ritmo (min/km) desde la primera muestra GPS válida
+ * - Detección de velocidad excesiva (>20 km/h) para avisar al usuario
  * - Codificación de la ruta en Encoded Polyline al finalizar
  * Se comunica con TrackingViewModel a través del patrón Binder local.
  */
@@ -72,17 +73,17 @@ public final class TrackingService extends Service implements SensorEventListene
     // Constantes de acelerómetro
     // -------------------------------------------------------------------------
 
-    private static final float ACCEL_RUN_THRESHOLD  = 15.0f;
+    private static final float ACCEL_RUN_THRESHOLD = 15.0f;
     // Ventana ampliada de 15 a 30 muestras (~6 s con SENSOR_DELAY_NORMAL).
     // Con la ventana anterior de 15 (~3 s) los cambios Walking↔Running eran demasiado
     // bruscos y afectaban el cálculo de calorías.
-    private static final int   ACCEL_SAMPLE_WINDOW  = 30;
-    private static final int   CONFIRM_STEPS        = 3;
+    private static final int   ACCEL_SAMPLE_WINDOW = 30;
+    private static final int   CONFIRM_STEPS       = 3;
     // Factor α del filtro de paso bajo (EMA - Exponential Moving Average).
     // Un valor bajo (0.2) suaviza picos puntuales del acelerómetro (ej. baches, gestos
     // bruscos del brazo) sin añadir un retardo perceptible en la detección real de
     // cambios de ritmo.
-    private static final float ACCEL_ALPHA          = 0.2f;
+    private static final float ACCEL_ALPHA         = 0.2f;
 
     // -------------------------------------------------------------------------
     // Constantes de localización
@@ -93,8 +94,36 @@ public final class TrackingService extends Service implements SensorEventListene
     private static final float LOCATION_MIN_DISTANCE_M = 5.0f;
     private static final float LOCATION_MIN_ACCURACY_M = 20.0f;
 
-    /** Distancia mínima (m) para mostrar ritmo — evita valores absurdos al inicio. */
-    private static final int PACE_MIN_DISTANCE_M = 200;
+    // -------------------------------------------------------------------------
+    // Constantes de ritmo
+    // -------------------------------------------------------------------------
+
+    /**
+     * Número mínimo de puntos GPS para empezar a calcular el ritmo.
+     * Con 2 puntos ya tenemos un segmento real (distancia + tiempo), evitando
+     * valores absurdos en los primeros milisegundos pero mostrando el ritmo
+     * desde el inicio real de la actividad (~6 s tras el primer fix GPS).
+     */
+    private static final int PACE_MIN_GPS_POINTS = 2;
+
+    // -------------------------------------------------------------------------
+    // Constantes de detección de velocidad excesiva (vehículo)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Velocidad máxima humana razonable corriendo (m/s).
+     * 20 km/h = 5.556 m/s. Ningún corredor amateur supera este ritmo de forma
+     * sostenida. Referencia: Pokémon GO usa ~10.5 km/h; Strava/Runkeeper 18-25 km/h.
+     * 20 km/h es un umbral conservador y seguro para detectar vehículos.
+     */
+    private static final float MAX_HUMAN_SPEED_MS = 5.556f; // 20 km/h
+
+    /**
+     * Muestras GPS consecutivas por encima de MAX_HUMAN_SPEED_MS necesarias
+     * para disparar el aviso. Evita falsas alarmas por un pico GPS puntual
+     * (p. ej. deriva del receptor al arrancar o un túnel).
+     */
+    private static final int SPEED_ALERT_CONSECUTIVE = 3;
 
     // -------------------------------------------------------------------------
     // Binder local
@@ -116,9 +145,23 @@ public final class TrackingService extends Service implements SensorEventListene
     private final MutableLiveData<TrackingState> stateLiveData =
             new MutableLiveData<>(TrackingState.idle());
 
+    /**
+     * Evento de velocidad excesiva (vehículo detectado).
+     * Se emite con {@code true} exactamente cuando el contador llega a
+     * {@link #SPEED_ALERT_CONSECUTIVE}, no en cada muestra posterior,
+     * para no bombardear la UI con alertas repetidas.
+     * El ViewModel lo convierte en un {@code Event<String>} de un solo disparo.
+     */
+    private final MutableLiveData<Boolean> vehicleSpeedDetected = new MutableLiveData<>();
+
     @NonNull
     public LiveData<TrackingState> getStateLiveData() {
         return stateLiveData;
+    }
+
+    @NonNull
+    public LiveData<Boolean> getVehicleSpeedDetected() {
+        return vehicleSpeedDetected;
     }
 
     // -------------------------------------------------------------------------
@@ -128,12 +171,18 @@ public final class TrackingService extends Service implements SensorEventListene
     private TrackingState.Status       currentStatus = TrackingState.Status.IDLE;
     private TrackingState.ActivityType activityType  = TrackingState.ActivityType.WALKING;
 
-    private long   elapsedSeconds  = 0L;
+    private long   elapsedSeconds = 0L;
     /** Segundos en estado RUNNING — excluye pausas. Usado para el cálculo de ritmo. */
-    private long   activeSeconds   = 0L;
-    private int    distanceMeters  = 0;
-    private int    calories        = 0;
-    private double userWeightKg    = 70.0;
+    private long   activeSeconds  = 0L;
+    private int    distanceMeters = 0;
+    private int    calories       = 0;
+    private double userWeightKg   = 70.0;
+
+    /** Número de puntos GPS acumulados en la sesión actual (solo muestras válidas). */
+    private int    gpsPointCount  = 0;
+
+    /** Contador de muestras GPS consecutivas por encima de MAX_HUMAN_SPEED_MS. */
+    private int    highSpeedCount = 0;
 
     private final List<LatLng> routePoints = new ArrayList<>();
     @Nullable private Location lastLocation = null;
@@ -172,14 +221,14 @@ public final class TrackingService extends Service implements SensorEventListene
     private SensorManager    sensorManager;
     @Nullable private Sensor accelerometer;
 
-    private int accelRunSamples     = 0;
-    private int accelTotalSamples   = 0;
-    private int runningConfirmCount = 0;
-    private int walkingConfirmCount = 0;
+    private int   accelRunSamples     = 0;
+    private int   accelTotalSamples   = 0;
+    private int   runningConfirmCount = 0;
+    private int   walkingConfirmCount = 0;
     // Magnitud filtrada con EMA. Se inicializa en gravedad terrestre
     // (≈9.81 m/s²) para que la primera muestra no arranque desde 0 y genere un
     // falso positivo de running.
-    private float accelFilteredMag  = SensorManager.GRAVITY_EARTH;
+    private float accelFilteredMag    = SensorManager.GRAVITY_EARTH;
 
     // -------------------------------------------------------------------------
     // Ciclo de vida del servicio
@@ -273,8 +322,6 @@ public final class TrackingService extends Service implements SensorEventListene
         stopLocationUpdates();
         stopAccelerometer();
         publishState();
-        // Detener el foreground service para eliminar la notificación persistente
-        // y liberar los recursos del servicio.
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
     }
@@ -285,7 +332,6 @@ public final class TrackingService extends Service implements SensorEventListene
         resetInternalState();
         currentStatus = TrackingState.Status.IDLE;
         publishState();
-        // Ídem — resetear también detiene el foreground service.
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
     }
@@ -315,8 +361,39 @@ public final class TrackingService extends Service implements SensorEventListene
     private void onNewLocation(@NonNull Location location) {
         if (currentStatus != TrackingState.Status.RUNNING) return;
 
+        // -----------------------------------------------------------------
+        // 1. Detección de velocidad excesiva (vehículo).
+        //    Se comprueba ANTES de acumular distancia para no inflar
+        //    estadísticas con trayectos en tren/coche/moto.
+        //    Usamos location.getSpeed() (velocidad instantánea GPS en m/s)
+        //    que FusedLocationProvider filtra internamente — más fiable que
+        //    calcular manualmente la distancia entre dos puntos.
+        // -----------------------------------------------------------------
+        if (location.hasSpeed() && location.getSpeed() > MAX_HUMAN_SPEED_MS) {
+            highSpeedCount++;
+            if (highSpeedCount == SPEED_ALERT_CONSECUTIVE) {
+                // Emitir el aviso una sola vez al alcanzar el umbral.
+                vehicleSpeedDetected.postValue(true);
+                // Pausar la actividad: detiene cronómetro, GPS y acelerómetro.
+                // El usuario deberá pulsar Play manualmente para reanudar,
+                // igual que si hubiera pausado a mano — así tiempo y calorías
+                // no se inflan mientras va en vehículo.
+                pauseTracking();
+            }
+            // Aunque aún no se haya alcanzado el umbral, descartamos el punto:
+            // no acumulamos distancia ni actualizamos lastLocation.
+            return;
+        }
+
+        // Velocidad dentro del rango humano: reiniciamos racha de alta velocidad.
+        highSpeedCount = 0;
+
+        // -----------------------------------------------------------------
+        // 2. Acumulación normal de distancia y puntos de ruta.
+        // -----------------------------------------------------------------
         LatLng point = new LatLng(location.getLatitude(), location.getLongitude());
         routePoints.add(point);
+        gpsPointCount++;
 
         if (lastLocation != null) {
             float delta = lastLocation.distanceTo(location);
@@ -367,7 +444,6 @@ public final class TrackingService extends Service implements SensorEventListene
         accelFilteredMag = ACCEL_ALPHA * magnitude + (1f - ACCEL_ALPHA) * accelFilteredMag;
 
         accelTotalSamples++;
-        // Comparar con la magnitud filtrada en vez de la cruda.
         if (accelFilteredMag > ACCEL_RUN_THRESHOLD) {
             accelRunSamples++;
         }
@@ -408,19 +484,12 @@ public final class TrackingService extends Service implements SensorEventListene
     private void startTimer() {
         stopTimer();
         // Guardia para evitar operar sobre un scheduler ya cerrado.
-        // Puede ocurrir si el sistema recrea el servicio vía START_STICKY y el
-        // scheduler del ciclo anterior quedó en estado shutdown.
         if (scheduler.isShutdown()) return;
-        // El tick se despacha al main looper via mainHandler.post() para que
-        // elapsedSeconds, calories y publishState() se ejecuten en el mismo hilo que
-        // onNewLocation() y onSensorChanged(), eliminando la condición de carrera.
-        // Se recalculan las calorías en cada tick para que avancen aunque el
-        // GPS no envíe actualizaciones (usuario lento / filtro de 5 m no superado).
         timerFuture = scheduler.scheduleWithFixedDelay(
                 () -> mainHandler.post(() -> {
                     elapsedSeconds++;
-                    activeSeconds++; // solo cuenta cuando el timer está activo (RUNNING)
-                    calories = calculateCalories(); // BUG-12
+                    activeSeconds++;
+                    calories = calculateCalories();
                     publishState();
                     updateNotification();
                 }),
@@ -450,14 +519,25 @@ public final class TrackingService extends Service implements SensorEventListene
     // -------------------------------------------------------------------------
 
     /**
-     * Devuelve el ritmo como "M'SS\"" o null si aún no hay suficiente distancia.
-     * Usa activeSeconds (excluye pausas) para un ritmo real.
-     * No se muestra hasta PACE_MIN_DISTANCE_M metros para evitar valores absurdos.
+     * Devuelve el ritmo como "M'SS\"" o null mientras no haya datos suficientes.
+     * Condiciones para mostrar ritmo:
+     *   - Al menos {@link #PACE_MIN_GPS_POINTS} puntos GPS válidos recibidos
+     *   - distanceMeters > 0 y activeSeconds > 0
+     *   - Resultado dentro del rango razonable [1'00"/km – 30'00"/km]
+     * Usar gpsPointCount en vez de un umbral de metros fijo hace que el ritmo
+     * aparezca desde el inicio de la actividad (~6 s tras el primer fix GPS)
+     * y se vaya ajustando a medida que se acumulan más datos.
      */
     @Nullable
     private String calculatePace() {
-        if (distanceMeters < PACE_MIN_DISTANCE_M || activeSeconds <= 0) return null;
+        if (gpsPointCount < PACE_MIN_GPS_POINTS
+                || distanceMeters <= 0
+                || activeSeconds <= 0) {
+            return null;
+        }
         double paceMinKm = (activeSeconds / 60.0) / (distanceMeters / 1000.0);
+        // Descartar valores fuera del rango humano (evita 0'01"/km o 99'00"/km)
+        if (paceMinKm < 1.0 || paceMinKm > 30.0) return null;
         int mins = (int) paceMinKm;
         int secs = (int) Math.round((paceMinKm - mins) * 60);
         if (secs == 60) { mins++; secs = 0; }
@@ -503,14 +583,16 @@ public final class TrackingService extends Service implements SensorEventListene
         activeSeconds       = 0L;
         distanceMeters      = 0;
         calories            = 0;
+        gpsPointCount       = 0;
+        highSpeedCount      = 0;
         routePoints.clear();
         lastLocation        = null;
         accelRunSamples     = 0;
         accelTotalSamples   = 0;
         runningConfirmCount = 0;
         walkingConfirmCount = 0;
-        // FIX BUG-11: Reiniciar también la magnitud filtrada a gravedad terrestre
-        // para que la siguiente sesión no arrastre el estado del filtro EMA.
+        // FIX BUG-11: Reiniciar la magnitud filtrada a gravedad terrestre para que
+        // la siguiente sesión no arrastre el estado del filtro EMA.
         accelFilteredMag    = SensorManager.GRAVITY_EARTH;
         activityType        = TrackingState.ActivityType.WALKING;
     }

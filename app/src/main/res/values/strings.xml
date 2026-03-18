@@ -213,6 +213,9 @@
     <string name="tracking_requirement_device_location_name">GPS</string>
     <string name="common_accept">Aceptar</string>
 
+    <!-- Avisos en tiempo real -->
+    <string name="tracking_warning_vehicle_speed">Velocidad demasiado alta detectada. ¿Estás en un vehículo?</string>
+
 
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <!--  STATS                                                                 -->
@@ -456,6 +459,7 @@
     <string name="vm_error_respuesta_invalida">Respuesta inválida</string>
     <string name="vm_registro_completado">Registro completado</string>
     <string name="vm_error_login_post_registro">Cuenta creada, pero no se pudo iniciar sesión: %1$s</string>
+    <string name="vm_error_vehicle_speed">Velocidad demasiado alta detectada. ¿Estás en un vehículo?</string>
 
 
     <!-- ══════════════════════════════════════════════════════════════════════ -->
@@ -485,14 +489,16 @@
     <string name="error_timeout_sync_perfil">Tiempo de espera agotado durante la sincronización del perfil</string>
 
 
-<!-- ══════════════════════════════════════════════════════════════════════ -->
-<!--  API / ERRORES HTTP                                                   -->
-<!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  API / ERRORES HTTP                                                    -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="api_error_unauthorized">No autorizado</string>
     <string name="api_error_forbidden">Acceso denegado</string>
     <string name="api_error_not_found">Recurso no encontrado</string>
     <string name="api_error_conflict">Conflicto en la solicitud</string>
     <string name="api_error_server">Error interno del servidor</string>
+
+
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <!--  COMÚN                                                                 -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->
@@ -503,7 +509,7 @@
     <string name="validation_real_name_invalid_characters">El nombre no puede contener números ni símbolos especiales</string>
     <string name="validation_username_inappropriate_or_not_allowed">El nombre de usuario contiene lenguaje inapropiado o no permitido</string>
     <string name="validation_real_name_inappropriate_or_not_allowed">El nombre real contiene lenguaje inapropiado o no permitido</string>
-    <string name="validation_content_unavailable">No se pudo validar el contenido en este momento</string>
+    <string name="validation_content_unavailable" tools:ignore="Typos">No se pudo validar el contenido en este momento</string>
     <string name="validation_password_too_long_bytes">La contraseña no puede superar los 72 bytes en UTF-8</string>
     <string name="validation_password_missing_uppercase">La contraseña debe incluir al menos una letra mayúscula</string>
     <string name="validation_password_missing_number">La contraseña debe incluir al menos un número</string>
@@ -511,6 +517,7 @@
     <string name="validation_recovery_code_must_be_numeric">El código solo puede contener números</string>
     <string name="validation_height_out_of_range">La altura debe estar entre 50cm y 300cm</string>
     <string name="validation_weight_out_of_range">El peso debe estar entre 20kg y 300kg</string>
+
 
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <!--  ELIMINAR CUENTA                                                       -->
@@ -527,6 +534,7 @@
     <string name="profile_delete_account_dialog_confirm">Eliminar definitivamente</string>
     <string name="profile_delete_account_deleting">Eliminando cuenta…</string>
     <string name="profile_error_delete_account">No se pudo eliminar la cuenta. Inténtalo de nuevo.</string>
+
 
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <!--  OFFLINE                                                               -->

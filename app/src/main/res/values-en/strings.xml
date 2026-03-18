@@ -134,6 +134,7 @@
     <string name="tracking_requirement_notifications_name">Notifications</string>
     <string name="tracking_requirement_device_location_name">GPS</string>
     <string name="common_accept">Accept</string>
+    <string name="tracking_warning_vehicle_speed">Speed too high detected. Are you in a vehicle?</string>
     <string name="stats_title">Stats</string>
     <string name="stats_label_distance">Distance</string>
     <string name="stats_label_time">Time</string>
@@ -288,6 +289,7 @@
     <string name="vm_error_respuesta_invalida">Invalid response</string>
     <string name="vm_registro_completado">Registration completed</string>
     <string name="vm_error_login_post_registro">Account created, but sign in failed: %1$s</string>
+    <string name="vm_error_vehicle_speed">Speed too high detected. Are you in a vehicle?</string>
     <string name="error_no_sesion_activa">There is no active session</string>
     <string name="error_actividad_no_encontrada">Activity not found</string>
     <string name="error_actividad_pendiente_sync">Activity pending sync</string>
@@ -351,4 +353,3 @@
     <string name="offline_banner_text">No connection. Changes will sync automatically.</string>
 
 </resources>
-

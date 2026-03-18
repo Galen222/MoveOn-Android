@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 
 import com.proyecto.moveon.app.ServiceLocator;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
@@ -28,6 +29,7 @@ import java.time.format.DateTimeFormatter;
  * - Exponer TrackingState como LiveData al Fragment
  * - Cargar el peso del usuario tras conectar con el servicio
  * - Llamar a POST /actividad/guardar al finalizar
+ * - Exponer el evento de velocidad excesiva (vehículo detectado) a la UI
  */
 public final class TrackingViewModel extends AndroidViewModel {
 
@@ -44,6 +46,22 @@ public final class TrackingViewModel extends AndroidViewModel {
     /** Evento único: mensaje de error que la UI muestra una sola vez. */
     private final MutableLiveData<Event<String>> errorEvent = new MutableLiveData<>();
 
+    /**
+     * Evento único: se dispara cuando TrackingService detecta velocidad de vehículo
+     * (>20 km/h durante {@code SPEED_ALERT_CONSECUTIVE} muestras GPS consecutivas).
+     * La UI debe mostrar un aviso informativo al usuario.
+     */
+    private final MutableLiveData<Event<String>> vehicleSpeedEvent = new MutableLiveData<>();
+
+    /** Observer para vehicleSpeedDetected — guardado para poder eliminarlo en onCleared(). */
+    private final Observer<Boolean> vehicleSpeedObserver = detected -> {
+        if (Boolean.TRUE.equals(detected)) {
+            vehicleSpeedEvent.setValue(new Event<>(
+                    getApplication().getString(
+                            com.proyecto.moveon.R.string.vm_error_vehicle_speed)));
+        }
+    };
+
     @NonNull
     public LiveData<TrackingState> getTrackingState() { return trackingState; }
 
@@ -53,6 +71,9 @@ public final class TrackingViewModel extends AndroidViewModel {
     @NonNull
     public LiveData<Event<String>> getErrorEvent() { return errorEvent; }
 
+    @NonNull
+    public LiveData<Event<String>> getVehicleSpeedEvent() { return vehicleSpeedEvent; }
+
     public TrackingViewModel(@NonNull Application application) {
         super(application);
         // MEJ-01: Creación centralizada vía ServiceLocator.
@@ -60,12 +81,18 @@ public final class TrackingViewModel extends AndroidViewModel {
         trackingController = new TrackingServiceController(application);
         trackingState.setValue(TrackingState.idle());
         trackingState.addSource(trackingController.getTrackingState(), trackingState::setValue);
+
+        // observeForever porque el ViewModel no es un LifecycleOwner.
+        // Se elimina en onCleared() para evitar leak.
+        trackingController.getVehicleSpeedDetected().observeForever(vehicleSpeedObserver);
+
         loadUserWeight();
     }
 
     @Override
     protected void onCleared() {
         trackingState.removeSource(trackingController.getTrackingState());
+        trackingController.getVehicleSpeedDetected().removeObserver(vehicleSpeedObserver);
         trackingController.release();
         repository.cancelAll();
         super.onCleared();

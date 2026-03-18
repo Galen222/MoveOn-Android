@@ -27,6 +27,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.material.snackbar.Snackbar;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.databinding.FragmentInicioBinding;
@@ -221,6 +222,19 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
             if (msg != null) {
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
             }
+        });
+
+        viewModel.getVehicleSpeedEvent().observe(getViewLifecycleOwner(), event -> {
+            if (event == null) return;
+            String msg = event.getContentIfNotHandled();
+            if (msg == null) return;
+            Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_LONG)
+                    .setAnchorView(binding.cardControls)
+                    .setBackgroundTint(
+                            ContextCompat.getColor(requireContext(), R.color.surfaceContainerHigh))
+                    .setTextColor(
+                            ContextCompat.getColor(requireContext(), R.color.textPrimary))
+                    .show();
         });
     }
 

@@ -14,7 +14,7 @@ import androidx.lifecycle.MediatorLiveData;
 
 /**
  * Adaptador de conexión con TrackingService.
- *
+
  * El ViewModel no conserva ya una referencia directa al Service ni conoce el
  * ciclo de vida del bind. Toda esa responsabilidad queda encapsulada en una
  * pieza dedicada basada en application context.
@@ -25,8 +25,16 @@ public final class TrackingServiceController {
     private final MediatorLiveData<TrackingState> trackingState =
             new MediatorLiveData<>(TrackingState.idle());
 
+    /**
+     * Retransmite el LiveData<Boolean> de velocidad excesiva que publica el servicio.
+     * Mientras el servicio no esté conectado permanece en su valor inicial (null),
+     * igual que hacemos con trackingState.
+     */
+    private final MediatorLiveData<Boolean> vehicleSpeedDetected = new MediatorLiveData<>();
+
     @Nullable private TrackingService service;
     @Nullable private LiveData<TrackingState> serviceStateSource;
+    @Nullable private LiveData<Boolean> serviceVehicleSource;
     private boolean bound = false;
     private boolean bindRequested = false;
     private boolean pendingStartAfterBind = false;
@@ -50,6 +58,11 @@ public final class TrackingServiceController {
             serviceStateSource = service.getStateLiveData();
             trackingState.addSource(serviceStateSource, trackingState::setValue);
 
+            // Conectar también el LiveData de velocidad excesiva del servicio.
+            detachServiceVehicleSource();
+            serviceVehicleSource = service.getVehicleSpeedDetected();
+            vehicleSpeedDetected.addSource(serviceVehicleSource, vehicleSpeedDetected::setValue);
+
             if (pendingUserWeightKg != null) {
                 service.setUserWeight(pendingUserWeightKg);
                 pendingUserWeightKg = null;
@@ -64,6 +77,7 @@ public final class TrackingServiceController {
         @Override
         public void onServiceDisconnected(@NonNull ComponentName name) {
             detachServiceStateSource();
+            detachServiceVehicleSource();
             bound = false;
             bindRequested = false;
             service = null;
@@ -78,6 +92,11 @@ public final class TrackingServiceController {
     @NonNull
     public LiveData<TrackingState> getTrackingState() {
         return trackingState;
+    }
+
+    @NonNull
+    public LiveData<Boolean> getVehicleSpeedDetected() {
+        return vehicleSpeedDetected;
     }
 
     public void startTracking() {
@@ -137,6 +156,7 @@ public final class TrackingServiceController {
         pendingStartAfterBind = false;
         pendingUserWeightKg = null;
         detachServiceStateSource();
+        detachServiceVehicleSource();
         safeUnbindIfNeeded();
         bindRequested = false;
         service = null;
@@ -157,6 +177,13 @@ public final class TrackingServiceController {
         if (serviceStateSource != null) {
             trackingState.removeSource(serviceStateSource);
             serviceStateSource = null;
+        }
+    }
+
+    private void detachServiceVehicleSource() {
+        if (serviceVehicleSource != null) {
+            vehicleSpeedDetected.removeSource(serviceVehicleSource);
+            serviceVehicleSource = null;
         }
     }
 
