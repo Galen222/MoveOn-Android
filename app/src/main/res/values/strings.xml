@@ -218,6 +218,19 @@
 
 
     <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  RANKING                                                               -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <string name="ranking_title">Ranking</string>
+    <string name="ranking_close_desc">Cerrar ranking</string>
+    <string name="ranking_filter_espana">España</string>
+    <string name="ranking_filter_provincia">Provincia</string>
+    <string name="ranking_selector_title">Selecciona una provincia</string>
+    <string name="ranking_empty">Aún no hay usuarios en este ranking</string>
+    <string name="ranking_error">No se pudo cargar el ranking. Inténtalo de nuevo.</string>
+    <string name="ranking_puntos_format">%1$d pts</string>
+
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
     <!--  STATS                                                                 -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->
 
@@ -509,7 +522,7 @@
     <string name="validation_real_name_invalid_characters">El nombre no puede contener números ni símbolos especiales</string>
     <string name="validation_username_inappropriate_or_not_allowed">El nombre de usuario contiene lenguaje inapropiado o no permitido</string>
     <string name="validation_real_name_inappropriate_or_not_allowed">El nombre real contiene lenguaje inapropiado o no permitido</string>
-    <string name="validation_content_unavailable" tools:ignore="Typos">No se pudo validar el contenido en este momento</string>
+    <string name="validation_content_unavailable">No se pudo validar el contenido en este momento</string>
     <string name="validation_password_too_long_bytes">La contraseña no puede superar los 72 bytes en UTF-8</string>
     <string name="validation_password_missing_uppercase">La contraseña debe incluir al menos una letra mayúscula</string>
     <string name="validation_password_missing_number">La contraseña debe incluir al menos un número</string>

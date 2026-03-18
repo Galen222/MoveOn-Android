@@ -8,6 +8,7 @@ import androidx.annotation.VisibleForTesting;
 import com.proyecto.moveon.data.activities.ActivityRepository;
 import com.proyecto.moveon.data.profile.PerfilRepository;
 import com.proyecto.moveon.data.profile.UserPrefsRepository;
+import com.proyecto.moveon.data.ranking.RankingRepository;
 import com.proyecto.moveon.data.session.AuthRepository;
 
 /**
@@ -77,6 +78,11 @@ public class ServiceLocator {
     @NonNull
     public PerfilRepository newPerfilRepository() {
         return new PerfilRepository(appContext, getUserPrefsRepository());
+    }
+
+    @NonNull
+    public RankingRepository newRankingRepository() {
+        return new RankingRepository(appContext);
     }
 
     // ── Singleton ────────────────────────────────────────────────────────────

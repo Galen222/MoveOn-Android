@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import com.proyecto.moveon.ui.ranking.RankingFragment;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -261,8 +262,11 @@ public class ProfileFragment extends Fragment {
             });
         });
 
-        binding.itemRanking.setOnClickListener(v ->
-                Toast.makeText(requireContext(), R.string.common_proximamente, Toast.LENGTH_SHORT).show());
+        binding.itemRanking.setOnClickListener(v -> {
+            String provincia = perfilActual != null ? perfilActual.provincia : null;
+            RankingFragment.newInstance(provincia)
+                    .show(getChildFragmentManager(), RankingFragment.TAG);
+        });
         binding.itemShareRoutes.setOnClickListener(v ->
                 Toast.makeText(requireContext(), R.string.common_proximamente, Toast.LENGTH_SHORT).show());
 

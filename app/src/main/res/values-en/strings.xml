@@ -135,6 +135,14 @@
     <string name="tracking_requirement_device_location_name">GPS</string>
     <string name="common_accept">Accept</string>
     <string name="tracking_warning_vehicle_speed">Speed too high detected. Are you in a vehicle?</string>
+    <string name="ranking_title">Ranking</string>
+    <string name="ranking_close_desc">Close ranking</string>
+    <string name="ranking_filter_espana">Spain</string>
+    <string name="ranking_filter_provincia">Province</string>
+    <string name="ranking_selector_title">Select a province</string>
+    <string name="ranking_empty">No users in this ranking yet</string>
+    <string name="ranking_error">Could not load the ranking. Please try again.</string>
+    <string name="ranking_puntos_format">%1$d pts</string>
     <string name="stats_title">Stats</string>
     <string name="stats_label_distance">Distance</string>
     <string name="stats_label_time">Time</string>
