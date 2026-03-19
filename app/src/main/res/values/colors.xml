@@ -34,6 +34,7 @@
     <color name="outlineVariant">#E5E7EB</color>
     <color name="disabled">#9CA3AF</color>
     <color name="error">#DC2626</color>
+    <color name="errorContainer">#FEE2E2</color>
 
     <!-- Transparencias -->
     <color name="scrim">#80000000</color>

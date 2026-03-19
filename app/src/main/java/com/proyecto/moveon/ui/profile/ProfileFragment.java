@@ -58,6 +58,9 @@ public class ProfileFragment extends Fragment {
     private ProfileDialogHelper dialogHelper;
     private ProfileTrackingHelper trackingHelper;
 
+    /** Referencia al bottom sheet de eliminación (si está visible). */
+    @Nullable private DeleteAccountBottomSheet deleteAccountSheet;
+
     private final ActivityResultLauncher<Intent> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) return;
@@ -128,6 +131,7 @@ public class ProfileFragment extends Fragment {
         binding = null;
         dialogHelper = null;
         trackingHelper = null;
+        deleteAccountSheet = null;
     }
 
     private void bindLocalData() {
@@ -287,7 +291,7 @@ public class ProfileFragment extends Fragment {
         });
 
         binding.btnLogout.setOnClickListener(v -> viewModel.logout());
-        binding.btnDeleteAccount.setOnClickListener(v -> dialogHelper.showDeleteAccountConfirmationDialog());
+        binding.tvDeleteAccount.setOnClickListener(v -> showDeleteAccountBottomSheet());
         binding.itemLanguage.setOnClickListener(v -> dialogHelper.showLanguageDialog());
 
         binding.itemFullName.setOnClickListener(v -> dialogHelper.showEditTextDialog(
@@ -342,7 +346,7 @@ public class ProfileFragment extends Fragment {
                 }
         ));
 
-        binding.itemBirthdate.setOnClickListener(v -> dialogHelper.showBirthdatePicker());
+        binding.itemBirthdate.setOnClickListener(v -> dialogHelper.showBirthDatePicker());
         binding.itemProvincia.setOnClickListener(v -> dialogHelper.showEditProvinciaDialog());
         binding.itemGenero.setOnClickListener(v -> dialogHelper.showGeneroDialog());
 
@@ -412,11 +416,6 @@ public class ProfileFragment extends Fragment {
                 viewModel.resetUpdateState();
             } else if (state.error != null) {
                 // FIX: Recargar datos para revertir cambios optimistas.
-                // Si el servidor rechazó (422, 400), el path FAILED del repository
-                // ya hizo fetchPerfilBlocking → mergeRemoteSnapshot, así que Room
-                // ya emitió los datos reales. Pero si eso también falló (backend
-                // caído), perfilActual tiene el último estado confirmado y
-                // bindPerfilData revierte el switch/campo al valor correcto.
                 if (perfilActual != null) {
                     bindPerfilData(perfilActual);
                 }
@@ -426,10 +425,6 @@ public class ProfileFragment extends Fragment {
         });
 
         // ── photoState: solo feedback (snackbar), NUNCA overlay ──
-        // FIX: Eliminado showOverlay(state.loading).
-        // La foto preview se muestra instantáneamente desde pendingLocalPhotoPath
-        // (Room emite → bindPerfilData → Glide carga el archivo local).
-        // El overlay bloqueaba la UI 8-60 s con backend caído.
         viewModel.getPhotoState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
             if (state.data != null) {
@@ -465,25 +460,41 @@ public class ProfileFragment extends Fragment {
             goToLogin();
         });
 
+        // ── deleteAccountState: delegado al BottomSheet ──
         viewModel.getDeleteAccountState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
             if (state.loading) {
-                binding.btnDeleteAccount.setEnabled(false);
-                binding.btnDeleteAccount.setText(R.string.profile_delete_account_deleting);
+                if (deleteAccountSheet != null) {
+                    deleteAccountSheet.setLoading(true);
+                }
                 showOverlay(true);
                 return;
             }
             showOverlay(false);
             if (state.error != null) {
-                binding.btnDeleteAccount.setEnabled(true);
-                binding.btnDeleteAccount.setText(R.string.profile_btn_delete_account);
-                showErrorFeedback(getString(R.string.profile_error_delete_account));
+                if (deleteAccountSheet != null) {
+                    deleteAccountSheet.setError(getString(R.string.profile_error_delete_account));
+                } else {
+                    showErrorFeedback(getString(R.string.profile_error_delete_account));
+                }
                 return;
+            }
+            // Éxito: cerrar bottom sheet y navegar al login
+            if (deleteAccountSheet != null) {
+                deleteAccountSheet.dismiss();
+                deleteAccountSheet = null;
             }
             goToLogin();
         });
     }
 
+    // ── Eliminar cuenta (BottomSheet) ───────────────────────────────────────────
+
+    private void showDeleteAccountBottomSheet() {
+        deleteAccountSheet = DeleteAccountBottomSheet.newInstance();
+        deleteAccountSheet.setOnDeleteConfirmedListener(() -> viewModel.deleteAccount());
+        deleteAccountSheet.show(getChildFragmentManager(), DeleteAccountBottomSheet.TAG);
+    }
 
     // ── TopSnackbar helpers ─────────────────────────────────────────────────────
 
@@ -532,8 +543,6 @@ public class ProfileFragment extends Fragment {
         if (!isAdded()) return;
         NavigationUtils.goToActivityAndClearTask(requireActivity(), LoginActivity.class);
     }
-
-    // ── Eliminar cuenta ─────────────────────────────────────────────────────────
 
     private String validationError(@NonNull AppInputValidator.ValidationResult<?> result) {
         String msg = result.getErrorMessage();

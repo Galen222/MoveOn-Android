@@ -36,6 +36,8 @@ import java.util.function.Supplier;
 
 /**
  * MEJ-04: Diálogos de edición del perfil extraídos de ProfileFragment.
+ *
+ * <p>La eliminación de cuenta se ha movido a {@link DeleteAccountBottomSheet}.</p>
  */
 public final class ProfileDialogHelper {
 
@@ -173,51 +175,45 @@ public final class ProfileDialogHelper {
         dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String value = dialogBinding.etField.getText() != null
                     ? dialogBinding.etField.getText().toString().trim() : "";
-            dialogBinding.tilField.setError(null);
-
             if (required && value.isEmpty()) {
                 dialogBinding.tilField.setError(fragment.getString(R.string.dialog_error_required));
                 return;
             }
-
-            boolean close = listener.onSaved(value);
-            if (close) dialog.dismiss();
+            dialogBinding.tilField.setError(null);
+            if (listener.onSaved(value)) {
+                dialog.dismiss();
+            }
         }));
 
         dialog.show();
     }
 
-    public void showBirthdatePicker() {
-        Calendar maxDate = Calendar.getInstance();
-        maxDate.add(Calendar.YEAR, -18);
+    public void showBirthDatePicker() {
+        Calendar today = Calendar.getInstance();
+
+        Calendar minDate = Calendar.getInstance();
+        minDate.set(1900, Calendar.JANUARY, 1);
 
         CalendarConstraints constraints = new CalendarConstraints.Builder()
-                .setEnd(maxDate.getTimeInMillis())
-                .setValidator(DateValidatorPointBackward.before(maxDate.getTimeInMillis()))
+                .setStart(minDate.getTimeInMillis())
+                .setEnd(today.getTimeInMillis())
+                .setValidator(DateValidatorPointBackward.now())
                 .build();
 
-        long initialSelection;
+        MaterialDatePicker.Builder<Long> builder = MaterialDatePicker.Builder.datePicker()
+                .setTitleText(R.string.profile_label_birthdate)
+                .setCalendarConstraints(constraints);
+
         if (perfilSupplier.get() != null && StringUtils.hasText(perfilSupplier.get().fechaNacimiento)) {
             try {
-                String[] parts = perfilSupplier.get().fechaNacimiento.split("-");
+                LocalDate parsed = LocalDate.parse(perfilSupplier.get().fechaNacimiento);
                 Calendar cal = Calendar.getInstance();
-                cal.set(Integer.parseInt(parts[0]),
-                        Integer.parseInt(parts[1]) - 1,
-                        Integer.parseInt(parts[2]));
-                initialSelection = cal.getTimeInMillis();
-            } catch (Exception e) {
-                initialSelection = maxDate.getTimeInMillis();
-            }
-        } else {
-            initialSelection = maxDate.getTimeInMillis();
+                cal.set(parsed.getYear(), parsed.getMonthValue() - 1, parsed.getDayOfMonth());
+                builder.setSelection(cal.getTimeInMillis());
+            } catch (Exception ignored) { }
         }
 
-        MaterialDatePicker<Long> picker = MaterialDatePicker.Builder.datePicker()
-                .setTitleText(R.string.profile_label_birthdate)
-                .setInputMode(MaterialDatePicker.INPUT_MODE_CALENDAR)
-                .setCalendarConstraints(constraints)
-                .setSelection(initialSelection)
-                .build();
+        MaterialDatePicker<Long> picker = builder.build();
 
         picker.addOnPositiveButtonClickListener(selection -> {
             Calendar selected = Calendar.getInstance();
@@ -361,56 +357,6 @@ public final class ProfileDialogHelper {
             if (modes[i].equals(normalizedMode)) return i;
         }
         return 0;
-    }
-
-
-    // ── Eliminar cuenta ─────────────────────────────────────────────────────────
-
-    public void showDeleteAccountConfirmationDialog() {
-        new MaterialAlertDialogBuilder(fragment.requireContext())
-                .setTitle(R.string.profile_delete_account_dialog_title)
-                .setMessage(R.string.profile_delete_account_dialog_message)
-                .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .setPositiveButton(R.string.profile_delete_account_dialog_continue,
-                        (dialog, which) -> showDeleteAccountStep2Dialog())
-                .show();
-    }
-
-    public void showDeleteAccountStep2Dialog() {
-        DialogEditFieldBinding dialogBinding =
-                DialogEditFieldBinding.inflate(LayoutInflater.from(fragment.requireContext()));
-
-        String confirmWord = fragment.getString(R.string.profile_delete_confirm_word);
-        dialogBinding.tilField.setHint(R.string.profile_delete_account_step2_hint);
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(fragment.requireContext())
-                .setTitle(R.string.profile_delete_account_step2_title)
-                .setMessage(R.string.profile_delete_account_step2_message)
-                .setView(dialogBinding.getRoot())
-                .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .setPositiveButton(R.string.profile_delete_account_dialog_confirm, null)
-                .create();
-
-        dialog.setOnShowListener(d -> {
-            Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            positiveButton.setEnabled(false);
-
-            dialogBinding.etField.addTextChangedListener(new android.text.TextWatcher() {
-                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-                @Override
-                public void afterTextChanged(android.text.Editable s) {
-                    positiveButton.setEnabled(confirmWord.equals(s.toString()));
-                }
-            });
-
-            positiveButton.setOnClickListener(v -> {
-                dialog.dismiss();
-                viewModel.deleteAccount();
-            });
-        });
-
-        dialog.show();
     }
 
     @NonNull

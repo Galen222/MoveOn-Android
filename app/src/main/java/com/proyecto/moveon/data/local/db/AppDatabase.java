@@ -70,7 +70,7 @@ public abstract class AppDatabase extends RoomDatabase {
                             // intermedia, Room destruye y recrea las tablas en vez de crashear.
                             // Los datos locales son caché del servidor — se re-sincronizan al
                             // abrir la app. Preferible a un crash irrecuperable.
-                            .fallbackToDestructiveMigration()
+                            .fallbackToDestructiveMigration(true)
                             .build();
                 }
             }

@@ -342,18 +342,20 @@
     <string name="validation_weight_out_of_range">Weight must be between 20kg and 300kg</string>
 
     <!-- Delete account -->
-    <string name="profile_section_account">Account</string>
     <string name="profile_btn_delete_account">Delete account</string>
-    <string name="profile_delete_account_dialog_title">Delete your account?</string>
-    <string name="profile_delete_account_dialog_message">This action is permanent and irreversible. Your profile, all your activities, routes and progress will be deleted. There is no going back.</string>
-    <string name="profile_delete_account_dialog_continue">Continue</string>
-    <string name="profile_delete_account_step2_title">Confirm deletion</string>
-    <string name="profile_delete_account_step2_message">Type DELETE in the text field to confirm.</string>
-    <string name="profile_delete_account_step2_hint">DELETE</string>
     <string name="profile_delete_confirm_word">DELETE</string>
-    <string name="profile_delete_account_dialog_confirm">Delete permanently</string>
-    <string name="profile_delete_account_deleting">Deleting account…</string>
     <string name="profile_error_delete_account">Could not delete the account. Please try again.</string>
+
+    <!-- Delete account bottom sheet -->
+    <string name="delete_account_sheet_title">Delete your account</string>
+    <string name="delete_account_sheet_subtitle">This will permanently delete:</string>
+    <string name="delete_account_item_profile">Your profile and personal data</string>
+    <string name="delete_account_item_activities">All your activities and routes</string>
+    <string name="delete_account_item_progress">Your points and progress</string>
+    <string name="delete_account_sheet_confirm_instruction">Type DELETE to confirm</string>
+    <string name="delete_account_sheet_confirm_hint">DELETE</string>
+    <string name="delete_account_sheet_btn_delete">Delete permanently</string>
+    <string name="delete_account_sheet_btn_deleting">Deleting account…</string>
 
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <!--  OFFLINE                                                               -->

@@ -535,18 +535,20 @@
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <!--  ELIMINAR CUENTA                                                       -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <string name="profile_section_account">Cuenta</string>
     <string name="profile_btn_delete_account">Eliminar cuenta</string>
-    <string name="profile_delete_account_dialog_title">¿Eliminar tu cuenta?</string>
-    <string name="profile_delete_account_dialog_message">Esta acción es permanente e irreversible. Se eliminarán tu perfil, todas tus actividades, rutas y progreso. No hay vuelta atrás.</string>
-    <string name="profile_delete_account_dialog_continue">Continuar</string>
-    <string name="profile_delete_account_step2_title">Confirma la eliminación</string>
-    <string name="profile_delete_account_step2_message">Escribe ELIMINAR en el campo de texto para confirmar.</string>
-    <string name="profile_delete_account_step2_hint">ELIMINAR</string>
     <string name="profile_delete_confirm_word">ELIMINAR</string>
-    <string name="profile_delete_account_dialog_confirm">Eliminar definitivamente</string>
-    <string name="profile_delete_account_deleting">Eliminando cuenta…</string>
     <string name="profile_error_delete_account">No se pudo eliminar la cuenta. Inténtalo de nuevo.</string>
+
+    <!-- Bottom sheet eliminar cuenta -->
+    <string name="delete_account_sheet_title">Eliminar tu cuenta</string>
+    <string name="delete_account_sheet_subtitle">Se eliminará de forma permanente:</string>
+    <string name="delete_account_item_profile">Tu perfil y datos personales</string>
+    <string name="delete_account_item_activities">Todas tus actividades y rutas</string>
+    <string name="delete_account_item_progress">Tus puntos y progreso</string>
+    <string name="delete_account_sheet_confirm_instruction">Escribe ELIMINAR para confirmar</string>
+    <string name="delete_account_sheet_confirm_hint">ELIMINAR</string>
+    <string name="delete_account_sheet_btn_delete">Eliminar definitivamente</string>
+    <string name="delete_account_sheet_btn_deleting">Eliminando cuenta…</string>
 
 
     <!-- ══════════════════════════════════════════════════════════════════════ -->
