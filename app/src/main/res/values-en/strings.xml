@@ -360,6 +360,10 @@
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <!--  OFFLINE                                                               -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <string name="offline_banner_text">No connection. Changes will sync automatically.</string>
+    <string name="offline_banner_text">Sin conexión. Los cambios se sincronizarán automáticamente.</string>
+
+    <!-- Vehicle speed detection -->
+    <string name="tracking_vehicle_speed_title">High speed detected</string>
+    <string name="tracking_vehicle_continue">Continue activity</string>
 
 </resources>

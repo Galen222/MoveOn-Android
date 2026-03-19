@@ -7,7 +7,7 @@ import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import com.proyecto.moveon.ui.common.TopSnackbar;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -27,7 +27,6 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.material.snackbar.Snackbar;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.databinding.FragmentInicioBinding;
@@ -49,10 +48,6 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
 
     @Nullable private GoogleMap googleMap;
     @Nullable private Polyline routePolyline;
-
-    /** {@code true} tras centrar la cámara en la ubicación real del usuario.
-     *  Evita re-centrar innecesariamente en cada onResume (ej. al cambiar de tab). */
-    private boolean userLocated = false;
 
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(
@@ -82,21 +77,6 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        // Si los permisos se concedieron desde otro sitio (ej. ProfileFragment o
-        // Ajustes del sistema) mientras este Fragment estaba oculto, onMapReady
-        // ya pasó y el mapa sigue centrado en España. Aquí detectamos esa situación
-        // y centramos la cámara en el usuario.
-        if (googleMap != null
-                && !userLocated
-                && TrackingRequirementsManager.hasLocationPermission(requireContext())) {
-            enableMapMyLocation();
-            moveCameraToCurrentLocation();
-        }
     }
 
     private void setupMap() {
@@ -146,7 +126,6 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
                         location.getLatitude(), location.getLongitude());
                 googleMap.animateCamera(
                         CameraUpdateFactory.newLatLngZoom(userLatLng, USER_ZOOM));
-                userLocated = true;
             } else {
                 googleMap.moveCamera(
                         CameraUpdateFactory.newLatLngZoom(DEFAULT_LOCATION, DEFAULT_ZOOM));
@@ -230,8 +209,8 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
                     uiState.loading ? View.VISIBLE : View.GONE);
 
             if (!uiState.loading && uiState.data != null) {
-                TopSnackbar.success(binding.getRoot(),
-                        getString(R.string.tracking_activity_saved_ok));
+                Toast.makeText(requireContext(),
+                        R.string.tracking_activity_saved_ok, Toast.LENGTH_SHORT).show();
                 clearMapRoute();
             }
         });
@@ -240,21 +219,14 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
             if (event == null) return;
             String msg = event.getContentIfNotHandled();
             if (msg != null) {
-                TopSnackbar.error(binding.getRoot(), msg);
+                Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
             }
         });
 
         viewModel.getVehicleSpeedEvent().observe(getViewLifecycleOwner(), event -> {
             if (event == null) return;
-            String msg = event.getContentIfNotHandled();
-            if (msg == null) return;
-            Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_LONG)
-                    .setAnchorView(binding.cardControls)
-                    .setBackgroundTint(
-                            ContextCompat.getColor(requireContext(), R.color.surfaceContainerHigh))
-                    .setTextColor(
-                            ContextCompat.getColor(requireContext(), R.color.textPrimary))
-                    .show();
+            if (event.getContentIfNotHandled() == null) return;
+            showVehicleSpeedDialog();
         });
     }
 
@@ -416,6 +388,24 @@ public class InicioFragment extends Fragment implements OnMapReadyCallback {
                 .setPositiveButton(R.string.common_accept, null)
                 .setNegativeButton(R.string.tracking_requirements_go_settings,
                         (dialog, which) -> openLocationSettings())
+                .show();
+    }
+
+    /**
+     * Diálogo no cancelable que se muestra cuando se detecta velocidad de vehículo.
+     * El usuario debe elegir explícitamente: guardar la actividad o reanudarla.
+     * Si reanuda y sigue en vehículo, el servicio lo detectará de nuevo y volverá a mostrar
+     * este diálogo tras {@code SPEED_ALERT_CONSECUTIVE} puntos GPS consecutivos.
+     */
+    private void showVehicleSpeedDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.tracking_vehicle_speed_title)
+                .setMessage(R.string.tracking_warning_vehicle_speed)
+                .setCancelable(false)
+                .setPositiveButton(R.string.tracking_dialog_stop_confirm,
+                        (dialog, which) -> viewModel.stopAndSave())
+                .setNegativeButton(R.string.tracking_vehicle_continue,
+                        (dialog, which) -> viewModel.startTracking())
                 .show();
     }
 

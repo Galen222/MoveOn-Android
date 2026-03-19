@@ -556,4 +556,8 @@
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="offline_banner_text">Sin conexión. Los cambios se sincronizarán automáticamente.</string>
 
+    <!-- Detección de velocidad de vehículo -->
+    <string name="tracking_vehicle_speed_title">Velocidad elevada detectada</string>
+    <string name="tracking_vehicle_continue">Continuar actividad</string>
+
 </resources>
