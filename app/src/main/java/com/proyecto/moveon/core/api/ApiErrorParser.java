@@ -1,6 +1,7 @@
 package com.proyecto.moveon.core.api;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,8 +37,16 @@ import retrofit2.Response;
  */
 public final class ApiErrorParser {
 
+    private static final String TAG = "ApiErrorParser";
+
     private ApiErrorParser() {}
 
+    /**
+     * FIX: Reemplazado {@code catch (Exception ignored)} por catches tipados
+     * con {@code Log.w} para dejar traza cuando falla la lectura del errorBody.
+     * El {@code IOException} cubre el caso habitual (conexión cortada, body ya
+     * consumido); el {@code RuntimeException} cubre edge cases de OkHttp.
+     */
     @NonNull
     public static ApiError fromHttp(@NonNull Context context, @NonNull Response<?> response) {
         int code = response.code();
@@ -46,7 +55,10 @@ public final class ApiErrorParser {
         if (eb != null) {
             try {
                 raw = eb.string();
-            } catch (Exception ignored) {
+            } catch (IOException e) {
+                Log.w(TAG, "No se pudo leer errorBody()", e);
+            } catch (RuntimeException e) {
+                Log.w(TAG, "Fallo inesperado leyendo errorBody()", e);
             } finally {
                 eb.close();
             }

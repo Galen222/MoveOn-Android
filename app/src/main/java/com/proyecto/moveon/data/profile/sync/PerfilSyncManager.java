@@ -39,6 +39,18 @@ import java.util.UUID;
  */
 public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridge {
 
+    /**
+     * FIX: Máximo de reintentos para patches pendientes.
+     * Tras alcanzar este límite, el patch se marca como FAILED y deja de
+     * aparecer en {@code getPending()} (el DAO solo lee state = 'PENDING').
+     * Esto evita que un error retryable repetido (ej. backend caído durante
+     * horas) mantenga la cola bloqueada indefinidamente.
+     */
+    private static final int MAX_PATCH_ATTEMPTS = 5;
+
+    private static final String STATE_PENDING = "PENDING";
+    private static final String STATE_FAILED  = "FAILED";
+
     private final Context appContext;
     private final PerfilLocalDataSource local;
     private final PerfilRemoteDataSource remote;
@@ -81,6 +93,42 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     }
 
     // ══════════════════════════════════════════════════════════════════════════
+    // Retry helper centralizado
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Evalúa si un patch pendiente debe seguir en cola de reintentos.
+     *
+     * <p>Incrementa el contador de intentos y actualiza el mensaje de error.
+     * Si el error no es retryable o se ha alcanzado {@link #MAX_PATCH_ATTEMPTS},
+     * marca el patch como FAILED y devuelve {@code false}. En caso contrario
+     * lo mantiene como PENDING y devuelve {@code true}.</p>
+     *
+     * @return {@code true} si el patch sigue pendiente y merece reintento.
+     */
+    private boolean shouldKeepRetrying(@NonNull PerfilPendingPatchEntity op,
+                                       @NonNull ApiError error) {
+        op.attempts += 1;
+        op.lastError = error.getMessage();
+
+        if (!PhotoSyncHelper.isRetryableError(error)) {
+            op.state = STATE_FAILED;
+            local.updatePatch(op);
+            return false;
+        }
+
+        if (op.attempts >= MAX_PATCH_ATTEMPTS) {
+            op.state = STATE_FAILED;
+            local.updatePatch(op);
+            return false;
+        }
+
+        op.state = STATE_PENDING;
+        local.updatePatch(op);
+        return true;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
     // Patch + sync directo
     // ══════════════════════════════════════════════════════════════════════════
 
@@ -99,7 +147,7 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
         op.createdAtMs = System.currentTimeMillis();
         op.attempts    = 0;
         op.lastError   = null;
-        op.state       = "PENDING";
+        op.state       = STATE_PENDING;
         local.enqueuePatch(op);
 
         boolean applyOptimistically = shouldApplyPatchOptimistically(patchJson);
@@ -132,20 +180,16 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
             return UpdateResult.synced();
         }
 
+        // FIX: Usa shouldKeepRetrying en vez de lógica inline sin límite.
         ApiError error = result.error != null
                 ? result.error
                 : ApiError.local(appContext.getString(R.string.error_sincronizando_perfil));
-        op.attempts += 1;
-        op.lastError  = error.getMessage();
 
-        if (PhotoSyncHelper.isRetryableError(error)) {
-            local.updatePatch(op);
+        if (shouldKeepRetrying(op, error)) {
             return UpdateResult.queued();
         }
 
-        op.state = "FAILED";
-        local.updatePatch(op);
-
+        // Fallo permanente: refrescar caché desde servidor para revertir optimismo.
         ApiResult<ProfileInfoDto> fetchResult = remote.fetchPerfilBlocking();
         if (fetchResult.isSuccess() && fetchResult.data != null) {
             mergeRemoteSnapshotInternal(accountKey, fetchResult.data, false);
@@ -193,20 +237,17 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
                     continue;
                 }
 
+                // FIX: Usa shouldKeepRetrying en vez de lógica inline sin límite.
                 ApiError error = result.error != null
                         ? result.error
                         : ApiError.local(appContext.getString(R.string.error_sincronizando_perfil));
-                op.attempts += 1;
-                op.lastError  = error.getMessage();
 
-                if (PhotoSyncHelper.isRetryableError(error)) {
-                    local.updatePatch(op);
+                if (shouldKeepRetrying(op, error)) {
                     retryNeeded = true;
                     break;
-                } else {
-                    op.state = "FAILED";
-                    local.updatePatch(op);
                 }
+                // Si shouldKeepRetrying devolvió false, el patch ya está FAILED;
+                // continuar con el siguiente.
             }
         }
 

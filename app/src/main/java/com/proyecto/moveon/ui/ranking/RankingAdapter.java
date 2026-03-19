@@ -1,6 +1,6 @@
 package com.proyecto.moveon.ui.ranking;
 
-import android.graphics.Color;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,13 +22,17 @@ import com.proyecto.moveon.data.ranking.dto.RankingItemDto;
 import java.util.Locale;
 import java.util.Objects;
 
+/**
+ * FIX: Eliminados colores hardcoded con {@code Color.parseColor(...)}.
+ * Ahora se resuelven desde recursos ({@code R.color.ranking_position_*})
+ * para que respeten el tema claro/oscuro automáticamente.
+ *
+ * Requiere añadir los colores en:
+ * - {@code res/values/colors.xml} (tema claro)
+ * - {@code res/values-night/colors.xml} (tema oscuro)
+ */
 public final class RankingAdapter
         extends ListAdapter<RankingItemDto, RecyclerView.ViewHolder> {
-
-    private static final int COLOR_ORO      = Color.parseColor("#F5A623");
-    private static final int COLOR_PLATA    = Color.parseColor("#9B9B9B");
-    private static final int COLOR_BRONCE   = Color.parseColor("#C47A2E");
-    private static final int COLOR_NORMAL   = Color.parseColor("#374151");
 
     private static final DiffUtil.ItemCallback<RankingItemDto> DIFF =
             new DiffUtil.ItemCallback<>() {
@@ -64,6 +69,17 @@ public final class RankingAdapter
         ((ViewHolder) holder).bind(getItem(position), position + 1);
     }
 
+    // ── Helper de color ─────────────────────────────────────────────────────
+
+    private static int resolvePositionColor(@NonNull Context context, int posicion) {
+        if (posicion == 1) return ContextCompat.getColor(context, R.color.ranking_position_gold);
+        if (posicion == 2) return ContextCompat.getColor(context, R.color.ranking_position_silver);
+        if (posicion == 3) return ContextCompat.getColor(context, R.color.ranking_position_bronze);
+        return ContextCompat.getColor(context, R.color.ranking_position_default);
+    }
+
+    // ── ViewHolder ──────────────────────────────────────────────────────────
+
     private static final class ViewHolder extends RecyclerView.ViewHolder {
 
         private final TextView tvPosicion;
@@ -88,14 +104,7 @@ public final class RankingAdapter
             tvPuntos.setText(itemView.getContext()
                     .getString(R.string.ranking_puntos_format, item.totalPuntos));
 
-            int posColor;
-            switch (posicion) {
-                case 1:  posColor = COLOR_ORO;    break;
-                case 2:  posColor = COLOR_PLATA;  break;
-                case 3:  posColor = COLOR_BRONCE; break;
-                default: posColor = COLOR_NORMAL; break;
-            }
-            tvPosicion.setTextColor(posColor);
+            tvPosicion.setTextColor(resolvePositionColor(itemView.getContext(), posicion));
 
             if (item.fotoPerfil != null && !item.fotoPerfil.isEmpty()) {
                 String url = item.fotoPerfil

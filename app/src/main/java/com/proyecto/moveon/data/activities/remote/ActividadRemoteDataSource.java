@@ -1,6 +1,8 @@
 package com.proyecto.moveon.data.activities.remote;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.annotation.NonNull;
 
@@ -9,6 +11,7 @@ import com.google.gson.JsonObject;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiResult;
+import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
 import com.proyecto.moveon.data.activities.dto.ActividadResponseDto;
 import com.proyecto.moveon.data.activities.dto.ActividadesPageDto;
 import com.proyecto.moveon.data.activities.dto.BorrarActividadResponseDto;
@@ -31,6 +34,7 @@ public class ActividadRemoteDataSource {
     private final AuthenticatedApiClient api;
     private final Gson gson = new Gson();
     private final Context appContext;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public ActividadRemoteDataSource(@NonNull Context context) {
         this.appContext = context.getApplicationContext();
@@ -49,42 +53,20 @@ public class ActividadRemoteDataSource {
                 callback::onResult);
     }
 
+    /**
+     * Obtiene todas las actividades con paginación automática.
+     *
+     * <p>FIX: Eliminada la recursión de callbacks {@code fetchPage()}.
+     * Ahora delega en {@link #fetchAllActividadesBlocking()} (iterativo)
+     * ejecutándolo en hilo IO y devolviendo el resultado en main thread.
+     * Esto elimina el riesgo teórico de acumulación de stack frames
+     * con backends que devuelvan muchas páginas.</p>
+     */
     public void fetchAllActividades(@NonNull Callback<List<ActividadResponseDto>> callback) {
-        fetchPage(0, new ArrayList<>(), callback);
-    }
-
-    private void fetchPage(int skip,
-                           @NonNull List<ActividadResponseDto> acc,
-                           @NonNull Callback<List<ActividadResponseDto>> callback) {
-        String endpoint = ENDPOINT_LIST + "?skip=" + skip + "&limit=" + PAGE_SIZE;
-        api.get(endpoint,
-                json -> gson.fromJson(json, ActividadesPageDto.class),
-                result -> {
-                    if (!result.isSuccess()) {
-                        callback.onResult(ApiResult.failure(
-                                result.error != null ? result.error
-                                        : ApiError.local(appContext.getString(R.string.error_cargando_actividades))
-                        ));
-                        return;
-                    }
-
-                    ActividadesPageDto page = result.data;
-                    if (page == null) {
-                        callback.onResult(ApiResult.success(acc));
-                        return;
-                    }
-
-                    if (page.items != null && !page.items.isEmpty()) {
-                        acc.addAll(page.items);
-                    }
-
-                    if (page.hasMore) {
-                        int nextSkip = page.skip + page.limit;
-                        fetchPage(nextSkip, acc, callback);
-                    } else {
-                        callback.onResult(ApiResult.success(acc));
-                    }
-                });
+        MoveOnExecutors.io().execute(() -> {
+            ApiResult<List<ActividadResponseDto>> result = fetchAllActividadesBlocking();
+            mainHandler.post(() -> callback.onResult(result));
+        });
     }
 
     @NonNull

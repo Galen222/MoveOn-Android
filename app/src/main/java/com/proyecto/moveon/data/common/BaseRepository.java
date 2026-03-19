@@ -3,8 +3,9 @@ package com.proyecto.moveon.data.common;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -13,18 +14,35 @@ import retrofit2.Response;
 /**
  * Clase base para repositorios y clientes de red.
  * Centraliza el seguimiento y cancelación de peticiones.
+ *
+ * <p>FIX: Reemplazado {@code CopyOnWriteArrayList} por
+ * {@code Collections.synchronizedList(new ArrayList<>())}.
+ * COWArrayList copia el array completo en cada add/remove,
+ * lo cual es innecesariamente costoso para listas que se mutan
+ * frecuentemente (track/untrack por cada petición).
+ * {@code synchronizedList} solo necesita un lock y es más eficiente
+ * para el patrón de escrituras frecuentes + lecturas infrecuentes.</p>
+ *
+ * <p>En {@link #cancelAll()} se hace un snapshot bajo lock para
+ * evitar iterar mientras otro hilo muta la lista.</p>
  */
 public abstract class BaseRepository {
 
-    private final List<Call<?>> inFlight = new CopyOnWriteArrayList<>();
+    private final List<Call<?>> inFlight =
+            Collections.synchronizedList(new ArrayList<>());
 
     public void cancelAll() {
-        for (Call<?> c : inFlight) {
+        List<Call<?>> snapshot;
+        synchronized (inFlight) {
+            snapshot = new ArrayList<>(inFlight);
+            inFlight.clear();
+        }
+
+        for (Call<?> c : snapshot) {
             if (c != null && !c.isCanceled()) {
                 c.cancel();
             }
         }
-        inFlight.clear();
     }
 
     protected void trackCall(@Nullable Call<?> call) {
@@ -62,6 +80,8 @@ public abstract class BaseRepository {
     }
 
     protected final int getTrackedCallCountForTest() {
-        return inFlight.size();
+        synchronized (inFlight) {
+            return inFlight.size();
+        }
     }
 }

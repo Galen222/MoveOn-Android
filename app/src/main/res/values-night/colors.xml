@@ -49,4 +49,10 @@
     <color name="snackbarErrorBg">#2C2A2A</color>
     <color name="snackbarErrorText">#EF4444</color>
 
+    <!-- Colores de posición del ranking — Tema oscuro -->
+    <color name="ranking_position_gold">#FFC857</color>
+    <color name="ranking_position_silver">#C7CDD8</color>
+    <color name="ranking_position_bronze">#D79A5B</color>
+    <color name="ranking_position_default">#E5E7EB</color>
+
 </resources>

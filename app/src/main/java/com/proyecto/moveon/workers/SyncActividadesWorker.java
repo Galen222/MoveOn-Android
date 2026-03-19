@@ -6,9 +6,18 @@ import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.proyecto.moveon.app.ServiceLocator;
 import com.proyecto.moveon.data.activities.ActivityRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 
+/**
+ * Worker que sincroniza las actividades pendientes de crear con el backend.
+ *
+ * <p>FIX: Usa {@link ServiceLocator} para obtener el repositorio en lugar
+ * de instanciarlo con {@code new}. Esto unifica la creación de dependencias
+ * con el resto de la app (ViewModels, MoveOnApp) y permite sustituir
+ * el ServiceLocator en tests instrumentados vía {@code ServiceLocator.swap()}.</p>
+ */
 public class SyncActividadesWorker extends Worker {
 
     public SyncActividadesWorker(@NonNull Context context, @NonNull WorkerParameters params) {
@@ -18,14 +27,18 @@ public class SyncActividadesWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        // BUG-08: Singleton en lugar de new para evitar múltiples instancias.
-        String accountKey = SecureSessionManager.getInstance(getApplicationContext()).getAccountKey();
+        String accountKey = SecureSessionManager
+                .getInstance(getApplicationContext())
+                .getAccountKey();
 
         if (accountKey == null) {
             return Result.success();
         }
 
-        ActivityRepository repository = new ActivityRepository(getApplicationContext());
+        ActivityRepository repository = ServiceLocator
+                .getInstance(getApplicationContext())
+                .newActivityRepository();
+
         ActivityRepository.SyncResult result = repository.syncPendingNow(accountKey);
         repository.cancelAll();
 

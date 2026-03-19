@@ -5,6 +5,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
@@ -15,6 +16,7 @@ import com.proyecto.moveon.data.remote.retrofit.AppSessionProvider;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Observador de conectividad a nivel de proceso.
@@ -29,9 +31,19 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *       para lanzar la sincronización de repos pendientes.</li>
  * </ol>
  *
+ * <p>FIX: Añadido throttling de {@link #RECONNECT_THROTTLE_MS} ms para evitar
+ * que oscilaciones de conectividad (Wi-Fi inestable, cambio Wi-Fi↔datos)
+ * disparen múltiples sincronizaciones en ráfaga.</p>
+ *
  * <p>Inicializar una vez en {@code Application.onCreate()} con {@link #init(Context)}.</p>
  */
 public final class ConnectivityObserver {
+
+    /**
+     * Ventana mínima entre despachos de listeners de reconexión (ms).
+     * Si la red oscila más rápido que esto, los eventos intermedios se ignoran.
+     */
+    private static final long RECONNECT_THROTTLE_MS = 15_000L;
 
     private static volatile ConnectivityObserver instance;
 
@@ -40,6 +52,13 @@ public final class ConnectivityObserver {
     // CopyOnWriteArrayList es thread-safe y eficiente para listas pequeñas
     // con lecturas frecuentes (cada reconexión) y escrituras raras (solo al arrancar).
     private final List<Runnable> reconnectListeners = new CopyOnWriteArrayList<>();
+
+    /**
+     * Timestamp (elapsedRealtime) del último despacho de listeners.
+     * Usa elapsedRealtime porque es monotónico y no se ve afectado
+     * por cambios de hora del sistema.
+     */
+    private final AtomicLong lastReconnectDispatchMs = new AtomicLong(0L);
 
     private ConnectivityObserver() {}
 
@@ -131,10 +150,28 @@ public final class ConnectivityObserver {
         reconnectListeners.remove(listener);
     }
 
+    /**
+     * FIX: Añadido throttle con {@link #RECONNECT_THROTTLE_MS}.
+     * Si la última ejecución de listeners fue hace menos de 15 s, se ignora
+     * la reconexión. El CAS en {@code lastReconnectDispatchMs} garantiza que
+     * solo un hilo despacha aunque varios callbacks del sistema lleguen
+     * simultáneamente.
+     */
     private void onNetworkRestored() {
         // Resetear el cooldown del handshake para que la primera operación
         // tras reconectar no falle con "cooldown tras fallo reciente".
         AppSessionProvider.resetFailureCooldown();
+
+        long now = SystemClock.elapsedRealtime();
+        long last = lastReconnectDispatchMs.get();
+
+        if (now - last < RECONNECT_THROTTLE_MS) {
+            return;
+        }
+        if (!lastReconnectDispatchMs.compareAndSet(last, now)) {
+            // Otro hilo ya actualizó el timestamp — ese hilo despacha.
+            return;
+        }
 
         for (Runnable listener : reconnectListeners) {
             MoveOnExecutors.io().execute(listener);
