@@ -42,7 +42,14 @@ public final class TrackingState {
     private   final long                 elapsedSeconds;
     private   final int                  distanceMeters;
     private   final int                  calories;
+    /** Ritmo instantáneo GPS en tiempo real. Null si está parado o sin datos. */
     @Nullable private final String       pace;
+    /**
+     * Ritmo medio de toda la actividad (activeSeconds / distanceMeters).
+     * Solo se calcula al finalizar (status == FINISHED). Null en cualquier
+     * otro estado.
+     */
+    @Nullable private final String       averagePace;
     @NonNull  private final List<LatLng> routePoints;
     @Nullable private final String       encodedPolyline;
 
@@ -57,6 +64,7 @@ public final class TrackingState {
             int                    distanceMeters,
             int                    calories,
             @Nullable String       pace,
+            @Nullable String       averagePace,
             @NonNull  List<LatLng> routePoints,
             @Nullable String       encodedPolyline) {
 
@@ -66,6 +74,7 @@ public final class TrackingState {
         this.distanceMeters  = distanceMeters;
         this.calories        = calories;
         this.pace            = pace;
+        this.averagePace     = averagePace;
         this.routePoints     = Collections.unmodifiableList(routePoints);
         this.encodedPolyline = encodedPolyline;
     }
@@ -89,6 +98,7 @@ public final class TrackingState {
     public    int                 getDistanceMeters()  { return distanceMeters; }
     public    int                 getCalories()        { return calories; }
     @Nullable public String       getPace()            { return pace; }
+    @Nullable public String       getAveragePace()     { return averagePace; }
     @NonNull  public List<LatLng> getRoutePoints()     { return routePoints; }
     @Nullable public String       getEncodedPolyline() { return encodedPolyline; }
 
@@ -120,6 +130,7 @@ public final class TrackingState {
         private   int                  distanceMeters  = 0;
         private   int                  calories        = 0;
         @Nullable private String       pace            = null;
+        @Nullable private String       averagePace     = null;
         @NonNull  private List<LatLng> routePoints     = Collections.emptyList();
         @Nullable private String       encodedPolyline = null;
 
@@ -132,6 +143,7 @@ public final class TrackingState {
             this.distanceMeters  = s.distanceMeters;
             this.calories        = s.calories;
             this.pace            = s.pace;
+            this.averagePace     = s.averagePace;
             this.routePoints     = s.routePoints;
             this.encodedPolyline = s.encodedPolyline;
         }
@@ -142,6 +154,7 @@ public final class TrackingState {
         public Builder distanceMeters(int v)                  { this.distanceMeters  = v; return this; }
         public Builder calories(int v)                        { this.calories        = v; return this; }
         public Builder pace(@Nullable String v)               { this.pace            = v; return this; }
+        public Builder averagePace(@Nullable String v)        { this.averagePace     = v; return this; }
         public Builder routePoints(@NonNull List<LatLng> v)   { this.routePoints     = v; return this; }
         public Builder encodedPolyline(@Nullable String v)    { this.encodedPolyline = v; return this; }
 
@@ -149,7 +162,8 @@ public final class TrackingState {
         public TrackingState build() {
             return new TrackingState(
                     status, activityType, elapsedSeconds,
-                    distanceMeters, calories, pace, routePoints, encodedPolyline);
+                    distanceMeters, calories, pace, averagePace,
+                    routePoints, encodedPolyline);
         }
     }
 }

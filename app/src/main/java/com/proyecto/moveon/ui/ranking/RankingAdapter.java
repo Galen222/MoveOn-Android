@@ -26,9 +26,8 @@ import java.util.Objects;
  * FIX: Eliminados colores hardcoded con {@code Color.parseColor(...)}.
  * Ahora se resuelven desde recursos ({@code R.color.ranking_position_*})
  * para que respeten el tema claro/oscuro automáticamente.
- *
  * Requiere añadir los colores en:
- * - {@code res/values/colors.xml} (tema claro)
+ * - {@code res/values/colors.xml} (tema claro
  * - {@code res/values-night/colors.xml} (tema oscuro)
  */
 public final class RankingAdapter
