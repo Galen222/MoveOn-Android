@@ -361,8 +361,11 @@
     <!--  OFFLINE                                                               -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="offline_banner_text">Sin conexión. Los cambios se sincronizarán automáticamente.</string>
+    <string name="sync_completed">Synchronization complete</string>
 
-    <!-- Vehicle speed detection -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  VEHICLE SPEED DETECTION                                               -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="tracking_vehicle_speed_title">High speed detected</string>
     <string name="tracking_vehicle_continue">Continue activity</string>
 

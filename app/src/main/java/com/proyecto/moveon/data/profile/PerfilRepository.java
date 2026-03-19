@@ -207,12 +207,38 @@ public class PerfilRepository {
         public static UpdateResult failed(@NonNull ApiError error) { return new UpdateResult(STATUS_FAILED, error); }
     }
 
+    /**
+     * Resultado del ciclo de sincronización offline del perfil.
+     *
+     * <p>Además del típico flag de reintento, este resultado informa de si realmente se ha
+     * completado trabajo pendiente (patches de texto o foto pendiente). Así la UI puede enseñar
+     * el snackbar solo cuando la cola offline se ha vaciado de verdad.</p>
+     */
     public static final class SyncResult {
+        /** Indica si WorkManager debe reintentar más tarde. */
         public final boolean shouldRetry;
 
-        private SyncResult(boolean shouldRetry) { this.shouldRetry = shouldRetry; }
+        /** Indica si esta ejecución completó trabajo pendiente real. */
+        public final boolean completedPendingWork;
 
-        public static SyncResult success() { return new SyncResult(false); }
-        public static SyncResult retry()   { return new SyncResult(true); }
+        private SyncResult(boolean shouldRetry, boolean completedPendingWork) {
+            this.shouldRetry = shouldRetry;
+            this.completedPendingWork = completedPendingWork;
+        }
+
+        /** Devuelve éxito cuando el worker se ejecutó pero no había cola pendiente. */
+        public static SyncResult successNoop() {
+            return new SyncResult(false, false);
+        }
+
+        /** Devuelve éxito cuando sí había cola pendiente y ya quedó completada. */
+        public static SyncResult successCompleted() {
+            return new SyncResult(false, true);
+        }
+
+        /** Devuelve reintento cuando parte de la cola sigue pendiente. */
+        public static SyncResult retry() {
+            return new SyncResult(true, false);
+        }
     }
 }

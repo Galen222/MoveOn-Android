@@ -18,11 +18,13 @@ import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.auth.GlobalAuthManager;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.network.ConnectivityObserver;
+import com.proyecto.moveon.core.sync.GlobalSyncNotifier;
 import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityMainBinding;
 import com.proyecto.moveon.ui.auth.LoginActivity;
 import com.proyecto.moveon.ui.common.SessionUiHelper;
+import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.ui.home.InicioFragment;
 import com.proyecto.moveon.ui.home.tracking.TrackingService;
 import com.proyecto.moveon.ui.profile.ProfileFragment;
@@ -91,6 +93,18 @@ public class MainActivity extends AppCompatActivity {
             if (token != null) {
                 GlobalAuthManager.getInstance().acknowledgeSessionExpired();
                 SessionUiHelper.handleSessionExpired(this, getString(R.string.auth_sesion_expirada));
+            }
+        });
+
+        // Observador global para avisar cuando una cola offline termina de sincronizarse.
+        // Se escucha en MainActivity para que el snackbar pueda aparecer desde cualquier pestaña.
+        GlobalSyncNotifier.getInstance().getSyncCompletedEvent().observe(this, ev -> {
+            if (ev == null || binding == null) return;
+
+            String token = ev.getContentIfNotHandled();
+            if (token != null) {
+                // El mensaje se resuelve desde recursos para respetar el idioma activo de la app.
+                TopSnackbar.success(binding.getRoot(), getString(R.string.sync_completed));
             }
         });
 

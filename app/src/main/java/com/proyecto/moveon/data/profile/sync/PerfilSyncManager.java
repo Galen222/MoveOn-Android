@@ -225,7 +225,14 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     public SyncResult syncAllPending(@NonNull String accountKey) {
         boolean retryNeeded = false;
 
-        // 1. Sync patches de texto pendientes
+        // Detectamos al inicio si realmente existía cola offline.
+        // Esto evita mostrar el snackbar cuando el worker corre sin nada pendiente.
+        boolean hadPendingText = local.countPending(accountKey) > 0;
+        PerfilCacheEntity currentCache = local.getCacheNow(accountKey);
+        boolean hadPendingPhoto = currentCache != null && photoHelper.hasPendingPhoto(currentCache);
+        boolean hadPendingWork = hadPendingText || hadPendingPhoto;
+
+        // 1. Sync patches de texto pendientes.
         List<PerfilPendingPatchEntity> ops = local.getPending(accountKey);
         if (ops != null) {
             for (PerfilPendingPatchEntity op : ops) {
@@ -233,6 +240,7 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
                 ApiResult<String> result = remote.patchPerfilBlocking(patchJson);
 
                 if (result.isSuccess()) {
+                    // Eliminamos el patch porque ya quedó confirmado en backend.
                     local.deletePatch(op.operationId);
                     continue;
                 }
@@ -243,20 +251,20 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
                         : ApiError.local(appContext.getString(R.string.error_sincronizando_perfil));
 
                 if (shouldKeepRetrying(op, error)) {
+                    // Si un patch sigue siendo retryable detenemos el ciclo para reintentar luego.
                     retryNeeded = true;
                     break;
                 }
-                // Si shouldKeepRetrying devolvió false, el patch ya está FAILED;
-                // continuar con el siguiente.
+                // Si shouldKeepRetrying devolvió false, el patch ya quedó FAILED y no bloquea la cola.
             }
         }
 
-        // 2. Sync foto pendiente — delegado a PhotoSyncHelper
+        // 2. Sync foto pendiente — delegado a PhotoSyncHelper.
         if (photoHelper.syncPendingIfNeeded(accountKey)) {
             retryNeeded = true;
         }
 
-        // 3. Refresh general del perfil
+        // 3. Refresh general del perfil para dejar la caché consolidada.
         ApiResult<ProfileInfoDto> refreshResult = remote.fetchPerfilBlocking();
         if (refreshResult.isSuccess() && refreshResult.data != null) {
             mergeRemoteSnapshotInternal(accountKey, refreshResult.data, false);
@@ -265,7 +273,11 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
             retryNeeded = true;
         }
 
-        return retryNeeded ? SyncResult.retry() : SyncResult.success();
+        if (retryNeeded) {
+            return SyncResult.retry();
+        }
+
+        return hadPendingWork ? SyncResult.successCompleted() : SyncResult.successNoop();
     }
 
     // ══════════════════════════════════════════════════════════════════════════

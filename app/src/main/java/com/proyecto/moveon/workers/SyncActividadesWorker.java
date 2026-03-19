@@ -7,6 +7,7 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.proyecto.moveon.app.ServiceLocator;
+import com.proyecto.moveon.core.sync.GlobalSyncNotifier;
 import com.proyecto.moveon.data.activities.ActivityRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 
@@ -41,6 +42,11 @@ public class SyncActividadesWorker extends Worker {
 
         ActivityRepository.SyncResult result = repository.syncPendingNow(accountKey);
         repository.cancelAll();
+
+        // Solo avisamos a la UI si la cola offline de verdad quedó completada en esta ejecución.
+        if (!result.retry && result.completedPendingWork) {
+            GlobalSyncNotifier.getInstance().notifySyncCompleted();
+        }
 
         return result.retry ? Result.retry() : Result.success();
     }

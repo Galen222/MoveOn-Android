@@ -4,10 +4,11 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.NetworkRequest;
+import android.os.Build;
 import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -21,19 +22,20 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Observador de conectividad a nivel de proceso.
  *
- * <p>Monitoriza la red con {@link ConnectivityManager.NetworkCallback} y expone
- * un {@link LiveData} con el estado actual de conectividad. Cuando detecta que
- * la red vuelve tras una desconexión:</p>
+ * <p>Expone un {@link LiveData} con el estado online/offline consumido por la UI
+ * y además permite registrar listeners para disparar sincronizaciones cuando la
+ * conectividad vuelve de verdad.</p>
+ *
+ * <p>Este archivo corrige dos problemas típicos del banner offline:</p>
  * <ol>
- *   <li>Resetea el cooldown de {@link AppSessionProvider} para que el próximo
- *       handshake se intente de verdad.</li>
- *   <li>Ejecuta todos los listeners registrados vía {@link #addOnReconnectListener}
- *       para lanzar la sincronización de repos pendientes.</li>
+ *   <li>No escucha "cualquier red" del sistema, sino la <b>red por defecto</b>
+ *       de la app mediante {@link ConnectivityManager#registerDefaultNetworkCallback}.</li>
+ *   <li>No mezcla snapshots síncronas transitorias dentro del callback con el
+ *       estado real de la red que Android está notificando.</li>
  * </ol>
  *
- * <p>FIX: Añadido throttling de {@link #RECONNECT_THROTTLE_MS} ms para evitar
- * que oscilaciones de conectividad (Wi-Fi inestable, cambio Wi-Fi↔datos)
- * disparen múltiples sincronizaciones en ráfaga.</p>
+ * <p>La app solo se considera online cuando la red por defecto tiene capacidad
+ * de Internet y además está validada por el sistema operativo.</p>
  *
  * <p>Inicializar una vez en {@code Application.onCreate()} con {@link #init(Context)}.</p>
  */
@@ -41,27 +43,49 @@ public final class ConnectivityObserver {
 
     /**
      * Ventana mínima entre despachos de listeners de reconexión (ms).
-     * Si la red oscila más rápido que esto, los eventos intermedios se ignoran.
+     * Evita ráfagas cuando la red oscila o cambia entre Wi‑Fi y datos.
      */
     private static final long RECONNECT_THROTTLE_MS = 15_000L;
 
     private static volatile ConnectivityObserver instance;
 
+    /**
+     * Estado observable de conectividad consumido por la UI.
+     *
+     * <p>Se inicializa a {@code true} para evitar un falso negativo visual antes
+     * de calcular el estado real en {@link #init(Context)}.</p>
+     */
     private final MutableLiveData<Boolean> connected = new MutableLiveData<>(true);
-    // BUG-N05: Lista de listeners en lugar de un único Runnable.
-    // CopyOnWriteArrayList es thread-safe y eficiente para listas pequeñas
-    // con lecturas frecuentes (cada reconexión) y escrituras raras (solo al arrancar).
+
+    /**
+     * Lista de listeners a ejecutar cuando la conectividad usable vuelve.
+     *
+     * <p>{@link CopyOnWriteArrayList} es adecuada aquí porque hay muy pocas altas
+     * y bajas de listeners, pero muchas lecturas en comparación.</p>
+     */
     private final List<Runnable> reconnectListeners = new CopyOnWriteArrayList<>();
 
     /**
-     * Timestamp (elapsedRealtime) del último despacho de listeners.
-     * Usa elapsedRealtime porque es monotónico y no se ve afectado
-     * por cambios de hora del sistema.
+     * Timestamp del último despacho de listeners de reconexión.
+     *
+     * <p>Se usa {@link SystemClock#elapsedRealtime()} porque es monotónico y no
+     * depende de cambios manuales de hora del sistema.</p>
      */
     private final AtomicLong lastReconnectDispatchMs = new AtomicLong(0L);
 
-    private ConnectivityObserver() {}
+    /**
+     * Referencia al callback registrado para evitar registrar varias veces el
+     * observador si {@link #init(Context)} se llama más de una vez por error.
+     */
+    @Nullable
+    private volatile ConnectivityManager.NetworkCallback networkCallback;
 
+    private ConnectivityObserver() {
+    }
+
+    /**
+     * Devuelve la instancia singleton del observador.
+     */
     @NonNull
     public static ConnectivityObserver getInstance() {
         if (instance == null) {
@@ -75,57 +99,84 @@ public final class ConnectivityObserver {
     }
 
     /**
-     * Registra el NetworkCallback. Llamar una vez desde {@code Application.onCreate()}.
+     * Registra el callback de conectividad.
+     *
+     * <p>Debe llamarse una sola vez desde {@code Application.onCreate()}.</p>
+     *
+     * @param context contexto de aplicación.
      */
-    public void init(@NonNull Context context) {
-        ConnectivityManager cm = (ConnectivityManager)
+    public synchronized void init(@NonNull Context context) {
+        final ConnectivityManager cm = (ConnectivityManager)
                 context.getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null) return;
+        if (cm == null) {
+            return;
+        }
 
-        // Estado inicial
+        // Evita callbacks duplicados si init(...) se invoca más de una vez.
+        if (networkCallback != null) {
+            return;
+        }
+
+        // Estado inicial calculado con el mismo criterio estricto que usaremos
+        // en el resto de caminos.
         connected.postValue(isCurrentlyConnected(cm));
 
-        NetworkRequest request = new NetworkRequest.Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .build();
-
-        cm.registerNetworkCallback(request, new ConnectivityManager.NetworkCallback() {
+        final ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
             @Override
             public void onAvailable(@NonNull Network network) {
-                boolean wasOffline = Boolean.FALSE.equals(connected.getValue());
-                connected.postValue(true);
-
-                if (wasOffline) {
-                    onNetworkRestored();
-                }
+                // OJO: onAvailable NO garantiza todavía Internet usable.
+                // Android puede notificar una red disponible antes de validarla,
+                // por eso aquí no marcamos online ni lanzamos reconexión.
             }
 
             @Override
             public void onLost(@NonNull Network network) {
-                // Verificar si hay OTRA red disponible antes de marcar offline.
-                // En dispositivos con Wi-Fi + datos, perder Wi-Fi no implica
-                // estar offline si los datos móviles siguen activos.
-                connected.postValue(isCurrentlyConnected(cm));
+                // En el callback de la red por defecto, perder esa red significa
+                // que la app se ha quedado sin red por defecto efectiva.
+                // Marcamos offline inmediatamente para que el banner aparezca
+                // sin depender de snapshots transitorias de activeNetwork.
+                connected.postValue(false);
             }
 
             @Override
             public void onCapabilitiesChanged(@NonNull Network network,
                                               @NonNull NetworkCapabilities caps) {
-                boolean hasInternet = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                        && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+                // Este es el callback fiable para saber si la red por defecto ya
+                // tiene Internet usable de verdad.
                 boolean wasOffline = Boolean.FALSE.equals(connected.getValue());
-                connected.postValue(hasInternet);
+                boolean onlineNow = hasUsableInternet(caps);
 
-                if (hasInternet && wasOffline) {
+                connected.postValue(onlineNow);
+
+                // Solo se dispara la lógica de reconexión cuando veníamos de
+                // offline y la red por defecto pasa a estar validada.
+                if (onlineNow && wasOffline) {
                     onNetworkRestored();
                 }
             }
-        });
+        };
+
+        networkCallback = callback;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            // API correcta para seguir la red efectiva de la app.
+            cm.registerDefaultNetworkCallback(callback);
+        } else {
+            // Fallback defensivo para APIs antiguas, aunque en ese caso el
+            // comportamiento puede ser menos preciso que con la red por defecto.
+            cm.registerNetworkCallback(
+                    new android.net.NetworkRequest.Builder()
+                            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                            .build(),
+                    callback
+            );
+        }
     }
 
     /**
-     * Estado actual de la red. {@code true} = online, {@code false} = offline.
-     * Observar desde la Activity para mostrar/ocultar el banner.
+     * Devuelve un observable con el estado actual de conectividad.
+     *
+     * @return {@code true} si la app tiene Internet usable; {@code false} en caso contrario.
      */
     @NonNull
     public LiveData<Boolean> isConnected() {
@@ -133,11 +184,12 @@ public final class ConnectivityObserver {
     }
 
     /**
-     * Registra una acción a ejecutar cuando la red vuelve.
-     * Típicamente: enqueueSync de repositorios con patches pendientes.
-     * Se ejecuta en hilo IO para no bloquear el callback del sistema.
+     * Registra una acción a ejecutar cuando la conectividad vuelve de verdad.
      *
-     * <p>Soporta múltiples listeners: cada llamada añade sin sobrescribir.</p>
+     * <p>Típicamente se usa para encolar sincronizaciones pendientes de los
+     * repositorios offline-first.</p>
+     *
+     * @param listener listener a ejecutar al recuperar conectividad usable.
      */
     public void addOnReconnectListener(@NonNull Runnable listener) {
         reconnectListeners.add(listener);
@@ -145,44 +197,70 @@ public final class ConnectivityObserver {
 
     /**
      * Elimina un listener registrado previamente.
+     *
+     * @param listener listener a eliminar.
      */
     public void removeOnReconnectListener(@NonNull Runnable listener) {
         reconnectListeners.remove(listener);
     }
 
     /**
-     * FIX: Añadido throttle con {@link #RECONNECT_THROTTLE_MS}.
-     * Si la última ejecución de listeners fue hace menos de 15 s, se ignora
-     * la reconexión. El CAS en {@code lastReconnectDispatchMs} garantiza que
-     * solo un hilo despacha aunque varios callbacks del sistema lleguen
-     * simultáneamente.
+     * Ejecuta la lógica de reconexión con throttling.
+     *
+     * <p>Si la última ejecución ocurrió hace menos de
+     * {@link #RECONNECT_THROTTLE_MS}, se ignora el evento para no disparar
+     * sincronizaciones duplicadas por oscilaciones de red.</p>
      */
     private void onNetworkRestored() {
-        // Resetear el cooldown del handshake para que la primera operación
-        // tras reconectar no falle con "cooldown tras fallo reciente".
+        // Reseteamos el cooldown de fallos de handshake para que la primera
+        // operación tras reconectar no herede un estado viejo de error.
         AppSessionProvider.resetFailureCooldown();
 
         long now = SystemClock.elapsedRealtime();
         long last = lastReconnectDispatchMs.get();
 
+        // Ignoramos ráfagas de reconexión demasiado cercanas.
         if (now - last < RECONNECT_THROTTLE_MS) {
             return;
         }
+
+        // Solo un hilo gana el derecho a despachar listeners.
         if (!lastReconnectDispatchMs.compareAndSet(last, now)) {
-            // Otro hilo ya actualizó el timestamp — ese hilo despacha.
             return;
         }
 
+        // Ejecutamos en IO para no bloquear el callback del sistema.
         for (Runnable listener : reconnectListeners) {
             MoveOnExecutors.io().execute(listener);
         }
     }
 
+    /**
+     * Comprueba si unas capabilities representan Internet realmente usable.
+     *
+     * @param caps capabilities de una red concreta.
+     * @return {@code true} si la red tiene INTERNET y además está VALIDATED.
+     */
+    private static boolean hasUsableInternet(@Nullable NetworkCapabilities caps) {
+        return caps != null
+                && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+    }
+
+    /**
+     * Calcula el estado actual de conectividad usable de la app.
+     *
+     * <p>Se usa solo para el estado inicial fuera de los callbacks. Dentro de los
+     * callbacks nos apoyamos en la red por defecto que Android ya nos notifica.</p>
+     *
+     * @param cm connectivity manager del sistema.
+     * @return {@code true} si la red activa actual es usable.
+     */
     private static boolean isCurrentlyConnected(@NonNull ConnectivityManager cm) {
         Network active = cm.getActiveNetwork();
-        if (active == null) return false;
-        NetworkCapabilities caps = cm.getNetworkCapabilities(active);
-        return caps != null
-                && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        if (active == null) {
+            return false;
+        }
+        return hasUsableInternet(cm.getNetworkCapabilities(active));
     }
 }

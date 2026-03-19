@@ -555,8 +555,11 @@
     <!--  OFFLINE                                                               -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="offline_banner_text">Sin conexión. Los cambios se sincronizarán automáticamente.</string>
+    <string name="sync_completed">Sincronización completada</string>
 
-    <!-- Detección de velocidad de vehículo -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!--  DETECCIÓN DE VELOCIDAD DEL VEHÍCULO                                   -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
     <string name="tracking_vehicle_speed_title">Velocidad elevada detectada</string>
     <string name="tracking_vehicle_continue">Continuar actividad</string>
 

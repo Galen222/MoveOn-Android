@@ -7,6 +7,7 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.proyecto.moveon.app.ServiceLocator;
+import com.proyecto.moveon.core.sync.GlobalSyncNotifier;
 import com.proyecto.moveon.data.profile.PerfilRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 
@@ -41,6 +42,11 @@ public class SyncPerfilWorker extends Worker {
 
         PerfilRepository.SyncResult syncResult = repository.syncPendingNow(accountKey);
         repository.cancelOngoing();
+
+        // Solo mostramos el aviso cuando realmente se vació una cola pendiente de perfil.
+        if (!syncResult.shouldRetry && syncResult.completedPendingWork) {
+            GlobalSyncNotifier.getInstance().notifySyncCompleted();
+        }
 
         return syncResult.shouldRetry ? Result.retry() : Result.success();
     }

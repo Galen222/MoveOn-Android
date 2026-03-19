@@ -51,56 +51,67 @@ public final class ActivitySyncManager {
      */
     @NonNull
     public SyncResult syncPendingNow(@NonNull String accountKey) {
+        // Capturamos si al arrancar este ciclo había trabajo offline real.
+        // Así evitamos disparar el snackbar cuando el worker corre "en vacío".
         List<ActividadEntity> creates = local.getPendingCreates(accountKey);
-        for (ActividadEntity entity : creates) {
-            ApiResult<ActividadResponseDto> result =
-                    remote.createActividadBlocking(ActividadCreatePayload.fromEntity(entity).toJson());
+        boolean hadPendingCreates = creates != null && !creates.isEmpty();
 
-            if (result.isSuccess() && result.data != null) {
-                ActividadResponseDto dto = result.data;
-                entity.remoteId         = dto.id;
-                entity.tipo             = dto.tipo;
-                entity.distancia        = dto.distancia;
-                entity.duracion         = dto.duracion;
-                entity.caloriasQuemadas = dto.caloriasQuemadas;
-                entity.rutaPolilinea    = dto.rutaPolilinea;
-                entity.rutaMapaUrl      = dto.rutaMapaUrl;
-                entity.fechaRuta        = dto.fechaRuta;
-                entity.syncState        = ActivitySyncState.SYNCED;
-                entity.lastError        = null;
-                entity.updatedAtMs      = System.currentTimeMillis();
-                local.save(entity);
-                continue;
-            }
+        if (creates != null) {
+            for (ActividadEntity entity : creates) {
+                ApiResult<ActividadResponseDto> result =
+                        remote.createActividadBlocking(ActividadCreatePayload.fromEntity(entity).toJson());
 
-            ApiError error = result.error != null
-                    ? result.error
-                    : ApiError.local(appContext.getString(R.string.error_sincronizando_actividad));
+                if (result.isSuccess() && result.data != null) {
+                    ActividadResponseDto dto = result.data;
+                    entity.remoteId         = dto.id;
+                    entity.tipo             = dto.tipo;
+                    entity.distancia        = dto.distancia;
+                    entity.duracion         = dto.duracion;
+                    entity.caloriasQuemadas = dto.caloriasQuemadas;
+                    entity.rutaPolilinea    = dto.rutaPolilinea;
+                    entity.rutaMapaUrl      = dto.rutaMapaUrl;
+                    entity.fechaRuta        = dto.fechaRuta;
+                    entity.syncState        = ActivitySyncState.SYNCED;
+                    entity.lastError        = null;
+                    entity.updatedAtMs      = System.currentTimeMillis();
+                    local.save(entity);
+                    continue;
+                }
 
-            if (isRetryable(error)) {
+                ApiError error = result.error != null
+                        ? result.error
+                        : ApiError.local(appContext.getString(R.string.error_sincronizando_actividad));
+
+                if (isRetryable(error)) {
+                    // Dejamos la entidad pendiente para que WorkManager la reintente.
+                    entity.lastError   = error.getMessage();
+                    entity.updatedAtMs = System.currentTimeMillis();
+                    local.save(entity);
+                    return SyncResult.retry();
+                }
+
+                // Si el error es permanente marcamos FAILED_CREATE para sacar el elemento de la cola.
+                entity.syncState   = ActivitySyncState.FAILED_CREATE;
                 entity.lastError   = error.getMessage();
                 entity.updatedAtMs = System.currentTimeMillis();
                 local.save(entity);
-                return SyncResult.retry();
             }
-
-            entity.syncState   = ActivitySyncState.FAILED_CREATE;
-            entity.lastError   = error.getMessage();
-            entity.updatedAtMs = System.currentTimeMillis();
-            local.save(entity);
         }
 
+        // Tras vaciar la cola local, refrescamos snapshot remoto para dejar Room coherente.
         ApiResult<List<ActividadResponseDto>> refreshResult = remote.fetchAllActividadesBlocking();
         if (refreshResult.isSuccess() && refreshResult.data != null) {
             mergeRemoteSnapshot(accountKey, refreshResult.data);
-            return SyncResult.success();
+            return hadPendingCreates ? SyncResult.successCompleted() : SyncResult.successNoop();
         }
 
         if (refreshResult.error != null && isRetryable(refreshResult.error)) {
             return SyncResult.retry();
         }
 
-        return SyncResult.success();
+        // Si el refresh falla de forma no retryable pero ya no queda cola local, tratamos el ciclo
+        // como completado para no dejar el trabajo pendiente bloqueado.
+        return hadPendingCreates ? SyncResult.successCompleted() : SyncResult.successNoop();
     }
 
     // ── Merge remoto ─────────────────────────────────────────────────────────

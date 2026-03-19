@@ -318,12 +318,47 @@ public final class ActivityRepository {
 
     // ── Inner classes ─────────────────────────────────────────────────────────
 
+    /**
+     * Resultado del ciclo de sincronización offline de actividades.
+     *
+     * <p>Se separan dos conceptos distintos:</p>
+     * <ul>
+     *     <li>{@code retry}: indica si WorkManager debe reintentar más tarde.</li>
+     *     <li>{@code completedPendingWork}: indica si realmente había elementos pendientes
+     *     y esa cola ha terminado en este ciclo.</li>
+     * </ul>
+     *
+     * <p>Esto permite a la UI mostrar un snackbar solo cuando de verdad se ha vaciado una cola
+     * offline, y no simplemente cada vez que el worker se ejecuta sin nada que hacer.</p>
+     */
     public static final class SyncResult {
+        /** Indica si WorkManager debe programar un nuevo intento. */
         public final boolean retry;
 
-        private SyncResult(boolean retry) { this.retry = retry; }
+        /**
+         * Indica si en esta ejecución se completó trabajo pendiente real.
+         * Se usa para decidir si se muestra el aviso "Sincronización completada".
+         */
+        public final boolean completedPendingWork;
 
-        public static SyncResult success() { return new SyncResult(false); }
-        public static SyncResult retry()   { return new SyncResult(true); }
+        private SyncResult(boolean retry, boolean completedPendingWork) {
+            this.retry = retry;
+            this.completedPendingWork = completedPendingWork;
+        }
+
+        /** Devuelve éxito sin trabajo pendiente previo. */
+        public static SyncResult successNoop() {
+            return new SyncResult(false, false);
+        }
+
+        /** Devuelve éxito tras completar trabajo pendiente real. */
+        public static SyncResult successCompleted() {
+            return new SyncResult(false, true);
+        }
+
+        /** Devuelve reintento porque todavía queda trabajo pendiente por resolver. */
+        public static SyncResult retry() {
+            return new SyncResult(true, false);
+        }
     }
 }
