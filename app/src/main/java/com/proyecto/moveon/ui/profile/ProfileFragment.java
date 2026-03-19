@@ -1,7 +1,5 @@
 package com.proyecto.moveon.ui.profile;
 
-import android.app.Activity;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -15,7 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import com.proyecto.moveon.ui.ranking.RankingFragment;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -34,6 +31,7 @@ import com.proyecto.moveon.databinding.FragmentProfileBinding;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
 import com.proyecto.moveon.ui.auth.LoginActivity;
 import com.proyecto.moveon.ui.common.TopSnackbar;
+import com.proyecto.moveon.ui.ranking.RankingFragment;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
 
@@ -58,31 +56,44 @@ public class ProfileFragment extends Fragment {
     private ProfileDialogHelper dialogHelper;
     private ProfileTrackingHelper trackingHelper;
 
-    /** Referencia al bottom sheet de eliminación (si está visible). */
     @Nullable private DeleteAccountBottomSheet deleteAccountSheet;
 
-    private final ActivityResultLauncher<Intent> pickImageLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) return;
-                Uri uri = result.getData().getData();
-                if (uri == null) return;
-
-                File file = uriToFile(uri);
-                if (file == null) {
-                    showErrorFeedback(getString(R.string.profile_error_photo_read));
-                    return;
-                }
-                showTransientPhotoPreview(file);
-                viewModel.uploadPhoto(file);
-            });
-
-    private final ActivityResultLauncher<String[]> trackingRequirementPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(),
-                    result -> {
-                        if (trackingHelper != null) trackingHelper.updateTrackingRequirementsUi();
-                    });
+    // ── ActivityResult launchers ──────────────────────────────────────────────
+    // Se registran en onCreate() según el ciclo de vida de Fragment.
+    //
+    // pickImageLauncher usa GetContent: el contrato correcto para seleccionar
+    // imágenes. Recibe el MIME type como String y devuelve la Uri seleccionada,
+    // evitando completamente StartActivityForResult.
+    private ActivityResultLauncher<String> pickImageLauncher;
+    private ActivityResultLauncher<String[]> trackingRequirementPermissionLauncher;
 
     public ProfileFragment() {}
+
+    // ── Ciclo de vida ─────────────────────────────────────────────────────────
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        pickImageLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri == null) return;
+                    File file = uriToFile(uri);
+                    if (file == null) {
+                        showErrorFeedback(getString(R.string.profile_error_photo_read));
+                        return;
+                    }
+                    showTransientPhotoPreview(file);
+                    viewModel.uploadPhoto(file);
+                });
+
+        trackingRequirementPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestMultiplePermissions(),
+                result -> {
+                    if (trackingHelper != null) trackingHelper.updateTrackingRequirementsUi();
+                });
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -90,13 +101,13 @@ public class ProfileFragment extends Fragment {
         binding = FragmentProfileBinding.inflate(inflater, container, false);
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
 
-        // MEJ-04: Helpers para diálogos y requisitos de tracking.
         dialogHelper = new ProfileDialogHelper(
                 this, viewModel, () -> perfilActual, this::showErrorFeedback);
         trackingHelper = new ProfileTrackingHelper(
                 this, binding, trackingRequirementPermissionLauncher);
 
-        bindLocalData();        setupListeners();
+        bindLocalData();
+        setupListeners();
         observeViewModel();
         syncThemeToggleWithSavedMode();
         syncLanguageSelectionText();
@@ -134,13 +145,14 @@ public class ProfileFragment extends Fragment {
         deleteAccountSheet = null;
     }
 
+    // ── Datos locales (sin esperar red) ───────────────────────────────────────
+
     private void bindLocalData() {
         String username = viewModel.getUsername();
         if (!StringUtils.hasText(username)) {
             username = getString(R.string.profile_default_username);
         }
         binding.tvUserName.setText(username);
-
         syncLanguageSelectionText();
         trackingHelper.updateTrackingRequirementsUi();
     }
@@ -149,7 +161,7 @@ public class ProfileFragment extends Fragment {
         if (binding == null) return;
         perfilActual = perfil;
 
-        String notIndicated = getString(R.string.profile_not_indicated);
+        final String notIndicated = getString(R.string.profile_not_indicated);
 
         binding.tvUserName.setText(perfil.nombreUsuario);
         binding.tvUserEmail.setText(perfil.email);
@@ -161,9 +173,12 @@ public class ProfileFragment extends Fragment {
         binding.tvEmail.setText(perfil.email);
         binding.tvBirthdate.setText(
                 StringUtils.hasText(perfil.fechaNacimiento)
-                        ? formatFecha(perfil.fechaNacimiento) : notIndicated);
-        binding.tvProvincia.setText(ProfileValueLocalizer.displayProvincia(requireContext(), perfil.provincia));
-        binding.tvGenero.setText(ProfileValueLocalizer.displayGenero(requireContext(), perfil.genero));
+                        ? formatFecha(perfil.fechaNacimiento)
+                        : notIndicated);
+        binding.tvProvincia.setText(
+                ProfileValueLocalizer.displayProvincia(requireContext(), perfil.provincia));
+        binding.tvGenero.setText(
+                ProfileValueLocalizer.displayGenero(requireContext(), perfil.genero));
         binding.tvAltura.setText(
                 perfil.altura != null
                         ? getString(R.string.profile_altura_formato, perfil.altura)
@@ -182,7 +197,7 @@ public class ProfileFragment extends Fragment {
                     .toJson());
         });
 
-        Object photoSource;
+        final Object photoSource;
         if (StringUtils.hasText(perfil.pendingLocalPhotoPath)
                 && new File(perfil.pendingLocalPhotoPath).exists()) {
             transientPhotoPreviewPath = null;
@@ -218,7 +233,8 @@ public class ProfileFragment extends Fragment {
             request = request
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .skipMemoryCache(true)
-                    .signature(new ObjectKey(file.getAbsolutePath() + ":" + file.lastModified()));
+                    .signature(new ObjectKey(
+                            file.getAbsolutePath() + ":" + file.lastModified()));
         } else {
             request = request.diskCacheStrategy(DiskCacheStrategy.ALL);
         }
@@ -231,35 +247,18 @@ public class ProfileFragment extends Fragment {
         loadProfilePhoto(file);
     }
 
-    @NonNull
-    private String formatFecha(@NonNull String fecha) {
-        try {
-            Locale locale = AppLanguageManager.getActiveLocale(requireContext());
-            return LocalDate.parse(fecha).format(
-                    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
-            );
-        } catch (DateTimeParseException ignored) {
-            return fecha;
-        }
-    }
-
-    @NonNull
-    private String appendPhotoVersion(@NonNull String baseUrl, int version) {
-        String separator = baseUrl.contains("?") ? "&" : "?";
-        return baseUrl + separator + "v=" + version;
-    }
+    // ── Listeners ─────────────────────────────────────────────────────────────
 
     private void setupListeners() {
         binding.toggleThemeMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
-            String newMode;
-            if      (checkedId == R.id.btn_theme_light)  newMode = ThemeManager.MODE_LIGHT;
+            final String newMode;
+            if (checkedId == R.id.btn_theme_light)       newMode = ThemeManager.MODE_LIGHT;
             else if (checkedId == R.id.btn_theme_dark)   newMode = ThemeManager.MODE_DARK;
             else if (checkedId == R.id.btn_theme_system) newMode = ThemeManager.MODE_SYSTEM;
             else return;
 
-            String currentMode = ThemeManager.getSavedMode(requireContext());
-            if (newMode.equals(currentMode)) return;
+            if (newMode.equals(ThemeManager.getSavedMode(requireContext()))) return;
             dialogHelper.startUiRecreationWithSplash(() -> {
                 ThemeManager.saveAndApply(requireContext(), newMode);
                 requireActivity().recreate();
@@ -271,24 +270,26 @@ public class ProfileFragment extends Fragment {
             RankingFragment.newInstance(provincia)
                     .show(getChildFragmentManager(), RankingFragment.TAG);
         });
+
         binding.itemShareRoutes.setOnClickListener(v ->
-                Toast.makeText(requireContext(), R.string.common_proximamente, Toast.LENGTH_SHORT).show());
+                Toast.makeText(requireContext(),
+                        R.string.common_proximamente, Toast.LENGTH_SHORT).show());
 
-        binding.tvTrackingLocationAction.setOnClickListener(
-                v -> trackingHelper.handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.LOCATION));
-        binding.tvTrackingActivityAction.setOnClickListener(
-                v -> trackingHelper.handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
-        binding.tvTrackingNotificationsAction.setOnClickListener(
-                v -> trackingHelper.handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.NOTIFICATIONS));
-        binding.tvTrackingDeviceLocationAction.setOnClickListener(
-                v -> trackingHelper.handleTrackingRequirementAction(TrackingRequirementsManager.Requirement.GPS));
+        binding.tvTrackingLocationAction.setOnClickListener(v ->
+                trackingHelper.handleTrackingRequirementAction(
+                        TrackingRequirementsManager.Requirement.LOCATION));
+        binding.tvTrackingActivityAction.setOnClickListener(v ->
+                trackingHelper.handleTrackingRequirementAction(
+                        TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
+        binding.tvTrackingNotificationsAction.setOnClickListener(v ->
+                trackingHelper.handleTrackingRequirementAction(
+                        TrackingRequirementsManager.Requirement.NOTIFICATIONS));
+        binding.tvTrackingDeviceLocationAction.setOnClickListener(v ->
+                trackingHelper.handleTrackingRequirementAction(
+                        TrackingRequirementsManager.Requirement.GPS));
 
-        binding.fabChangePhoto.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            intent.setType("image/*");
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-            pickImageLauncher.launch(intent);
-        });
+        // GetContent lanza el selector del sistema con el MIME type indicado
+        binding.fabChangePhoto.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
 
         binding.btnLogout.setOnClickListener(v -> viewModel.logout());
         binding.tvDeleteAccount.setOnClickListener(v -> showDeleteAccountBottomSheet());
@@ -297,7 +298,8 @@ public class ProfileFragment extends Fragment {
         binding.itemFullName.setOnClickListener(v -> dialogHelper.showEditTextDialog(
                 getString(R.string.profile_label_fullname),
                 perfilActual != null ? perfilActual.nombreReal : null,
-                android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS,
+                android.text.InputType.TYPE_CLASS_TEXT
+                        | android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS,
                 false,
                 value -> {
                     AppInputValidator.ValidationResult<String> validation =
@@ -306,24 +308,20 @@ public class ProfileFragment extends Fragment {
                         showErrorFeedback(validationError(validation));
                         return false;
                     }
-
-                    String normalizedValue = validation.getValue();
-                    String currentValue = perfilActual != null ? perfilActual.nombreReal : null;
-                    if (AppInputValidator.sameText(currentValue, normalizedValue)) {
-                        return true;
-                    }
-
+                    String normalized = validation.getValue();
+                    String current = perfilActual != null ? perfilActual.nombreReal : null;
+                    if (AppInputValidator.sameText(current, normalized)) return true;
                     viewModel.updatePerfil(new ProfilePatchPayload()
-                            .nombreReal(StringUtils.hasText(normalizedValue) ? normalizedValue : null)
+                            .nombreReal(StringUtils.hasText(normalized) ? normalized : null)
                             .toJson());
                     return true;
-                }
-        ));
+                }));
 
         binding.itemEmail.setOnClickListener(v -> dialogHelper.showEditTextDialog(
                 getString(R.string.profile_label_email),
                 perfilActual != null ? perfilActual.email : null,
-                android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,
+                android.text.InputType.TYPE_CLASS_TEXT
+                        | android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,
                 true,
                 value -> {
                     AppInputValidator.ValidationResult<String> validation =
@@ -332,62 +330,25 @@ public class ProfileFragment extends Fragment {
                         showErrorFeedback(validationError(validation));
                         return false;
                     }
-
-                    String normalizedValue = validation.getValue();
-                    String currentValue = perfilActual != null ? perfilActual.email : null;
-                    if (AppInputValidator.sameText(currentValue, normalizedValue)) {
-                        return true;
-                    }
-
+                    String normalized = validation.getValue();
+                    String current = perfilActual != null ? perfilActual.email : null;
+                    if (AppInputValidator.sameText(current, normalized)) return true;
                     viewModel.updatePerfil(new ProfilePatchPayload()
-                            .email(normalizedValue)
+                            .email(normalized)
                             .toJson());
                     return true;
-                }
-        ));
+                }));
 
         binding.itemBirthdate.setOnClickListener(v -> dialogHelper.showBirthDatePicker());
         binding.itemProvincia.setOnClickListener(v -> dialogHelper.showEditProvinciaDialog());
         binding.itemGenero.setOnClickListener(v -> dialogHelper.showGeneroDialog());
-
         binding.itemAltura.setOnClickListener(v -> dialogHelper.showAlturaPickerDialog());
         binding.itemPeso.setOnClickListener(v -> dialogHelper.showPesoPickerDialog());
     }
 
-    private void syncThemeToggleWithSavedMode() {
-        if (binding == null) return;
-
-        String mode = ThemeManager.getSavedMode(requireContext());
-        int targetButtonId;
-        if (ThemeManager.MODE_LIGHT.equals(mode)) {
-            targetButtonId = R.id.btn_theme_light;
-        } else if (ThemeManager.MODE_DARK.equals(mode)) {
-            targetButtonId = R.id.btn_theme_dark;
-        } else {
-            targetButtonId = R.id.btn_theme_system;
-        }
-
-        if (binding.toggleThemeMode.getCheckedButtonId() != targetButtonId) {
-            binding.toggleThemeMode.check(targetButtonId);
-        }
-    }
-
-    private void syncLanguageSelectionText() {
-        if (binding == null || dialogHelper == null) return;
-
-        String mode = viewModel.getAppLanguageMode();
-        int index = dialogHelper.findLanguageModeIndex(mode);
-        String[] labels = getResources().getStringArray(R.array.app_language_labels);
-
-        if (index >= 0 && index < labels.length) {
-            binding.tvLanguageValue.setText(labels[index]);
-        }
-    }
+    // ── Observadores ──────────────────────────────────────────────────────────
 
     private void observeViewModel() {
-        // ── perfilState: ÚNICO observer que controla el overlay ──
-        // Solo se muestra durante la carga inicial del perfil (loadPerfil).
-        // Los patches optimistas y subidas de foto nunca activan el overlay.
         viewModel.getPerfilState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
             showOverlay(state.loading);
@@ -398,33 +359,22 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        // ── updateState: solo feedback (snackbar), NUNCA overlay ──
-        // FIX: Eliminado showOverlay(state.loading).
-        // Con el overlay aquí, dos LiveData competían por mostrarlo/ocultarlo:
-        // updateState lo ponía y perfilState lo quitaba 5 ms después (por la
-        // emisión optimista de Room). El overlay parpadeaba y luego desaparecía,
-        // pero el hilo IO seguía bloqueado 8-30 s con backend caído.
         viewModel.getUpdateState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
             if (state.data != null) {
-                String updateStatus = state.data;
-                if (PerfilRepository.UpdateResult.STATUS_SYNCED.equals(updateStatus)) {
+                if (PerfilRepository.UpdateResult.STATUS_SYNCED.equals(state.data)) {
                     showSuccessFeedback(getString(R.string.profile_update_ok));
-                } else if (PerfilRepository.UpdateResult.STATUS_QUEUED.equals(updateStatus)) {
+                } else if (PerfilRepository.UpdateResult.STATUS_QUEUED.equals(state.data)) {
                     showWarningFeedback(getString(R.string.profile_update_queued));
                 }
                 viewModel.resetUpdateState();
             } else if (state.error != null) {
-                // FIX: Recargar datos para revertir cambios optimistas.
-                if (perfilActual != null) {
-                    bindPerfilData(perfilActual);
-                }
+                if (perfilActual != null) bindPerfilData(perfilActual);
                 showApiError(state.error, viewModel::retryLastUpdate);
                 viewModel.resetUpdateState();
             }
         });
 
-        // ── photoState: solo feedback (snackbar), NUNCA overlay ──
         viewModel.getPhotoState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
             if (state.data != null) {
@@ -437,9 +387,7 @@ public class ProfileFragment extends Fragment {
                 viewModel.resetPhotoState();
             } else if (state.error != null) {
                 transientPhotoPreviewPath = null;
-                if (perfilActual != null) {
-                    bindPerfilData(perfilActual);
-                }
+                if (perfilActual != null) bindPerfilData(perfilActual);
                 showApiError(state.error, viewModel::retryLastPhotoUpload);
                 viewModel.resetPhotoState();
             }
@@ -460,26 +408,23 @@ public class ProfileFragment extends Fragment {
             goToLogin();
         });
 
-        // ── deleteAccountState: delegado al BottomSheet ──
         viewModel.getDeleteAccountState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
             if (state.loading) {
-                if (deleteAccountSheet != null) {
-                    deleteAccountSheet.setLoading(true);
-                }
+                if (deleteAccountSheet != null) deleteAccountSheet.setLoading(true);
                 showOverlay(true);
                 return;
             }
             showOverlay(false);
             if (state.error != null) {
                 if (deleteAccountSheet != null) {
-                    deleteAccountSheet.setError(getString(R.string.profile_error_delete_account));
+                    deleteAccountSheet.setError(
+                            getString(R.string.profile_error_delete_account));
                 } else {
                     showErrorFeedback(getString(R.string.profile_error_delete_account));
                 }
                 return;
             }
-            // Éxito: cerrar bottom sheet y navegar al login
             if (deleteAccountSheet != null) {
                 deleteAccountSheet.dismiss();
                 deleteAccountSheet = null;
@@ -488,7 +433,7 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    // ── Eliminar cuenta (BottomSheet) ───────────────────────────────────────────
+    // ── Eliminar cuenta ───────────────────────────────────────────────────────
 
     private void showDeleteAccountBottomSheet() {
         deleteAccountSheet = DeleteAccountBottomSheet.newInstance();
@@ -496,7 +441,31 @@ public class ProfileFragment extends Fragment {
         deleteAccountSheet.show(getChildFragmentManager(), DeleteAccountBottomSheet.TAG);
     }
 
-    // ── TopSnackbar helpers ─────────────────────────────────────────────────────
+    // ── Sincronización de UI con ajustes guardados ────────────────────────────
+
+    private void syncThemeToggleWithSavedMode() {
+        if (binding == null) return;
+        final String mode = ThemeManager.getSavedMode(requireContext());
+        final int targetId;
+        if (ThemeManager.MODE_LIGHT.equals(mode))       targetId = R.id.btn_theme_light;
+        else if (ThemeManager.MODE_DARK.equals(mode))   targetId = R.id.btn_theme_dark;
+        else                                            targetId = R.id.btn_theme_system;
+        if (binding.toggleThemeMode.getCheckedButtonId() != targetId) {
+            binding.toggleThemeMode.check(targetId);
+        }
+    }
+
+    private void syncLanguageSelectionText() {
+        if (binding == null || dialogHelper == null) return;
+        final String mode = viewModel.getAppLanguageMode();
+        final int index = dialogHelper.findLanguageModeIndex(mode);
+        final String[] labels = getResources().getStringArray(R.array.app_language_labels);
+        if (index >= 0 && index < labels.length) {
+            binding.tvLanguageValue.setText(labels[index]);
+        }
+    }
+
+    // ── Feedback helpers ──────────────────────────────────────────────────────
 
     private void showSuccessFeedback(@NonNull CharSequence message) {
         if (binding == null) return;
@@ -525,7 +494,6 @@ public class ProfileFragment extends Fragment {
 
     private boolean isRetryable(@Nullable ApiError error) {
         if (error == null) return false;
-
         ApiErrorType type = error.getType();
         return type == ApiErrorType.NETWORK
                 || type == ApiErrorType.TIMEOUT
@@ -544,6 +512,27 @@ public class ProfileFragment extends Fragment {
         NavigationUtils.goToActivityAndClearTask(requireActivity(), LoginActivity.class);
     }
 
+    // ── Utilidades ────────────────────────────────────────────────────────────
+
+    @NonNull
+    private String formatFecha(@NonNull String fecha) {
+        try {
+            Locale locale = AppLanguageManager.getActiveLocale(requireContext());
+            return LocalDate.parse(fecha)
+                    .format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                            .withLocale(locale));
+        } catch (DateTimeParseException ignored) {
+            return fecha;
+        }
+    }
+
+    @NonNull
+    private String appendPhotoVersion(@NonNull String baseUrl, int version) {
+        String separator = baseUrl.contains("?") ? "&" : "?";
+        return baseUrl + separator + "v=" + version;
+    }
+
+    @NonNull
     private String validationError(@NonNull AppInputValidator.ValidationResult<?> result) {
         String msg = result.getErrorMessage();
         return msg != null ? msg : getString(R.string.vm_error_generico);
@@ -552,9 +541,11 @@ public class ProfileFragment extends Fragment {
     @Nullable
     private File uriToFile(@NonNull Uri uri) {
         try {
-            InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
+            InputStream inputStream =
+                    requireContext().getContentResolver().openInputStream(uri);
             if (inputStream == null) return null;
-            File tempFile = File.createTempFile("photo_", ".jpg", requireContext().getCacheDir());
+            File tempFile = File.createTempFile(
+                    "photo_", ".jpg", requireContext().getCacheDir());
             try (FileOutputStream out = new FileOutputStream(tempFile)) {
                 byte[] buffer = new byte[4096];
                 int read;
@@ -568,5 +559,4 @@ public class ProfileFragment extends Fragment {
             return null;
         }
     }
-
 }
