@@ -4,34 +4,36 @@
     <string name="mo_tracking_notification_channel_desc">Muestra el estado del tracking mientras la app está en segundo plano</string>
 
     <string name="mo_tracking_notification_title">MoveOn</string>
-    <string name="mo_tracking_notification_title_running">%1$s en curso</string>
-    <string name="mo_tracking_notification_title_live">MoveOn · %1$s</string>
-    <string name="mo_tracking_notification_title_paused_short">MoveOn · En pausa</string>
-    <string name="mo_tracking_notification_title_review_short">MoveOn · Revisar</string>
-    <string name="mo_tracking_notification_title_waiting_short">MoveOn · Auto pausa</string>
-    <string name="mo_tracking_notification_title_manual_pause">Entreno en pausa</string>
+    <string name="mo_tracking_notification_title_running">%1$s · seguimiento</string>
+    <string name="mo_tracking_notification_title_manual_pause">Sesión en pausa</string>
     <string name="mo_tracking_notification_title_suspicious_speed">Revisión necesaria</string>
     <string name="mo_tracking_notification_title_auto_pause">Pausa automática</string>
 
-    <string name="mo_tracking_notification_summary_running">Activa %1$s · Parada %2$s</string>
-    <string name="mo_tracking_notification_summary_paused">Sesión en pausa</string>
-    <string name="mo_tracking_notification_summary_review">Velocidad sospechosa detectada</string>
-    <string name="mo_tracking_notification_summary_waiting">Esperando movimiento para reanudar</string>
+    <string name="mo_tracking_notification_summary_running">%1$s activos · %2$s parados</string>
 
-    <string name="mo_tracking_notification_status_live_short">En marcha</string>
+    <string name="mo_tracking_notification_status_live_short">En curso</string>
     <string name="mo_tracking_notification_status_paused_short">Pausa manual</string>
-    <string name="mo_tracking_notification_status_waiting_short">Esperando</string>
-    <string name="mo_tracking_notification_status_review_short">Revisar</string>
+    <string name="mo_tracking_notification_status_waiting_short">Esperando movimiento</string>
+    <string name="mo_tracking_notification_status_review_short">Revisar actividad</string>
+
+    <string name="mo_tracking_notification_status_live_badge">LIVE</string>
+    <string name="mo_tracking_notification_status_paused_badge">PAUSA</string>
+    <string name="mo_tracking_notification_status_waiting_badge">AUTO</string>
+    <string name="mo_tracking_notification_status_review_badge">REVISAR</string>
 
     <string name="mo_tracking_notification_activity_walk">Caminata</string>
     <string name="mo_tracking_notification_activity_run">Carrera</string>
 
     <string name="mo_tracking_notification_metric_time">Tiempo</string>
     <string name="mo_tracking_notification_metric_distance">Distancia</string>
-    <string name="mo_tracking_notification_metric_moving">Activa</string>
-    <string name="mo_tracking_notification_metric_stopped">Parada</string>
+    <string name="mo_tracking_notification_metric_moving">Activo</string>
+    <string name="mo_tracking_notification_metric_stopped">Parado</string>
     <string name="mo_tracking_notification_metric_pace">Ritmo</string>
     <string name="mo_tracking_notification_metric_calories">Kcal</string>
+
+    <string name="mo_tracking_notification_metric_time_compact">TIEMPO</string>
+    <string name="mo_tracking_notification_metric_distance_compact">DISTANCIA</string>
+    <string name="mo_tracking_notification_metric_right_compact">RITMO</string>
 
     <string name="mo_tracking_notification_metric_row">%1$s · %2$s</string>
     <string name="mo_tracking_notification_metric_pair">%1$s · %2$s    %3$s · %4$s</string>

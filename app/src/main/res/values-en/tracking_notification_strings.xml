@@ -4,24 +4,22 @@
     <string name="mo_tracking_notification_channel_desc">Shows tracking status while the app is in the background</string>
 
     <string name="mo_tracking_notification_title">MoveOn</string>
-    <string name="mo_tracking_notification_title_running">%1$s in progress</string>
-    <string name="mo_tracking_notification_title_live">MoveOn · %1$s</string>
-    <string name="mo_tracking_notification_title_paused_short">MoveOn · Paused</string>
-    <string name="mo_tracking_notification_title_review_short">MoveOn · Review</string>
-    <string name="mo_tracking_notification_title_waiting_short">MoveOn · Auto pause</string>
-    <string name="mo_tracking_notification_title_manual_pause">Workout paused</string>
+    <string name="mo_tracking_notification_title_running">%1$s · tracking</string>
+    <string name="mo_tracking_notification_title_manual_pause">Session paused</string>
     <string name="mo_tracking_notification_title_suspicious_speed">Review required</string>
     <string name="mo_tracking_notification_title_auto_pause">Auto pause</string>
 
-    <string name="mo_tracking_notification_summary_running">Moving %1$s · Stopped %2$s</string>
-    <string name="mo_tracking_notification_summary_paused">Session paused</string>
-    <string name="mo_tracking_notification_summary_review">Suspicious speed detected</string>
-    <string name="mo_tracking_notification_summary_waiting">Waiting for movement to resume</string>
+    <string name="mo_tracking_notification_summary_running">%1$s moving · %2$s stopped</string>
 
-    <string name="mo_tracking_notification_status_live_short">Moving</string>
+    <string name="mo_tracking_notification_status_live_short">Live</string>
     <string name="mo_tracking_notification_status_paused_short">Manual pause</string>
-    <string name="mo_tracking_notification_status_waiting_short">Waiting</string>
-    <string name="mo_tracking_notification_status_review_short">Review</string>
+    <string name="mo_tracking_notification_status_waiting_short">Waiting for movement</string>
+    <string name="mo_tracking_notification_status_review_short">Review activity</string>
+
+    <string name="mo_tracking_notification_status_live_badge">LIVE</string>
+    <string name="mo_tracking_notification_status_paused_badge">PAUSED</string>
+    <string name="mo_tracking_notification_status_waiting_badge">AUTO</string>
+    <string name="mo_tracking_notification_status_review_badge">REVIEW</string>
 
     <string name="mo_tracking_notification_activity_walk">Walk</string>
     <string name="mo_tracking_notification_activity_run">Run</string>
@@ -32,6 +30,10 @@
     <string name="mo_tracking_notification_metric_stopped">Stopped</string>
     <string name="mo_tracking_notification_metric_pace">Pace</string>
     <string name="mo_tracking_notification_metric_calories">Kcal</string>
+
+    <string name="mo_tracking_notification_metric_time_compact">TIME</string>
+    <string name="mo_tracking_notification_metric_distance_compact">DISTANCE</string>
+    <string name="mo_tracking_notification_metric_right_compact">PACE</string>
 
     <string name="mo_tracking_notification_metric_row">%1$s · %2$s</string>
     <string name="mo_tracking_notification_metric_pair">%1$s · %2$s    %3$s · %4$s</string>
@@ -44,7 +46,7 @@
     <string name="mo_tracking_notification_line_pace_calories">Avg pace %1$s · %2$s</string>
 
     <string name="mo_tracking_notification_action_pause">Pause</string>
-    <string name="mo_tracking_notification_action_resume">Continue</string>
+    <string name="mo_tracking_notification_action_resume">Resume</string>
     <string name="mo_tracking_notification_action_finish">Stop</string>
     <string name="mo_tracking_notification_action_open">Open app</string>
     <string name="mo_tracking_notification_action_review">Review</string>
