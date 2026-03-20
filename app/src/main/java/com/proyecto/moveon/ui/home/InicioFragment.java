@@ -28,6 +28,7 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
+import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.databinding.FragmentInicioBinding;
 import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.ui.home.tracking.TrackingAlert;
@@ -66,6 +67,7 @@ public class InicioFragment extends Fragment
      * el estado actual de la sesión sigue justificándolo.</p>
      */
     @Nullable private TrackingAlert pendingTrackingAlertAfterStopDialog;
+    private boolean suppressStationarySheetForCurrentActivity = false;
 
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(
@@ -100,6 +102,7 @@ public class InicioFragment extends Fragment
         trackingAlertBottomSheet = null;
         activeTrackingAlertType = null;
         pendingTrackingAlertAfterStopDialog = null;
+        suppressStationarySheetForCurrentActivity = false;
         binding = null;
         super.onDestroyView();
     }
@@ -160,7 +163,6 @@ public class InicioFragment extends Fragment
         binding.btnPlay.setOnClickListener(v -> onPlayClicked());
         binding.btnStop.setOnClickListener(v -> onStopClicked());
         binding.btnReset.setOnClickListener(v -> onResetClicked());
-        binding.btnAdd.setOnClickListener(v -> onAddClicked());
     }
 
     private void onPlayClicked() {
@@ -175,7 +177,10 @@ public class InicioFragment extends Fragment
             return;
         }
 
-        if (state.isIdle() || state.isFinished() || state.isPaused()) {
+        if (state.isIdle() || state.isFinished()) {
+            resetStationarySheetSuppressionForCurrentActivity();
+            ensureTrackingRequirementsAndStart();
+        } else if (state.isPaused()) {
             ensureTrackingRequirementsAndStart();
         } else if (state.isRunning()) {
             viewModel.pauseTracking();
@@ -209,6 +214,7 @@ public class InicioFragment extends Fragment
                     clearMapRoute();
                     dismissTrackingSheetIfShowing();
                     pendingTrackingAlertAfterStopDialog = null;
+                    resetStationarySheetSuppressionForCurrentActivity();
                 })
                 .create();
 
@@ -220,19 +226,6 @@ public class InicioFragment extends Fragment
         TrackingState state = viewModel.getTrackingState().getValue();
         if (state == null || state.isIdle()) return;
 
-        new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.tracking_dialog_reset_title)
-                .setMessage(R.string.tracking_dialog_reset_message)
-                .setPositiveButton(R.string.tracking_dialog_reset_confirm, (d, w) -> {
-                    viewModel.resetTracking();
-                    clearMapRoute();
-                    dismissTrackingSheetIfShowing();
-                })
-                .setNegativeButton(R.string.tracking_dialog_reset_cancel, null)
-                .show();
-    }
-
-    private void onAddClicked() {
         if (viewModel.isTrackingActive()) {
             new AlertDialog.Builder(requireContext())
                     .setTitle(R.string.tracking_dialog_new_activity_title)
@@ -241,13 +234,25 @@ public class InicioFragment extends Fragment
                         viewModel.resetTracking();
                         clearMapRoute();
                         dismissTrackingSheetIfShowing();
+                        resetStationarySheetSuppressionForCurrentActivity();
                         ensureTrackingRequirementsAndStart();
                     })
                     .setNegativeButton(R.string.tracking_dialog_new_activity_cancel, null)
                     .show();
-        } else {
-            ensureTrackingRequirementsAndStart();
+            return;
         }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.tracking_dialog_reset_title)
+                .setMessage(R.string.tracking_dialog_reset_message)
+                .setPositiveButton(R.string.tracking_dialog_reset_confirm, (d, w) -> {
+                    viewModel.resetTracking();
+                    clearMapRoute();
+                    dismissTrackingSheetIfShowing();
+                    resetStationarySheetSuppressionForCurrentActivity();
+                })
+                .setNegativeButton(R.string.tracking_dialog_reset_cancel, null)
+                .show();
     }
 
     private void observeViewModel() {
@@ -262,6 +267,7 @@ public class InicioFragment extends Fragment
                 TopSnackbar.success(binding.getRoot(), R.string.tracking_activity_saved_ok);
                 clearMapRoute();
                 dismissTrackingSheetIfShowing();
+                resetStationarySheetSuppressionForCurrentActivity();
             }
         });
 
@@ -277,6 +283,13 @@ public class InicioFragment extends Fragment
             if (event == null) return;
             TrackingAlert alert = event.getContentIfNotHandled();
             if (alert != null) {
+                if (alert.getType() == TrackingAlert.Type.STATIONARY_AUTO_PAUSE
+                        && !shouldShowStationaryAutoPauseSheet()) {
+                    pendingTrackingAlertAfterStopDialog = null;
+                    dismissTrackingSheetIfShowing();
+                    return;
+                }
+
                 // Mientras el modal de stop esté abierto, no mostramos paneles
                 // inferiores nuevos: el modal manda y concentra la decisión.
                 if (isStopDialogShowing()) {
@@ -359,6 +372,9 @@ public class InicioFragment extends Fragment
 
         if (state.getStatus() == TrackingState.Status.AUTO_PAUSED) {
             if (state.getPauseReason() == TrackingState.PauseReason.STATIONARY) {
+                if (!shouldShowStationaryAutoPauseSheet()) {
+                    return null;
+                }
                 return new TrackingAlert(TrackingAlert.Type.STATIONARY_AUTO_PAUSE);
             }
             if (state.getPauseReason() == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
@@ -536,6 +552,7 @@ public class InicioFragment extends Fragment
                     getString(R.string.tracking_stationary_sheet_message),
                     getString(R.string.tracking_stationary_sheet_primary),
                     getString(R.string.tracking_stationary_sheet_secondary),
+                    getString(R.string.tracking_stationary_sheet_tertiary),
                     true
             );
         } else {
@@ -545,6 +562,7 @@ public class InicioFragment extends Fragment
                     getString(R.string.tracking_warning_vehicle_speed),
                     getString(R.string.tracking_vehicle_continue),
                     getString(R.string.tracking_dialog_stop_confirm),
+                    null,
                     false
             );
         }
@@ -553,6 +571,18 @@ public class InicioFragment extends Fragment
         trackingAlertBottomSheet = sheet;
         activeTrackingAlertType = alert.getType();
         sheet.show(getChildFragmentManager(), TrackingAlertBottomSheet.TAG);
+    }
+
+    private boolean shouldShowStationaryAutoPauseSheet() {
+        if (suppressStationarySheetForCurrentActivity) {
+            return false;
+        }
+        return SecureSessionManager.getInstance(requireContext())
+                .shouldShowAutoPauseAlertsByDefault();
+    }
+
+    private void resetStationarySheetSuppressionForCurrentActivity() {
+        suppressStationarySheetForCurrentActivity = false;
     }
 
     private void dismissTrackingSheetIfShowing() {
@@ -584,6 +614,13 @@ public class InicioFragment extends Fragment
     public void onSecondaryAction(@NonNull TrackingAlert.Type type) {
         // "Finalizar" o "Guardar".
         viewModel.stopAndSave();
+    }
+
+    @Override
+    public void onTertiaryAction(@NonNull TrackingAlert.Type type) {
+        if (type == TrackingAlert.Type.STATIONARY_AUTO_PAUSE) {
+            suppressStationarySheetForCurrentActivity = true;
+        }
     }
 
     private void ensureTrackingRequirementsAndStart() {
@@ -777,5 +814,7 @@ public class InicioFragment extends Fragment
         return getString(R.string.tracking_distance_m_format, meters);
     }
 }
+
+
 
 

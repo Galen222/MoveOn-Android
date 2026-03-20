@@ -37,6 +37,8 @@ public final class SecureSessionManager {
     private static final String KEY_USER_ID_IV = "user_id_iv";
     private static final String KEY_REMEMBERED_ID_CT = "remembered_id_ct";
     private static final String KEY_REMEMBERED_ID_IV = "remembered_id_iv";
+    private static final String KEY_SHOW_AUTO_PAUSE_ALERTS_CT = "show_auto_pause_alerts_ct";
+    private static final String KEY_SHOW_AUTO_PAUSE_ALERTS_IV = "show_auto_pause_alerts_iv";
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int GCM_TAG_LENGTH_BITS = 128;
 
@@ -247,6 +249,36 @@ public final class SecureSessionManager {
         }
     }
 
+    public boolean shouldShowAutoPauseAlertsByDefault() {
+        synchronized (sessionLock) {
+            String rawValue = getDecryptedValueLocked(
+                    KEY_SHOW_AUTO_PAUSE_ALERTS_CT,
+                    KEY_SHOW_AUTO_PAUSE_ALERTS_IV
+            );
+            if (!StringUtils.hasText(rawValue)) {
+                return true;
+            }
+            return Boolean.parseBoolean(rawValue);
+        }
+    }
+
+    public void setShowAutoPauseAlertsByDefault(boolean show) {
+        synchronized (sessionLock) {
+            try {
+                SharedPreferences.Editor editor = prefs.edit();
+                putEncrypted(
+                        editor,
+                        KEY_SHOW_AUTO_PAUSE_ALERTS_CT,
+                        KEY_SHOW_AUTO_PAUSE_ALERTS_IV,
+                        Boolean.toString(show)
+                );
+                editor.apply();
+            } catch (Exception e) {
+                throw new RuntimeException("Error guardando preferencia de avisos de auto-pausa", e);
+            }
+        }
+    }
+
     private void saveLoginLocked(@Nullable String username,
                                  @Nullable String accessToken,
                                  @Nullable String refreshToken) {
@@ -412,3 +444,4 @@ public final class SecureSessionManager {
         }
     }
 }
+

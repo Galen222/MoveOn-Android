@@ -8,46 +8,13 @@
     android:baselineAligned="false"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/surfaceBackground"
-        android:baselineAligned="false"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="20dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="12dp">
-
-        <TextView
-            android:id="@+id/tv_title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/Inicio_fragment_inicio_xml"
-            android:textColor="@color/textPrimary"
-            android:textSize="26sp"
-            android:textStyle="bold" />
-
-        <ImageButton
-            android:id="@+id/btn_add"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@drawable/btn_add_background"
-            android:contentDescription="@string/inicio_desc_add"
-            android:padding="12dp"
-            android:src="@drawable/add_icon"
-            app:tint="@color/greenPrimary" />
-
-    </LinearLayout>
-
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_map"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="12dp"
         app:cardCornerRadius="20dp"
@@ -503,4 +470,3 @@
     </FrameLayout>
 
 </LinearLayout>
-

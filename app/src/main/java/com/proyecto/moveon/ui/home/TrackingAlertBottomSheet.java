@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.proyecto.moveon.databinding.BottomSheetTrackingAlertBinding;
+import com.proyecto.moveon.utils.StringUtils;
 import com.proyecto.moveon.ui.common.BaseExpandedBottomSheetDialogFragment;
 import com.proyecto.moveon.ui.home.tracking.TrackingAlert;
 
@@ -27,11 +28,13 @@ public final class TrackingAlertBottomSheet extends BaseExpandedBottomSheetDialo
     private static final String ARG_MESSAGE = "arg_message";
     private static final String ARG_PRIMARY = "arg_primary";
     private static final String ARG_SECONDARY = "arg_secondary";
+    private static final String ARG_TERTIARY = "arg_tertiary";
     private static final String ARG_CANCELABLE = "arg_cancelable";
 
     public interface Listener {
         void onPrimaryAction(@NonNull TrackingAlert.Type type);
         void onSecondaryAction(@NonNull TrackingAlert.Type type);
+        void onTertiaryAction(@NonNull TrackingAlert.Type type);
     }
 
     @Nullable private BottomSheetTrackingAlertBinding binding;
@@ -44,6 +47,7 @@ public final class TrackingAlertBottomSheet extends BaseExpandedBottomSheetDialo
             @NonNull String message,
             @NonNull String primaryLabel,
             @NonNull String secondaryLabel,
+            @Nullable String tertiaryLabel,
             boolean cancelable) {
         TrackingAlertBottomSheet sheet = new TrackingAlertBottomSheet();
         Bundle args = new Bundle();
@@ -52,6 +56,7 @@ public final class TrackingAlertBottomSheet extends BaseExpandedBottomSheetDialo
         args.putString(ARG_MESSAGE, message);
         args.putString(ARG_PRIMARY, primaryLabel);
         args.putString(ARG_SECONDARY, secondaryLabel);
+        args.putString(ARG_TERTIARY, tertiaryLabel);
         args.putBoolean(ARG_CANCELABLE, cancelable);
         sheet.setArguments(args);
         return sheet;
@@ -82,6 +87,14 @@ public final class TrackingAlertBottomSheet extends BaseExpandedBottomSheetDialo
         binding.btnPrimary.setText(args.getString(ARG_PRIMARY));
         binding.btnSecondary.setText(args.getString(ARG_SECONDARY));
 
+        String tertiaryLabel = args.getString(ARG_TERTIARY);
+        if (StringUtils.hasText(tertiaryLabel)) {
+            binding.btnTertiary.setVisibility(View.VISIBLE);
+            binding.btnTertiary.setText(tertiaryLabel);
+        } else {
+            binding.btnTertiary.setVisibility(View.GONE);
+        }
+
         binding.btnPrimary.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onPrimaryAction(type);
@@ -95,6 +108,13 @@ public final class TrackingAlertBottomSheet extends BaseExpandedBottomSheetDialo
             }
             dismissAllowingStateLoss();
         });
+
+        binding.btnTertiary.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onTertiaryAction(type);
+            }
+            dismissAllowingStateLoss();
+        });
     }
 
     @Override
@@ -103,3 +123,4 @@ public final class TrackingAlertBottomSheet extends BaseExpandedBottomSheetDialo
         super.onDestroyView();
     }
 }
+

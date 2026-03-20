@@ -25,6 +25,7 @@ import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.core.validation.AppInputValidator;
+import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.data.profile.PerfilRepository;
 import com.proyecto.moveon.data.profile.sync.ProfilePatchPayload;
 import com.proyecto.moveon.databinding.FragmentProfileBinding;
@@ -55,6 +56,7 @@ public class ProfileFragment extends Fragment {
 
     private ProfileDialogHelper dialogHelper;
     private ProfileTrackingHelper trackingHelper;
+    private SecureSessionManager secureSessionManager;
 
     @Nullable private DeleteAccountBottomSheet deleteAccountSheet;
 
@@ -100,6 +102,7 @@ public class ProfileFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentProfileBinding.inflate(inflater, container, false);
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
+        secureSessionManager = SecureSessionManager.getInstance(requireContext());
 
         dialogHelper = new ProfileDialogHelper(
                 this, viewModel, () -> perfilActual, this::showErrorFeedback);
@@ -133,6 +136,7 @@ public class ProfileFragment extends Fragment {
         super.onResume();
         syncThemeToggleWithSavedMode();
         syncLanguageSelectionText();
+        syncAutoPauseAlertsToggle();
         trackingHelper.updateTrackingRequirementsUi();
     }
 
@@ -142,6 +146,7 @@ public class ProfileFragment extends Fragment {
         binding = null;
         dialogHelper = null;
         trackingHelper = null;
+        secureSessionManager = null;
         deleteAccountSheet = null;
     }
 
@@ -154,7 +159,21 @@ public class ProfileFragment extends Fragment {
         }
         binding.tvUserName.setText(username);
         syncLanguageSelectionText();
+        syncAutoPauseAlertsToggle();
         trackingHelper.updateTrackingRequirementsUi();
+    }
+
+    private void syncAutoPauseAlertsToggle() {
+        if (binding == null || secureSessionManager == null) return;
+
+        binding.switchAutoPauseAlerts.setOnCheckedChangeListener(null);
+        binding.switchAutoPauseAlerts.setChecked(
+                secureSessionManager.shouldShowAutoPauseAlertsByDefault()
+        );
+        binding.switchAutoPauseAlerts.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (!buttonView.isPressed() || secureSessionManager == null) return;
+            secureSessionManager.setShowAutoPauseAlertsByDefault(isChecked);
+        });
     }
 
     private void bindPerfilData(@NonNull PerfilUsuario perfil) {

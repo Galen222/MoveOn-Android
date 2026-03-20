@@ -222,9 +222,10 @@
     <string name="tracking_vehicle_speed_title">Velocidad sospechosa</string>
     <string name="tracking_vehicle_continue">Continuar igualmente</string>
     <string name="tracking_stationary_sheet_title">Parece que te has detenido</string>
-    <string name="tracking_stationary_sheet_message">Hemos auto-pausado la sesión para no inflar tiempo activo, ritmo y calorías. Puedes reanudar cuando vuelvas a moverte o finalizar ahora.</string>
+    <string name="tracking_stationary_sheet_message">Hemos auto-pausado la sesión para no inflar tiempo activo, ritmo y calorías. Se reanudará cuando vuelvas a moverte o puedes finalizar ahora.</string>
     <string name="tracking_stationary_sheet_primary">Entendido</string>
     <string name="tracking_stationary_sheet_secondary">Finalizar</string>
+    <string name="tracking_stationary_sheet_tertiary">No mostrar durante esta actividad</string>
     <string name="tracking_status_idle">Sesión lista</string>
     <string name="tracking_status_running">Grabando actividad</string>
     <string name="tracking_status_manual_pause">Pausa manual</string>
@@ -394,6 +395,7 @@
 
     <!-- Ítems preferencias -->
     <string name="profile_item_public_profile">Perfil público</string>
+    <string name="profile_item_auto_pause_alerts">Mostrar avisos de auto-pausa</string>
     <string name="profile_item_theme">Tema</string>
     <string name="profile_theme_light">Claro</string>
     <string name="profile_theme_dark">Oscuro</string>
@@ -588,5 +590,7 @@
     <string name="sync_completed">Sincronización completada</string>
 
 </resources>
+
+
 
 

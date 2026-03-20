@@ -231,6 +231,7 @@
     <string name="profile_item_share_routes">Share routes</string>
     <string name="profile_item_notifications">Notifications</string>
     <string name="profile_item_public_profile">Public profile</string>
+    <string name="profile_item_auto_pause_alerts">Show auto-pause alerts</string>
     <string name="profile_item_theme">Theme</string>
     <string name="profile_theme_light">Light</string>
     <string name="profile_theme_dark">Dark</string>
@@ -382,9 +383,10 @@
     <string name="tracking_speed_alert_counter_placeholder">Speed alerts: 0</string>
 
     <string name="tracking_stationary_sheet_title">It looks like you have stopped</string>
-    <string name="tracking_stationary_sheet_message">We auto-paused the session to avoid inflating active time, pace, and calories. You can resume when you start moving again or finish now.</string>
+    <string name="tracking_stationary_sheet_message">We auto-paused the session to avoid inflating active time, pace, and calories. it will resume when you start moving again or you can finish now.</string>
     <string name="tracking_stationary_sheet_primary">Got it</string>
     <string name="tracking_stationary_sheet_secondary">Finish</string>
+    <string name="tracking_stationary_sheet_tertiary">Do not show during this activity</string>
 
     <string name="tracking_status_idle">Session ready</string>
     <string name="tracking_status_running">Recording activity</string>
@@ -406,4 +408,6 @@
     <string name="error_tracking_total_duration_mismatch">Total time, moving time, and stopped time do not match</string>
 
 </resources>
+
+
 
