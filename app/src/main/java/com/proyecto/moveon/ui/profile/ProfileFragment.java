@@ -25,9 +25,9 @@ import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.core.validation.AppInputValidator;
-import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.data.profile.PerfilRepository;
 import com.proyecto.moveon.data.profile.sync.ProfilePatchPayload;
+import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.databinding.FragmentProfileBinding;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
 import com.proyecto.moveon.ui.auth.LoginActivity;
@@ -46,6 +46,12 @@ import java.time.format.DateTimeParseException;
 import java.time.format.FormatStyle;
 import java.util.Locale;
 
+/**
+ * Pantalla de perfil del usuario.
+ *
+ * <p>Este archivo sustituye el placeholder anterior de “Compartir rutas” por el
+ * flujo real que abre un bottom sheet con todas las rutas del usuario.</p>
+ */
 public class ProfileFragment extends Fragment {
 
     private FragmentProfileBinding binding;
@@ -290,9 +296,8 @@ public class ProfileFragment extends Fragment {
                     .show(getChildFragmentManager(), RankingFragment.TAG);
         });
 
-        binding.itemShareRoutes.setOnClickListener(v ->
-                Toast.makeText(requireContext(),
-                        R.string.common_proximamente, Toast.LENGTH_SHORT).show());
+        // Sustituye el placeholder anterior por el bottom sheet real de compartir rutas.
+        binding.itemShareRoutes.setOnClickListener(v -> showShareRoutesBottomSheet());
 
         binding.tvTrackingLocationAction.setOnClickListener(v ->
                 trackingHelper.handleTrackingRequirementAction(
@@ -363,6 +368,17 @@ public class ProfileFragment extends Fragment {
         binding.itemGenero.setOnClickListener(v -> dialogHelper.showGeneroDialog());
         binding.itemAltura.setOnClickListener(v -> dialogHelper.showAlturaPickerDialog());
         binding.itemPeso.setOnClickListener(v -> dialogHelper.showPesoPickerDialog());
+    }
+
+    /**
+     * Abre el bottom sheet de compartir rutas.
+     */
+    private void showShareRoutesBottomSheet() {
+        if (!isAdded()) return;
+        if (getChildFragmentManager().isStateSaved()) return;
+
+        ShareRoutesBottomSheet.newInstance()
+                .show(getChildFragmentManager(), ShareRoutesBottomSheet.TAG);
     }
 
     // ── Observadores ──────────────────────────────────────────────────────────
