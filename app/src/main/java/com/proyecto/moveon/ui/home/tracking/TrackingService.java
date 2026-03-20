@@ -10,6 +10,8 @@ import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Binder;
@@ -18,6 +20,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.SystemClock;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -917,10 +920,10 @@ public final class TrackingService extends Service implements SensorEventListene
     private void createNotificationChannel() {
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
-                getString(R.string.tracking_notification_channel_name),
+                getString(R.string.mo_tracking_notification_channel_name),
                 NotificationManager.IMPORTANCE_LOW
         );
-        channel.setDescription(getString(R.string.tracking_notification_channel_desc));
+        channel.setDescription(getString(R.string.mo_tracking_notification_channel_desc));
         channel.setShowBadge(false);
         NotificationManager manager = getSystemService(NotificationManager.class);
         if (manager != null) {
@@ -938,18 +941,13 @@ public final class TrackingService extends Service implements SensorEventListene
 
         String title = buildNotificationTitle();
         String compactText = buildNotificationCompactText();
-        String expandedText = buildNotificationExpandedText();
-        String summaryText = buildNotificationSummaryText();
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(title)
                 .setContentText(compactText)
-                .setSubText(summaryText)
-                .setStyle(new NotificationCompat.BigTextStyle()
-                        .setBigContentTitle(title)
-                        .bigText(expandedText)
-                        .setSummaryText(summaryText))
+                .setStyle(buildNotificationStyle(title))
                 .setSmallIcon(R.drawable.run_icon)
+                .setLargeIcon(buildNotificationLargeIcon())
                 .setColor(ContextCompat.getColor(this, R.color.greenPrimary))
                 .setContentIntent(contentIntent)
                 .setDeleteIntent(restorePendingIntent)
@@ -973,6 +971,100 @@ public final class TrackingService extends Service implements SensorEventListene
 
         addNotificationActions(builder);
         return builder.build();
+    }
+
+    @NonNull
+    private NotificationCompat.Style buildNotificationStyle(@NonNull String title) {
+        NotificationCompat.InboxStyle style = new NotificationCompat.InboxStyle()
+                .setBigContentTitle(title)
+                .setSummaryText(buildNotificationSummaryText());
+
+        String statusLine = buildNotificationStatusLine();
+        if (!statusLine.isEmpty()) {
+            style.addLine(statusLine);
+        }
+
+        style.addLine(buildNotificationMetricLine(
+                R.string.mo_tracking_notification_metric_time,
+                formatElapsed(elapsedSeconds)
+        ));
+
+        style.addLine(buildNotificationMetricLine(
+                R.string.mo_tracking_notification_metric_distance,
+                formatNotificationDistance()
+        ));
+
+        style.addLine(buildNotificationMetricPairLine(
+                R.string.mo_tracking_notification_metric_moving,
+                formatElapsed(movingSeconds),
+                R.string.mo_tracking_notification_metric_stopped,
+                formatElapsed(stoppedSeconds)
+        ));
+
+        String averagePace = calculateAverageMovingPace();
+        String paceText = (averagePace != null
+                ? averagePace
+                : getString(R.string.tracking_default_pace)) + "/km";
+        String caloriesText = getString(R.string.tracking_calories_format, calories);
+
+        style.addLine(buildNotificationMetricPairLine(
+                R.string.mo_tracking_notification_metric_pace,
+                paceText,
+                R.string.mo_tracking_notification_metric_calories,
+                caloriesText
+        ));
+
+        return style;
+    }
+
+    @NonNull
+    private String buildNotificationMetricLine(int labelResId, @NonNull String value) {
+        return getString(
+                R.string.mo_tracking_notification_metric_row,
+                getString(labelResId),
+                value
+        );
+    }
+
+    @NonNull
+    private String buildNotificationMetricPairLine(
+            int leftLabelResId,
+            @NonNull String leftValue,
+            int rightLabelResId,
+            @NonNull String rightValue
+    ) {
+        return getString(
+                R.string.mo_tracking_notification_metric_pair,
+                getString(leftLabelResId),
+                leftValue,
+                getString(rightLabelResId),
+                rightValue
+        );
+    }
+
+    @NonNull
+    private String buildNotificationStatusLine() {
+        if (currentStatus == TrackingState.Status.AUTO_PAUSED) {
+            if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
+                return getString(R.string.mo_tracking_notification_status_review_short);
+            }
+            return getString(R.string.mo_tracking_notification_status_waiting_short);
+        }
+
+        if (currentStatus == TrackingState.Status.PAUSED) {
+            return getString(R.string.mo_tracking_notification_status_paused_short);
+        }
+
+        return "";
+    }
+
+    @Nullable
+    private Bitmap buildNotificationLargeIcon() {
+        try {
+            return BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher_round);
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     @NonNull
@@ -1002,55 +1094,64 @@ public final class TrackingService extends Service implements SensorEventListene
     private void addNotificationActions(@NonNull NotificationCompat.Builder builder) {
         switch (currentStatus) {
             case RUNNING:
-                builder.addAction(
-                        android.R.drawable.ic_media_pause,
-                        getString(R.string.tracking_notification_action_pause),
+                builder.addAction(buildNotificationAction(
+                        R.drawable.ic_pause_24,
+                        getString(R.string.mo_tracking_notification_action_pause),
                         buildServiceActionPendingIntent(ACTION_NOTIFICATION_PAUSE, 10)
-                );
-                builder.addAction(
-                        android.R.drawable.ic_menu_close_clear_cancel,
-                        getString(R.string.tracking_notification_action_finish),
+                ));
+                builder.addAction(buildNotificationAction(
+                        R.drawable.ic_stop_24,
+                        getString(R.string.mo_tracking_notification_action_finish),
                         buildServiceActionPendingIntent(ACTION_NOTIFICATION_FINISH, 11)
-                );
+                ));
                 break;
 
             case PAUSED:
-                builder.addAction(
-                        android.R.drawable.ic_media_play,
-                        getString(R.string.tracking_notification_action_resume),
+                builder.addAction(buildNotificationAction(
+                        R.drawable.ic_play_arrow_24,
+                        getString(R.string.mo_tracking_notification_action_resume),
                         buildServiceActionPendingIntent(ACTION_NOTIFICATION_RESUME, 12)
-                );
-                builder.addAction(
-                        android.R.drawable.ic_menu_close_clear_cancel,
-                        getString(R.string.tracking_notification_action_finish),
+                ));
+                builder.addAction(buildNotificationAction(
+                        R.drawable.ic_stop_24,
+                        getString(R.string.mo_tracking_notification_action_finish),
                         buildServiceActionPendingIntent(ACTION_NOTIFICATION_FINISH, 13)
-                );
+                ));
                 break;
 
             case AUTO_PAUSED:
                 if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                    builder.addAction(
-                            android.R.drawable.ic_menu_view,
-                            getString(R.string.tracking_notification_action_review),
+                    builder.addAction(buildNotificationAction(
+                            R.drawable.ic_rate_review_24,
+                            getString(R.string.mo_tracking_notification_action_review),
                             buildNotificationContentIntent(14)
-                    );
+                    ));
                 } else {
-                    builder.addAction(
-                            android.R.drawable.ic_menu_view,
-                            getString(R.string.tracking_notification_action_open),
+                    builder.addAction(buildNotificationAction(
+                            R.drawable.ic_open_in_new_24,
+                            getString(R.string.mo_tracking_notification_action_open),
                             buildNotificationContentIntent(15)
-                    );
+                    ));
                 }
-                builder.addAction(
-                        android.R.drawable.ic_menu_close_clear_cancel,
-                        getString(R.string.tracking_notification_action_finish),
+                builder.addAction(buildNotificationAction(
+                        R.drawable.ic_stop_24,
+                        getString(R.string.mo_tracking_notification_action_finish),
                         buildServiceActionPendingIntent(ACTION_NOTIFICATION_FINISH, 16)
-                );
+                ));
                 break;
 
             default:
                 break;
         }
+    }
+
+    @NonNull
+    private NotificationCompat.Action buildNotificationAction(
+            @DrawableRes int iconResId,
+            @NonNull String title,
+            @NonNull PendingIntent pendingIntent
+    ) {
+        return new NotificationCompat.Action.Builder(iconResId, title, pendingIntent).build();
     }
 
     private boolean shouldShowNotificationChronometer() {
@@ -1061,68 +1162,72 @@ public final class TrackingService extends Service implements SensorEventListene
     private String buildNotificationTitle() {
         switch (currentStatus) {
             case RUNNING:
-                return getString(R.string.tracking_notification_title_running, buildNotificationActivityLabel());
+                return getString(
+                        R.string.mo_tracking_notification_title_live,
+                        buildNotificationActivityTitleLabel()
+                );
 
             case PAUSED:
-                return getString(R.string.tracking_notification_title_manual_pause);
+                return getString(R.string.mo_tracking_notification_title_paused_short);
 
             case AUTO_PAUSED:
                 if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                    return getString(R.string.tracking_notification_title_suspicious_speed);
+                    return getString(R.string.mo_tracking_notification_title_review_short);
                 }
-                return getString(R.string.tracking_notification_title_auto_pause);
+                return getString(R.string.mo_tracking_notification_title_waiting_short);
 
             case FINISHED:
-                return getString(R.string.tracking_notification_title);
-
             case IDLE:
             default:
-                return getString(R.string.tracking_notification_title);
+                return getString(R.string.mo_tracking_notification_title);
         }
     }
 
     @NonNull
     private String buildNotificationCompactText() {
+        String elapsedText = formatElapsed(elapsedSeconds);
         String distanceText = formatNotificationDistance();
         String instantPace = calculateInstantPace();
 
         switch (currentStatus) {
             case RUNNING:
                 if (instantPace != null) {
-                    return distanceText + " · " + instantPace + "/km";
+                    return elapsedText + " · " + distanceText + " · " + instantPace + "/km";
                 }
-                return distanceText + " · " + buildNotificationActivityLabel();
+                return elapsedText + " · " + distanceText + " · "
+                        + getString(R.string.mo_tracking_notification_status_live_short);
 
             case PAUSED:
-                return formatElapsed(elapsedSeconds) + " · " + distanceText;
+                return elapsedText + " · " + distanceText + " · "
+                        + getString(R.string.mo_tracking_notification_status_paused_short);
 
             case AUTO_PAUSED:
                 if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                    return distanceText + " · "
-                            + getString(R.string.tracking_notification_review_required);
+                    return elapsedText + " · " + distanceText + " · "
+                            + getString(R.string.mo_tracking_notification_status_review_short);
                 }
-                return distanceText + " · "
-                        + getString(R.string.tracking_notification_waiting_for_movement);
+                return elapsedText + " · " + distanceText + " · "
+                        + getString(R.string.mo_tracking_notification_status_waiting_short);
 
             case FINISHED:
             case IDLE:
             default:
-                return formatElapsed(elapsedSeconds) + " · " + distanceText;
+                return elapsedText + " · " + distanceText;
         }
     }
 
     @NonNull
     private String buildNotificationExpandedText() {
         String elapsedLine = getString(
-                R.string.tracking_notification_line_elapsed,
+                R.string.mo_tracking_notification_line_elapsed,
                 formatElapsed(elapsedSeconds)
         );
         String distanceLine = getString(
-                R.string.tracking_notification_line_distance,
+                R.string.mo_tracking_notification_line_distance,
                 formatNotificationDistance()
         );
         String movingStoppedLine = getString(
-                R.string.tracking_notification_line_moving_stopped,
+                R.string.mo_tracking_notification_line_moving_stopped,
                 formatElapsed(movingSeconds),
                 formatElapsed(stoppedSeconds)
         );
@@ -1131,7 +1236,7 @@ public final class TrackingService extends Service implements SensorEventListene
         String paceText = (averagePace != null ? averagePace : getString(R.string.tracking_default_pace)) + "/km";
         String caloriesText = getString(R.string.tracking_calories_format, calories);
         String paceCaloriesLine = getString(
-                R.string.tracking_notification_line_pace_calories,
+                R.string.mo_tracking_notification_line_pace_calories,
                 paceText,
                 caloriesText
         );
@@ -1140,9 +1245,9 @@ public final class TrackingService extends Service implements SensorEventListene
 
         if (currentStatus == TrackingState.Status.AUTO_PAUSED) {
             if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                expanded.append(getString(R.string.tracking_notification_review_required)).append('\n');
+                expanded.append(getString(R.string.mo_tracking_notification_review_required)).append('\n');
             } else {
-                expanded.append(getString(R.string.tracking_notification_waiting_for_movement)).append('\n');
+                expanded.append(getString(R.string.mo_tracking_notification_waiting_for_movement)).append('\n');
             }
         } else if (currentStatus == TrackingState.Status.PAUSED) {
             expanded.append(getString(R.string.tracking_status_manual_pause)).append('\n');
@@ -1164,24 +1269,24 @@ public final class TrackingService extends Service implements SensorEventListene
         switch (currentStatus) {
             case RUNNING:
                 return getString(
-                        R.string.tracking_notification_summary_running,
+                        R.string.mo_tracking_notification_summary_running,
                         formatElapsed(movingSeconds),
                         formatElapsed(stoppedSeconds)
                 );
 
             case PAUSED:
-                return getString(R.string.tracking_status_manual_pause);
+                return getString(R.string.mo_tracking_notification_summary_paused);
 
             case AUTO_PAUSED:
                 if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                    return getString(R.string.tracking_status_suspicious_speed);
+                    return getString(R.string.mo_tracking_notification_summary_review);
                 }
-                return getString(R.string.tracking_status_auto_pause);
+                return getString(R.string.mo_tracking_notification_summary_waiting);
 
             case FINISHED:
             case IDLE:
             default:
-                return getString(R.string.tracking_notification_title);
+                return getString(R.string.mo_tracking_notification_title);
         }
     }
 
@@ -1191,6 +1296,14 @@ public final class TrackingService extends Service implements SensorEventListene
             return getString(R.string.inicio_running);
         }
         return getString(R.string.inicio_walking);
+    }
+
+    @NonNull
+    private String buildNotificationActivityTitleLabel() {
+        if (activityType == TrackingState.ActivityType.RUNNING_ACTIVITY) {
+            return getString(R.string.mo_tracking_notification_activity_run);
+        }
+        return getString(R.string.mo_tracking_notification_activity_walk);
     }
 
     @NonNull
