@@ -25,6 +25,7 @@
     <string name="inicio_walking">Andando</string>
     <string name="inicio_running">Corriendo</string>
     <string name="tracking_label_pace">RITMO</string>
+    <string name="tracking_label_average_pace">RITMO MEDIO</string>
     <string name="tracking_default_pace">--\'--\"</string>
 
     <!-- ContentDescriptions -->
@@ -163,12 +164,15 @@
     <string name="tracking_notification_channel_name">Tracking activo</string>
     <string name="tracking_notification_channel_desc">Muestra el estado del tracking mientras la app está en segundo plano</string>
     <string name="tracking_notification_title">MoveOn — Actividad en curso</string>
+    <string name="tracking_notification_auto_paused_format">Auto-pausado · %1$s · %2$s</string>
 
     <!-- Métricas por defecto -->
     <string name="tracking_default_time">00:00</string>
     <string name="tracking_default_distance">0 m</string>
     <string name="tracking_default_calories">0 kcal</string>
     <string name="tracking_label_time">TIEMPO</string>
+    <string name="tracking_label_moving_time">MOVIMIENTO</string>
+    <string name="tracking_label_stopped_time">PARADO</string>
     <string name="tracking_label_distance">DISTANCIA</string>
     <string name="tracking_label_cal">CAL</string>
 
@@ -179,7 +183,7 @@
 
     <!-- Diálogo Stop -->
     <string name="tracking_dialog_stop_title">Finalizar actividad</string>
-    <string name="tracking_dialog_stop_message">¿Quieres finalizar y guardar la actividad?</string>
+    <string name="tracking_dialog_stop_message">¿Qué quieres hacer con esta actividad?</string>
     <string name="tracking_dialog_stop_confirm">Guardar</string>
     <string name="tracking_dialog_stop_cancel">Cancelar</string>
 
@@ -214,7 +218,23 @@
     <string name="common_accept">Aceptar</string>
 
     <!-- Avisos en tiempo real -->
-    <string name="tracking_warning_vehicle_speed">Velocidad demasiado alta detectada. ¿Estás en un vehículo?</string>
+    <string name="tracking_warning_vehicle_speed">Velocidad demasiado alta detectada. Parece que vas en un vehículo. Ese tramo no se contará mientras no confirmes que quieres continuar.</string>
+    <string name="tracking_vehicle_speed_title">Velocidad sospechosa</string>
+    <string name="tracking_vehicle_continue">Continuar igualmente</string>
+    <string name="tracking_stationary_sheet_title">Parece que te has detenido</string>
+    <string name="tracking_stationary_sheet_message">Hemos auto-pausado la sesión para no inflar tiempo activo, ritmo y calorías. Puedes reanudar cuando vuelvas a moverte o finalizar ahora.</string>
+    <string name="tracking_stationary_sheet_primary">Entendido</string>
+    <string name="tracking_stationary_sheet_secondary">Finalizar</string>
+    <string name="tracking_status_idle">Sesión lista</string>
+    <string name="tracking_status_running">Grabando actividad</string>
+    <string name="tracking_status_manual_pause">Pausa manual</string>
+    <string name="tracking_status_auto_pause">Auto-pausado por parada</string>
+    <string name="tracking_status_suspicious_speed">Pausado por velocidad sospechosa</string>
+    <string name="tracking_status_finished">Actividad finalizada</string>
+    <string name="tracking_pause_summary_format">Auto-pausas: %1$d · Pausas manuales: %2$d</string>
+    <string name="tracking_pause_summary_placeholder">Auto-pausas: 0 · Pausas manuales: 0</string>
+    <string name="tracking_speed_alert_counter_format">Alertas velocidad: %1$d</string>
+    <string name="tracking_speed_alert_counter_placeholder">Alertas velocidad: 0</string>
 
 
     <!-- ══════════════════════════════════════════════════════════════════════ -->
@@ -306,6 +326,8 @@
     <string name="stats_historial_totales">%1$s  ·  %2$s  ·  %3$s</string>
     <string name="stats_historial_semana_rango">%1$d–%2$d %3$s</string>
     <string name="stats_historial_tiempo_kcal">%1$s  ·  %2$s</string>
+    <string name="stats_activity_duration_breakdown">Mov. %1$s · Total %2$s</string>
+    <string name="stats_activity_kcal_and_pace">%1$d kcal · %2$s/km</string>
 
     <!-- Card Hoy -->
     <string name="stats_section_today">Hoy</string>
@@ -493,6 +515,14 @@
     <string name="error_polilinea_invalida">La ruta polilínea no es válida</string>
     <string name="error_fecha_futura">La fecha de la actividad no puede estar en el futuro</string>
     <string name="error_formato_fecha_invalido">El formato de fecha no es válido</string>
+    <string name="error_tracking_moving_duration_invalid">El tiempo en movimiento no es válido</string>
+    <string name="error_tracking_stopped_duration_invalid">El tiempo parado no es válido</string>
+    <string name="error_tracking_total_duration_mismatch">Tiempo total, tiempo en movimiento y tiempo parado no cuadran</string>
+    <string name="error_tracking_manual_pause_invalid">El tiempo de pausa manual no es válido</string>
+    <string name="error_tracking_average_pace_invalid">El ritmo medio no es válido</string>
+    <string name="error_tracking_average_speed_invalid">La velocidad media no es válida</string>
+    <string name="error_tracking_max_speed_invalid">La velocidad máxima no es válida</string>
+    <string name="error_tracking_counter_invalid">Los contadores de tracking no son válidos</string>
     <string name="error_sin_respuesta_servidor">Sin respuesta del servidor</string>
     <string name="error_sync_actividades_interrumpida">Sincronización de actividades interrumpida</string>
     <string name="error_sync_perfil_interrumpida">Sincronización del perfil interrumpida</string>
@@ -557,10 +587,6 @@
     <string name="offline_banner_text">Sin conexión. Los cambios se sincronizarán automáticamente.</string>
     <string name="sync_completed">Sincronización completada</string>
 
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!--  DETECCIÓN DE VELOCIDAD DEL VEHÍCULO                                   -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <string name="tracking_vehicle_speed_title">Velocidad elevada detectada</string>
-    <string name="tracking_vehicle_continue">Continuar actividad</string>
-
 </resources>
+
+

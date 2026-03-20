@@ -107,7 +107,7 @@
     <string name="tracking_distance_m_format">%1$d m</string>
     <string name="tracking_distance_km_format">%1$.2f km</string>
     <string name="tracking_dialog_stop_title">Finish activity</string>
-    <string name="tracking_dialog_stop_message">Do you want to finish and save the activity?</string>
+    <string name="tracking_dialog_stop_message">What do you want to do with this activity?</string>
     <string name="tracking_dialog_stop_confirm">Save</string>
     <string name="tracking_dialog_stop_cancel">Cancel</string>
     <string name="tracking_dialog_reset_title">Discard activity</string>
@@ -134,7 +134,7 @@
     <string name="tracking_requirement_notifications_name">Notifications</string>
     <string name="tracking_requirement_device_location_name">GPS</string>
     <string name="common_accept">Accept</string>
-    <string name="tracking_warning_vehicle_speed">Speed too high detected. Are you in a vehicle?</string>
+    <string name="tracking_warning_vehicle_speed">Suspicious speed detected. It looks like you may be in a vehicle. This segment will not be counted unless you confirm that you want to continue.</string>
     <string name="ranking_title">Ranking</string>
     <string name="ranking_close_desc">Close ranking</string>
     <string name="ranking_filter_espana">Spain</string>
@@ -366,7 +366,44 @@
     <!-- ══════════════════════════════════════════════════════════════════════ -->
     <!--  VEHICLE SPEED DETECTION                                               -->
     <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <string name="tracking_vehicle_speed_title">High speed detected</string>
-    <string name="tracking_vehicle_continue">Continue activity</string>
+    <string name="tracking_vehicle_speed_title">Suspicious speed</string>
+    <string name="tracking_vehicle_continue">Continue anyway</string>
+
+
+    <!-- Tracking — extended metrics and alerts -->
+    <string name="tracking_label_average_pace">AVG PACE</string>
+    <string name="tracking_label_moving_time">MOVING</string>
+    <string name="tracking_label_stopped_time">STOPPED</string>
+
+    <string name="tracking_notification_auto_paused_format">Auto-paused · %1$s · %2$s</string>
+    <string name="tracking_pause_summary_format">Auto-pauses: %1$d · Manual pauses: %2$d</string>
+    <string name="tracking_pause_summary_placeholder">Auto-pauses: 0 · Manual pauses: 0</string>
+    <string name="tracking_speed_alert_counter_format">Speed alerts: %1$d</string>
+    <string name="tracking_speed_alert_counter_placeholder">Speed alerts: 0</string>
+
+    <string name="tracking_stationary_sheet_title">It looks like you have stopped</string>
+    <string name="tracking_stationary_sheet_message">We auto-paused the session to avoid inflating active time, pace, and calories. You can resume when you start moving again or finish now.</string>
+    <string name="tracking_stationary_sheet_primary">Got it</string>
+    <string name="tracking_stationary_sheet_secondary">Finish</string>
+
+    <string name="tracking_status_idle">Session ready</string>
+    <string name="tracking_status_running">Recording activity</string>
+    <string name="tracking_status_manual_pause">Manual pause</string>
+    <string name="tracking_status_auto_pause">Auto-paused due to stop</string>
+    <string name="tracking_status_suspicious_speed">Paused due to suspicious speed</string>
+    <string name="tracking_status_finished">Activity finished</string>
+
+    <string name="stats_activity_duration_breakdown">Moving %1$s · Total %2$s</string>
+    <string name="stats_activity_kcal_and_pace">%1$d kcal · %2$s/km</string>
+
+    <string name="error_tracking_moving_duration_invalid">Moving time is not valid</string>
+    <string name="error_tracking_stopped_duration_invalid">Stopped time is not valid</string>
+    <string name="error_tracking_manual_pause_invalid">Manual pause time is not valid</string>
+    <string name="error_tracking_average_pace_invalid">Average pace is not valid</string>
+    <string name="error_tracking_average_speed_invalid">Average speed is not valid</string>
+    <string name="error_tracking_max_speed_invalid">Maximum speed is not valid</string>
+    <string name="error_tracking_counter_invalid">Tracking counters are not valid</string>
+    <string name="error_tracking_total_duration_mismatch">Total time, moving time, and stopped time do not match</string>
 
 </resources>
+

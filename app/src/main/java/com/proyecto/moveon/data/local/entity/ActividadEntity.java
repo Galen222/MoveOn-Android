@@ -7,6 +7,12 @@ import androidx.room.Entity;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+/**
+ * Entidad Room de actividades sincronizables.
+ *
+ * <p>Incluye métricas enriquecidas del tracking para no perder información
+ * entre la sesión local y el backend.</p>
+ */
 @Entity(
         tableName = "actividades_locales",
         indices = {
@@ -30,10 +36,42 @@ public class ActividadEntity {
     public String tipo;
 
     public int distancia;
-    public int duracion;
+
+    @ColumnInfo(name = "duracion_total")
+    public int duracionTotal;
+
+    @ColumnInfo(name = "duracion_movimiento")
+    public int duracionMovimiento;
+
+    @ColumnInfo(name = "duracion_parado")
+    public int duracionParado;
+
+    @ColumnInfo(name = "duracion_pausa_manual")
+    public int duracionPausaManual;
 
     @ColumnInfo(name = "calorias_quemadas")
     public int caloriasQuemadas;
+
+    @ColumnInfo(name = "ritmo_medio_movimiento")
+    public int ritmoMedioMovimiento;
+
+    @ColumnInfo(name = "ritmo_medio_total")
+    public int ritmoMedioTotal;
+
+    @ColumnInfo(name = "velocidad_media_x100")
+    public int velocidadMediaKmhX100;
+
+    @ColumnInfo(name = "velocidad_max_x100")
+    public int velocidadMaxKmhX100;
+
+    @ColumnInfo(name = "auto_pausas")
+    public int autoPausas;
+
+    @ColumnInfo(name = "pausas_manuales")
+    public int pausasManuales;
+
+    @ColumnInfo(name = "alertas_velocidad")
+    public int alertasVelocidad;
 
     @Nullable
     @ColumnInfo(name = "ruta_polilinea")

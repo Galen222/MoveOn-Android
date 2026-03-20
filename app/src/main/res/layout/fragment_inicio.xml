@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
     android:background="@color/surfaceBackground"
     android:baselineAligned="false"
     android:orientation="vertical">
 
-    <!-- Header con fondo propio  -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -43,7 +42,6 @@
 
     </LinearLayout>
 
-    <!--  Mapa (peso 1 para ocupar el espacio disponible) -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_map"
         android:layout_width="match_parent"
@@ -62,7 +60,6 @@
             android:layout_height="match_parent"
             tools:ignore="UnknownFragment,InstantiationWarning" />
 
-        <!-- Gradiente inferior sobre el mapa -->
         <View
             android:layout_width="match_parent"
             android:layout_height="60dp"
@@ -71,7 +68,6 @@
 
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- ── Tarjeta de controles ── -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_controls"
         android:layout_width="match_parent"
@@ -90,26 +86,37 @@
             android:layout_height="wrap_content"
             android:baselineAligned="false"
             android:orientation="vertical"
-            android:paddingStart="24dp"
-            android:paddingTop="20dp"
-            android:paddingEnd="24dp"
-            android:paddingBottom="28dp">
+            android:paddingStart="22dp"
+            android:paddingTop="18dp"
+            android:paddingEnd="22dp"
+            android:paddingBottom="18dp">
 
-            <!-- ── Métricas ── -->
+            <TextView
+                android:id="@+id/tv_tracking_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:background="@drawable/pill_inactive"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:text="@string/tracking_status_idle"
+                android:textColor="@color/textSecondary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="10dp"
                 android:baselineAligned="false"
                 android:gravity="center"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:weightSum="3">
 
-                <!-- Tiempo -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:baselineAligned="false"
                     android:gravity="center"
                     android:orientation="vertical">
 
@@ -119,14 +126,12 @@
                         android:layout_height="wrap_content"
                         android:text="@string/tracking_default_time"
                         android:textColor="@color/textPrimary"
-                        android:textSize="22sp"
+                        android:textSize="20sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:letterSpacing="0.12"
                         android:text="@string/tracking_label_time"
                         android:textColor="@color/textSecondary"
                         android:textSize="11sp" />
@@ -135,15 +140,78 @@
 
                 <View
                     android:layout_width="1dp"
-                    android:layout_height="32dp"
+                    android:layout_height="30dp"
                     android:background="@color/dividerColor" />
 
-                <!-- Distancia -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:baselineAligned="false"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_moving_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/tracking_default_time"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/tracking_label_moving_time"
+                        android:textColor="@color/textSecondary"
+                        android:textSize="11sp" />
+
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="30dp"
+                    android:background="@color/dividerColor" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_stopped_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/tracking_default_time"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/tracking_label_stopped_time"
+                        android:textColor="@color/textSecondary"
+                        android:textSize="11sp" />
+
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:baselineAligned="false"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:weightSum="4">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:gravity="center"
                     android:orientation="vertical">
 
@@ -153,31 +221,26 @@
                         android:layout_height="wrap_content"
                         android:text="@string/tracking_default_distance"
                         android:textColor="@color/textPrimary"
-                        android:textSize="22sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:letterSpacing="0.12"
                         android:text="@string/tracking_label_distance"
                         android:textColor="@color/textSecondary"
                         android:textSize="11sp" />
-
                 </LinearLayout>
 
                 <View
                     android:layout_width="1dp"
-                    android:layout_height="32dp"
+                    android:layout_height="30dp"
                     android:background="@color/dividerColor" />
 
-                <!-- Calorías -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:baselineAligned="false"
                     android:gravity="center"
                     android:orientation="vertical">
 
@@ -187,31 +250,26 @@
                         android:layout_height="wrap_content"
                         android:text="@string/tracking_default_calories"
                         android:textColor="@color/textPrimary"
-                        android:textSize="22sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:letterSpacing="0.12"
                         android:text="@string/tracking_label_cal"
                         android:textColor="@color/textSecondary"
                         android:textSize="11sp" />
-
                 </LinearLayout>
 
                 <View
                     android:layout_width="1dp"
-                    android:layout_height="32dp"
+                    android:layout_height="30dp"
                     android:background="@color/dividerColor" />
 
-                <!-- Ritmo -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:baselineAligned="false"
                     android:gravity="center"
                     android:orientation="vertical">
 
@@ -221,27 +279,80 @@
                         android:layout_height="wrap_content"
                         android:text="@string/tracking_default_pace"
                         android:textColor="@color/textPrimary"
-                        android:textSize="22sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:letterSpacing="0.12"
                         android:text="@string/tracking_label_pace"
                         android:textColor="@color/textSecondary"
                         android:textSize="11sp" />
-
                 </LinearLayout>
 
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="30dp"
+                    android:background="@color/dividerColor" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_average_pace"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/tracking_default_pace"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/tracking_label_average_pace"
+                        android:textColor="@color/textSecondary"
+                        android:textSize="11sp" />
+                </LinearLayout>
             </LinearLayout>
 
-            <!-- ── Pills Walking / Running ── -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="16dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_pause_summary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:text="@string/tracking_pause_summary_placeholder"
+                    android:textAlignment="center"
+                    android:textColor="@color/textTertiary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tv_speed_alerts_count"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center_horizontal"
+                    android:text="@string/tracking_speed_alert_counter_placeholder"
+                    android:textAlignment="center"
+                    android:textColor="@color/textTertiary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="18dp"
                 android:baselineAligned="false"
                 android:gravity="center"
                 android:orientation="horizontal"
@@ -254,7 +365,6 @@
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
                     android:background="@drawable/pill_active"
-                    android:baselineAligned="false"
                     android:gravity="center"
                     android:orientation="horizontal"
                     android:paddingStart="16dp"
@@ -277,7 +387,6 @@
                         android:contentDescription="@string/inicio_desc_walking"
                         android:src="@drawable/walk_icon"
                         app:tint="@color/textOnGreen" />
-
                 </LinearLayout>
 
                 <LinearLayout
@@ -287,7 +396,6 @@
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
                     android:background="@drawable/pill_inactive"
-                    android:baselineAligned="false"
                     android:gravity="center"
                     android:orientation="horizontal"
                     android:paddingStart="16dp"
@@ -310,17 +418,13 @@
                         android:contentDescription="@string/inicio_desc_running"
                         android:src="@drawable/run_icon"
                         app:tint="@color/textSecondary" />
-
                 </LinearLayout>
-
             </LinearLayout>
 
-            <!-- ── Botones ── -->
             <LinearLayout
                 android:id="@+id/layout_controls"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:baselineAligned="false"
                 android:gravity="center"
                 android:orientation="horizontal">
 
@@ -378,14 +482,10 @@
                     app:iconTint="@color/textPrimary"
                     app:strokeColor="@color/outlineVariant"
                     app:strokeWidth="1dp" />
-
             </LinearLayout>
-
         </LinearLayout>
-
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- ── Overlay de carga ── -->
     <FrameLayout
         android:id="@+id/loading_overlay"
         android:layout_width="match_parent"
@@ -400,7 +500,7 @@
             android:layout_height="48dp"
             android:layout_gravity="center"
             android:indeterminateTint="@color/greenPrimary" />
-
     </FrameLayout>
 
 </LinearLayout>
+

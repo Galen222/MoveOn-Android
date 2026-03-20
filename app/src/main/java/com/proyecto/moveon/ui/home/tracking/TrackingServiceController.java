@@ -3,7 +3,6 @@ package com.proyecto.moveon.ui.home.tracking;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.IBinder;
 
 import androidx.annotation.NonNull;
@@ -13,35 +12,28 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 
 /**
- * Adaptador de conexión con TrackingService.
-
- * El ViewModel no conserva ya una referencia directa al Service ni conoce el
- * ciclo de vida del bind. Toda esa responsabilidad queda encapsulada en una
- * pieza dedicada basada en application context.
+ * Adaptador de conexión con {@link TrackingService}.
+ *
+ * <p>Centraliza bind/unbind, retransmisión de LiveData y comandos públicos
+ * para que el ViewModel no tenga que conocer detalles del servicio.</p>
  */
 public final class TrackingServiceController {
 
     private final Context appContext;
     private final MediatorLiveData<TrackingState> trackingState =
             new MediatorLiveData<>(TrackingState.idle());
-
-    /**
-     * Retransmite el LiveData<Boolean> de velocidad excesiva que publica el servicio.
-     * Mientras el servicio no esté conectado permanece en su valor inicial (null),
-     * igual que hacemos con trackingState.
-     */
-    private final MediatorLiveData<Boolean> vehicleSpeedDetected = new MediatorLiveData<>();
+    private final MediatorLiveData<TrackingAlert> trackingAlert = new MediatorLiveData<>();
 
     @Nullable private TrackingService service;
     @Nullable private LiveData<TrackingState> serviceStateSource;
-    @Nullable private LiveData<Boolean> serviceVehicleSource;
+    @Nullable private LiveData<TrackingAlert> serviceAlertSource;
     private boolean bound = false;
     private boolean bindRequested = false;
     private boolean pendingStartAfterBind = false;
     @Nullable private Double pendingUserWeightKg = null;
     private boolean released = false;
 
-    private final ServiceConnection connection = new ServiceConnection() {
+    private final android.content.ServiceConnection connection = new android.content.ServiceConnection() {
         @Override
         public void onServiceConnected(@NonNull ComponentName name, @NonNull IBinder binder) {
             if (released) {
@@ -58,10 +50,9 @@ public final class TrackingServiceController {
             serviceStateSource = service.getStateLiveData();
             trackingState.addSource(serviceStateSource, trackingState::setValue);
 
-            // Conectar también el LiveData de velocidad excesiva del servicio.
-            detachServiceVehicleSource();
-            serviceVehicleSource = service.getVehicleSpeedDetected();
-            vehicleSpeedDetected.addSource(serviceVehicleSource, vehicleSpeedDetected::setValue);
+            detachServiceAlertSource();
+            serviceAlertSource = service.getTrackingAlertLiveData();
+            trackingAlert.addSource(serviceAlertSource, trackingAlert::setValue);
 
             if (pendingUserWeightKg != null) {
                 service.setUserWeight(pendingUserWeightKg);
@@ -77,7 +68,7 @@ public final class TrackingServiceController {
         @Override
         public void onServiceDisconnected(@NonNull ComponentName name) {
             detachServiceStateSource();
-            detachServiceVehicleSource();
+            detachServiceAlertSource();
             bound = false;
             bindRequested = false;
             service = null;
@@ -85,7 +76,7 @@ public final class TrackingServiceController {
     };
 
     public TrackingServiceController(@NonNull Context context) {
-        this.appContext = context.getApplicationContext();
+        appContext = context.getApplicationContext();
         bindTrackingService();
     }
 
@@ -95,8 +86,8 @@ public final class TrackingServiceController {
     }
 
     @NonNull
-    public LiveData<Boolean> getVehicleSpeedDetected() {
-        return vehicleSpeedDetected;
+    public LiveData<TrackingAlert> getTrackingAlert() {
+        return trackingAlert;
     }
 
     public void startTracking() {
@@ -156,7 +147,7 @@ public final class TrackingServiceController {
         pendingStartAfterBind = false;
         pendingUserWeightKg = null;
         detachServiceStateSource();
-        detachServiceVehicleSource();
+        detachServiceAlertSource();
         safeUnbindIfNeeded();
         bindRequested = false;
         service = null;
@@ -180,10 +171,10 @@ public final class TrackingServiceController {
         }
     }
 
-    private void detachServiceVehicleSource() {
-        if (serviceVehicleSource != null) {
-            vehicleSpeedDetected.removeSource(serviceVehicleSource);
-            serviceVehicleSource = null;
+    private void detachServiceAlertSource() {
+        if (serviceAlertSource != null) {
+            trackingAlert.removeSource(serviceAlertSource);
+            serviceAlertSource = null;
         }
     }
 
@@ -193,6 +184,7 @@ public final class TrackingServiceController {
         try {
             appContext.unbindService(connection);
         } catch (IllegalArgumentException ignored) {
+            // El sistema ya liberó el bind.
         } finally {
             bound = false;
             bindRequested = false;

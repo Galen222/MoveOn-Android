@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tracking_notification_title_running">MoveOn · %1$s</string>
+    <string name="tracking_notification_title_manual_pause">MoveOn · Pausa manual</string>
+    <string name="tracking_notification_title_auto_pause">MoveOn · Auto-pausado</string>
+    <string name="tracking_notification_title_suspicious_speed">MoveOn · Velocidad sospechosa</string>
+
+    <string name="tracking_notification_waiting_for_movement">Esperando movimiento</string>
+    <string name="tracking_notification_review_required">Revisar en la app</string>
+
+    <string name="tracking_notification_line_elapsed">Tiempo %1$s</string>
+    <string name="tracking_notification_line_distance">Distancia %1$s</string>
+    <string name="tracking_notification_line_moving_stopped">Movimiento %1$s · Parado %2$s</string>
+    <string name="tracking_notification_line_pace_calories">Ritmo medio %1$s · %2$s</string>
+    <string name="tracking_notification_summary_running">Movimiento %1$s · Parado %2$s</string>
+
+    <string name="tracking_notification_action_pause">Pausar</string>
+    <string name="tracking_notification_action_resume">Reanudar</string>
+    <string name="tracking_notification_action_finish">Finalizar</string>
+    <string name="tracking_notification_action_open">Abrir</string>
+    <string name="tracking_notification_action_review">Revisar</string>
+</resources>

@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
 import com.proyecto.moveon.databinding.ItemActividadBinding;
@@ -18,16 +19,16 @@ import com.proyecto.moveon.domain.activity.ActividadItem;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Locale;
 
 /**
- * Adapter para el historial de actividades en {@link StatsFragment}.
+ * Adapter del historial de actividades.
  *
- * <p>Usa {@link ListAdapter} con {@link DiffUtil} para actualizaciones eficientes
- * y {@link ItemActividadBinding} (ViewBinding) para acceso seguro a las vistas.
+ * <p>Se muestran ahora tiempo de movimiento frente a total y el ritmo medio
+ * en movimiento, que son los campos más útiles del nuevo modelo.</p>
  */
 public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapter.ViewHolder> {
 
-    /** Callback para el botón de borrar de cada ítem. */
     public interface OnDeleteClickListener {
         void onDeleteClick(@NonNull ActividadItem item);
     }
@@ -45,6 +46,8 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
                             && a.syncState.equals(b.syncState)
                             && a.distanciaMetros == b.distanciaMetros
                             && a.duracionSegundos == b.duracionSegundos
+                            && a.duracionMovimientoSegundos == b.duracionMovimientoSegundos
+                            && a.ritmoMedioMovimientoSegKm == b.ritmoMedioMovimientoSegKm
                             && a.caloriasQuemadas == b.caloriasQuemadas
                             && a.fechaRutaIso.equals(b.fechaRutaIso);
                 }
@@ -71,8 +74,6 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
         holder.bind(getItem(position));
     }
 
-    // ── ViewHolder ────────────────────────────────────────────────────────────
-
     public final class ViewHolder extends RecyclerView.ViewHolder {
 
         private final ItemActividadBinding binding;
@@ -85,37 +86,37 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
         void bind(@NonNull ActividadItem item) {
             Context context = binding.getRoot().getContext();
 
-            // Tipo canónico + label localizado para UI
             String canonicalTipo = ProfileValueLocalizer.canonicalActivityTypeFromLabel(context, item.tipo);
             boolean esCaminar = "Caminar".equals(canonicalTipo);
             binding.ivActivityIcon.setImageResource(
-                    esCaminar
-                            ? com.proyecto.moveon.R.drawable.walk_icon
-                            : com.proyecto.moveon.R.drawable.play_icon);
-
+                    esCaminar ? R.drawable.walk_icon : R.drawable.play_icon
+            );
             binding.tvActivityType.setText(ProfileValueLocalizer.displayActivityType(context, canonicalTipo));
-
-            // Fecha formateada
             binding.tvActivityDate.setText(formatFecha(item.fechaRutaIso, context));
 
-            // Badge pendiente
             boolean pendiente = item.isPendingSync();
             binding.tvPendingBadge.setVisibility(pendiente ? View.VISIBLE : View.GONE);
 
-            // Métricas
             binding.tvActivityDistance.setText(
-                    context.getString(
-                            com.proyecto.moveon.R.string.stats_format_km,
-                            item.distanciaMetros / 1000.0f));
+                    context.getString(R.string.stats_format_km, item.distanciaMetros / 1000.0f)
+            );
 
-            binding.tvActivityDuration.setText(formatDuracion(item.duracionSegundos, context));
+            binding.tvActivityDuration.setText(
+                    context.getString(
+                            R.string.stats_activity_duration_breakdown,
+                            formatDuracion(item.duracionMovimientoSegundos, context),
+                            formatDuracion(item.duracionSegundos, context)
+                    )
+            );
 
             binding.tvActivityCalories.setText(
                     context.getString(
-                            com.proyecto.moveon.R.string.stats_format_kcal,
-                            item.caloriasQuemadas));
+                            R.string.stats_activity_kcal_and_pace,
+                            item.caloriasQuemadas,
+                            formatPace(item.ritmoMedioMovimientoSegKm)
+                    )
+            );
 
-            // Botón borrar — deshabilitado si está pendiente de sync
             binding.btnDelete.setEnabled(!pendiente);
             binding.btnDelete.setAlpha(pendiente ? 0.3f : 1.0f);
             binding.btnDelete.setOnClickListener(v -> deleteListener.onDeleteClick(item));
@@ -141,11 +142,19 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
             long horas = segundos / 3600L;
             long minutos = (segundos % 3600L) / 60L;
             if (horas > 0) {
-                return context.getString(
-                        com.proyecto.moveon.R.string.stats_format_time_hm, horas, minutos);
+                return context.getString(R.string.stats_format_time_hm, horas, minutos);
             }
-            return context.getString(
-                    com.proyecto.moveon.R.string.stats_format_time_m, minutos);
+            return context.getString(R.string.stats_format_time_m, Math.max(1L, minutos));
+        }
+
+        @NonNull
+        private String formatPace(int secondsPerKm) {
+            if (secondsPerKm <= 0) {
+                return "--'--\"";
+            }
+            int minutes = secondsPerKm / 60;
+            int seconds = secondsPerKm % 60;
+            return String.format(Locale.US, "%d'%02d\"", minutes, seconds);
         }
     }
 }

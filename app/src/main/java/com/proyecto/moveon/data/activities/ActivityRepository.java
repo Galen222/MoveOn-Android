@@ -13,6 +13,7 @@ import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.api.ApiResult;
@@ -30,7 +31,6 @@ import com.proyecto.moveon.data.profile.dto.ProfileInfoDto;
 import com.proyecto.moveon.data.remote.AuthenticatedApiClient;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.domain.activity.ActividadItem;
-import com.proyecto.moveon.R;
 import com.proyecto.moveon.utils.StringUtils;
 import com.proyecto.moveon.workers.SyncActividadesWorker;
 
@@ -44,11 +44,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * MEJ-07: Coordinador delgado de actividades.
- *
- * <p>Responsabilidades: exponer LiveData, validar inputs, despachar trabajo
- * al hilo IO, y programar WorkManager. La lógica de sync y merge vive
- * en {@link ActivitySyncManager}.</p>
+ * Coordinador delgado del dominio de actividades.
  */
 public final class ActivityRepository {
 
@@ -79,16 +75,14 @@ public final class ActivityRepository {
     private final ExecutorService io = MoveOnExecutors.io();
 
     public ActivityRepository(@NonNull Context context) {
-        this.appContext     = context.getApplicationContext();
-        this.sessionManager = SecureSessionManager.getInstance(appContext);
-        this.apiClient      = new AuthenticatedApiClient(appContext);
-        AppDatabase db      = AppDatabase.getInstance(appContext);
-        this.local          = new ActividadLocalDataSource(db);
-        this.remote         = new ActividadRemoteDataSource(appContext);
-        this.syncManager    = new ActivitySyncManager(appContext, local, remote);
+        appContext = context.getApplicationContext();
+        sessionManager = SecureSessionManager.getInstance(appContext);
+        apiClient = new AuthenticatedApiClient(appContext);
+        AppDatabase db = AppDatabase.getInstance(appContext);
+        local = new ActividadLocalDataSource(db);
+        remote = new ActividadRemoteDataSource(appContext);
+        syncManager = new ActivitySyncManager(appContext, local, remote);
     }
-
-    // ── Guardar ───────────────────────────────────────────────────────────────
 
     public void guardarActividad(
             @NonNull GuardarActividadRequestDto request,
@@ -96,7 +90,9 @@ public final class ActivityRepository {
 
         String accountKey = sessionManager.getAccountKey();
         if (accountKey == null) {
-            callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.error_no_sesion_activa))));
+            callback.onResult(ApiResult.failure(
+                    ApiError.local(appContext.getString(R.string.error_no_sesion_activa))
+            ));
             return;
         }
 
@@ -110,40 +106,58 @@ public final class ActivityRepository {
             long now = System.currentTimeMillis();
 
             ActividadEntity entity = new ActividadEntity();
-            entity.localId           = UUID.randomUUID().toString();
-            entity.accountKey        = accountKey;
-            entity.remoteId          = null;
-            entity.tipo              = request.tipo;
-            entity.distancia         = request.distancia;
-            entity.duracion          = request.duracion;
-            entity.caloriasQuemadas  = request.caloriasQuemadas;
-            entity.rutaPolilinea     = request.rutaPolilinea;
-            entity.rutaMapaUrl       = null;
-            entity.fechaRuta         = request.fechaRuta;
-            entity.syncState         = ActivitySyncState.PENDING_CREATE;
-            entity.lastError         = null;
-            entity.createdAtMs       = now;
-            entity.updatedAtMs       = now;
+            entity.localId = UUID.randomUUID().toString();
+            entity.accountKey = accountKey;
+            entity.remoteId = null;
+            entity.tipo = request.tipo;
+            entity.distancia = request.distancia;
+            entity.duracionTotal = request.duracionTotal;
+            entity.duracionMovimiento = request.duracionMovimiento;
+            entity.duracionParado = request.duracionParado;
+            entity.duracionPausaManual = request.duracionPausaManual;
+            entity.caloriasQuemadas = request.caloriasQuemadas;
+            entity.ritmoMedioMovimiento = request.ritmoMedioMovimiento;
+            entity.ritmoMedioTotal = request.ritmoMedioTotal;
+            entity.velocidadMediaKmhX100 = request.velocidadMediaKmhX100;
+            entity.velocidadMaxKmhX100 = request.velocidadMaxKmhX100;
+            entity.autoPausas = request.autoPausas;
+            entity.pausasManuales = request.pausasManuales;
+            entity.alertasVelocidad = request.alertasVelocidad;
+            entity.rutaPolilinea = request.rutaPolilinea;
+            entity.rutaMapaUrl = null;
+            entity.fechaRuta = request.fechaRuta;
+            entity.syncState = ActivitySyncState.PENDING_CREATE;
+            entity.lastError = null;
+            entity.createdAtMs = now;
+            entity.updatedAtMs = now;
 
             local.save(entity);
             enqueueSync();
 
             GuardarActividadResponseDto dto = new GuardarActividadResponseDto();
-            dto.id               = 0;
-            dto.tipo             = entity.tipo;
-            dto.distancia        = entity.distancia;
-            dto.duracion         = entity.duracion;
+            dto.id = 0;
+            dto.tipo = entity.tipo;
+            dto.distancia = entity.distancia;
+            dto.duracionTotal = entity.duracionTotal;
+            dto.duracionMovimiento = entity.duracionMovimiento;
+            dto.duracionParado = entity.duracionParado;
+            dto.duracionPausaManual = entity.duracionPausaManual;
             dto.caloriasQuemadas = entity.caloriasQuemadas;
-            dto.rutaPolilinea    = entity.rutaPolilinea;
-            dto.rutaMapaUrl      = entity.rutaMapaUrl;
-            dto.fechaRuta        = entity.fechaRuta;
+            dto.ritmoMedioMovimiento = entity.ritmoMedioMovimiento;
+            dto.ritmoMedioTotal = entity.ritmoMedioTotal;
+            dto.velocidadMediaKmhX100 = entity.velocidadMediaKmhX100;
+            dto.velocidadMaxKmhX100 = entity.velocidadMaxKmhX100;
+            dto.autoPausas = entity.autoPausas;
+            dto.pausasManuales = entity.pausasManuales;
+            dto.alertasVelocidad = entity.alertasVelocidad;
+            dto.rutaPolilinea = entity.rutaPolilinea;
+            dto.rutaMapaUrl = entity.rutaMapaUrl;
+            dto.fechaRuta = entity.fechaRuta;
             dto.nuevoTotalPuntos = 0;
 
             callback.onResult(ApiResult.success(dto));
         });
     }
-
-    // ── Perfil ────────────────────────────────────────────────────────────────
 
     public void obtenerPerfil(@NonNull Callback<ProfileInfoDto> callback) {
         apiClient.get(
@@ -155,8 +169,6 @@ public final class ActivityRepository {
                 callback::onResult
         );
     }
-
-    // ── Observar / Refresh ────────────────────────────────────────────────────
 
     public LiveData<List<ActividadItem>> observeActividades(@NonNull String accountKey) {
         MediatorLiveData<List<ActividadItem>> result = new MediatorLiveData<>();
@@ -189,8 +201,6 @@ public final class ActivityRepository {
             });
         });
     }
-
-    // ── Borrar ────────────────────────────────────────────────────────────────
 
     public void borrarActividad(
             @NonNull String localId,
@@ -236,8 +246,6 @@ public final class ActivityRepository {
         });
     }
 
-    // ── Sync (Worker) ────────────────────────────────────────────────────────
-
     @NonNull
     public SyncResult syncPendingNow(@NonNull String accountKey) {
         return syncManager.syncPendingNow(accountKey);
@@ -262,8 +270,6 @@ public final class ActivityRepository {
         apiClient.cancelAll();
     }
 
-    // ── Privados ──────────────────────────────────────────────────────────────
-
     @NonNull
     private ActividadItem mapEntityToDomain(@NonNull ActividadEntity entity) {
         return new ActividadItem(
@@ -271,8 +277,18 @@ public final class ActivityRepository {
                 entity.remoteId,
                 entity.tipo,
                 entity.distancia,
-                entity.duracion,
+                entity.duracionTotal,
+                entity.duracionMovimiento,
+                entity.duracionParado,
+                entity.duracionPausaManual,
                 entity.caloriasQuemadas,
+                entity.ritmoMedioMovimiento,
+                entity.ritmoMedioTotal,
+                entity.velocidadMediaKmhX100,
+                entity.velocidadMaxKmhX100,
+                entity.autoPausas,
+                entity.pausasManuales,
+                entity.alertasVelocidad,
                 entity.rutaPolilinea,
                 entity.rutaMapaUrl,
                 entity.fechaRuta,
@@ -291,13 +307,52 @@ public final class ActivityRepository {
             return ApiError.typed(ApiErrorType.VALIDATION,
                     appContext.getString(R.string.error_distancia_invalida));
         }
-        if (request.duracion <= 0 || request.duracion > 86400) {
+        if (request.duracionTotal <= 0 || request.duracionTotal > 86400) {
             return ApiError.typed(ApiErrorType.VALIDATION,
                     appContext.getString(R.string.error_duracion_invalida));
+        }
+        if (request.duracionMovimiento <= 0 || request.duracionMovimiento > request.duracionTotal) {
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_tracking_moving_duration_invalid));
+        }
+        if (request.duracionParado < 0 || request.duracionParado > request.duracionTotal) {
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_tracking_stopped_duration_invalid));
+        }
+        if ((request.duracionMovimiento + request.duracionParado) != request.duracionTotal) {
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_tracking_total_duration_mismatch));
+        }
+        if (request.duracionPausaManual < 0 || request.duracionPausaManual > 86400) {
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_tracking_manual_pause_invalid));
         }
         if (request.caloriasQuemadas <= 0 || request.caloriasQuemadas > 10000) {
             return ApiError.typed(ApiErrorType.VALIDATION,
                     appContext.getString(R.string.error_calorias_invalidas));
+        }
+        if (request.ritmoMedioMovimiento <= 0 || request.ritmoMedioMovimiento > 3600) {
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_tracking_average_pace_invalid));
+        }
+        if (request.ritmoMedioTotal <= 0 || request.ritmoMedioTotal > 3600) {
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_tracking_average_pace_invalid));
+        }
+        if (request.velocidadMediaKmhX100 <= 0 || request.velocidadMediaKmhX100 > 5000) {
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_tracking_average_speed_invalid));
+        }
+        if (request.velocidadMaxKmhX100 <= 0 || request.velocidadMaxKmhX100 > 10000
+                || request.velocidadMaxKmhX100 < request.velocidadMediaKmhX100) {
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_tracking_max_speed_invalid));
+        }
+        if (request.autoPausas < 0 || request.autoPausas > 500
+                || request.pausasManuales < 0 || request.pausasManuales > 500
+                || request.alertasVelocidad < 0 || request.alertasVelocidad > 500) {
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    appContext.getString(R.string.error_tracking_counter_invalid));
         }
         if (StringUtils.hasText(request.rutaPolilinea) && request.rutaPolilinea.trim().length() < 2) {
             return ApiError.typed(ApiErrorType.VALIDATION,
@@ -316,29 +371,8 @@ public final class ActivityRepository {
         return null;
     }
 
-    // ── Inner classes ─────────────────────────────────────────────────────────
-
-    /**
-     * Resultado del ciclo de sincronización offline de actividades.
-     *
-     * <p>Se separan dos conceptos distintos:</p>
-     * <ul>
-     *     <li>{@code retry}: indica si WorkManager debe reintentar más tarde.</li>
-     *     <li>{@code completedPendingWork}: indica si realmente había elementos pendientes
-     *     y esa cola ha terminado en este ciclo.</li>
-     * </ul>
-     *
-     * <p>Esto permite a la UI mostrar un snackbar solo cuando de verdad se ha vaciado una cola
-     * offline, y no simplemente cada vez que el worker se ejecuta sin nada que hacer.</p>
-     */
     public static final class SyncResult {
-        /** Indica si WorkManager debe programar un nuevo intento. */
         public final boolean retry;
-
-        /**
-         * Indica si en esta ejecución se completó trabajo pendiente real.
-         * Se usa para decidir si se muestra el aviso "Sincronización completada".
-         */
         public final boolean completedPendingWork;
 
         private SyncResult(boolean retry, boolean completedPendingWork) {
@@ -346,17 +380,14 @@ public final class ActivityRepository {
             this.completedPendingWork = completedPendingWork;
         }
 
-        /** Devuelve éxito sin trabajo pendiente previo. */
         public static SyncResult successNoop() {
             return new SyncResult(false, false);
         }
 
-        /** Devuelve éxito tras completar trabajo pendiente real. */
         public static SyncResult successCompleted() {
             return new SyncResult(false, true);
         }
 
-        /** Devuelve reintento porque todavía queda trabajo pendiente por resolver. */
         public static SyncResult retry() {
             return new SyncResult(true, false);
         }
