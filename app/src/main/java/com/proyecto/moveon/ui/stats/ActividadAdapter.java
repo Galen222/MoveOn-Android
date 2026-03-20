@@ -26,8 +26,8 @@ import java.util.Set;
 /**
  * Adapter del historial de actividades.
  *
- * <p>Muestra una card colapsada con la distancia y tipo de actividad.
- * Al pulsar la cabecera se expande para mostrar calorías, ritmo medio,
+ * <p>La cabecera muestra distancia y tiempo total siempre visibles.
+ * Al pulsar se expande un panel con calorías, ritmo medio,
  * tiempo en movimiento y tiempo parado.</p>
  *
  * <p>El estado de expansión se gestiona internamente con un {@link Set}
@@ -115,9 +115,12 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
             boolean pendiente = item.isPendingSync();
             binding.tvPendingBadge.setVisibility(pendiente ? View.VISIBLE : View.GONE);
 
-            // Distancia (siempre visible en cabecera)
+            // Cabecera: distancia y tiempo total siempre visibles
             binding.tvActivityDistance.setText(
                     context.getString(R.string.stats_format_km, item.distanciaMetros / 1000.0f)
+            );
+            binding.tvActivityDuration.setText(
+                    formatDuracion(item.duracionSegundos, context)
             );
 
             // Detalles del panel expandible
@@ -151,10 +154,6 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
 
         // ── Expansión ─────────────────────────────────────────────────────────
 
-        /**
-         * Alterna el estado expandido para el {@code localId} dado y
-         * aplica la transición con animación sobre el chevron.
-         */
         private void toggleExpand(@NonNull String localId) {
             if (expandedIds.contains(localId)) {
                 expandedIds.remove(localId);
@@ -164,13 +163,6 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
             applyExpandState(localId, true);
         }
 
-        /**
-         * Aplica la visibilidad de la sección de detalles y la rotación
-         * del chevron según el estado de expansión actual.
-         *
-         * @param localId   identificador de la actividad
-         * @param animate   {@code true} para animar la rotación del chevron
-         */
         private void applyExpandState(@NonNull String localId, boolean animate) {
             boolean expanded = expandedIds.contains(localId);
             int detailVisibility = expanded ? View.VISIBLE : View.GONE;
