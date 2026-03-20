@@ -195,6 +195,12 @@
     <string name="stats_historial_semana_rango">%1$d–%2$d %3$s</string>
     <string name="stats_historial_tiempo_kcal">%1$s  ·  %2$s</string>
     <string name="stats_section_today">Today</string>
+    <string name="stats_item_label_calories">Calories</string>
+    <string name="stats_item_label_pace">Average pace</string>
+    <string name="stats_item_label_moving">Moving time</string>
+    <string name="stats_item_label_stopped">Stopped time</string>
+    <string name="stats_item_expand_desc">View activity details</string>
+    <string name="stats_item_pace_format">%1$s/km</string>
     <string name="stats_section_calendar">History by weeks</string>
     <string name="stats_calendar_week_range">%1$d–%2$d %3$s</string>
     <string name="stats_calendar_btn_more">See more months</string>

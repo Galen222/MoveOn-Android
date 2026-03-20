@@ -1,120 +1,243 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingHorizontal="@dimen/stats_item_padding_horizontal"
-    android:paddingVertical="@dimen/stats_item_padding_vertical">
+    android:layout_marginHorizontal="@dimen/stats_item_padding_horizontal"
+    android:layout_marginBottom="8dp"
+    app:cardBackgroundColor="@color/darkSurface"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/outline"
+    app:strokeWidth="1dp">
 
-    <!-- Icono tipo de actividad -->
-    <ImageView
-        android:id="@+id/iv_activity_icon"
-        android:layout_width="@dimen/stats_item_icon_size"
-        android:layout_height="@dimen/stats_item_icon_size"
-        android:background="@drawable/btn_add_background"
-        android:padding="10dp"
-        android:scaleType="centerInside"
-        android:contentDescription="@string/stats_desc_activity_icon"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        tools:src="@drawable/walk_icon" />
-
-    <!-- Tipo de actividad -->
-    <TextView
-        android:id="@+id/tv_activity_type"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:textSize="14sp"
-        android:textColor="@color/textPrimary"
-        android:fontFamily="sans-serif-medium"
-        app:layout_constraintStart_toEndOf="@id/iv_activity_icon"
-        app:layout_constraintEnd_toStartOf="@id/tv_activity_distance"
-        app:layout_constraintTop_toTopOf="@id/iv_activity_icon"
-        tools:text="Caminar" />
+        android:orientation="vertical">
 
-    <!-- Fecha -->
-    <TextView
-        android:id="@+id/tv_activity_date"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:textSize="12sp"
-        android:textColor="@color/textTertiary"
-        app:layout_constraintStart_toEndOf="@id/iv_activity_icon"
-        app:layout_constraintEnd_toStartOf="@id/tv_activity_distance"
-        app:layout_constraintTop_toBottomOf="@id/tv_activity_type"
-        tools:text="12 mar 2025" />
+        <!-- ── Cabecera: siempre visible ── -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layout_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="@dimen/stats_item_padding_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
 
-    <!-- Badge pendiente de sync -->
-    <TextView
-        android:id="@+id/tv_pending_badge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="2dp"
-        android:text="@string/stats_pending_badge"
-        android:textSize="11sp"
-        android:textColor="@color/textOnGreen"
-        android:background="@drawable/pill_active"
-        android:paddingHorizontal="6dp"
-        android:paddingVertical="2dp"
-        android:visibility="gone"
-        app:layout_constraintStart_toEndOf="@id/iv_activity_icon"
-        app:layout_constraintTop_toBottomOf="@id/tv_activity_date"
-        tools:visibility="visible" />
+            <!-- Icono de tipo de actividad -->
+            <ImageView
+                android:id="@+id/iv_activity_icon"
+                android:layout_width="@dimen/stats_item_icon_size"
+                android:layout_height="@dimen/stats_item_icon_size"
+                android:background="@drawable/btn_add_background"
+                android:padding="10dp"
+                android:scaleType="centerInside"
+                android:contentDescription="@string/stats_desc_activity_icon"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                tools:src="@drawable/walk_icon" />
 
-    <!-- Distancia -->
-    <TextView
-        android:id="@+id/tv_activity_distance"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="4dp"
-        android:textSize="13sp"
-        android:textColor="@color/textPrimary"
-        android:fontFamily="sans-serif-medium"
-        app:layout_constraintEnd_toStartOf="@id/btn_delete"
-        app:layout_constraintTop_toTopOf="@id/iv_activity_icon"
-        tools:text="3.2 km" />
+            <!-- Tipo de actividad -->
+            <TextView
+                android:id="@+id/tv_activity_type"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:textSize="14sp"
+                android:textColor="@color/textPrimary"
+                android:fontFamily="sans-serif-medium"
+                app:layout_constraintStart_toEndOf="@id/iv_activity_icon"
+                app:layout_constraintEnd_toStartOf="@id/tv_activity_distance"
+                app:layout_constraintTop_toTopOf="@id/iv_activity_icon"
+                tools:text="Caminar" />
 
-    <!-- Duración -->
-    <TextView
-        android:id="@+id/tv_activity_duration"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="4dp"
-        android:textSize="11sp"
-        android:textColor="@color/textTertiary"
-        app:layout_constraintEnd_toStartOf="@id/btn_delete"
-        app:layout_constraintTop_toBottomOf="@id/tv_activity_distance"
-        tools:text="32m" />
+            <!-- Fecha -->
+            <TextView
+                android:id="@+id/tv_activity_date"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:textSize="12sp"
+                android:textColor="@color/textTertiary"
+                app:layout_constraintStart_toEndOf="@id/iv_activity_icon"
+                app:layout_constraintEnd_toStartOf="@id/tv_activity_distance"
+                app:layout_constraintTop_toBottomOf="@id/tv_activity_type"
+                tools:text="12 mar 2025" />
 
-    <!-- Calorías -->
-    <TextView
-        android:id="@+id/tv_activity_calories"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="4dp"
-        android:textSize="11sp"
-        android:textColor="@color/textTertiary"
-        app:layout_constraintEnd_toStartOf="@id/btn_delete"
-        app:layout_constraintTop_toBottomOf="@id/tv_activity_duration"
-        tools:text="245 kcal" />
+            <!-- Badge: pendiente de sync -->
+            <TextView
+                android:id="@+id/tv_pending_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="3dp"
+                android:text="@string/stats_pending_badge"
+                android:textSize="11sp"
+                android:textColor="@color/textOnGreen"
+                android:background="@drawable/pill_active"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:visibility="gone"
+                app:layout_constraintStart_toEndOf="@id/iv_activity_icon"
+                app:layout_constraintTop_toBottomOf="@id/tv_activity_date"
+                tools:visibility="visible" />
 
-    <!-- Botón borrar -->
-    <ImageButton
-        android:id="@+id/btn_delete"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@drawable/ic_delete"
-        android:contentDescription="@string/stats_desc_delete"
-        app:tint="@color/textTertiary"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+            <!-- Distancia en km -->
+            <TextView
+                android:id="@+id/tv_activity_distance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:textSize="14sp"
+                android:textColor="@color/textPrimary"
+                android:fontFamily="sans-serif-medium"
+                app:layout_constraintEnd_toStartOf="@id/iv_chevron"
+                app:layout_constraintTop_toTopOf="@id/iv_activity_icon"
+                app:layout_constraintBottom_toBottomOf="@id/iv_activity_icon"
+                tools:text="3.24 km" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <!-- Chevron indicador de expansión -->
+            <ImageView
+                android:id="@+id/iv_chevron"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginEnd="2dp"
+                android:src="@drawable/ic_chevron_down"
+                android:contentDescription="@string/stats_item_expand_desc"
+                app:tint="@color/textTertiary"
+                app:layout_constraintEnd_toStartOf="@id/btn_delete"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+            <!-- Botón borrar -->
+            <ImageButton
+                android:id="@+id/btn_delete"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_delete"
+                android:contentDescription="@string/stats_desc_delete"
+                app:tint="@color/textTertiary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- ── Separador (visible solo en estado expandido) ── -->
+        <View
+            android:id="@+id/view_divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/outlineVariant"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <!-- ── Detalles expandibles ── -->
+        <LinearLayout
+            android:id="@+id/layout_details"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:baselineAligned="false"
+            android:paddingHorizontal="12dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="12dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <!-- Columna izquierda: Calorías + En movimiento -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/stats_item_label_calories"
+                    android:textSize="11sp"
+                    android:textColor="@color/textTertiary" />
+
+                <TextView
+                    android:id="@+id/tv_activity_calories"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:textSize="13sp"
+                    android:textColor="@color/textPrimary"
+                    android:fontFamily="sans-serif-medium"
+                    tools:text="245 kcal" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/stats_item_label_moving"
+                    android:textSize="11sp"
+                    android:textColor="@color/textTertiary" />
+
+                <TextView
+                    android:id="@+id/tv_activity_moving"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="@color/textPrimary"
+                    android:fontFamily="sans-serif-medium"
+                    tools:text="28 min" />
+
+            </LinearLayout>
+
+            <!-- Columna derecha: Ritmo medio + Parado -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/stats_item_label_pace"
+                    android:textSize="11sp"
+                    android:textColor="@color/textTertiary" />
+
+                <TextView
+                    android:id="@+id/tv_activity_pace"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:textSize="13sp"
+                    android:textColor="@color/textPrimary"
+                    android:fontFamily="sans-serif-medium"
+                    tools:text="5'30&quot;/km" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/stats_item_label_stopped"
+                    android:textSize="11sp"
+                    android:textColor="@color/textTertiary" />
+
+                <TextView
+                    android:id="@+id/tv_activity_stopped"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="@color/textPrimary"
+                    android:fontFamily="sans-serif-medium"
+                    tools:text="5 min" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

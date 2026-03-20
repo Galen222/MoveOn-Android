@@ -21,6 +21,10 @@ import java.util.Set;
 
 /**
  * Lógica blocking de sincronización de actividades.
+ *
+ * <p>El servidor persiste y devuelve todos los campos de tracking enriquecido,
+ * por lo que {@link #mapDtoIntoEntity} sobreescribe el registro local completo
+ * con los datos autoritativos del servidor.</p>
  */
 public final class ActivitySyncManager {
 
@@ -44,11 +48,11 @@ public final class ActivitySyncManager {
         if (creates != null) {
             for (ActividadEntity entity : creates) {
                 ApiResult<ActividadResponseDto> result =
-                        remote.createActividadBlocking(ActividadCreatePayload.fromEntity(entity).toJson());
+                        remote.createActividadBlocking(
+                                ActividadCreatePayload.fromEntity(entity).toJson());
 
                 if (result.isSuccess() && result.data != null) {
-                    ActividadResponseDto dto = result.data;
-                    mapDtoIntoEntity(entity, dto);
+                    mapDtoIntoEntity(entity, result.data);
                     entity.syncState = ActivitySyncState.SYNCED;
                     entity.lastError = null;
                     entity.updatedAtMs = System.currentTimeMillis();
@@ -119,25 +123,34 @@ public final class ActivitySyncManager {
         }
     }
 
-    private void mapDtoIntoEntity(@NonNull ActividadEntity entity, @NonNull ActividadResponseDto dto) {
-        entity.remoteId = dto.id;
-        entity.tipo = dto.tipo;
-        entity.distancia = dto.distancia;
-        entity.duracionTotal = dto.duracionTotal;
-        entity.duracionMovimiento = dto.duracionMovimiento;
-        entity.duracionParado = dto.duracionParado;
-        entity.duracionPausaManual = dto.duracionPausaManual;
-        entity.caloriasQuemadas = dto.caloriasQuemadas;
-        entity.ritmoMedioMovimiento = dto.ritmoMedioMovimiento;
-        entity.ritmoMedioTotal = dto.ritmoMedioTotal;
+    /**
+     * Sobreescribe {@code entity} con los datos autoritativos del servidor.
+     *
+     * <p>{@code tipo} y {@code fechaRuta} son {@code @NonNull} en Room pero
+     * {@code @Nullable} en el DTO (el servidor siempre los devuelve, pero Gson
+     * puede dejarlos null si el campo falta en la respuesta). En ese caso
+     * se preserva el valor local para no romper la constraint de Room.</p>
+     */
+    private void mapDtoIntoEntity(@NonNull ActividadEntity entity,
+                                  @NonNull ActividadResponseDto dto) {
+        entity.remoteId              = dto.id;
+        entity.tipo                  = dto.tipo != null ? dto.tipo : entity.tipo;
+        entity.distancia             = dto.distancia;
+        entity.duracionTotal         = dto.duracionTotal;
+        entity.duracionMovimiento    = dto.duracionMovimiento;
+        entity.duracionParado        = dto.duracionParado;
+        entity.duracionPausaManual   = dto.duracionPausaManual;
+        entity.caloriasQuemadas      = dto.caloriasQuemadas;
+        entity.ritmoMedioMovimiento  = dto.ritmoMedioMovimiento;
+        entity.ritmoMedioTotal       = dto.ritmoMedioTotal;
         entity.velocidadMediaKmhX100 = dto.velocidadMediaKmhX100;
-        entity.velocidadMaxKmhX100 = dto.velocidadMaxKmhX100;
-        entity.autoPausas = dto.autoPausas;
-        entity.pausasManuales = dto.pausasManuales;
-        entity.alertasVelocidad = dto.alertasVelocidad;
-        entity.rutaPolilinea = dto.rutaPolilinea;
-        entity.rutaMapaUrl = dto.rutaMapaUrl;
-        entity.fechaRuta = dto.fechaRuta;
+        entity.velocidadMaxKmhX100   = dto.velocidadMaxKmhX100;
+        entity.autoPausas            = dto.autoPausas;
+        entity.pausasManuales        = dto.pausasManuales;
+        entity.alertasVelocidad      = dto.alertasVelocidad;
+        entity.rutaPolilinea         = dto.rutaPolilinea;
+        entity.rutaMapaUrl           = dto.rutaMapaUrl;
+        entity.fechaRuta             = dto.fechaRuta != null ? dto.fechaRuta : entity.fechaRuta;
     }
 
     public boolean isRetryable(@NonNull ApiError error) {

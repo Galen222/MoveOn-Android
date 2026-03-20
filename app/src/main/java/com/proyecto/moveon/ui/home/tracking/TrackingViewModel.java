@@ -148,8 +148,11 @@ public final class TrackingViewModel extends AndroidViewModel {
     /**
      * Construye el DTO de guardado usando métricas ya depuradas por el servicio.
      *
-     * <p>Los campos derivados se recalculan aquí a partir de moving/elapsed
-     * para garantizar consistencia aunque cambie la representación visual.</p>
+     * <p>{@code duracionParado} se calcula como {@code elapsed - moving} para
+     * garantizar que la constraint del backend se cumpla siempre
+     * ({@code duracion_movimiento + duracion_parado = duracion_total}),
+     * ya que pequeños desfases de redondeo entre contadores pueden provocar
+     * que {@code stoppedSeconds} no cuadre exactamente con {@code elapsedSeconds - movingSeconds}.</p>
      */
     private void guardarActividad(@NonNull TrackingState state) {
         saveState.setValue(UiState.loading());
@@ -172,6 +175,14 @@ public final class TrackingViewModel extends AndroidViewModel {
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
         int calorias = Math.max(1, Math.min(state.getCalories(), 10000));
+
+        // duracion_total y duracion_movimiento son los valores reales del servicio.
+        // duracion_parado se deriva de la diferencia para garantizar que la suma
+        // cuadre exactamente con lo que valida el backend.
+        int duracionTotal      = safeToInt(state.getElapsedSeconds());
+        int duracionMovimiento = safeToInt(state.getMovingSeconds());
+        int duracionParado     = Math.max(0, duracionTotal - duracionMovimiento);
+
         int averageMovingPace = calculatePaceSecondsPerKm(state.getMovingSeconds(), state.getDistanceMeters());
         int averageElapsedPace = calculatePaceSecondsPerKm(state.getElapsedSeconds(), state.getDistanceMeters());
         int averageSpeedKmhX100 = calculateAverageSpeedKmhX100(
@@ -182,9 +193,9 @@ public final class TrackingViewModel extends AndroidViewModel {
         GuardarActividadRequestDto request = new GuardarActividadRequestDto(
                 tipo,
                 state.getDistanceMeters(),
-                safeToInt(state.getElapsedSeconds()),
-                safeToInt(state.getMovingSeconds()),
-                safeToInt(state.getStoppedSeconds()),
+                duracionTotal,
+                duracionMovimiento,
+                duracionParado,
                 safeToInt(state.getManualPausedSeconds()),
                 calorias,
                 averageMovingPace,
