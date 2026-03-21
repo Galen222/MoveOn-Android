@@ -376,6 +376,8 @@
     <string name="profile_label_altura">Altura</string>
     <string name="profile_label_peso">Peso</string>
 
+    <string name="profile_weight_estimation_notice">Si no proporcionas tu peso real, se calculará un gasto calórico estimado.</string>
+
     <!-- Formatos de valor -->
     <string name="profile_altura_format">%1$d cm</string>
     <string name="profile_altura_formato">%1$d cm</string>

@@ -208,10 +208,15 @@ public class ProfileFragment extends Fragment {
                 perfil.altura != null
                         ? getString(R.string.profile_altura_formato, perfil.altura)
                         : notIndicated);
+
+        final boolean hasValidWeight = perfil.peso != null && perfil.peso > 0;
+
         binding.tvPeso.setText(
-                perfil.peso != null
+                hasValidWeight
                         ? getString(R.string.profile_peso_formato, perfil.peso)
                         : notIndicated);
+        binding.tvWeightEstimationNotice.setVisibility(
+                hasValidWeight ? View.GONE : View.VISIBLE);
 
         binding.switchPublicProfile.setOnCheckedChangeListener(null);
         binding.switchPublicProfile.setChecked(perfil.perfilVisible);
@@ -595,3 +600,4 @@ public class ProfileFragment extends Fragment {
         }
     }
 }
+

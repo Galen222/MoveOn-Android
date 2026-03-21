@@ -223,6 +223,7 @@
     <string name="profile_label_genero">Gender</string>
     <string name="profile_label_altura">Height</string>
     <string name="profile_label_peso">Weight</string>
+    <string name="profile_weight_estimation_notice">If you do not provide your actual weight, an estimated calorie burn will be calculated.</string>
     <string name="profile_altura_format">%1$d cm</string>
     <string name="profile_altura_formato">%1$d cm</string>
     <string name="profile_peso_format">%1$.1f kg</string>
