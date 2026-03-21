@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/cardBackground">
+
+    <!-- Handle visual -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        android:background="@color/textTertiary" />
+
+    <!-- Título -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/stats_section_history"
+        android:textSize="20sp"
+        android:textColor="@color/textPrimary"
+        android:fontFamily="sans-serif-medium"
+        android:paddingHorizontal="20dp"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Lista completa -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_todas_actividades"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="32dp"
+        android:nestedScrollingEnabled="true"
+        tools:listitem="@layout/item_actividad"
+        tools:itemCount="10" />
+
+</LinearLayout>

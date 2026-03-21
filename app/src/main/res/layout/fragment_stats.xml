@@ -850,6 +850,16 @@
                 tools:listitem="@layout/item_actividad"
                 tools:itemCount="4" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_ver_todas_actividades"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/stats_btn_ver_todas"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

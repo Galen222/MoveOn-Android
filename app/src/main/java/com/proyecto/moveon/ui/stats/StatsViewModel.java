@@ -36,6 +36,9 @@ import java.util.List;
  */
 public class StatsViewModel extends AndroidViewModel {
 
+    /** Número máximo de actividades visibles en la pantalla de estadísticas. */
+    private static final int PREVIEW_LIMIT = 5;
+
     // ── LiveData expuesto ─────────────────────────────────────────────────────
 
     /** Estado principal: loading / success(StatsResumen) / error. */
@@ -43,6 +46,12 @@ public class StatsViewModel extends AndroidViewModel {
 
     /** Lista reactiva de actividades para el historial reciente. */
     private final MediatorLiveData<List<ActividadItem>> actividades = new MediatorLiveData<>();
+
+    /** Lista completa de actividades (para el bottom sheet "Ver todas"). */
+    private final MediatorLiveData<List<ActividadItem>> allActividades = new MediatorLiveData<>();
+
+    /** True si hay más de {@link #PREVIEW_LIMIT} actividades. */
+    private final MutableLiveData<Boolean> hayMasActividades = new MutableLiveData<>(false);
 
     /** Evento puntual del resultado del borrado — consumo único en el Fragment. */
     private final MutableLiveData<Event<UiState<String>>> deleteEvent = new MutableLiveData<>();
@@ -87,6 +96,16 @@ public class StatsViewModel extends AndroidViewModel {
     @NonNull
     public LiveData<List<ActividadItem>> getActividades() {
         return actividades;
+    }
+
+    @NonNull
+    public LiveData<List<ActividadItem>> getAllActividades() {
+        return allActividades;
+    }
+
+    @NonNull
+    public LiveData<Boolean> getHayMasActividades() {
+        return hayMasActividades;
     }
 
     @NonNull
@@ -168,6 +187,8 @@ public class StatsViewModel extends AndroidViewModel {
     private void attachSources() {
         if (accountKey == null) {
             actividades.setValue(Collections.emptyList());
+            allActividades.setValue(Collections.emptyList());
+            hayMasActividades.setValue(false);
             statsState.setValue(UiState.success(
                     StatsResumen.empty(
                             StatsCalculator.DEFAULT_WEEKLY_GOAL_METERS,
@@ -179,7 +200,12 @@ public class StatsViewModel extends AndroidViewModel {
         actividadesSource = actividadRepository.observeActividades(accountKey);
         statsState.addSource(actividadesSource, items -> {
             lastItems = items != null ? items : Collections.emptyList();
-            actividades.setValue(lastItems);
+            allActividades.setValue(lastItems);
+            actividades.setValue(
+                    lastItems.size() > PREVIEW_LIMIT
+                            ? lastItems.subList(0, PREVIEW_LIMIT)
+                            : lastItems);
+            hayMasActividades.setValue(lastItems.size() > PREVIEW_LIMIT);
             recalcular();
         });
 

@@ -88,6 +88,10 @@ public class StatsFragment extends Fragment {
         binding.cardRanking.setOnClickListener(v ->
                 RankingFragment.newInstance(null)
                         .show(getChildFragmentManager(), RankingFragment.TAG));
+
+        binding.btnVerTodasActividades.setOnClickListener(v ->
+                TodasActividadesBottomSheet.newInstance()
+                        .show(getChildFragmentManager(), TodasActividadesBottomSheet.TAG));
     }
 
     private void observeViewModel() {
@@ -107,6 +111,11 @@ public class StatsFragment extends Fragment {
             if (binding == null) return;
             adapter.submitList(items);
             updateEmptyState(items);
+        });
+
+        viewModel.getHayMasActividades().observe(getViewLifecycleOwner(), hayMas -> {
+            if (binding == null) return;
+            binding.btnVerTodasActividades.setVisibility(hayMas ? View.VISIBLE : View.GONE);
         });
 
         viewModel.getDeleteEvent().observe(getViewLifecycleOwner(), event -> {
@@ -269,6 +278,14 @@ public class StatsFragment extends Fragment {
                 })
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
                 .show();
+    }
+
+    void onDeleteClickPublic(@NonNull ActividadItem item) {
+        onDeleteClick(item);
+    }
+
+    void onShareClickPublic(@NonNull ActividadItem item) {
+        onShareClick(item);
     }
 
     private void onDeleteClick(@NonNull ActividadItem item) {
