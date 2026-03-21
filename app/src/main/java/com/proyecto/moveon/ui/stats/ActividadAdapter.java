@@ -39,6 +39,10 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
         void onDeleteClick(@NonNull ActividadItem item);
     }
 
+    public interface OnShareClickListener {
+        void onShareClick(@NonNull ActividadItem item);
+    }
+
     private static final DiffUtil.ItemCallback<ActividadItem> DIFF_CALLBACK =
             new DiffUtil.ItemCallback<>() {
                 @Override
@@ -62,13 +66,17 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
 
     @NonNull
     private final OnDeleteClickListener deleteListener;
+    @NonNull
+    private final OnShareClickListener shareListener;
 
     /** Conjunto de localIds cuya card está actualmente expandida. */
     private final Set<String> expandedIds = new HashSet<>();
 
-    public ActividadAdapter(@NonNull OnDeleteClickListener deleteListener) {
+    public ActividadAdapter(@NonNull OnDeleteClickListener deleteListener,
+                            @NonNull OnShareClickListener shareListener) {
         super(DIFF_CALLBACK);
         this.deleteListener = deleteListener;
+        this.shareListener = shareListener;
     }
 
     @NonNull
@@ -100,10 +108,15 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
 
             // Icono y tipo de actividad
             String canonicalTipo = ProfileValueLocalizer.canonicalActivityTypeFromLabel(context, item.tipo);
-            boolean esCaminar = "Caminar".equals(canonicalTipo);
-            binding.ivActivityIcon.setImageResource(
-                    esCaminar ? R.drawable.walk_icon : R.drawable.play_icon
-            );
+            final int iconRes;
+            if ("Caminar".equals(canonicalTipo)) {
+                iconRes = R.drawable.walk_icon;
+            } else if ("Correr".equals(canonicalTipo)) {
+                iconRes = R.drawable.run_icon;
+            } else {
+                iconRes = R.drawable.walk_icon;
+            }
+            binding.ivActivityIcon.setImageResource(iconRes);
             binding.tvActivityType.setText(
                     ProfileValueLocalizer.displayActivityType(context, canonicalTipo)
             );
@@ -144,6 +157,14 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
             binding.btnDelete.setEnabled(!pendiente);
             binding.btnDelete.setAlpha(pendiente ? 0.3f : 1.0f);
             binding.btnDelete.setOnClickListener(v -> deleteListener.onDeleteClick(item));
+
+            // Botón compartir: visible solo si la actividad tiene polilínea
+            boolean tienePolilinea = item.rutaPolilinea != null && !item.rutaPolilinea.isEmpty();
+            binding.btnShareRoute.setVisibility(tienePolilinea ? View.VISIBLE : View.GONE);
+            binding.viewShareDivider.setVisibility(tienePolilinea ? View.VISIBLE : View.GONE);
+            if (tienePolilinea) {
+                binding.btnShareRoute.setOnClickListener(v -> shareListener.onShareClick(item));
+            }
 
             // Estado de expansión — aplicar sin animación durante bind
             applyExpandState(item.localId, false);

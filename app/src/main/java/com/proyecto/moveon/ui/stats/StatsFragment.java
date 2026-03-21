@@ -1,6 +1,8 @@
 package com.proyecto.moveon.ui.stats;
 
+import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,15 +14,22 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.databinding.FragmentStatsBinding;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 import com.proyecto.moveon.domain.activity.StatsResumen;
 import com.proyecto.moveon.ui.common.TopSnackbar;
+import com.proyecto.moveon.ui.profile.ShareRouteFormatter;
+import com.proyecto.moveon.ui.profile.ShareRouteImageGenerator;
+import com.proyecto.moveon.ui.profile.ShareRoutePreviewBottomSheet;
+import com.proyecto.moveon.ui.ranking.RankingFragment;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,6 +41,7 @@ public class StatsFragment extends Fragment {
     private ActividadAdapter adapter;
 
     @Nullable private StatsResumen lastResumen = null;
+    private boolean isSharingInProgress = false;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -58,7 +68,7 @@ public class StatsFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
-        adapter = new ActividadAdapter(this::onDeleteClick);
+        adapter = new ActividadAdapter(this::onDeleteClick, this::onShareClick);
         binding.rvHistory.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.rvHistory.setAdapter(adapter);
         binding.rvHistory.setHasFixedSize(false);
@@ -74,6 +84,10 @@ public class StatsFragment extends Fragment {
             HistorialBottomSheet.newInstance(lastResumen.monthBlocks)
                     .show(getChildFragmentManager(), "historial");
         });
+
+        binding.cardRanking.setOnClickListener(v ->
+                RankingFragment.newInstance(null)
+                        .show(getChildFragmentManager(), RankingFragment.TAG));
     }
 
     private void observeViewModel() {
@@ -269,6 +283,51 @@ public class StatsFragment extends Fragment {
                 .setPositiveButton(R.string.stats_delete_confirm,
                         (dialog, which) -> viewModel.borrarActividad(item.localId))
                 .show();
+    }
+
+    @SuppressWarnings("resource") // MoveOnExecutors.io() es un executor compartido — no se debe cerrar
+    private void onShareClick(@NonNull ActividadItem item) {
+        if (binding == null || isSharingInProgress) return;
+
+        isSharingInProgress = true;
+
+        final Context localizedContext = AppLanguageManager.localizedContext(requireContext());
+        MoveOnExecutors.io().execute(() -> {
+            try {
+                Uri uri = ShareRouteImageGenerator.generateShareImage(localizedContext, item);
+                String shareText = ShareRouteFormatter.buildShareText(localizedContext, item);
+
+                FragmentActivity activity = getActivity();
+                if (activity == null) return;
+
+                activity.runOnUiThread(() -> {
+                    isSharingInProgress = false;
+                    if (binding == null || !isAdded()) return;
+                    if (getChildFragmentManager().isStateSaved()) {
+                        TopSnackbar.error(binding.getRoot(),
+                                getString(R.string.share_routes_error_opening_preview));
+                        return;
+                    }
+                    ShareRoutePreviewBottomSheet.newInstance(uri, shareText)
+                            .show(getChildFragmentManager(), ShareRoutePreviewBottomSheet.TAG);
+                });
+            } catch (IllegalArgumentException e) {
+                handleShareError(R.string.share_routes_error_no_polyline);
+            } catch (Exception e) {
+                handleShareError(R.string.share_routes_error_generating_image);
+            }
+        });
+    }
+
+    private void handleShareError(int messageRes) {
+        FragmentActivity activity = getActivity();
+        if (activity == null) return;
+        activity.runOnUiThread(() -> {
+            isSharingInProgress = false;
+            if (binding != null) {
+                TopSnackbar.error(binding.getRoot(), getString(messageRes));
+            }
+        });
     }
 
     private void showContent() {

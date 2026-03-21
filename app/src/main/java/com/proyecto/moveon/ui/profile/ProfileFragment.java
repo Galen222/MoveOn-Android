@@ -32,7 +32,6 @@ import com.proyecto.moveon.databinding.FragmentProfileBinding;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
 import com.proyecto.moveon.ui.auth.LoginActivity;
 import com.proyecto.moveon.ui.common.TopSnackbar;
-import com.proyecto.moveon.ui.ranking.RankingFragment;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
 
@@ -295,15 +294,6 @@ public class ProfileFragment extends Fragment {
             });
         });
 
-        binding.itemRanking.setOnClickListener(v -> {
-            String provincia = perfilActual != null ? perfilActual.provincia : null;
-            RankingFragment.newInstance(provincia)
-                    .show(getChildFragmentManager(), RankingFragment.TAG);
-        });
-
-        // Sustituye el placeholder anterior por el bottom sheet real de compartir rutas.
-        binding.itemShareRoutes.setOnClickListener(v -> showShareRoutesBottomSheet());
-
         binding.tvTrackingLocationAction.setOnClickListener(v ->
                 trackingHelper.handleTrackingRequirementAction(
                         TrackingRequirementsManager.Requirement.LOCATION));
@@ -373,17 +363,6 @@ public class ProfileFragment extends Fragment {
         binding.itemGenero.setOnClickListener(v -> dialogHelper.showGeneroDialog());
         binding.itemAltura.setOnClickListener(v -> dialogHelper.showAlturaPickerDialog());
         binding.itemPeso.setOnClickListener(v -> dialogHelper.showPesoPickerDialog());
-    }
-
-    /**
-     * Abre el bottom sheet de compartir rutas.
-     */
-    private void showShareRoutesBottomSheet() {
-        if (!isAdded()) return;
-        if (getChildFragmentManager().isStateSaved()) return;
-
-        ShareRoutesBottomSheet.newInstance()
-                .show(getChildFragmentManager(), ShareRoutesBottomSheet.TAG);
     }
 
     // ── Observadores ──────────────────────────────────────────────────────────
@@ -600,4 +579,3 @@ public class ProfileFragment extends Fragment {
         }
     }
 }
-

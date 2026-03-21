@@ -53,11 +53,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:baselineAligned="false">
+                        android:baselineAligned="false"
+                        android:minHeight="@dimen/stats_metric_row_height">
 
                         <LinearLayout
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:layout_weight="1"
                             android:orientation="vertical"
                             android:gravity="center">
@@ -66,28 +67,33 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/stats_label_distance"
                                 android:textSize="12sp"
-                                android:textColor="@color/textTertiary" />
+                                android:textColor="@color/textTertiary"
+                                android:maxLines="1" />
                             <TextView
                                 android:id="@+id/tv_today_dist"
-                                android:layout_width="wrap_content"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:textSize="20sp"
                                 android:textColor="@color/textPrimary"
                                 android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:maxLines="1"
                                 android:layout_marginTop="4dp"
+                                app:autoSizeTextType="uniform"
+                                app:autoSizeMinTextSize="10sp"
+                                app:autoSizeMaxTextSize="20sp"
                                 tools:text="2.3 km" />
                         </LinearLayout>
 
                         <View
                             android:layout_width="1dp"
-                            android:layout_height="match_parent"
+                            android:layout_height="@dimen/stats_metric_row_height"
                             android:layout_marginStart="12dp"
                             android:layout_marginEnd="12dp"
                             android:background="@color/dividerColor" />
 
                         <LinearLayout
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:layout_weight="1"
                             android:orientation="vertical"
                             android:gravity="center">
@@ -96,28 +102,33 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/stats_label_time"
                                 android:textSize="12sp"
-                                android:textColor="@color/textTertiary" />
+                                android:textColor="@color/textTertiary"
+                                android:maxLines="1" />
                             <TextView
                                 android:id="@+id/tv_today_time"
-                                android:layout_width="wrap_content"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:textSize="20sp"
                                 android:textColor="@color/textPrimary"
                                 android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:maxLines="1"
                                 android:layout_marginTop="4dp"
+                                app:autoSizeTextType="uniform"
+                                app:autoSizeMinTextSize="10sp"
+                                app:autoSizeMaxTextSize="20sp"
                                 tools:text="24 min" />
                         </LinearLayout>
 
                         <View
                             android:layout_width="1dp"
-                            android:layout_height="match_parent"
+                            android:layout_height="@dimen/stats_metric_row_height"
                             android:layout_marginStart="12dp"
                             android:layout_marginEnd="12dp"
                             android:background="@color/dividerColor" />
 
                         <LinearLayout
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:layout_weight="1"
                             android:orientation="vertical"
                             android:gravity="center">
@@ -126,15 +137,20 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/stats_label_calories"
                                 android:textSize="12sp"
-                                android:textColor="@color/textTertiary" />
+                                android:textColor="@color/textTertiary"
+                                android:maxLines="1" />
                             <TextView
                                 android:id="@+id/tv_today_kcal"
-                                android:layout_width="wrap_content"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:textSize="20sp"
                                 android:textColor="@color/textPrimary"
                                 android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:maxLines="1"
                                 android:layout_marginTop="4dp"
+                                app:autoSizeTextType="uniform"
+                                app:autoSizeMinTextSize="10sp"
+                                app:autoSizeMaxTextSize="20sp"
                                 tools:text="180 kcal" />
                         </LinearLayout>
                     </LinearLayout>
@@ -455,11 +471,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:baselineAligned="false">
+                        android:baselineAligned="false"
+                        android:minHeight="@dimen/stats_comparison_row_height">
 
                         <LinearLayout
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:layout_weight="1"
                             android:orientation="vertical">
                             <TextView
@@ -467,15 +484,19 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/stats_period_this_week"
                                 android:textSize="12sp"
-                                android:textColor="@color/textTertiary" />
+                                android:textColor="@color/textTertiary"
+                                android:maxLines="1" />
                             <TextView
                                 android:id="@+id/tv_current_week_dist"
-                                android:layout_width="wrap_content"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:textSize="20sp"
                                 android:textColor="@color/textPrimary"
                                 android:fontFamily="sans-serif-medium"
+                                android:maxLines="1"
                                 android:layout_marginTop="4dp"
+                                app:autoSizeTextType="uniform"
+                                app:autoSizeMinTextSize="12sp"
+                                app:autoSizeMaxTextSize="20sp"
                                 tools:text="19.5 km" />
                             <TextView
                                 android:id="@+id/tv_current_week_kcal"
@@ -483,20 +504,21 @@
                                 android:layout_height="wrap_content"
                                 android:textSize="12sp"
                                 android:textColor="@color/textTertiary"
+                                android:maxLines="1"
                                 android:layout_marginTop="2dp"
                                 tools:text="1 420 kcal" />
                         </LinearLayout>
 
                         <View
                             android:layout_width="1dp"
-                            android:layout_height="match_parent"
+                            android:layout_height="@dimen/stats_comparison_row_height"
                             android:layout_marginStart="16dp"
                             android:layout_marginEnd="16dp"
                             android:background="@color/dividerColor" />
 
                         <LinearLayout
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:layout_weight="1"
                             android:orientation="vertical">
                             <TextView
@@ -504,15 +526,19 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/stats_period_prev_week"
                                 android:textSize="12sp"
-                                android:textColor="@color/textTertiary" />
+                                android:textColor="@color/textTertiary"
+                                android:maxLines="1" />
                             <TextView
                                 android:id="@+id/tv_previous_week_dist"
-                                android:layout_width="wrap_content"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:textSize="20sp"
                                 android:textColor="@color/textPrimary"
                                 android:fontFamily="sans-serif-medium"
+                                android:maxLines="1"
                                 android:layout_marginTop="4dp"
+                                app:autoSizeTextType="uniform"
+                                app:autoSizeMinTextSize="12sp"
+                                app:autoSizeMaxTextSize="20sp"
                                 tools:text="24.1 km" />
                             <TextView
                                 android:id="@+id/tv_previous_week_kcal"
@@ -520,6 +546,7 @@
                                 android:layout_height="wrap_content"
                                 android:textSize="12sp"
                                 android:textColor="@color/textTertiary"
+                                android:maxLines="1"
                                 android:layout_marginTop="2dp"
                                 tools:text="1 780 kcal" />
                         </LinearLayout>
@@ -556,11 +583,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:baselineAligned="false">
+                        android:baselineAligned="false"
+                        android:minHeight="@dimen/stats_comparison_row_height">
 
                         <LinearLayout
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:layout_weight="1"
                             android:orientation="vertical">
                             <TextView
@@ -568,15 +596,19 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/stats_period_this_month"
                                 android:textSize="12sp"
-                                android:textColor="@color/textTertiary" />
+                                android:textColor="@color/textTertiary"
+                                android:maxLines="1" />
                             <TextView
                                 android:id="@+id/tv_current_month_dist"
-                                android:layout_width="wrap_content"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:textSize="20sp"
                                 android:textColor="@color/textPrimary"
                                 android:fontFamily="sans-serif-medium"
+                                android:maxLines="1"
                                 android:layout_marginTop="4dp"
+                                app:autoSizeTextType="uniform"
+                                app:autoSizeMinTextSize="12sp"
+                                app:autoSizeMaxTextSize="20sp"
                                 tools:text="38.6 km" />
                             <TextView
                                 android:id="@+id/tv_current_month_kcal"
@@ -584,20 +616,21 @@
                                 android:layout_height="wrap_content"
                                 android:textSize="12sp"
                                 android:textColor="@color/textTertiary"
+                                android:maxLines="1"
                                 android:layout_marginTop="2dp"
                                 tools:text="2 840 kcal" />
                         </LinearLayout>
 
                         <View
                             android:layout_width="1dp"
-                            android:layout_height="match_parent"
+                            android:layout_height="@dimen/stats_comparison_row_height"
                             android:layout_marginStart="16dp"
                             android:layout_marginEnd="16dp"
                             android:background="@color/dividerColor" />
 
                         <LinearLayout
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:layout_weight="1"
                             android:orientation="vertical">
                             <TextView
@@ -605,15 +638,19 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/stats_period_prev_month"
                                 android:textSize="12sp"
-                                android:textColor="@color/textTertiary" />
+                                android:textColor="@color/textTertiary"
+                                android:maxLines="1" />
                             <TextView
                                 android:id="@+id/tv_previous_month_dist"
-                                android:layout_width="wrap_content"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:textSize="20sp"
                                 android:textColor="@color/textPrimary"
                                 android:fontFamily="sans-serif-medium"
+                                android:maxLines="1"
                                 android:layout_marginTop="4dp"
+                                app:autoSizeTextType="uniform"
+                                app:autoSizeMinTextSize="12sp"
+                                app:autoSizeMaxTextSize="20sp"
                                 tools:text="32.7 km" />
                             <TextView
                                 android:id="@+id/tv_previous_month_kcal"
@@ -621,6 +658,7 @@
                                 android:layout_height="wrap_content"
                                 android:textSize="12sp"
                                 android:textColor="@color/textTertiary"
+                                android:maxLines="1"
                                 android:layout_marginTop="2dp"
                                 tools:text="2 410 kcal" />
                         </LinearLayout>
@@ -700,6 +738,51 @@
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Card Ranking -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_ranking"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@color/cardBackground"
+                app:cardElevation="0dp"
+                app:cardCornerRadius="16dp"
+                app:rippleColor="?attr/colorControlHighlight">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_ranking_label"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ranking_title"
+                        android:textSize="16sp"
+                        android:textColor="@color/textPrimary"
+                        android:fontFamily="sans-serif-medium"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/iv_ranking_chevron"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <ImageView
+                        android:id="@+id/iv_ranking_chevron"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:contentDescription="@null"
+                        app:tint="@color/textTertiary"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <!-- Card 9 — Historial (abre BottomSheet al pulsar) -->

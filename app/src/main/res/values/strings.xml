@@ -301,6 +301,7 @@
     <string name="stats_item_label_stopped">Parado</string>
     <string name="stats_item_expand_desc">Ver detalles de la actividad</string>
     <string name="stats_item_pace_format">%1$s/km</string>
+    <string name="stats_item_share_route">Compartir ruta</string>
 
     <!-- Eliminar actividad -->
     <string name="stats_delete_title">Eliminar actividad</string>

@@ -60,4 +60,9 @@
     <dimen name="stats_chart_bar_width">32dp</dimen>
     <dimen name="stats_chart_bar_radius">6dp</dimen>
     <dimen name="stats_chart_label_size">10sp</dimen>
+    <!-- Stats — filas de métricas con divisores verticales -->
+    <!-- label (12sp ≈ 15dp) + margin 4dp + valor (20sp ≈ 24dp) + padding ≈ 56dp -->
+    <dimen name="stats_metric_row_height">56dp</dimen>
+    <!-- label (12sp) + valor (20sp) + kcal (12sp) + márgenes ≈ 70dp -->
+    <dimen name="stats_comparison_row_height">70dp</dimen>
 </resources>
