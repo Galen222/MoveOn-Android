@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.databinding.BottomSheetShareRoutesBinding;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 import com.proyecto.moveon.ui.common.BaseExpandedBottomSheetDialogFragment;
@@ -123,12 +124,15 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
 
         setSharingInProgress(true);
 
-        final Context appContext = requireContext().getApplicationContext();
+        final Context localizedContext = AppLanguageManager.localizedContext(requireContext());
         MoveOnExecutors.io().execute(() -> {
             try {
                 // Generamos la imagen fuera del hilo principal para no bloquear la UI.
-                Uri uri = ShareRouteImageGenerator.generateShareImage(appContext, item);
-                String shareText = ShareRouteFormatter.buildShareText(appContext, item);
+                // Generamos tanto el bitmap como el texto usando un contexto
+                // reenvuelto al idioma activo. Así la tarjeta compartida y su
+                // copy adjunto salen en el idioma elegido por el usuario.
+                Uri uri = ShareRouteImageGenerator.generateShareImage(localizedContext, item);
+                String shareText = ShareRouteFormatter.buildShareText(localizedContext, item);
 
                 FragmentActivity activity = getActivity();
                 if (activity == null) return;

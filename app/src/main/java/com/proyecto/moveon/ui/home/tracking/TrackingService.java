@@ -24,6 +24,7 @@ import android.widget.RemoteViews;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
@@ -38,6 +39,7 @@ import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.maps.android.PolyUtil;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.ui.main.MainActivity;
 
 import java.util.ArrayDeque;
@@ -921,10 +923,10 @@ public final class TrackingService extends Service implements SensorEventListene
     private void createNotificationChannel() {
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
-                getString(R.string.mo_tracking_notification_channel_name),
+                tr(R.string.mo_tracking_notification_channel_name),
                 NotificationManager.IMPORTANCE_LOW
         );
-        channel.setDescription(getString(R.string.mo_tracking_notification_channel_desc));
+        channel.setDescription(tr(R.string.mo_tracking_notification_channel_desc));
         channel.setShowBadge(false);
         NotificationManager manager = getSystemService(NotificationManager.class);
         if (manager != null) {
@@ -981,19 +983,19 @@ private RemoteViews buildCollapsedNotificationRemoteViews() {
     views.setTextViewText(R.id.tv_metric_primary_value, formatElapsed(elapsedSeconds));
     views.setTextViewText(
             R.id.tv_metric_primary_label,
-            getString(R.string.mo_tracking_notification_metric_time_compact)
+            tr(R.string.mo_tracking_notification_metric_time_compact)
     );
 
     views.setTextViewText(R.id.tv_metric_secondary_value, formatNotificationDistance());
     views.setTextViewText(
             R.id.tv_metric_secondary_label,
-            getString(R.string.mo_tracking_notification_metric_distance_compact)
+            tr(R.string.mo_tracking_notification_metric_distance_compact)
     );
 
     views.setTextViewText(R.id.tv_metric_tertiary_value, buildCompactRightMetricValue());
     views.setTextViewText(
             R.id.tv_metric_tertiary_label,
-            getString(R.string.mo_tracking_notification_metric_right_compact)
+            tr(R.string.mo_tracking_notification_metric_right_compact)
     );
 
 
@@ -1015,48 +1017,48 @@ private RemoteViews buildExpandedNotificationRemoteViews() {
             R.id.tv_card_time_value,
             R.id.tv_card_time_label,
             formatElapsed(elapsedSeconds),
-            getString(R.string.mo_tracking_notification_metric_time)
+            tr(R.string.mo_tracking_notification_metric_time)
     );
     bindMetricCard(
             views,
             R.id.tv_card_distance_value,
             R.id.tv_card_distance_label,
             formatNotificationDistance(),
-            getString(R.string.mo_tracking_notification_metric_distance)
+            tr(R.string.mo_tracking_notification_metric_distance)
     );
 
     String averagePace = calculateAverageMovingPace();
     String paceText = averagePace != null
             ? averagePace + "/km"
-            : getString(R.string.tracking_default_pace) + "/km";
+            : tr(R.string.tracking_default_pace) + "/km";
 
     bindMetricCard(
             views,
             R.id.tv_card_pace_value,
             R.id.tv_card_pace_label,
             paceText,
-            getString(R.string.mo_tracking_notification_metric_pace)
+            tr(R.string.mo_tracking_notification_metric_pace)
     );
     bindMetricCard(
             views,
             R.id.tv_card_calories_value,
             R.id.tv_card_calories_label,
-            getString(R.string.tracking_calories_format, calories),
-            getString(R.string.mo_tracking_notification_metric_calories)
+            tr(R.string.tracking_calories_format, calories),
+            tr(R.string.mo_tracking_notification_metric_calories)
     );
     bindMetricCard(
             views,
             R.id.tv_card_moving_value,
             R.id.tv_card_moving_label,
             formatElapsed(movingSeconds),
-            getString(R.string.mo_tracking_notification_metric_moving)
+            tr(R.string.mo_tracking_notification_metric_moving)
     );
     bindMetricCard(
             views,
             R.id.tv_card_stopped_value,
             R.id.tv_card_stopped_label,
             formatElapsed(stoppedSeconds),
-            getString(R.string.mo_tracking_notification_metric_stopped)
+            tr(R.string.mo_tracking_notification_metric_stopped)
     );
 
     bindNotificationButtons(
@@ -1092,21 +1094,21 @@ private void bindStatusPill(@NonNull RemoteViews views, int pillViewId) {
 private String buildStatusPillText() {
     switch (currentStatus) {
         case RUNNING:
-            return getString(R.string.mo_tracking_notification_status_live_badge);
+            return tr(R.string.mo_tracking_notification_status_live_badge);
 
         case PAUSED:
-            return getString(R.string.mo_tracking_notification_status_paused_badge);
+            return tr(R.string.mo_tracking_notification_status_paused_badge);
 
         case AUTO_PAUSED:
             if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                return getString(R.string.mo_tracking_notification_status_review_badge);
+                return tr(R.string.mo_tracking_notification_status_review_badge);
             }
-            return getString(R.string.mo_tracking_notification_status_waiting_badge);
+            return tr(R.string.mo_tracking_notification_status_waiting_badge);
 
         case FINISHED:
         case IDLE:
         default:
-            return getString(R.string.mo_tracking_notification_title);
+            return tr(R.string.mo_tracking_notification_title);
     }
 }
 
@@ -1135,15 +1137,15 @@ private String buildCompactRightMetricValue() {
         return averagePace + "/km";
     }
     if (currentStatus == TrackingState.Status.PAUSED) {
-        return getString(R.string.mo_tracking_notification_status_paused_short);
+        return tr(R.string.mo_tracking_notification_status_paused_short);
     }
     if (currentStatus == TrackingState.Status.AUTO_PAUSED) {
         if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-            return getString(R.string.mo_tracking_notification_status_review_short);
+            return tr(R.string.mo_tracking_notification_status_review_short);
         }
-        return getString(R.string.mo_tracking_notification_status_waiting_short);
+        return tr(R.string.mo_tracking_notification_status_waiting_short);
     }
-    return getString(R.string.tracking_default_pace) + "/km";
+    return tr(R.string.tracking_default_pace) + "/km";
 }
 
 private void bindNotificationButtons(
@@ -1163,7 +1165,7 @@ private void bindNotificationButtons(
                     primaryIconId,
                     primaryTextId,
                     R.drawable.ic_pause_24,
-                    getString(R.string.mo_tracking_notification_action_pause),
+                    tr(R.string.mo_tracking_notification_action_pause),
                     buildServiceActionPendingIntent(ACTION_NOTIFICATION_PAUSE, 10)
             );
             bindNotificationButton(
@@ -1172,7 +1174,7 @@ private void bindNotificationButtons(
                     secondaryIconId,
                     secondaryTextId,
                     R.drawable.ic_stop_24,
-                    getString(R.string.mo_tracking_notification_action_finish),
+                    tr(R.string.mo_tracking_notification_action_finish),
                     buildServiceActionPendingIntent(ACTION_NOTIFICATION_FINISH, 11)
             );
             break;
@@ -1184,7 +1186,7 @@ private void bindNotificationButtons(
                     primaryIconId,
                     primaryTextId,
                     R.drawable.ic_play_arrow_24,
-                    getString(R.string.mo_tracking_notification_action_resume),
+                    tr(R.string.mo_tracking_notification_action_resume),
                     buildServiceActionPendingIntent(ACTION_NOTIFICATION_RESUME, 12)
             );
             bindNotificationButton(
@@ -1193,7 +1195,7 @@ private void bindNotificationButtons(
                     secondaryIconId,
                     secondaryTextId,
                     R.drawable.ic_stop_24,
-                    getString(R.string.mo_tracking_notification_action_finish),
+                    tr(R.string.mo_tracking_notification_action_finish),
                     buildServiceActionPendingIntent(ACTION_NOTIFICATION_FINISH, 13)
             );
             break;
@@ -1206,7 +1208,7 @@ private void bindNotificationButtons(
                         primaryIconId,
                         primaryTextId,
                         R.drawable.ic_rate_review_24,
-                        getString(R.string.mo_tracking_notification_action_review),
+                        tr(R.string.mo_tracking_notification_action_review),
                         buildNotificationContentIntent(14)
                 );
             } else {
@@ -1216,7 +1218,7 @@ private void bindNotificationButtons(
                         primaryIconId,
                         primaryTextId,
                         R.drawable.ic_open_in_new_24,
-                        getString(R.string.mo_tracking_notification_action_open),
+                        tr(R.string.mo_tracking_notification_action_open),
                         buildNotificationContentIntent(15)
                 );
             }
@@ -1227,7 +1229,7 @@ private void bindNotificationButtons(
                     secondaryIconId,
                     secondaryTextId,
                     R.drawable.ic_stop_24,
-                    getString(R.string.mo_tracking_notification_action_finish),
+                    tr(R.string.mo_tracking_notification_action_finish),
                     buildServiceActionPendingIntent(ACTION_NOTIFICATION_FINISH, 16)
             );
             break;
@@ -1241,7 +1243,7 @@ private void bindNotificationButtons(
                     primaryIconId,
                     primaryTextId,
                     R.drawable.ic_open_in_new_24,
-                    getString(R.string.mo_tracking_notification_action_open),
+                    tr(R.string.mo_tracking_notification_action_open),
                     buildNotificationContentIntent(17)
             );
             bindNotificationButton(
@@ -1250,7 +1252,7 @@ private void bindNotificationButtons(
                     secondaryIconId,
                     secondaryTextId,
                     R.drawable.ic_stop_24,
-                    getString(R.string.mo_tracking_notification_action_finish),
+                    tr(R.string.mo_tracking_notification_action_finish),
                     buildServiceActionPendingIntent(ACTION_NOTIFICATION_FINISH, 18)
             );
             break;
@@ -1301,26 +1303,26 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
     private String buildNotificationTitle() {
         switch (currentStatus) {
             case RUNNING:
-                return getString(
+                return tr(
                         R.string.mo_tracking_notification_title_running,
                         buildNotificationActivityTitleLabel()
                 );
 
             case PAUSED:
-                return getString(R.string.mo_tracking_notification_title_manual_pause);
+                return tr(R.string.mo_tracking_notification_title_manual_pause);
 
             case AUTO_PAUSED:
                 if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                    return getString(R.string.mo_tracking_notification_title_suspicious_speed);
+                    return tr(R.string.mo_tracking_notification_title_suspicious_speed);
                 }
-                return getString(R.string.mo_tracking_notification_title_auto_pause);
+                return tr(R.string.mo_tracking_notification_title_auto_pause);
 
             case FINISHED:
-                return getString(R.string.mo_tracking_notification_title);
+                return tr(R.string.mo_tracking_notification_title);
 
             case IDLE:
             default:
-                return getString(R.string.mo_tracking_notification_title);
+                return tr(R.string.mo_tracking_notification_title);
         }
     }
 
@@ -1334,18 +1336,18 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
                 if (instantPace != null) {
                     return distanceText + " · " + instantPace + "/km";
                 }
-                return distanceText + " · " + getString(R.string.mo_tracking_notification_status_live_short);
+                return distanceText + " · " + tr(R.string.mo_tracking_notification_status_live_short);
 
             case PAUSED:
-                return distanceText + " · " + getString(R.string.mo_tracking_notification_status_paused_short);
+                return distanceText + " · " + tr(R.string.mo_tracking_notification_status_paused_short);
 
             case AUTO_PAUSED:
                 if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
                     return distanceText + " · "
-                            + getString(R.string.mo_tracking_notification_status_review_short);
+                            + tr(R.string.mo_tracking_notification_status_review_short);
                 }
                 return distanceText + " · "
-                        + getString(R.string.mo_tracking_notification_status_waiting_short);
+                        + tr(R.string.mo_tracking_notification_status_waiting_short);
 
             case FINISHED:
             case IDLE:
@@ -1356,24 +1358,24 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
 
     @NonNull
     private String buildNotificationExpandedText() {
-        String elapsedLine = getString(
+        String elapsedLine = tr(
                 R.string.mo_tracking_notification_line_elapsed,
                 formatElapsed(elapsedSeconds)
         );
-        String distanceLine = getString(
+        String distanceLine = tr(
                 R.string.mo_tracking_notification_line_distance,
                 formatNotificationDistance()
         );
-        String movingStoppedLine = getString(
+        String movingStoppedLine = tr(
                 R.string.mo_tracking_notification_line_moving_stopped,
                 formatElapsed(movingSeconds),
                 formatElapsed(stoppedSeconds)
         );
 
         String averagePace = calculateAverageMovingPace();
-        String paceText = (averagePace != null ? averagePace : getString(R.string.tracking_default_pace)) + "/km";
-        String caloriesText = getString(R.string.tracking_calories_format, calories);
-        String paceCaloriesLine = getString(
+        String paceText = (averagePace != null ? averagePace : tr(R.string.tracking_default_pace)) + "/km";
+        String caloriesText = tr(R.string.tracking_calories_format, calories);
+        String paceCaloriesLine = tr(
                 R.string.mo_tracking_notification_line_pace_calories,
                 paceText,
                 caloriesText
@@ -1383,12 +1385,12 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
 
         if (currentStatus == TrackingState.Status.AUTO_PAUSED) {
             if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                expanded.append(getString(R.string.mo_tracking_notification_review_required)).append('\n');
+                expanded.append(tr(R.string.mo_tracking_notification_review_required)).append('\n');
             } else {
-                expanded.append(getString(R.string.mo_tracking_notification_waiting_for_movement)).append('\n');
+                expanded.append(tr(R.string.mo_tracking_notification_waiting_for_movement)).append('\n');
             }
         } else if (currentStatus == TrackingState.Status.PAUSED) {
-            expanded.append(getString(R.string.tracking_status_manual_pause)).append('\n');
+            expanded.append(tr(R.string.tracking_status_manual_pause)).append('\n');
         }
 
         expanded.append(elapsedLine)
@@ -1406,50 +1408,50 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
     private String buildNotificationSummaryText() {
         switch (currentStatus) {
             case RUNNING:
-                return getString(
+                return tr(
                         R.string.mo_tracking_notification_summary_running,
                         formatElapsed(movingSeconds),
                         formatElapsed(stoppedSeconds)
                 );
 
             case PAUSED:
-                return getString(R.string.mo_tracking_notification_status_paused_short);
+                return tr(R.string.mo_tracking_notification_status_paused_short);
 
             case AUTO_PAUSED:
                 if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                    return getString(R.string.mo_tracking_notification_status_review_short);
+                    return tr(R.string.mo_tracking_notification_status_review_short);
                 }
-                return getString(R.string.mo_tracking_notification_status_waiting_short);
+                return tr(R.string.mo_tracking_notification_status_waiting_short);
 
             case FINISHED:
             case IDLE:
             default:
-                return getString(R.string.mo_tracking_notification_title);
+                return tr(R.string.mo_tracking_notification_title);
         }
     }
 
     @NonNull
     private String buildNotificationActivityLabel() {
         if (activityType == TrackingState.ActivityType.RUNNING_ACTIVITY) {
-            return getString(R.string.inicio_running);
+            return tr(R.string.inicio_running);
         }
-        return getString(R.string.inicio_walking);
+        return tr(R.string.inicio_walking);
     }
 
     @NonNull
     private String buildNotificationActivityTitleLabel() {
         if (activityType == TrackingState.ActivityType.RUNNING_ACTIVITY) {
-            return getString(R.string.mo_tracking_notification_activity_run);
+            return tr(R.string.mo_tracking_notification_activity_run);
         }
-        return getString(R.string.mo_tracking_notification_activity_walk);
+        return tr(R.string.mo_tracking_notification_activity_walk);
     }
 
     @NonNull
     private String formatNotificationDistance() {
         if (distanceMeters >= 1000) {
-            return getString(R.string.tracking_distance_km_format, distanceMeters / 1000.0f);
+            return tr(R.string.tracking_distance_km_format, distanceMeters / 1000.0f);
         }
-        return getString(R.string.tracking_distance_m_format, distanceMeters);
+        return tr(R.string.tracking_distance_m_format, distanceMeters);
     }
 
     private void updateNotification() {
@@ -1457,6 +1459,36 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
         if (manager != null) {
             manager.notify(NOTIFICATION_ID, buildNotification());
         }
+    }
+
+
+    /**
+     * Devuelve un contexto de recursos envuelto con el idioma activo.
+     *
+     * <p>El tracking vive dentro de un {@link Service}, así que no pasa por
+     * {@code Activity.attachBaseContext()}. Sin este paso, la notificación puede
+     * seguir resolviendo cadenas en el idioma anterior aunque la UI ya haya
+     * cambiado al nuevo idioma.</p>
+     */
+    @NonNull
+    private Context notificationTextContext() {
+        return AppLanguageManager.localizedContext(this);
+    }
+
+    /**
+     * Atajo para resolver una cadena simple con el idioma activo de la app.
+     */
+    @NonNull
+    private String tr(@StringRes int resId) {
+        return notificationTextContext().getString(resId);
+    }
+
+    /**
+     * Atajo para resolver una cadena con argumentos y el idioma activo de la app.
+     */
+    @NonNull
+    private String tr(@StringRes int resId, @NonNull Object... args) {
+        return notificationTextContext().getString(resId, args);
     }
 
     @NonNull

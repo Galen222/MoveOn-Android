@@ -85,6 +85,25 @@ public final class AppLanguageManager {
         return baseContext.createConfigurationContext(config);
     }
 
+
+    /**
+     * Devuelve un contexto listo para resolver recursos con el idioma activo de la app.
+     *
+     * <p>Este helper está pensado para componentes que no pasan por
+     * {@code Activity.attachBaseContext()}, por ejemplo {@code Service},
+     * workers o utilidades que generan bitmaps/textos fuera de una pantalla.</p>
+     *
+     * <p>Internamente reutiliza {@link #wrapContext(Context)} para aplicar el
+     * idioma guardado sobre el contexto recibido en ese momento.</p>
+     */
+    @NonNull
+    public static Context localizedContext(@NonNull Context context) {
+        // No usamos directamente getApplicationContext() aquí porque también puede
+        // interesar envolver contextos de Activity, Service o Dialog sin perder
+        // el resto de la configuración visual ya aplicada por Android.
+        return wrapContext(context);
+    }
+
     /**
      * Devuelve el modo que debe reflejar la UI del selector (siempre "es" o "en").
      * Si el usuario no ha elegido nada aún, devuelve el idioma efectivo resuelto
