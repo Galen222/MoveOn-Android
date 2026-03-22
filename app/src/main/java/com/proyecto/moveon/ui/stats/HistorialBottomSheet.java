@@ -499,8 +499,15 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
                 : getString(R.string.stats_format_time_m, minutes);
     }
 
+
     @NonNull
     private String formatKcal(long kcal) {
+        if (kcal >= 1_000_000L) {
+            return getString(R.string.stats_format_kcal_m, kcal / 1_000_000.0f);
+        }
+        if (kcal >= 1_000L) {
+            return getString(R.string.stats_format_kcal_k, kcal / 1_000.0f);
+        }
         return getString(R.string.stats_format_kcal, (int) kcal);
     }
 

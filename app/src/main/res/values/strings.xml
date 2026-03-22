@@ -280,6 +280,8 @@
     <string name="stats_format_time_m">%1$d min</string>
     <string name="stats_format_streak">%1$d días</string>
     <string name="stats_format_kcal">%1$d kcal</string>
+    <string name="stats_format_kcal_k">%.1fk kcal</string>
+    <string name="stats_format_kcal_m">%.1fM kcal</string>
 
     <!-- Objetivo semanal -->
     <string name="stats_goal_remaining_format">Te faltan %1$s para tu objetivo</string>

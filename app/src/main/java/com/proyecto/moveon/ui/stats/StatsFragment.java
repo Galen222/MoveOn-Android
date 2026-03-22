@@ -70,9 +70,7 @@ public class StatsFragment extends Fragment {
         binding.btnRetry.setOnClickListener(v -> viewModel.load());
         binding.tvWeeklyGoalHeader.setOnClickListener(v -> showGoalDialog(true));
         binding.tvMonthlyGoalHeader.setOnClickListener(v -> showGoalDialog(false));
-
         binding.cardHistory.setOnClickListener(v -> openUnifiedHistory());
-
         binding.cardRanking.setOnClickListener(v ->
                 RankingFragment.newInstance(null)
                         .show(getChildFragmentManager(), RankingFragment.TAG));
@@ -359,9 +357,6 @@ public class StatsFragment extends Fragment {
                 .show(getChildFragmentManager(), "historial");
     }
 
-
-
-
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
@@ -461,6 +456,12 @@ public class StatsFragment extends Fragment {
 
     @NonNull
     private String formatKcal(long kcal) {
+        if (kcal >= 1_000_000L) {
+            return getString(R.string.stats_format_kcal_m, kcal / 1_000_000.0f);
+        }
+        if (kcal >= 1_000L) {
+            return getString(R.string.stats_format_kcal_k, kcal / 1_000.0f);
+        }
         return getString(R.string.stats_format_kcal, (int) kcal);
     }
 
