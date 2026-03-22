@@ -332,7 +332,7 @@ public class StatsFragment extends Fragment {
         TextView titleView = new TextView(context);
         titleView.setText(titleRes);
         titleView.setTextColor(ContextCompat.getColor(context, R.color.textPrimary));
-        titleView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f);
+        titleView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14f);
         titleView.setTypeface(null, android.graphics.Typeface.NORMAL);
         titleView.setPadding(dp(24), dp(20), dp(24), dp(4));
 

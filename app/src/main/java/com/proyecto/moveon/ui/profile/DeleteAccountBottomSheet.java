@@ -65,7 +65,7 @@ public class DeleteAccountBottomSheet extends BaseExpandedBottomSheetDialogFragm
 
             @Override
             public void afterTextChanged(Editable s) {
-                boolean matches = confirmWord.equalsIgnoreCase(s.toString().trim());
+                boolean matches = confirmWord.equals(s.toString().trim());
                 binding.btnConfirmDelete.setEnabled(matches);
             }
         });

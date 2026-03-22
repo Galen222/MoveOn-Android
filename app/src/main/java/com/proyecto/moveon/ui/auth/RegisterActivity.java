@@ -5,7 +5,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
-import android.app.DatePickerDialog;
+import com.google.android.material.datepicker.CalendarConstraints;
+import com.google.android.material.datepicker.DateValidatorPointBackward;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -27,12 +32,8 @@ import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
-
-import java.time.Instant;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
-import java.util.Locale;
+
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -192,25 +193,40 @@ public class RegisterActivity extends AppCompatActivity {
     // ── DatePicker +18 ────────────────────────────────────────────────────────
 
     private void showDatePicker() {
-        Calendar maxDate = Calendar.getInstance();
-        maxDate.add(Calendar.YEAR, -MIN_AGE_YEARS);
+        LocalDate maxAllowedDate = LocalDate.now(ZoneOffset.UTC).minusYears(MIN_AGE_YEARS);
+        long maxAllowedMillis = maxAllowedDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+        long minMillis = LocalDate.of(1900, 1, 1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
 
-        int year  = maxDate.get(Calendar.YEAR);
-        int month = maxDate.get(Calendar.MONTH);
-        int day   = maxDate.get(Calendar.DAY_OF_MONTH);
+        CalendarConstraints constraints = new CalendarConstraints.Builder()
+                .setStart(minMillis)
+                .setEnd(maxAllowedMillis)
+                .setValidator(DateValidatorPointBackward.before(maxAllowedMillis))
+                .build();
 
-        DatePickerDialog dialog = new DatePickerDialog(
-                this,
-                (view, y, m, d) -> {
-                    String fecha = String.format(Locale.getDefault(), "%04d-%02d-%02d", y, m + 1, d);
-                    binding.etFechaNacimiento.setText(fecha);
-                    binding.tilFechaNacimiento.setError(null);
-                },
-                year, month, day
-        );
+        MaterialDatePicker.Builder<Long> builder = MaterialDatePicker.Builder.datePicker()
+                .setTitleText(R.string.registro_hint_fecha)
+                .setCalendarConstraints(constraints);
 
-        dialog.getDatePicker().setMaxDate(maxDate.getTimeInMillis());
-        dialog.show();
+        String currentText = StringUtils.textOf(binding.etFechaNacimiento.getText());
+        if (!currentText.isEmpty()) {
+            try {
+                LocalDate parsed = LocalDate.parse(currentText);
+                long millis = parsed.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+                builder.setSelection(millis);
+            } catch (Exception ignored) { }
+        }
+
+        MaterialDatePicker<Long> picker = builder.build();
+        picker.addOnPositiveButtonClickListener(selection -> {
+            LocalDate selectedDate = Instant.ofEpochMilli(selection)
+                    .atZone(ZoneOffset.UTC)
+                    .toLocalDate();
+            String fecha = selectedDate.toString();
+            binding.etFechaNacimiento.setText(fecha);
+            binding.tilFechaNacimiento.setError(null);
+        });
+
+        picker.show(getSupportFragmentManager(), "registro_date_picker");
     }
 
     // ── Validación y envío ────────────────────────────────────────────────────

@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.NumberPicker;
 
 import androidx.annotation.NonNull;
@@ -31,7 +30,6 @@ import com.proyecto.moveon.utils.StringUtils;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.Calendar;
 import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -191,15 +189,14 @@ public final class ProfileDialogHelper {
     }
 
     public void showBirthDatePicker() {
-        Calendar today = Calendar.getInstance();
-
-        Calendar minDate = Calendar.getInstance();
-        minDate.set(1900, Calendar.JANUARY, 1);
+        LocalDate maxAllowedDate = LocalDate.now(ZoneOffset.UTC).minusYears(18);
+        long maxAllowedMillis = maxAllowedDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+        long minMillis = LocalDate.of(1900, 1, 1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
 
         CalendarConstraints constraints = new CalendarConstraints.Builder()
-                .setStart(minDate.getTimeInMillis())
-                .setEnd(today.getTimeInMillis())
-                .setValidator(DateValidatorPointBackward.now())
+                .setStart(minMillis)
+                .setEnd(maxAllowedMillis)
+                .setValidator(DateValidatorPointBackward.before(maxAllowedMillis))
                 .build();
 
         MaterialDatePicker.Builder<Long> builder = MaterialDatePicker.Builder.datePicker()
