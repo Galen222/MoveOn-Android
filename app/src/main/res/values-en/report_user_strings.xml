@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="ranking_user_report">Report</string>
+    <string name="ranking_user_close">Close</string>
+
+    <string name="ranking_report_dialog_title">Report %1$s</string>
+    <string name="ranking_report_dialog_title_generic">Report</string>
+    <string name="ranking_report_reason_section_title">Reason for report</string>
+    <string name="ranking_report_reason_name">Report name</string>
+    <string name="ranking_report_reason_name_desc">The username contains offensive, inappropriate or impersonating text.</string>
+    <string name="ranking_report_reason_photo">Report photo</string>
+    <string name="ranking_report_reason_photo_desc">The photo shows offensive or disallowed content.</string>
+    <string name="ranking_report_observaciones_section_title">Observations</string>
+    <string name="ranking_report_error_reason_required">Select at least one option</string>
+    <string name="ranking_report_error_observaciones_too_long">Observations cannot exceed 500 characters</string>
+    <string name="ranking_report_sending">Sending...</string>
+    <string name="ranking_report_success">Report sent correctly</string>
+    <string name="ranking_report_error_generic">Could not send the report. Please try again.</string>
+
+    <string name="backend_error_at_least_one_report_reason_required">Select at least one report option</string>
+    <string name="backend_error_cannot_report_yourself">You cannot report your own profile</string>
+    <string name="backend_error_report_email_send_failed">Could not send the report. Please try again later.</string>
+    <string name="backend_error_report_target_username_required">The reported username is required</string>
+    <string name="backend_error_report_target_username_empty">The reported username cannot be empty</string>
+
+</resources>

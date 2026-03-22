@@ -20,12 +20,20 @@ import com.proyecto.moveon.databinding.FragmentRankingBinding;
 
 import java.util.List;
 
+/**
+ * Bottom sheet principal del ranking.
+ *
+ * <p>Esta versión mantiene el comportamiento actual de filtros y carga del TOP,
+ * pero añade la apertura de un segundo bottom sheet al pulsar una fila del
+ * ranking. Desde ese panel el usuario puede reportar nombre o foto
+ * inapropiados.</p>
+ */
 public final class RankingFragment extends BottomSheetDialogFragment {
 
     public static final String TAG = "RankingFragment";
     private static final String ARG_PROVINCIA = "provincia_usuario";
 
-    // Todas las provincias del enum ProvinciaEspaña del backend, en orden alfabético
+    // Todas las provincias del enum ProvinciaEspaña del backend, en orden alfabético.
     private static final String[] PROVINCIAS = {
             "A Coruña", "Álava", "Albacete", "Alicante", "Almería", "Asturias",
             "Ávila", "Badajoz", "Barcelona", "Burgos", "Cáceres", "Cádiz",
@@ -42,9 +50,13 @@ public final class RankingFragment extends BottomSheetDialogFragment {
     private RankingViewModel viewModel;
     private RankingAdapter adapter;
 
-    // Provincia seleccionada actualmente en el chip. Null = España
+    // Provincia seleccionada actualmente en el chip. Null = España.
     @Nullable private String provinciaSeleccionada = null;
 
+    /**
+     * Crea una nueva instancia del ranking, opcionalmente con la provincia
+     * del usuario para reutilizarla más adelante si hiciera falta.
+     */
     @NonNull
     public static RankingFragment newInstance(@Nullable String provinciaUsuario) {
         RankingFragment fragment = new RankingFragment();
@@ -87,6 +99,9 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         binding = null;
     }
 
+    /**
+     * Fuerza el ranking a mostrarse expandido para aprovechar mejor la altura disponible.
+     */
     private void setupBottomSheetExpanded() {
         if (!(getDialog() instanceof BottomSheetDialog)) return;
         BottomSheetDialog dialog = (BottomSheetDialog) getDialog();
@@ -94,6 +109,7 @@ public final class RankingFragment extends BottomSheetDialogFragment {
             View bottomSheet = ((BottomSheetDialog) d)
                     .findViewById(com.google.android.material.R.id.design_bottom_sheet);
             if (bottomSheet == null) return;
+
             BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
             bottomSheet.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
             behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
@@ -101,29 +117,37 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         });
     }
 
+    /**
+     * Inicializa la lista del ranking y conecta el callback de clic en usuario.
+     */
     private void setupRecyclerView() {
         FragmentRankingBinding b = binding;
         if (b == null) return;
-        adapter = new RankingAdapter();
+
+        adapter = new RankingAdapter(this::mostrarAccionesUsuario);
         b.rvRanking.setLayoutManager(new LinearLayoutManager(requireContext()));
         b.rvRanking.setAdapter(adapter);
         b.rvRanking.setHasFixedSize(false);
     }
 
+    /**
+     * Configura los chips de filtro nacional y por provincia.
+     */
     private void setupFiltros() {
         FragmentRankingBinding b = binding;
         if (b == null) return;
 
-        // Chip España → ranking nacional
+        // Chip España → ranking nacional.
         b.chipEspana.setOnClickListener(v -> {
             if (viewModel.getRankingState().getValue() != null
                     && viewModel.getRankingState().getValue().loading) return;
+
             provinciaSeleccionada = null;
             b.chipProvincia.setText(R.string.ranking_filter_provincia);
             viewModel.cargarRanking(null);
         });
 
-        // Chip Provincia → abre diálogo con lista de todas las provincias
+        // Chip Provincia → abre el diálogo con la lista completa.
         b.chipProvincia.setOnClickListener(v -> {
             if (viewModel.getRankingState().getValue() != null
                     && viewModel.getRankingState().getValue().loading) return;
@@ -131,8 +155,10 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         });
     }
 
+    /**
+     * Muestra el selector modal de provincia usando un single choice dialog clásico.
+     */
     private void mostrarSelectorProvincias(@NonNull FragmentRankingBinding b) {
-        // Índice de la provincia actualmente seleccionada (para marcarla en el diálogo)
         int indiceActual = -1;
         if (provinciaSeleccionada != null) {
             for (int i = 0; i < PROVINCIAS.length; i++) {
@@ -157,12 +183,18 @@ public final class RankingFragment extends BottomSheetDialogFragment {
                 .show();
     }
 
+    /**
+     * Configura el botón de cierre del panel principal.
+     */
     private void setupCloseButton() {
         FragmentRankingBinding b = binding;
         if (b == null) return;
         b.btnRankingClose.setOnClickListener(v -> dismiss());
     }
 
+    /**
+     * Observa el estado del ViewModel y actualiza loading / error / lista.
+     */
     private void observeViewModel() {
         viewModel.getRankingState().observe(getViewLifecycleOwner(), state -> {
             FragmentRankingBinding b = binding;
@@ -185,6 +217,9 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         });
     }
 
+    /**
+     * Renderiza la lista o el estado vacío.
+     */
     private void renderLista(@NonNull FragmentRankingBinding b,
                              @Nullable List<RankingItemDto> lista) {
         if (lista == null || lista.isEmpty()) {
@@ -199,10 +234,27 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         }
     }
 
+    /**
+     * Renderiza el estado de error del ranking.
+     */
     private void renderError(@NonNull FragmentRankingBinding b) {
         b.rvRanking.setVisibility(View.GONE);
         b.rankingEmptyState.setVisibility(View.VISIBLE);
         b.tvRankingEmpty.setText(R.string.ranking_error);
         b.btnRankingRetry.setOnClickListener(v -> viewModel.recargar());
+    }
+
+    /**
+     * Abre el panel inferior con las acciones del usuario pulsado.
+     */
+    private void mostrarAccionesUsuario(@NonNull RankingItemDto item) {
+        if (!isAdded()) return;
+
+        RankingUserActionsBottomSheet.newInstance(
+                item.nombreUsuario,
+                item.fotoPerfil,
+                item.fotoVersion,
+                item.totalPuntos
+        ).show(getParentFragmentManager(), RankingUserActionsBottomSheet.TAG);
     }
 }

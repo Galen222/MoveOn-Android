@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
@@ -23,15 +24,21 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * FIX: Eliminados colores hardcoded con {@code Color.parseColor(...)}.
- * Ahora se resuelven desde recursos ({@code R.color.ranking_position_*})
- * para que respeten el tema claro/oscuro automáticamente.
- * Requiere añadir los colores en:
- * - {@code res/values/colors.xml} (tema claro
- * - {@code res/values-night/colors.xml} (tema oscuro)
+ * Adapter del ranking.
+ *
+ * <p>Además de pintar cada fila, expone un callback para detectar cuándo el
+ * usuario pulsa sobre un integrante del ranking. Ese clic abre un bottom sheet
+ * inferior con acciones rápidas, incluyendo el nuevo flujo de reporte.</p>
  */
 public final class RankingAdapter
-        extends ListAdapter<RankingItemDto, RecyclerView.ViewHolder> {
+        extends ListAdapter<RankingItemDto, RankingAdapter.ViewHolder> {
+
+    /**
+     * Listener para informar al Fragment del usuario pulsado.
+     */
+    public interface OnUserClickListener {
+        void onUserClick(@NonNull RankingItemDto item);
+    }
 
     private static final DiffUtil.ItemCallback<RankingItemDto> DIFF =
             new DiffUtil.ItemCallback<>() {
@@ -51,25 +58,33 @@ public final class RankingAdapter
                 }
             };
 
-    public RankingAdapter() {
+    @Nullable
+    private final OnUserClickListener onUserClickListener;
+
+    /**
+     * @param onUserClickListener callback opcional para abrir el panel de acciones del usuario.
+     */
+    public RankingAdapter(@Nullable OnUserClickListener onUserClickListener) {
         super(DIFF);
+        this.onUserClickListener = onUserClickListener;
     }
 
     @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_ranking_usuario, parent, false);
-        return new ViewHolder(view);
+        return new ViewHolder(view, onUserClickListener);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        ((ViewHolder) holder).bind(getItem(position), position + 1);
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        holder.bind(getItem(position), position + 1);
     }
 
-    // ── Helper de color ─────────────────────────────────────────────────────
-
+    /**
+     * Resuelve el color de la posición usando recursos para respetar tema claro/oscuro.
+     */
     private static int resolvePositionColor(@NonNull Context context, int posicion) {
         if (posicion == 1) return ContextCompat.getColor(context, R.color.ranking_position_gold);
         if (posicion == 2) return ContextCompat.getColor(context, R.color.ranking_position_silver);
@@ -77,18 +92,37 @@ public final class RankingAdapter
         return ContextCompat.getColor(context, R.color.ranking_position_default);
     }
 
-    // ── ViewHolder ──────────────────────────────────────────────────────────
+    /**
+     * Construye una URL de imagen cache-busting cuando existe foto remota.
+     *
+     * <p>La app ya usa {@code fotoVersion} como versión lógica de la foto. Si
+     * llega una URL no vacía, se le añade el parámetro {@code v=} para evitar
+     * mostrar una imagen obsoleta en caché.</p>
+     */
+    @Nullable
+    private static String buildVersionedPhotoUrl(@Nullable String photoUrl, int photoVersion) {
+        if (photoUrl == null || photoUrl.trim().isEmpty()) {
+            return null;
+        }
+        return photoUrl + (photoUrl.contains("?") ? "&" : "?") + "v=" + photoVersion;
+    }
 
-    private static final class ViewHolder extends RecyclerView.ViewHolder {
+    /**
+     * ViewHolder simple de la fila del ranking.
+     */
+    static final class ViewHolder extends RecyclerView.ViewHolder {
 
         private final TextView tvPosicion;
         private final ImageView ivFoto;
         private final TextView tvNombre;
         private final TextView tvKm;
         private final TextView tvPuntos;
+        @Nullable private final OnUserClickListener onUserClickListener;
 
-        ViewHolder(@NonNull View itemView) {
+        ViewHolder(@NonNull View itemView,
+                   @Nullable OnUserClickListener onUserClickListener) {
             super(itemView);
+            this.onUserClickListener = onUserClickListener;
             tvPosicion = itemView.findViewById(R.id.tv_ranking_posicion);
             ivFoto     = itemView.findViewById(R.id.iv_ranking_foto);
             tvNombre   = itemView.findViewById(R.id.tv_ranking_nombre);
@@ -96,25 +130,26 @@ public final class RankingAdapter
             tvPuntos   = itemView.findViewById(R.id.tv_ranking_puntos);
         }
 
+        /**
+         * Vincula los datos del usuario a la fila visible.
+         */
         void bind(@NonNull RankingItemDto item, int posicion) {
             tvPosicion.setText(String.format(Locale.US, "%d", posicion));
             tvNombre.setText(item.nombreUsuario);
             tvKm.setText(String.format(Locale.US, "%.2f km", item.totalMetros / 1000.0));
             tvPuntos.setText(itemView.getContext()
                     .getString(R.string.ranking_puntos_format, item.totalPuntos));
-
             tvPosicion.setTextColor(resolvePositionColor(itemView.getContext(), posicion));
 
-            if (item.fotoPerfil != null && !item.fotoPerfil.isEmpty()) {
-                String url = item.fotoPerfil
-                        + (item.fotoPerfil.contains("?") ? "&" : "?")
-                        + "v=" + item.fotoVersion;
+            // Render de la foto con placeholder consistente y versión de caché.
+            String imageUrl = buildVersionedPhotoUrl(item.fotoPerfil, item.fotoVersion);
+            if (imageUrl != null) {
                 Glide.with(ivFoto.getContext())
-                        .load(url)
+                        .load(imageUrl)
                         .placeholder(R.drawable.default_profile)
                         .error(R.drawable.default_profile)
                         .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .signature(new ObjectKey(url))
+                        .signature(new ObjectKey(imageUrl))
                         .circleCrop()
                         .into(ivFoto);
             } else {
@@ -123,6 +158,13 @@ public final class RankingAdapter
                         .circleCrop()
                         .into(ivFoto);
             }
+
+            // La pulsación se delega al Fragment para abrir el bottom sheet inferior.
+            itemView.setOnClickListener(v -> {
+                if (onUserClickListener != null) {
+                    onUserClickListener.onUserClick(item);
+                }
+            });
         }
     }
 }

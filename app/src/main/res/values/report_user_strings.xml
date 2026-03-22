@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="ranking_user_report">Reportar</string>
+    <string name="ranking_user_close">Cerrar</string>
+
+    <string name="ranking_report_dialog_title">Reportar a %1$s</string>
+    <string name="ranking_report_dialog_title_generic">Reportar</string>
+    <string name="ranking_report_reason_section_title">Motivo del reporte</string>
+    <string name="ranking_report_reason_name">Reportar nombre</string>
+    <string name="ranking_report_reason_name_desc">El nombre contiene texto ofensivo, inapropiado o suplantación.</string>
+    <string name="ranking_report_reason_photo">Reportar foto</string>
+    <string name="ranking_report_reason_photo_desc">La foto muestra contenido ofensivo o no permitido.</string>
+    <string name="ranking_report_observaciones_section_title">Observaciones</string>
+    <string name="ranking_report_error_reason_required">Debes marcar al menos una opción</string>
+    <string name="ranking_report_error_observaciones_too_long">Las observaciones no pueden superar los 500 caracteres</string>
+    <string name="ranking_report_sending">Enviando...</string>
+    <string name="ranking_report_success">Reporte enviado correctamente</string>
+    <string name="ranking_report_error_generic">No se ha podido enviar el reporte. Inténtalo de nuevo.</string>
+
+    <string name="backend_error_at_least_one_report_reason_required">Debes marcar al menos una opción de reporte</string>
+    <string name="backend_error_cannot_report_yourself">No puedes reportarte a ti mismo</string>
+    <string name="backend_error_report_email_send_failed">No se ha podido enviar el reporte. Inténtalo más tarde.</string>
+    <string name="backend_error_report_target_username_required">El nombre de usuario reportado es obligatorio</string>
+    <string name="backend_error_report_target_username_empty">El nombre de usuario reportado no puede estar vacío</string>
+
+</resources>

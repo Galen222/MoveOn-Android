@@ -5,55 +5,58 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
     android:paddingHorizontal="20dp"
     android:paddingVertical="10dp">
 
-    <!-- Posición -->
+    <!-- Posición dentro del ranking -->
     <TextView
         android:id="@+id/tv_ranking_posicion"
         android:layout_width="32dp"
         android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:textStyle="bold"
         android:gravity="center"
         android:textColor="@color/textSecondary"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         tools:text="1" />
 
-    <!-- Foto de perfil -->
+    <!-- Foto de perfil del usuario -->
     <ImageView
         android:id="@+id/iv_ranking_foto"
         android:layout_width="44dp"
         android:layout_height="44dp"
         android:layout_marginStart="12dp"
-        android:src="@drawable/default_profile"
         android:contentDescription="@null"
+        android:src="@drawable/default_profile"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/tv_ranking_posicion"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Nombre + km (columna central) -->
+    <!-- Columna central con nombre y kilómetros acumulados -->
     <LinearLayout
         android:id="@+id/layout_ranking_nombre_km"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:orientation="vertical"
-        app:layout_constraintStart_toEndOf="@id/iv_ranking_foto"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/tv_ranking_puntos"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintStart_toEndOf="@id/iv_ranking_foto"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/tv_ranking_nombre"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textColor="@color/textPrimary"
             android:ellipsize="end"
             android:maxLines="1"
+            android:textColor="@color/textPrimary"
+            android:textSize="15sp"
             tools:text="alvaro_runner" />
 
         <TextView
@@ -61,23 +64,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textSize="12sp"
             android:textColor="@color/textSecondary"
+            android:textSize="12sp"
             tools:text="142.3 km" />
-
     </LinearLayout>
 
-    <!-- Puntos -->
+    <!-- Puntos visibles a la derecha -->
     <TextView
         android:id="@+id/tv_ranking_puntos"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="14sp"
         android:textColor="@color/greenPrimary"
+        android:textSize="14sp"
         android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         tools:text="142 pts" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
