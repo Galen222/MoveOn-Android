@@ -27,7 +27,7 @@
     <string name="login_btn_registrar">Create account</string>
     <string name="login_olvidaste_password">Forgot your password?</string>
     <string name="login_divisor">OR</string>
-    <string name="login_bienvenido">Welcome %1$s</string>
+    <string name="login_bienvenido">Hello %1$s</string>
     <string name="login_recordar_cuenta">Remember account</string>
     <string name="login_error_identificador_vacio">Enter your email or username</string>
     <string name="login_error_password_vacio">Enter your password</string>

@@ -53,7 +53,7 @@
     <string name="login_btn_registrar">Crear cuenta</string>
     <string name="login_olvidaste_password">¿Olvidaste tu contraseña?</string>
     <string name="login_divisor">O</string>
-    <string name="login_bienvenido">Bienvenido %1$s</string>
+    <string name="login_bienvenido">Hola %1$s</string>
     <string name="login_recordar_cuenta">Recordar cuenta</string>
 
     <!-- Errores -->

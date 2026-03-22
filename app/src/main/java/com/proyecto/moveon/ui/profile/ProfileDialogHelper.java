@@ -28,7 +28,9 @@ import com.proyecto.moveon.domain.profile.PerfilUsuario;
 import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.StringUtils;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -207,23 +209,17 @@ public final class ProfileDialogHelper {
         if (perfilSupplier.get() != null && StringUtils.hasText(perfilSupplier.get().fechaNacimiento)) {
             try {
                 LocalDate parsed = LocalDate.parse(perfilSupplier.get().fechaNacimiento);
-                Calendar cal = Calendar.getInstance();
-                cal.set(parsed.getYear(), parsed.getMonthValue() - 1, parsed.getDayOfMonth());
-                builder.setSelection(cal.getTimeInMillis());
+                long utcMillis = parsed.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+                builder.setSelection(utcMillis);
             } catch (Exception ignored) { }
         }
 
         MaterialDatePicker<Long> picker = builder.build();
 
         picker.addOnPositiveButtonClickListener(selection -> {
-            Calendar selected = Calendar.getInstance();
-            selected.setTimeInMillis(selection);
-
-            LocalDate selectedDate = LocalDate.of(
-                    selected.get(Calendar.YEAR),
-                    selected.get(Calendar.MONTH) + 1,
-                    selected.get(Calendar.DAY_OF_MONTH)
-            );
+            LocalDate selectedDate = Instant.ofEpochMilli(selection)
+                    .atZone(ZoneOffset.UTC)
+                    .toLocalDate();
 
             AppInputValidator.ValidationResult<String> validation =
                     AppInputValidator.validateBirthDate(fragment.requireContext(), selectedDate);
@@ -365,3 +361,4 @@ public final class ProfileDialogHelper {
         return msg != null ? msg : fragment.getString(R.string.vm_error_generico);
     }
 }
+
