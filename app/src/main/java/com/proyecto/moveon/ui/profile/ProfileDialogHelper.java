@@ -71,9 +71,10 @@ public final class ProfileDialogHelper {
         picker.setMaxValue(maxAltura);
         picker.setWrapSelectorWheel(false);
 
-        int initialAltura = 170; // dentro del nuevo rango 50–300
-        if (perfilSupplier.get() != null && perfilSupplier.get().altura != null) {
-            int current = perfilSupplier.get().altura;
+        int initialAltura = 170;
+        PerfilUsuario perfilAltura = perfilSupplier.get();
+        if (perfilAltura != null && perfilAltura.altura != null) {
+            int current = perfilAltura.altura;
             if (current >= minAltura && current <= maxAltura) {
                 initialAltura = current;
             }
@@ -120,9 +121,10 @@ public final class ProfileDialogHelper {
         picker.setDisplayedValues(labels);
         picker.setWrapSelectorWheel(false);
 
-        int initialIndex = (int) ((70.0 - pesoMin) / pesoStep); // 70 kg, dentro del nuevo rango 20–300
-        if (perfilSupplier.get() != null && perfilSupplier.get().peso != null) {
-            double current = perfilSupplier.get().peso;
+        int initialIndex = (int) ((70.0 - pesoMin) / pesoStep);
+        PerfilUsuario perfilPeso = perfilSupplier.get();
+        if (perfilPeso != null && perfilPeso.peso != null) {
+            double current = perfilPeso.peso;
             if (current >= pesoMin && current <= pesoMax) {
                 initialIndex = (int) Math.round((current - pesoMin) / pesoStep);
             }
