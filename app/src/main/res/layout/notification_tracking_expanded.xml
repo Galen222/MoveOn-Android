@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -12,7 +13,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:baselineAligned="false">
 
         <ImageView
             android:id="@+id/iv_tracking_header_icon"
@@ -20,7 +22,7 @@
             android:layout_height="18dp"
             android:contentDescription="@null"
             android:scaleType="fitCenter"
-            android:tint="@android:color/white" />
+            app:tint="@color/textPrimary" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -35,7 +37,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:textColor="@android:color/white"
+                android:textColor="@color/textPrimary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -46,7 +48,7 @@
                 android:layout_marginTop="1dp"
                 android:ellipsize="end"
                 android:maxLines="2"
-                android:textColor="#CCFFFFFF"
+                android:textColor="@color/textSecondary"
                 android:textSize="11sp" />
         </LinearLayout>
 
@@ -62,7 +64,7 @@
             android:paddingEnd="8dp"
             android:paddingBottom="3dp"
             android:textColor="@android:color/black"
-            android:textSize="10sp"
+            android:textSize="11sp"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -75,7 +77,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+        android:baselineAligned="false">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -87,7 +90,7 @@
                     android:id="@+id/tv_card_time_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/textPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -95,8 +98,8 @@
                     android:id="@+id/tv_card_time_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#B3FFFFFF"
-                    android:textSize="10sp" />
+                    android:textColor="@color/textSecondary"
+                    android:textSize="11sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -109,7 +112,7 @@
                     android:id="@+id/tv_card_distance_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/textPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -117,8 +120,8 @@
                     android:id="@+id/tv_card_distance_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#B3FFFFFF"
-                    android:textSize="10sp" />
+                    android:textColor="@color/textSecondary"
+                    android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
 
@@ -126,7 +129,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+        android:baselineAligned="false">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -138,7 +142,7 @@
                     android:id="@+id/tv_card_pace_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/textPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -146,8 +150,8 @@
                     android:id="@+id/tv_card_pace_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#B3FFFFFF"
-                    android:textSize="10sp" />
+                    android:textColor="@color/textSecondary"
+                    android:textSize="11sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -160,7 +164,7 @@
                     android:id="@+id/tv_card_calories_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/textPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -168,8 +172,8 @@
                     android:id="@+id/tv_card_calories_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#B3FFFFFF"
-                    android:textSize="10sp" />
+                    android:textColor="@color/textSecondary"
+                    android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
 
@@ -177,7 +181,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+        android:baselineAligned="false">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -189,7 +194,7 @@
                     android:id="@+id/tv_card_moving_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/textPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -197,8 +202,8 @@
                     android:id="@+id/tv_card_moving_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#B3FFFFFF"
-                    android:textSize="10sp" />
+                    android:textColor="@color/textSecondary"
+                    android:textSize="11sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -211,7 +216,7 @@
                     android:id="@+id/tv_card_stopped_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/textPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -219,8 +224,8 @@
                     android:id="@+id/tv_card_stopped_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#B3FFFFFF"
-                    android:textSize="10sp" />
+                    android:textColor="@color/textSecondary"
+                    android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
@@ -229,7 +234,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:baselineAligned="false">
 
         <LinearLayout
             android:id="@+id/action_primary_container"
@@ -247,14 +253,14 @@
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:contentDescription="@null"
-                android:tint="@android:color/black" />
+                app:tint="@color/textOnGreen" />
 
             <TextView
                 android:id="@+id/tv_action_primary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
-                android:textColor="@android:color/black"
+                android:textColor="@color/textOnGreen"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -276,16 +282,17 @@
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:contentDescription="@null"
-                android:tint="@android:color/white" />
+                app:tint="@color/textPrimary" />
 
             <TextView
                 android:id="@+id/tv_action_secondary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
-                android:textColor="@android:color/white"
+                android:textColor="@color/textPrimary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
+

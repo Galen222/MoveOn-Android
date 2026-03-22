@@ -263,8 +263,8 @@
 
     <!-- Secciones -->
     <string name="stats_section_chart">Gráfico Semanal</string>
-    <string name="stats_section_goal">Objetivo Semanal</string>
-    <string name="stats_section_recent">Actividad Reciente</string>
+    <string name="stats_section_goal">Objetivo</string>
+    <string name="stats_section_recent">Actividad reciente</string>
     <string name="stats_section_comparison">Comparación este mes - anterior</string>
     <string name="stats_section_history">Historial</string>
 
@@ -272,8 +272,8 @@
     <string name="stats_period_today">Hoy</string>
     <string name="stats_period_yesterday">Ayer</string>
     <string name="stats_period_two_days_ago">Hace dos días</string>
-    <string name="stats_period_this_month">Este mes</string>
-    <string name="stats_period_prev_month">Anterior</string>
+    <string name="stats_period_this_month">Mes actual</string>
+    <string name="stats_period_prev_month">Mes anterior</string>
 
     <!-- Formatos -->
     <string name="stats_format_km">%.2f km</string>
@@ -302,6 +302,7 @@
     <string name="stats_item_expand_desc">Ver detalles de la actividad</string>
     <string name="stats_item_pace_format">%1$s/km</string>
     <string name="stats_item_share_route">Compartir ruta</string>
+    <string name="stats_btn_ver_todas">Ver todas las actividades</string>
 
     <!-- Eliminar actividad -->
     <string name="stats_delete_title">Eliminar actividad</string>
@@ -312,18 +313,18 @@
     <string name="stats_delete_error">No se pudo eliminar la actividad</string>
 
     <!-- Objetivo mensual -->
-    <string name="stats_section_monthly_goal">Objetivo Mensual</string>
+    <string name="stats_section_monthly_goal">Objetivo</string>
     <string name="stats_monthly_goal_done">¡Objetivo mensual completado!</string>
     <string name="stats_monthly_goal_remaining_format">Te faltan %1$s para tu objetivo</string>
 
     <!-- Comparativas -->
     <string name="stats_section_month_comparison">Este mes vs. anterior</string>
     <string name="stats_section_week_comparison">Esta semana vs anterior</string>
-    <string name="stats_period_this_week">Esta semana</string>
+    <string name="stats_period_this_week">Semana actual</string>
     <string name="stats_period_prev_week">Semana anterior</string>
 
     <!-- Totales históricos -->
-    <string name="stats_section_totals">Totales e historial</string>
+    <string name="stats_section_totals">Total</string>
     <string name="stats_label_calories">Calorías</string>
     <string name="stats_label_activities">Actividades</string>
     <string name="stats_format_kcal_total">%1$d kcal</string>
@@ -334,6 +335,7 @@
     <string name="stats_historial_totales">%1$s  ·  %2$s  ·  %3$s</string>
     <string name="stats_historial_semana_rango">%1$d–%2$d %3$s</string>
     <string name="stats_historial_tiempo_kcal">%1$s  ·  %2$s</string>
+    <string name="stats_historial_show_more">Mostrar más</string>
     <string name="stats_activity_duration_breakdown">Mov. %1$s · Total %2$s</string>
     <string name="stats_activity_kcal_and_pace">%1$d kcal · %2$s/km</string>
 
@@ -341,7 +343,7 @@
     <string name="stats_section_today">Hoy</string>
 
     <!-- Historial por semanas (Card 9) -->
-    <string name="stats_section_calendar">Historial por semanas</string>
+    <string name="stats_section_calendar">Semanal</string>
     <string name="stats_calendar_week_range">%1$d–%2$d %3$s</string>
     <string name="stats_calendar_btn_more">Ver más meses</string>
     <string name="stats_calendar_distance_kcal">%1$s · %2$d kcal</string>
@@ -563,7 +565,7 @@
     <string name="validation_real_name_invalid_characters">El nombre no puede contener números ni símbolos especiales</string>
     <string name="validation_username_inappropriate_or_not_allowed">El nombre de usuario contiene lenguaje inapropiado o no permitido</string>
     <string name="validation_real_name_inappropriate_or_not_allowed">El nombre real contiene lenguaje inapropiado o no permitido</string>
-    <string name="validation_content_unavailable">No se pudo validar el contenido en este momento</string>
+    <string name="validation_content_unavailable" tools:ignore="Typos">No se pudo validar el contenido en este momento</string>
     <string name="validation_password_too_long_bytes">La contraseña no puede superar los 72 bytes en UTF-8</string>
     <string name="validation_password_missing_uppercase">La contraseña debe incluir al menos una letra mayúscula</string>
     <string name="validation_password_missing_number">La contraseña debe incluir al menos un número</string>
@@ -598,8 +600,9 @@
     <string name="offline_banner_text">Sin conexión. Los cambios se sincronizarán automáticamente.</string>
     <string name="sync_completed">Sincronización completada</string>
 
+
+    <string name="stats_section_weekly">Semanal</string>
+    <string name="stats_section_monthly">Mensual</string>
+    <string name="stats_section_full_history">Completo</string>
+    <string name="stats_desc_month_chart">Gráfico mensual por semanas</string>
 </resources>
-
-
-
-

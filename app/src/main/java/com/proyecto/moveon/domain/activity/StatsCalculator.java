@@ -257,28 +257,27 @@ public final class StatsCalculator {
         LocalDate cursor = primerDia.minusDays(primerDia.getDayOfWeek().getValue() - 1L);
 
         while (!cursor.isAfter(ultimoDia)) {
-            LocalDate lunes   = cursor;
+            LocalDate lunes = cursor;
             LocalDate domingo = cursor.plusDays(6);
+
+            LocalDate inicioVisible = lunes.isBefore(primerDia) ? primerDia : lunes;
+            LocalDate finVisible = domingo.isAfter(ultimoDia) ? ultimoDia : domingo;
 
             long distSemana = 0L;
             long kcalSemana = 0L;
-            long durSemana  = 0L;
+            long durSemana = 0L;
 
-            for (LocalDate d = lunes; !d.isAfter(domingo); d = d.plusDays(1)) {
-                if (d.getMonthValue() == month && d.getYear() == year) {
-                    long[] totales = porFecha.get(d);
-                    if (totales != null) {
-                        distSemana += totales[0];
-                        kcalSemana += totales[1];
-                        durSemana  += totales[2];
-                    }
+            for (LocalDate d = inicioVisible; !d.isAfter(finVisible); d = d.plusDays(1)) {
+                long[] totales = porFecha.get(d);
+                if (totales != null) {
+                    distSemana += totales[0];
+                    kcalSemana += totales[1];
+                    durSemana += totales[2];
                 }
             }
 
-            int startDay = lunes.getMonthValue() != month || lunes.getYear() != year
-                    ? 1
-                    : lunes.getDayOfMonth();
-            int endDay = Math.min(domingo.getDayOfMonth(), ultimoDia.getDayOfMonth());
+            int startDay = inicioVisible.getDayOfMonth();
+            int endDay = finVisible.getDayOfMonth();
 
             blocks.add(new StatsResumen.WeekBlock(
                     startDay, endDay, distSemana, kcalSemana, durSemana));

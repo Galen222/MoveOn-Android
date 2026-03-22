@@ -7,10 +7,10 @@
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="@dimen/stats_item_padding_horizontal"
     android:layout_marginBottom="8dp"
-    app:cardBackgroundColor="@color/darkSurface"
+    app:cardBackgroundColor="@color/cardBackground"
     app:cardCornerRadius="12dp"
     app:cardElevation="0dp"
-    app:strokeColor="@color/outline"
+    app:strokeColor="@color/dividerColor"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -34,10 +34,11 @@
                 android:id="@+id/iv_activity_icon"
                 android:layout_width="@dimen/stats_item_icon_size"
                 android:layout_height="@dimen/stats_item_icon_size"
-                android:background="@drawable/btn_add_background"
+                android:background="@drawable/bg_stats_activity_icon"
                 android:padding="10dp"
                 android:scaleType="centerInside"
                 android:contentDescription="@string/stats_desc_activity_icon"
+                app:tint="@color/textOnGreen"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -79,7 +80,7 @@
                 android:layout_marginTop="3dp"
                 android:text="@string/stats_pending_badge"
                 android:textSize="11sp"
-                android:textColor="@color/textOnGreen"
+                android:textColor="@color/textPrimary"
                 android:background="@drawable/pill_active"
                 android:paddingHorizontal="6dp"
                 android:paddingVertical="2dp"
@@ -273,13 +274,15 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_share_route"
-                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="@string/stats_item_share_route"
+                android:textColor="@color/textOnGreen"
                 android:textSize="13sp"
                 android:visibility="gone"
+                app:backgroundTint="@color/greenPrimary"
+                app:strokeWidth="0dp"
                 tools:visibility="visible" />
 
         </LinearLayout>

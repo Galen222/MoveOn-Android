@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootFullscreen"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surfaceBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <com.proyecto.moveon.ui.common.view.ZoomableImageView
+        android:id="@+id/ivRouteFullscreen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:layout_margin="16dp"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/share_routes_fullscreen_image_content_description" />
+
+    <ImageButton
+        android:id="@+id/btnCloseFullscreen"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_close_circle_green"
+        android:contentDescription="@string/share_routes_fullscreen_close_content_description"
+        android:padding="10dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_close_standard"
+        app:tint="@color/textOnGreen" />
+
+</FrameLayout>

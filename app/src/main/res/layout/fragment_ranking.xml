@@ -47,13 +47,14 @@
 
             <ImageButton
                 android:id="@+id/btn_ranking_close"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/close_icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_close_circle_green"
+                android:src="@drawable/ic_close_standard"
                 android:contentDescription="@string/ranking_close_desc"
-                android:padding="12dp"
-                app:tint="@color/textSecondary"
+                android:padding="10dp"
+                app:tint="@color/textOnGreen"
+                android:scaleType="centerInside"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
@@ -75,8 +76,13 @@
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:checked="true"
                 android:text="@string/ranking_filter_espana"
-                android:checked="true" />
+                android:textColor="@color/ranking_chip_text"
+                app:checkedIconTint="@color/textOnGreen"
+                app:chipBackgroundColor="@color/ranking_chip_background"
+                app:chipStrokeColor="@color/ranking_chip_stroke"
+                app:chipStrokeWidth="1dp" />
 
             <!-- Chip Provincia: abre selector con todas las provincias -->
             <com.google.android.material.chip.Chip
@@ -84,8 +90,13 @@
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:checkable="true"
                 android:text="@string/ranking_filter_provincia"
-                android:checkable="true" />
+                android:textColor="@color/ranking_chip_text"
+                app:checkedIconTint="@color/textOnGreen"
+                app:chipBackgroundColor="@color/ranking_chip_background"
+                app:chipStrokeColor="@color/ranking_chip_stroke"
+                app:chipStrokeWidth="1dp" />
 
         </com.google.android.material.chip.ChipGroup>
 

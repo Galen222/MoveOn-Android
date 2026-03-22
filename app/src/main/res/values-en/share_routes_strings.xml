@@ -26,8 +26,8 @@
     <string name="share_routes_share_text">Shared from MoveOn App, your running app!</string>
     <string name="share_routes_preview_title">Route preview</string>
     <string name="share_routes_preview_subtitle">This is the image card that will be shared</string>
-    <string name="share_routes_preview_share">Share now</string>
-    <string name="share_routes_preview_close">Close</string>
+    <string name="share_routes_preview_share">Share</string>
+    <string name="share_routes_preview_close">Cancel</string>
     <string name="share_routes_preview_image_content_description">Preview image of the shared route</string>
     <string name="share_routes_image_subtitle">Your activity, ready to share</string>
     <string name="share_routes_image_map_title">Complete route</string>
@@ -36,4 +36,6 @@
     <string name="share_routes_image_summary_subtitle">Key metrics of the selected activity</string>
     <string name="share_routes_legend_start">Start</string>
     <string name="share_routes_legend_end">End</string>
+<string name="share_routes_fullscreen_close_content_description">Close full image view</string>
+<string name="share_routes_fullscreen_image_content_description">Full shared route image</string>
 </resources>

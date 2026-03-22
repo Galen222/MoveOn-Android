@@ -11,6 +11,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.fragment.app.FragmentManager;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -87,9 +89,28 @@ public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogF
         binding.ivShareRoutePreview.setImageURI(previewUri);
         binding.tvShareRoutePreviewSummary.setText(shareText);
 
+        binding.ivShareRoutePreview.setOnClickListener(v -> openFullscreenPreview());
         binding.btnShareRouteNow.setOnClickListener(v -> shareRoute());
         binding.btnClosePreview.setOnClickListener(v -> dismissAllowingStateLoss());
     }
+
+/**
+ * Abre la imagen de preview a pantalla completa sobre el mismo fondo base de la app.
+ */
+private void openFullscreenPreview() {
+    if (previewUri == null || !isAdded()) {
+        return;
+    }
+
+    FragmentManager fragmentManager = getParentFragmentManager();
+    if (fragmentManager.isStateSaved()) {
+        return;
+    }
+
+    RouteImageFullscreenDialogFragment
+            .newInstance(previewUri)
+            .show(fragmentManager, RouteImageFullscreenDialogFragment.TAG);
+}
 
     /**
      * Abre el chooser de Android con la imagen y el texto resumen adjuntos.

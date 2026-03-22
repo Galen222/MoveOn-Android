@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingStart="16dp"
@@ -46,8 +48,7 @@
             app:cardCornerRadius="20dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/dividerColor"
-            app:strokeWidth="1dp"
-            xmlns:app="http://schemas.android.com/apk/res-auto">
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -60,7 +61,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="340dp"
                     android:adjustViewBounds="true"
+                    android:background="@color/surfaceBackground"
+                    android:clickable="true"
                     android:contentDescription="@string/share_routes_preview_image_content_description"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
                     android:scaleType="fitCenter" />
 
                 <TextView
@@ -94,10 +99,13 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:layout_weight="1"
-                android:text="@string/share_routes_preview_share" />
+                android:text="@string/share_routes_preview_share"
+                android:textColor="@color/textOnGreen"
+                app:backgroundTint="@color/greenPrimary" />
 
         </LinearLayout>
 
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

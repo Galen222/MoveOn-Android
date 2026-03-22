@@ -27,14 +27,15 @@ import java.util.List;
 
 /**
  * ViewModel del módulo de Estadísticas.
-
- * Dos fuentes reactivas:
+  * Dos fuentes reactivas:
  * 1. {@link ActivityRepository#observeActividades} — se recalcula al cambiar cualquier actividad.
  * 2. {@link UserPrefsRepository#observe} — se recalcula al cambiar los objetivos semanal/mensual.
-
  * Los cálculos estadísticos se delegan a {@link StatsCalculator}.
  */
 public class StatsViewModel extends AndroidViewModel {
+
+    /** Número máximo de actividades visibles en la pantalla de estadísticas. */
+    private static final int PREVIEW_LIMIT = 5;
 
     // ── LiveData expuesto ─────────────────────────────────────────────────────
 
@@ -44,30 +45,33 @@ public class StatsViewModel extends AndroidViewModel {
     /** Lista reactiva de actividades para el historial reciente. */
     private final MediatorLiveData<List<ActividadItem>> actividades = new MediatorLiveData<>();
 
+    /** Lista completa de actividades (para el bottom sheet "Ver todas"). */
+    private final MediatorLiveData<List<ActividadItem>> allActividades = new MediatorLiveData<>();
+
     /** Evento puntual del resultado del borrado — consumo único en el Fragment. */
     private final MutableLiveData<Event<UiState<String>>> deleteEvent = new MutableLiveData<>();
 
     // Estado interno compartido entre las dos fuentes
 
-    @NonNull  private List<ActividadItem> lastItems = Collections.emptyList();
-    private long lastWeeklyGoal  = StatsCalculator.DEFAULT_WEEKLY_GOAL_METERS;
+    @NonNull
+    private List<ActividadItem> lastItems = Collections.emptyList();
+    private long lastWeeklyGoal = StatsCalculator.DEFAULT_WEEKLY_GOAL_METERS;
     private long lastMonthlyGoal = StatsCalculator.DEFAULT_MONTHLY_GOAL_METERS;
 
     // ── Dependencias ──────────────────────────────────────────────────────────
 
-    private final ActivityRepository    actividadRepository;
-    private final UserPrefsRepository   userPrefsRepository;
+    private final ActivityRepository actividadRepository;
+    private final UserPrefsRepository userPrefsRepository;
 
     @Nullable private final String accountKey;
 
     @Nullable private LiveData<List<ActividadItem>> actividadesSource;
-    @Nullable private LiveData<UserPrefsEntity>     prefsSource;
+    @Nullable private LiveData<UserPrefsEntity> prefsSource;
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
     public StatsViewModel(@NonNull Application application) {
         super(application);
-        // MEJ-01: Creación centralizada vía ServiceLocator.
         ServiceLocator locator = ServiceLocator.getInstance(application);
         actividadRepository = locator.newActivityRepository();
         userPrefsRepository = locator.getUserPrefsRepository();
@@ -87,6 +91,11 @@ public class StatsViewModel extends AndroidViewModel {
     @NonNull
     public LiveData<List<ActividadItem>> getActividades() {
         return actividades;
+    }
+
+    @NonNull
+    public LiveData<List<ActividadItem>> getAllActividades() {
+        return allActividades;
     }
 
     @NonNull
@@ -168,6 +177,7 @@ public class StatsViewModel extends AndroidViewModel {
     private void attachSources() {
         if (accountKey == null) {
             actividades.setValue(Collections.emptyList());
+            allActividades.setValue(Collections.emptyList());
             statsState.setValue(UiState.success(
                     StatsResumen.empty(
                             StatsCalculator.DEFAULT_WEEKLY_GOAL_METERS,
@@ -175,22 +185,24 @@ public class StatsViewModel extends AndroidViewModel {
             return;
         }
 
-        // Fuente 1: actividades
         actividadesSource = actividadRepository.observeActividades(accountKey);
         statsState.addSource(actividadesSource, items -> {
             lastItems = items != null ? items : Collections.emptyList();
-            actividades.setValue(lastItems);
+            allActividades.setValue(lastItems);
+            actividades.setValue(
+                    lastItems.size() > PREVIEW_LIMIT
+                            ? lastItems.subList(0, PREVIEW_LIMIT)
+                            : lastItems);
             recalcular();
         });
 
-        // Fuente 2: preferencias (objetivos)
         prefsSource = userPrefsRepository.observe(accountKey);
         statsState.addSource(prefsSource, prefs -> {
             if (prefs != null) {
-                lastWeeklyGoal  = prefs.weeklyGoalMeters;
+                lastWeeklyGoal = prefs.weeklyGoalMeters;
                 lastMonthlyGoal = prefs.monthlyGoalMeters;
             } else {
-                lastWeeklyGoal  = StatsCalculator.DEFAULT_WEEKLY_GOAL_METERS;
+                lastWeeklyGoal = StatsCalculator.DEFAULT_WEEKLY_GOAL_METERS;
                 lastMonthlyGoal = StatsCalculator.DEFAULT_MONTHLY_GOAL_METERS;
             }
             recalcular();
@@ -208,7 +220,7 @@ public class StatsViewModel extends AndroidViewModel {
     @Override
     protected void onCleared() {
         if (actividadesSource != null) statsState.removeSource(actividadesSource);
-        if (prefsSource != null)       statsState.removeSource(prefsSource);
+        if (prefsSource != null) statsState.removeSource(prefsSource);
         actividadRepository.cancelAll();
         super.onCleared();
     }
