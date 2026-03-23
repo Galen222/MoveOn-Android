@@ -68,7 +68,22 @@ public class InicioFragment extends Fragment
      */
     @Nullable private TrackingAlert pendingTrackingAlertAfterStopDialog;
     private boolean suppressStationarySheetForCurrentActivity = false;
+    /**
+     * Espejo local del estado del permiso de ubicación conocido por este fragment.
+     *
+     * <p>Se usa para detectar la transición concreta "antes no había permiso y ahora sí"
+     * cuando el usuario concede el permiso fuera de esta pantalla (por ejemplo, desde Perfil).
+     * En ese caso, al volver a Inicio, el mapa debe recentrarse una vez sobre la posición actual.</p>
+     */
+    private boolean lastKnownLocationPermissionGranted = false;
 
+    /**
+     * Launcher propio del flujo de permisos iniciado desde Inicio.
+     *
+     * <p>Cuando el permiso se concede desde aquí, este callback sí vuelve a habilitar la capa
+     * {@code MyLocation}, recentra el mapa y reevalúa el resto de requisitos antes de arrancar
+     * el tracking.</p>
+     */
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(
                     new ActivityResultContracts.RequestMultiplePermissions(),
@@ -86,9 +101,29 @@ public class InicioFragment extends Fragment
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this).get(TrackingViewModel.class);
+
+        // Tomamos una fotografía inicial del permiso para poder detectar después
+        // si el usuario lo concede desde otra pantalla y vuelve a Inicio.
+        lastKnownLocationPermissionGranted =
+                TrackingRequirementsManager.hasLocationPermission(requireContext());
+
         setupMap();
         setupClickListeners();
         observeViewModel();
+    }
+
+    /**
+     * Re-sincroniza el estado del mapa cada vez que Inicio vuelve al primer plano.
+     *
+     * <p>Este punto corrige el caso en el que el permiso de ubicación se concede desde Perfil:
+     * el callback de Perfil actualiza su propia UI, pero el mapa de Inicio no recibe ese evento.
+     * Al volver a este fragment, comprobamos si el permiso pasó de denegado a concedido y,
+     * solo en esa transición, recentramos la cámara automáticamente.</p>
+     */
+    @Override
+    public void onResume() {
+        super.onResume();
+        syncMapLocationState();
     }
 
     @Override
@@ -157,6 +192,48 @@ public class InicioFragment extends Fragment
                 googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(DEFAULT_LOCATION, DEFAULT_ZOOM));
             }
         });
+    }
+
+    /**
+     * Mantiene la capa de ubicación del mapa alineada con el estado real de permisos.
+     *
+     * <p>Este método cubre tanto el alta del permiso (habilita la capa y recentra una sola vez)
+     * como su posible revocación posterior (deshabilita la capa para evitar inconsistencias).</p>
+     */
+    private void syncMapLocationState() {
+        if (!isAdded()) {
+            return;
+        }
+
+        boolean hasLocationPermission =
+                TrackingRequirementsManager.hasLocationPermission(requireContext());
+
+        if (googleMap != null) {
+            if (hasLocationPermission) {
+                enableMapMyLocation();
+
+                // Solo recentramos cuando detectamos una concesión nueva del permiso.
+                // Así evitamos mover la cámara en cada vuelta a la pestaña Inicio.
+                if (!lastKnownLocationPermissionGranted) {
+                    moveCameraToCurrentLocation();
+                }
+            } else if (lastKnownLocationPermissionGranted) {
+                // Si el permiso se revoca mientras el fragment no está visible,
+                // limpiamos la capa MyLocation al regresar para reflejar el estado real.
+                disableMapMyLocation();
+            }
+        }
+
+        lastKnownLocationPermissionGranted = hasLocationPermission;
+    }
+
+    /**
+     * Deshabilita la capa {@code MyLocation} de forma segura.
+     */
+    private void disableMapMyLocation() {
+        if (googleMap != null) {
+            googleMap.setMyLocationEnabled(false);
+        }
     }
 
     private void setupClickListeners() {
@@ -655,6 +732,11 @@ public class InicioFragment extends Fragment
             moveCameraToCurrentLocation();
         }
 
+        // Sincronizamos el espejo local para que futuras vueltas a Inicio no interpreten
+        // este mismo permiso como una concesión "nueva" y vuelvan a recentrar el mapa.
+        lastKnownLocationPermissionGranted =
+                TrackingRequirementsManager.hasLocationPermission(requireContext());
+
         List<TrackingRequirementsManager.Requirement> blockedRequirements =
                 TrackingRequirementsManager.getBlockedRuntimeRequirements(this);
         if (!blockedRequirements.isEmpty()) {
@@ -814,7 +896,3 @@ public class InicioFragment extends Fragment
         return getString(R.string.tracking_distance_m_format, meters);
     }
 }
-
-
-
-
