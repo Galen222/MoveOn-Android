@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.stats;
 
 import android.content.Context;
@@ -26,6 +27,7 @@ import com.proyecto.moveon.domain.activity.StatsResumen;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
@@ -37,6 +39,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+/**
+ * Bottom sheet que renderiza el historial mensual y semanal de actividades.
+ *
+ * <p>Tras esta corrección, tanto el filtrado interno como el formateo visual de fechas usan la
+ * misma conversión a zona horaria local que {@code StatsCalculator}, evitando discrepancias entre
+ * estadísticas, histórico y tarjetas compartidas.</p>
+ */
 public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment {
 
     private static final int PAGE_SIZE = 30;
@@ -441,15 +450,26 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return result;
     }
 
+    /**
+     * Convierte la fecha ISO de la actividad a la fecha local visible por el usuario.
+     *
+     * <p>Bugfix: se alinea con {@code StatsCalculator.parseFecha(...)} para que el histórico no
+     * clasifique una actividad en un día distinto al usado por las estadísticas.</p>
+     */
     @Nullable
     private LocalDate parseFecha(@NonNull String fechaIso) {
         try {
-            return OffsetDateTime.parse(fechaIso).toLocalDate();
+            return OffsetDateTime.parse(fechaIso)
+                    .atZoneSameInstant(ZoneId.systemDefault())
+                    .toLocalDate();
         } catch (DateTimeParseException e) {
             return null;
         }
     }
 
+    /**
+     * Formatea la fecha de la tarjeta usando la misma zona local aplicada al filtrado.
+     */
     @NonNull
     private String formatFechaActividad(@NonNull String fechaIso, @NonNull Context context) {
         try {
@@ -458,6 +478,7 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
                     AppLanguageManager.getActiveLocale(context)
             );
             return OffsetDateTime.parse(fechaIso)
+                    .atZoneSameInstant(ZoneId.systemDefault())
                     .toLocalDate()
                     .format(formatter);
         } catch (DateTimeParseException e) {
@@ -515,3 +536,4 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 }
+

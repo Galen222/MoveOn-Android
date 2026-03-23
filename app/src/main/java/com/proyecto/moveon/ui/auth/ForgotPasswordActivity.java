@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.auth;
 
 import android.content.Context;
@@ -5,6 +6,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -25,11 +28,22 @@ import com.proyecto.moveon.utils.StringUtils;
  */
 public class ForgotPasswordActivity extends AppCompatActivity {
 
+    private static final String STATE_EMAIL_CONFIRMADO = "state_email_confirmado";
+    private static final String STATE_IS_STEP_TWO = "state_is_step_two";
+
     private ActivityForgotPasswordBinding binding;
     private AuthViewModel viewModel;
 
     /** Email confirmado en el paso 1; se reutiliza en el paso 2. */
     private String emailConfirmado = "";
+
+    /**
+     * Indica si la UI está mostrando el paso 2.
+     *
+     * <p>Bugfix: este valor se persiste para no volver siempre al paso 1 tras una recreación
+     * de la activity (rotación, cambio de idioma, proceso reclamado por el sistema, etc.).</p>
+     */
+    private boolean isStepTwoVisible = false;
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -48,7 +62,26 @@ public class ForgotPasswordActivity extends AppCompatActivity {
 
         setupListeners();
         observeViewModel();
-        mostrarPaso1();
+
+        restoreUiState(savedInstanceState);
+    }
+
+    /**
+     * Restaura el paso visible y el email confirmado tras recreaciones de la activity.
+     */
+    private void restoreUiState(@Nullable Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            emailConfirmado = savedInstanceState.getString(STATE_EMAIL_CONFIRMADO, "");
+            isStepTwoVisible = savedInstanceState.getBoolean(STATE_IS_STEP_TWO, false);
+        }
+
+        if (isStepTwoVisible && StringUtils.hasText(emailConfirmado)) {
+            mostrarPaso2();
+        } else {
+            // Si no tenemos email confirmado válido, forzamos paso 1 para no dejar la UI
+            // en un estado incoherente donde el usuario no pueda completar el reset.
+            mostrarPaso1();
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -229,7 +262,11 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     // Control de visibilidad de pasos
     // -------------------------------------------------------------------------
 
+    /**
+     * Muestra el primer paso del flujo y sincroniza el estado restaurable asociado.
+     */
     private void mostrarPaso1() {
+        isStepTwoVisible = false;
         binding.tvDescripcion.setText(getString(R.string.forgot_description_step1));
 
         binding.tilEmail.setVisibility(View.VISIBLE);
@@ -241,7 +278,11 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         binding.btnAccion.setText(getString(R.string.forgot_btn_enviar_codigo));
     }
 
+    /**
+     * Muestra el segundo paso del flujo y sincroniza el estado restaurable asociado.
+     */
     private void mostrarPaso2() {
+        isStepTwoVisible = true;
         binding.tvDescripcion.setText(getString(R.string.forgot_description_step2));
 
         binding.tilEmail.setVisibility(View.GONE);
@@ -281,8 +322,16 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     // -------------------------------------------------------------------------
 
     @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(STATE_EMAIL_CONFIRMADO, emailConfirmado);
+        outState.putBoolean(STATE_IS_STEP_TWO, isStepTwoVisible);
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         binding = null;
     }
 }
+

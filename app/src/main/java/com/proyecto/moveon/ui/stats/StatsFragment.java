@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.stats;
 
 import android.content.Context;
@@ -36,6 +37,14 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Fragmento de estadísticas y resumen histórico del usuario.
+ *
+ * <p>Incluye acciones de borrado y compartición de rutas. El flujo de share se ejecuta
+ * fuera del hilo principal y, tras esta corrección, siempre restablece la marca interna
+ * {@code isSharingInProgress} incluso si el fragment se desacopla durante la generación
+ * de la imagen.</p>
+ */
 public class StatsFragment extends Fragment {
 
     private FragmentStatsBinding binding;
@@ -62,6 +71,9 @@ public class StatsFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        // Bugfix: si la vista se destruye en mitad de un share, la siguiente vista no debe heredar
+        // un estado de "compartiendo" atascado de la instancia anterior.
+        isSharingInProgress = false;
         super.onDestroyView();
         binding = null;
     }
@@ -396,7 +408,13 @@ public class StatsFragment extends Fragment {
                 String shareText = ShareRouteFormatter.buildShareText(localizedContext, item);
 
                 FragmentActivity activity = getActivity();
-                if (activity == null) return;
+                if (activity == null) {
+                    // Bugfix: el fragment puede quedar desacoplado mientras el trabajo en background
+                    // sigue ejecutándose. Restablecemos la flag manualmente para evitar un bloqueo
+                    // permanente de nuevos intentos de share en esta instancia.
+                    isSharingInProgress = false;
+                    return;
+                }
 
                 activity.runOnUiThread(() -> {
                     isSharingInProgress = false;
@@ -417,9 +435,18 @@ public class StatsFragment extends Fragment {
         });
     }
 
+    /**
+     * Restablece el estado interno del flujo de share y muestra el error si la vista sigue activa.
+     *
+     * <p>Bugfix: si la activity ya no existe, igualmente se limpia la flag para que la instancia del
+     * fragment no quede inutilizable al volver a la pestaña.</p>
+     */
     private void handleShareError(int messageRes) {
         FragmentActivity activity = getActivity();
-        if (activity == null) return;
+        if (activity == null) {
+            isSharingInProgress = false;
+            return;
+        }
         activity.runOnUiThread(() -> {
             isSharingInProgress = false;
             if (binding != null) {

@@ -1,13 +1,14 @@
-sdk.dir=C\:\Users\\galen\\AppData\\Local\\Android\\Sdk
-
-# Requerido para el handshake del backend. El build falla si se deja vacío.
+sdk.dir=
+# Clave para conectar con el Backend
 APP_ID=
 APP_SESSION_CACHE_TTL_MS=240000
-
-# Entornos disponibles: LOCAL, LAN, PRODUCCION
-MOVEON_BACKEND=LOCAL
-# MOVEON_BACKEND=PRODUCCION
+# Conexión con el Backend de desarrollo por emulador
+# MOVEON_BACKEND=LOCAL
+# Conexión con el Backend de desarrollo por movil fisico
 # MOVEON_BACKEND=LAN
-# MOVEON_LAN_BASE_URL=http://192.168.1.10:8000
-
+MOVEON_LAN_BASE_URL=http://192.168.1.10:8000
+# Conexión con el Backend de producción
+MOVEON_BACKEND=PRODUCCION
+MOVEON_PROD_BASE_URL=https://www.mibackend.com/
+# Clave de la API Google Maps
 MAPS_API_KEY=

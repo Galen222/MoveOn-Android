@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.stats;
 
 import android.content.Context;
@@ -17,6 +18,7 @@ import com.proyecto.moveon.databinding.ItemActividadBinding;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.HashSet;
@@ -204,6 +206,13 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
 
         // ── Formateo ──────────────────────────────────────────────────────────
 
+        /**
+         * Formatea la fecha de la actividad usando la zona horaria local del dispositivo.
+         *
+         * <p>Bugfix: las estadísticas agrupan por fecha convertida a {@link ZoneId#systemDefault()}.
+         * Si aquí se usa {@code toLocalDate()} directamente sobre el offset original, la misma
+         * actividad puede verse en un día distinto al calculado en {@code StatsCalculator}.</p>
+         */
         @NonNull
         private String formatFecha(@NonNull String fechaIso, @NonNull Context context) {
             try {
@@ -212,6 +221,7 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
                         AppLanguageManager.getActiveLocale(context)
                 );
                 return OffsetDateTime.parse(fechaIso)
+                        .atZoneSameInstant(ZoneId.systemDefault())
                         .toLocalDate()
                         .format(formatter);
             } catch (DateTimeParseException e) {

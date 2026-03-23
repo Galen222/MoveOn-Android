@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.profile;
 
 import android.content.Context;
@@ -11,6 +12,7 @@ import com.proyecto.moveon.domain.activity.ActividadItem;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.FormatStyle;
@@ -98,7 +100,11 @@ public final class ShareRouteFormatter {
     }
 
     /**
-     * Formatea la fecha ISO intentando soportar tanto LocalDate como OffsetDateTime.
+     * Formatea la fecha ISO intentando soportar tanto {@link LocalDate} como {@link OffsetDateTime}.
+     *
+     * <p>Bugfix: cuando la entrada trae offset, primero se normaliza a la zona horaria local del
+     * dispositivo. Así la fecha mostrada en la tarjeta compartida coincide con la usada por las
+     * estadísticas y por el historial.</p>
      */
     @NonNull
     public static String formatDate(@NonNull Context context, @NonNull String isoDate) {
@@ -107,7 +113,10 @@ public final class ShareRouteFormatter {
                 .withLocale(locale);
 
         try {
-            return OffsetDateTime.parse(isoDate).toLocalDate().format(formatter);
+            return OffsetDateTime.parse(isoDate)
+                    .atZoneSameInstant(ZoneId.systemDefault())
+                    .toLocalDate()
+                    .format(formatter);
         } catch (DateTimeParseException ignored) {
             // Fallback al formato solo-fecha si no venía zona horaria.
         }
@@ -121,3 +130,4 @@ public final class ShareRouteFormatter {
         return isoDate.length() >= 10 ? isoDate.substring(0, 10) : isoDate;
     }
 }
+

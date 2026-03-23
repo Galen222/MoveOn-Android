@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.profile;
 
 import android.content.Context;
@@ -135,35 +136,51 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
                 String shareText = ShareRouteFormatter.buildShareText(localizedContext, item);
 
                 FragmentActivity activity = getActivity();
-                if (activity == null) return;
+                if (activity == null) {
+                    // Bugfix: el sheet puede quedar retenido por FragmentManager aunque la activity
+                    // ya no esté disponible. Limpiamos la flag para no bloquear futuros shares.
+                    isSharingInProgress = false;
+                    return;
+                }
 
                 activity.runOnUiThread(() -> {
-                    if (binding == null) return;
+                    // Bugfix: primero limpiamos el estado interno y luego tocamos la UI. Así evitamos
+                    // dejar el flujo atascado si la vista ya fue destruida cuando vuelve el callback.
                     setSharingInProgress(false);
+                    if (binding == null) return;
                     openPreview(uri, shareText);
                 });
             } catch (IllegalArgumentException e) {
                 FragmentActivity activity = getActivity();
-                if (activity == null) return;
+                if (activity == null) {
+                    isSharingInProgress = false;
+                    return;
+                }
                 activity.runOnUiThread(() -> {
-                    if (binding == null) return;
                     setSharingInProgress(false);
+                    if (binding == null) return;
                     TopSnackbar.error(binding.getRoot(), getString(R.string.share_routes_error_no_polyline));
                 });
             } catch (IOException e) {
                 FragmentActivity activity = getActivity();
-                if (activity == null) return;
+                if (activity == null) {
+                    isSharingInProgress = false;
+                    return;
+                }
                 activity.runOnUiThread(() -> {
-                    if (binding == null) return;
                     setSharingInProgress(false);
+                    if (binding == null) return;
                     TopSnackbar.error(binding.getRoot(), getString(R.string.share_routes_error_generating_image));
                 });
             } catch (Exception e) {
                 FragmentActivity activity = getActivity();
-                if (activity == null) return;
+                if (activity == null) {
+                    isSharingInProgress = false;
+                    return;
+                }
                 activity.runOnUiThread(() -> {
-                    if (binding == null) return;
                     setSharingInProgress(false);
+                    if (binding == null) return;
                     TopSnackbar.error(binding.getRoot(), getString(R.string.share_routes_error_generating_image));
                 });
             }
@@ -205,6 +222,9 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
 
     @Override
     public void onDestroyView() {
+        // Bugfix: al destruir la vista limpiamos el estado para que una recreación del sheet no herede
+        // un bloqueo de compartición pendiente de una vista anterior.
+        setSharingInProgress(false);
         binding = null;
         super.onDestroyView();
     }
