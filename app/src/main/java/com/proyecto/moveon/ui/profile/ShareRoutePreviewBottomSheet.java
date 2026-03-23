@@ -19,7 +19,6 @@ import androidx.annotation.Nullable;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.databinding.BottomSheetShareRoutePreviewBinding;
 import com.proyecto.moveon.ui.common.BaseExpandedBottomSheetDialogFragment;
-import com.proyecto.moveon.ui.common.TopSnackbar;
 
 /**
  * Bottom sheet que muestra una vista previa de la imagen antes de abrir el chooser de Android.
@@ -133,7 +132,9 @@ private void openFullscreenPreview() {
             startActivity(Intent.createChooser(intent, getString(R.string.share_routes_chooser_title)));
             dismissAllowingStateLoss();
         } catch (ActivityNotFoundException e) {
-            TopSnackbar.error(binding.getRoot(), getString(R.string.share_routes_error_no_apps));
+            // Se muestra dentro de la ventana del bottom sheet para que no quede
+            // oculto por detrás del propio diálogo.
+            showSheetErrorSnackbar(getString(R.string.share_routes_error_no_apps));
         }
     }
 

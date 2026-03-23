@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.profile;
 
 import android.content.Context;
@@ -20,7 +19,6 @@ import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.databinding.BottomSheetShareRoutesBinding;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 import com.proyecto.moveon.ui.common.BaseExpandedBottomSheetDialogFragment;
-import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.ui.common.UiState;
 import com.proyecto.moveon.utils.StringUtils;
 
@@ -105,7 +103,7 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
             binding.rvShareRoutes.setVisibility(View.GONE);
             binding.tvEmptyShareRoutes.setVisibility(View.VISIBLE);
             binding.tvEmptyShareRoutes.setText(R.string.share_routes_empty);
-            TopSnackbar.error(binding.getRoot(), getString(R.string.share_routes_error_loading));
+            showSheetErrorSnackbar(getString(R.string.share_routes_error_loading));
         }
     }
 
@@ -119,7 +117,7 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
 
         // Regla pedida: si no hay polilínea, se avisa y no se genera nada.
         if (!StringUtils.hasText(item.rutaPolilinea)) {
-            TopSnackbar.error(binding.getRoot(), getString(R.string.share_routes_error_no_polyline));
+            showSheetErrorSnackbar(getString(R.string.share_routes_error_no_polyline));
             return;
         }
 
@@ -159,7 +157,7 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
                 activity.runOnUiThread(() -> {
                     setSharingInProgress(false);
                     if (binding == null) return;
-                    TopSnackbar.error(binding.getRoot(), getString(R.string.share_routes_error_no_polyline));
+                    showSheetErrorSnackbar(getString(R.string.share_routes_error_no_polyline));
                 });
             } catch (IOException e) {
                 FragmentActivity activity = getActivity();
@@ -170,7 +168,7 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
                 activity.runOnUiThread(() -> {
                     setSharingInProgress(false);
                     if (binding == null) return;
-                    TopSnackbar.error(binding.getRoot(), getString(R.string.share_routes_error_generating_image));
+                    showSheetErrorSnackbar(getString(R.string.share_routes_error_generating_image));
                 });
             } catch (Exception e) {
                 FragmentActivity activity = getActivity();
@@ -181,7 +179,7 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
                 activity.runOnUiThread(() -> {
                     setSharingInProgress(false);
                     if (binding == null) return;
-                    TopSnackbar.error(binding.getRoot(), getString(R.string.share_routes_error_generating_image));
+                    showSheetErrorSnackbar(getString(R.string.share_routes_error_generating_image));
                 });
             }
         });
@@ -196,7 +194,7 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
         }
 
         if (getParentFragmentManager().isStateSaved()) {
-            TopSnackbar.error(binding.getRoot(), getString(R.string.share_routes_error_opening_preview));
+            showSheetErrorSnackbar(getString(R.string.share_routes_error_opening_preview));
             return;
         }
 

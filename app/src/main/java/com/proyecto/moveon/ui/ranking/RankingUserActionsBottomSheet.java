@@ -22,10 +22,10 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.app.ServiceLocator;
 import com.proyecto.moveon.data.ranking.RankingRepository;
+import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.databinding.BottomSheetRankingUserActionsBinding;
 import com.proyecto.moveon.databinding.DialogReportRankingUserBinding;
 import com.proyecto.moveon.ui.common.BaseExpandedBottomSheetDialogFragment;
-import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.utils.StringUtils;
 
 /**
@@ -67,6 +67,9 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
     /** Repositorio de ranking reutilizado para enviar el reporte al backend. */
     @Nullable private RankingRepository repository;
 
+    /** Nombre de usuario autenticado, usado para bloquear el autoreporte desde UI. */
+    @Nullable private String currentUsername;
+
     /**
      * Crea una nueva instancia del sheet de acciones para un usuario concreto.
      *
@@ -95,6 +98,7 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         repository = ServiceLocator.getInstance(context).newRankingRepository();
+        currentUsername = SecureSessionManager.getInstance(context).getUsername();
     }
 
     @Nullable
@@ -131,6 +135,7 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
 
         b.tvUsername.setText(username);
         b.tvPoints.setText(getString(R.string.ranking_puntos_format, totalPoints));
+        configureReportButtonState(username);
 
         // Añadimos versión a la URL para que Glide invalide la caché cuando la foto cambie.
         String imageUrl = buildVersionedPhotoUrl(photoUrl, photoVersion);
@@ -159,7 +164,41 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
         if (b == null) return;
 
         b.btnClose.setOnClickListener(v -> dismiss());
-        b.btnReportUser.setOnClickListener(v -> showReportDialog());
+        b.btnReportUser.setOnClickListener(v -> {
+            // Defensa adicional: aunque el botón quede deshabilitado visualmente,
+            // mantenemos la comprobación aquí para evitar aperturas forzadas.
+            if (b.btnReportUser.isEnabled()) {
+                showReportDialog();
+            }
+        });
+    }
+
+
+    /**
+     * Ajusta el estado del botón de reporte según el usuario seleccionado.
+     *
+     * <p>El backend ya impide reportarse a uno mismo, pero deshabilitar la acción
+     * desde la UI evita una ida y vuelta innecesaria y aclara el comportamiento
+     * al usuario antes de abrir el formulario.</p>
+     *
+     * @param viewedUsername nombre del perfil actualmente mostrado en el sheet.
+     */
+    private void configureReportButtonState(@NonNull String viewedUsername) {
+        BottomSheetRankingUserActionsBinding b = binding;
+        if (b == null) return;
+
+        boolean canReport = !isViewingOwnProfile(viewedUsername);
+        b.btnReportUser.setEnabled(canReport);
+        b.btnReportUser.setAlpha(canReport ? 1f : 0.5f);
+    }
+
+    /**
+     * Indica si el perfil abierto pertenece al usuario autenticado.
+     */
+    private boolean isViewingOwnProfile(@Nullable String viewedUsername) {
+        return StringUtils.hasText(viewedUsername)
+                && StringUtils.hasText(currentUsername)
+                && viewedUsername.trim().equalsIgnoreCase(currentUsername.trim());
     }
 
     /**
@@ -172,12 +211,17 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
         if (!isAdded()) return;
         if (reportDialog != null && reportDialog.isShowing()) return;
 
+        String username = requireArguments().getString(ARG_USERNAME, "");
+        if (isViewingOwnProfile(username)) {
+            return;
+        }
+
+
         reportDialogBinding = DialogReportRankingUserBinding.inflate(
                 LayoutInflater.from(requireContext())
         );
         reportDialogBinding.tvReasonError.setVisibility(View.GONE);
 
-        String username = requireArguments().getString(ARG_USERNAME, "");
         reportDialogBinding.tvDialogTitle.setText(
                 getString(R.string.ranking_report_dialog_title, username)
         );
@@ -379,8 +423,7 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
                             reportDialog.dismiss();
                         }
                         if (binding != null) {
-                            TopSnackbar.success(
-                                    binding.getRoot(),
+                            showSheetSuccessSnackbar(
                                     StringUtils.hasText(result.data)
                                             ? result.data
                                             : getString(R.string.ranking_report_success)
@@ -390,8 +433,7 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
                     }
 
                     if (binding != null) {
-                        TopSnackbar.error(
-                                binding.getRoot(),
+                        showSheetErrorSnackbar(
                                 result.error != null
                                         ? result.error.getMessage()
                                         : getString(R.string.ranking_report_error_generic)
@@ -461,6 +503,7 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
             repo.cancelAll();
         }
         repository = null;
+        currentUsername = null;
         super.onDestroy();
     }
 

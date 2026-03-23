@@ -16,47 +16,99 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.snackbar.Snackbar;
 import com.proyecto.moveon.R;
 
+/**
+ * Helper visual para mostrar snackbars superiores con estilo consistente.
+ *
+ * <p>La clase permite, además, aplicar un desplazamiento superior extra para casos
+ * como diálogos o bottom sheets, cuya ventana puede empezar más arriba que el
+ * contenido estándar de la Activity.</p>
+ */
 public final class TopSnackbar {
 
     public enum Type { SUCCESS, WARNING, ERROR }
 
+    /**
+     * Márgenes base heredados del comportamiento ya usado en la app.
+     *
+     * <p>Se mantienen en píxeles para no alterar la apariencia de las pantallas
+     * que ya se veían correctamente. Los bottom sheets añaden un offset extra
+     * calculado dinámicamente cuando hace falta.</p>
+     */
+    private static final int BASE_TOP_MARGIN_PX = 24;
+    private static final int BASE_HORIZONTAL_MARGIN_PX = 32;
+
     private TopSnackbar() {}
 
-    // ── Métodos principales ──
+    // ── Métodos principales ──────────────────────────────────────────────────
 
     public static void success(@NonNull View root, @NonNull CharSequence msg) {
-        show(root, msg, Type.SUCCESS, Snackbar.LENGTH_LONG, null, null);
+        show(root, msg, Type.SUCCESS, Snackbar.LENGTH_LONG, null, null, 0);
+    }
+
+    public static void success(@NonNull View root,
+                               @NonNull CharSequence msg,
+                               int extraTopOffsetPx) {
+        show(root, msg, Type.SUCCESS, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
     }
 
     public static void success(@NonNull View root, @StringRes int msgRes) {
-        show(root, root.getContext().getString(msgRes), Type.SUCCESS, Snackbar.LENGTH_LONG, null, null);
+        show(root, root.getContext().getString(msgRes), Type.SUCCESS, Snackbar.LENGTH_LONG, null, null, 0);
+    }
+
+    public static void success(@NonNull View root, @StringRes int msgRes, int extraTopOffsetPx) {
+        show(root, root.getContext().getString(msgRes), Type.SUCCESS, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
     }
 
     public static void warning(@NonNull View root, @NonNull CharSequence msg) {
-        show(root, msg, Type.WARNING, Snackbar.LENGTH_LONG, null, null);
+        show(root, msg, Type.WARNING, Snackbar.LENGTH_LONG, null, null, 0);
+    }
+
+    public static void warning(@NonNull View root,
+                               @NonNull CharSequence msg,
+                               int extraTopOffsetPx) {
+        show(root, msg, Type.WARNING, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
     }
 
     public static void warning(@NonNull View root, @StringRes int msgRes) {
-        show(root, root.getContext().getString(msgRes), Type.WARNING, Snackbar.LENGTH_LONG, null, null);
+        show(root, root.getContext().getString(msgRes), Type.WARNING, Snackbar.LENGTH_LONG, null, null, 0);
+    }
+
+    public static void warning(@NonNull View root, @StringRes int msgRes, int extraTopOffsetPx) {
+        show(root, root.getContext().getString(msgRes), Type.WARNING, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
     }
 
     public static void error(@NonNull View root, @NonNull CharSequence msg) {
-        show(root, msg, Type.ERROR, Snackbar.LENGTH_LONG, null, null);
+        show(root, msg, Type.ERROR, Snackbar.LENGTH_LONG, null, null, 0);
+    }
+
+    public static void error(@NonNull View root,
+                             @NonNull CharSequence msg,
+                             int extraTopOffsetPx) {
+        show(root, msg, Type.ERROR, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
     }
 
     public static void error(@NonNull View root, @NonNull CharSequence msg,
                              @Nullable String actionLabel, @Nullable Runnable action) {
-        show(root, msg, Type.ERROR, Snackbar.LENGTH_LONG, actionLabel, action);
+        show(root, msg, Type.ERROR, Snackbar.LENGTH_LONG, actionLabel, action, 0);
     }
 
-    // ── Lógica interna ──
+    public static void error(@NonNull View root,
+                             @NonNull CharSequence msg,
+                             @Nullable String actionLabel,
+                             @Nullable Runnable action,
+                             int extraTopOffsetPx) {
+        show(root, msg, Type.ERROR, Snackbar.LENGTH_LONG, actionLabel, action, extraTopOffsetPx);
+    }
+
+    // ── Lógica interna ───────────────────────────────────────────────────────
 
     private static void show(@NonNull View root,
                              @NonNull CharSequence msg,
                              @NonNull Type type,
                              int duration,
                              @Nullable String actionLabel,
-                             @Nullable Runnable action) {
+                             @Nullable Runnable action,
+                             int extraTopOffsetPx) {
 
         Snackbar snackbar = Snackbar.make(root, msg, duration);
 
@@ -87,24 +139,25 @@ public final class TopSnackbar {
         // dependiendo del root del layout que invoca. Ambos soportan gravity.
         ViewGroup.LayoutParams rawParams = snackView.getLayoutParams();
         int topGravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+        int resolvedTopMargin = BASE_TOP_MARGIN_PX + Math.max(0, extraTopOffsetPx);
 
         if (rawParams instanceof CoordinatorLayout.LayoutParams) {
             CoordinatorLayout.LayoutParams clp = (CoordinatorLayout.LayoutParams) rawParams;
             clp.gravity = topGravity;
-            clp.topMargin = 24;
-            clp.leftMargin = 32;
-            clp.rightMargin = 32;
+            clp.topMargin = resolvedTopMargin;
+            clp.leftMargin = BASE_HORIZONTAL_MARGIN_PX;
+            clp.rightMargin = BASE_HORIZONTAL_MARGIN_PX;
         } else if (rawParams instanceof FrameLayout.LayoutParams) {
             FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) rawParams;
             flp.gravity = topGravity;
-            flp.topMargin = 24;
-            flp.leftMargin = 32;
-            flp.rightMargin = 32;
+            flp.topMargin = resolvedTopMargin;
+            flp.leftMargin = BASE_HORIZONTAL_MARGIN_PX;
+            flp.rightMargin = BASE_HORIZONTAL_MARGIN_PX;
         } else if (rawParams instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) rawParams;
-            mlp.topMargin = 24;
-            mlp.leftMargin = 32;
-            mlp.rightMargin = 32;
+            mlp.topMargin = resolvedTopMargin;
+            mlp.leftMargin = BASE_HORIZONTAL_MARGIN_PX;
+            mlp.rightMargin = BASE_HORIZONTAL_MARGIN_PX;
         }
         snackView.setLayoutParams(rawParams);
 
