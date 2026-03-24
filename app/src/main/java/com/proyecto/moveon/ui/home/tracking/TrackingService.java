@@ -284,8 +284,8 @@ public final class TrackingService extends Service implements SensorEventListene
         }
 
         if (ACTION_NOTIFICATION_FINISH.equals(action)) {
-            stopTracking();
-            return START_NOT_STICKY;
+            openAppForStopConfirmation();
+            return START_STICKY;
         }
 
         if (ACTION_RESTORE_NOTIFICATION.equals(action)) {
@@ -1130,8 +1130,17 @@ public final class TrackingService extends Service implements SensorEventListene
         }
     }
 
+    /**
+     * Construye la notificación foreground del tracking.
+     *
+     * <p>El {@code smallIcon} de la barra de estado sigue usando {@code run_icon}, porque
+     * Android lo procesa correctamente como icono monocromo del sistema. En cambio, el
+     * icono interno de las {@link RemoteViews} usa {@code run_icon_notification}, que tiene
+     * una variante en {@code res/drawable/} y otra en {@code res/drawable-night/} para
+     * mostrarse negro en modo claro y blanco en modo oscuro.</p>
+     */
     @NonNull
-private Notification buildNotification() {
+    private Notification buildNotification() {
     PendingIntent contentIntent = buildNotificationContentIntent(0);
     PendingIntent restorePendingIntent = buildServiceActionPendingIntent(
             ACTION_RESTORE_NOTIFICATION,
@@ -1166,11 +1175,19 @@ private Notification buildNotification() {
     return builder.build();
 }
 
-@NonNull
-private RemoteViews buildCollapsedNotificationRemoteViews() {
-    RemoteViews views = new RemoteViews(getPackageName(), R.layout.notification_tracking_compact);
+    /**
+     * Construye la vista compacta de la notificación.
+     *
+     * <p>Se usa un drawable específico de notificación para no depender de tint dinámico en
+     * {@link RemoteViews}, ya que algunos fabricantes ignoran ese tint dentro del contenido
+     * de la notificación.</p>
+     */
+    @NonNull
+    private RemoteViews buildCollapsedNotificationRemoteViews() {
+        RemoteViews views = new RemoteViews(getPackageName(), R.layout.notification_tracking_compact);
 
-    views.setImageViewResource(R.id.iv_tracking_header_icon, R.drawable.run_icon);
+        // Icono interno de la tarjeta de notificación: day/night separado para asegurar contraste.
+        views.setImageViewResource(R.id.iv_tracking_header_icon, R.drawable.run_icon_notification);
     views.setTextViewText(R.id.tv_tracking_title, buildNotificationTitle());
     views.setTextViewText(R.id.tv_tracking_subtitle, buildNotificationCompactText());
 
@@ -1198,11 +1215,18 @@ private RemoteViews buildCollapsedNotificationRemoteViews() {
     return views;
 }
 
-@NonNull
-private RemoteViews buildExpandedNotificationRemoteViews() {
-    RemoteViews views = new RemoteViews(getPackageName(), R.layout.notification_tracking_expanded);
+    /**
+     * Construye la vista expandida de la notificación.
+     *
+     * <p>Igual que en la vista compacta, el icono del encabezado usa un recurso propio con
+     * variante nocturna para mantener el color correcto dentro de la notificación.</p>
+     */
+    @NonNull
+    private RemoteViews buildExpandedNotificationRemoteViews() {
+        RemoteViews views = new RemoteViews(getPackageName(), R.layout.notification_tracking_expanded);
 
-    views.setImageViewResource(R.id.iv_tracking_header_icon, R.drawable.run_icon);
+        // Mismo recurso day/night que en la vista compacta para mantener consistencia visual.
+        views.setImageViewResource(R.id.iv_tracking_header_icon, R.drawable.run_icon_notification);
     views.setTextViewText(R.id.tv_tracking_title, buildNotificationTitle());
     views.setTextViewText(R.id.tv_tracking_summary, buildNotificationSummaryText());
 
@@ -1360,7 +1384,7 @@ private void bindNotificationButtons(
                     primaryContainerId,
                     primaryIconId,
                     primaryTextId,
-                    R.drawable.ic_pause_24,
+                    R.drawable.ic_pause_notification_action,
                     tr(R.string.mo_tracking_notification_action_pause),
                     buildServiceActionPendingIntent(ACTION_NOTIFICATION_PAUSE, 10)
             );
@@ -1369,9 +1393,9 @@ private void bindNotificationButtons(
                     secondaryContainerId,
                     secondaryIconId,
                     secondaryTextId,
-                    R.drawable.ic_stop_24,
+                    R.drawable.ic_stop_notification_action,
                     tr(R.string.mo_tracking_notification_action_finish),
-                    buildServiceActionPendingIntent(ACTION_NOTIFICATION_FINISH, 11)
+                    buildStopConfirmationPendingIntent(11)
             );
             break;
 
@@ -1390,9 +1414,9 @@ private void bindNotificationButtons(
                     secondaryContainerId,
                     secondaryIconId,
                     secondaryTextId,
-                    R.drawable.ic_stop_24,
+                    R.drawable.ic_stop_notification_action,
                     tr(R.string.mo_tracking_notification_action_finish),
-                    buildServiceActionPendingIntent(ACTION_NOTIFICATION_FINISH, 13)
+                    buildStopConfirmationPendingIntent(13)
             );
             break;
 
@@ -1413,7 +1437,7 @@ private void bindNotificationButtons(
                         primaryContainerId,
                         primaryIconId,
                         primaryTextId,
-                        R.drawable.ic_open_in_new_24,
+                        R.drawable.ic_open_notification_action,
                         tr(R.string.mo_tracking_notification_action_open),
                         buildNotificationContentIntent(15)
                 );
@@ -1424,9 +1448,9 @@ private void bindNotificationButtons(
                     secondaryContainerId,
                     secondaryIconId,
                     secondaryTextId,
-                    R.drawable.ic_stop_24,
+                    R.drawable.ic_stop_notification_action,
                     tr(R.string.mo_tracking_notification_action_finish),
-                    buildServiceActionPendingIntent(ACTION_NOTIFICATION_FINISH, 16)
+                    buildStopConfirmationPendingIntent(16)
             );
             break;
 
@@ -1438,7 +1462,7 @@ private void bindNotificationButtons(
                     primaryContainerId,
                     primaryIconId,
                     primaryTextId,
-                    R.drawable.ic_open_in_new_24,
+                    R.drawable.ic_open_notification_action,
                     tr(R.string.mo_tracking_notification_action_open),
                     buildNotificationContentIntent(17)
             );
@@ -1447,9 +1471,9 @@ private void bindNotificationButtons(
                     secondaryContainerId,
                     secondaryIconId,
                     secondaryTextId,
-                    R.drawable.ic_stop_24,
+                    R.drawable.ic_stop_notification_action,
                     tr(R.string.mo_tracking_notification_action_finish),
-                    buildServiceActionPendingIntent(ACTION_NOTIFICATION_FINISH, 18)
+                    buildStopConfirmationPendingIntent(18)
             );
             break;
     }
@@ -1464,7 +1488,9 @@ private void bindNotificationButton(
         @NonNull String label,
         @NonNull PendingIntent pendingIntent
 ) {
-    views.setImageViewResource(iconId, iconResId);
+            // Los iconos de acciones en RemoteViews deben resolverse por recurso
+        // (base y -night) para que claro/oscuro funcionen en todos los fabricantes.
+        views.setImageViewResource(iconId, iconResId);
     views.setTextViewText(textId, label);
     views.setOnClickPendingIntent(containerId, pendingIntent);
     views.setOnClickPendingIntent(iconId, pendingIntent);
@@ -1481,6 +1507,30 @@ private PendingIntent buildNotificationContentIntent(int requestCode) {
             tapIntent,
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
     );
+}
+
+/**
+ * Construye la acción "Detener" de la notificación para abrir la app y mostrar
+ * el mismo diálogo Guardar / Cancelar / Descartar que existe en Inicio.
+ */
+@NonNull
+private PendingIntent buildStopConfirmationPendingIntent(int requestCode) {
+    Intent intent = MainActivity.createLaunchIntentToShowTrackingStopDialog(this);
+    return PendingIntent.getActivity(
+            this,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+    );
+}
+
+/**
+ * Compatibilidad defensiva para notificaciones antiguas que todavía apunten a la
+ * acción de servicio de "Detener". En vez de cerrar en seco, reenviamos a la app.
+ */
+private void openAppForStopConfirmation() {
+    Intent intent = MainActivity.createLaunchIntentToShowTrackingStopDialog(this);
+    startActivity(intent);
 }
 
 @NonNull

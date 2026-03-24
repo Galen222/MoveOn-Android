@@ -22,7 +22,7 @@
             android:layout_height="18dp"
             android:contentDescription="@null"
             android:scaleType="fitCenter"
-            app:tint="@color/textPrimary" />
+            />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -253,7 +253,7 @@
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:contentDescription="@null"
-                app:tint="@color/textOnGreen" />
+                />
 
             <TextView
                 android:id="@+id/tv_action_primary"
@@ -282,7 +282,7 @@
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:contentDescription="@null"
-                app:tint="@color/textPrimary" />
+                />
 
             <TextView
                 android:id="@+id/tv_action_secondary"
@@ -295,4 +295,3 @@
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
-

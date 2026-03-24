@@ -229,10 +229,22 @@ public class InicioFragment extends Fragment
 
     /**
      * Deshabilita la capa {@code MyLocation} de forma segura.
+     *
+     * <p>Algunos analizadores estáticos exigen tratar esta llamada como protegida por
+     * permiso incluso cuando se usa para desactivar la capa. Además, en ciertos cambios
+     * de estado del fragment la API de Maps puede lanzar {@link SecurityException} si el
+     * permiso acaba de revocarse. Por eso la encapsulamos en un bloque defensivo.</p>
      */
     private void disableMapMyLocation() {
-        if (googleMap != null) {
+        if (googleMap == null) {
+            return;
+        }
+
+        try {
             googleMap.setMyLocationEnabled(false);
+        } catch (SecurityException ignored) {
+            // Si el permiso se ha revocado mientras el mapa sigue vivo,
+            // simplemente dejamos la capa deshabilitada y evitamos que la UI reviente.
         }
     }
 
@@ -297,6 +309,26 @@ public class InicioFragment extends Fragment
 
         stopDialog.setOnDismissListener(dialog -> stopDialog = null);
         stopDialog.show();
+    }
+
+    /**
+     * Punto de entrada usado por acciones externas (por ejemplo, la notificación)
+     * para abrir el mismo diálogo de detener que se muestra al pulsar el botón en pantalla.
+     *
+     * <p>No duplica ninguna lógica de guardado o descarte: simplemente reenruta hacia
+     * {@link #onStopClicked()} cuando el fragment y su vista están listos.</p>
+     */
+    public void requestStopDialogFromExternalAction() {
+        if (!isAdded() || binding == null) {
+            return;
+        }
+
+        binding.getRoot().post(() -> {
+            if (!isAdded() || binding == null) {
+                return;
+            }
+            onStopClicked();
+        });
     }
 
     private void onResetClicked() {

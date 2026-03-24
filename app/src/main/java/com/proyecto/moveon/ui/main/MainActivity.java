@@ -1,11 +1,13 @@
 package com.proyecto.moveon.ui.main;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
 import androidx.fragment.app.Fragment;
@@ -37,6 +39,12 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG_INICIO  = "tab_inicio";
     private static final String TAG_STATS   = "tab_stats";
     private static final String TAG_PROFILE = "tab_profile";
+    /**
+     * Extra pública usada por la notificación de tracking para pedir a la actividad
+     * principal que abra Inicio y muestre el mismo diálogo de detener que existe en pantalla.
+     */
+    public static final String EXTRA_SHOW_TRACKING_STOP_DIALOG =
+            "com.proyecto.moveon.extra.SHOW_TRACKING_STOP_DIALOG";
 
     private ActivityMainBinding binding;
     private FragmentManager fragmentManager;
@@ -49,6 +57,22 @@ public class MainActivity extends AppCompatActivity {
     private MainViewModel viewModel;
     private boolean keepSystemSplashVisible = false;
     private boolean pendingUiTransitionSplash = false;
+
+    /**
+     * Construye un intent listo para abrir la app en primer plano y pedir el flujo
+     * de confirmación de parada (Guardar / Cancelar / Descartar).
+     */
+    @NonNull
+    public static Intent createLaunchIntentToShowTrackingStopDialog(@NonNull Context context) {
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.setFlags(
+                Intent.FLAG_ACTIVITY_SINGLE_TOP
+                        | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        | Intent.FLAG_ACTIVITY_NEW_TASK
+        );
+        intent.putExtra(EXTRA_SHOW_TRACKING_STOP_DIALOG, true);
+        return intent;
+    }
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -175,6 +199,15 @@ public class MainActivity extends AppCompatActivity {
         } else {
             keepSystemSplashVisible = false;
         }
+
+        handleLaunchIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleLaunchIntent(intent);
     }
 
     public void showUiTransitionSplashNow() {
@@ -182,6 +215,60 @@ public class MainActivity extends AppCompatActivity {
         binding.transitionSplashOverlay.animate().cancel();
         binding.transitionSplashOverlay.setAlpha(1f);
         binding.transitionSplashOverlay.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Consume intents externos que piden abrir Inicio y mostrar el diálogo de parada.
+     *
+     * <p>Se usa desde la acción "Detener" de la notificación para reutilizar exactamente
+     * la misma lógica que ya existe en {@link InicioFragment}, evitando finalizar la sesión
+     * por un camino distinto al de la UI principal.</p>
+     */
+    private void handleLaunchIntent(@Nullable Intent intent) {
+        if (intent == null || !intent.getBooleanExtra(EXTRA_SHOW_TRACKING_STOP_DIALOG, false)) {
+            return;
+        }
+
+        intent.removeExtra(EXTRA_SHOW_TRACKING_STOP_DIALOG);
+        openInicioAndRequestStopDialog();
+    }
+
+    /**
+     * Lleva al usuario a la pestaña Inicio y delega allí la apertura del modal de stop.
+     */
+    private void openInicioAndRequestStopDialog() {
+        if (binding == null || fragmentManager == null) {
+            return;
+        }
+
+        if (selectedItemId != R.id.nav_inicio) {
+            binding.bottomNavigation.setSelectedItemId(R.id.nav_inicio);
+        } else {
+            switchTo(R.id.nav_inicio);
+        }
+
+        binding.getRoot().post(() -> {
+            if (fragmentManager == null || isFinishing()) {
+                return;
+            }
+            fragmentManager.executePendingTransactions();
+            InicioFragment fragment = resolveInicioFragment();
+            if (fragment != null) {
+                fragment.requestStopDialogFromExternalAction();
+            }
+        });
+    }
+
+    @Nullable
+    private InicioFragment resolveInicioFragment() {
+        if (inicioFragment != null) {
+            return inicioFragment;
+        }
+        Fragment fragment = fragmentManager.findFragmentByTag(TAG_INICIO);
+        if (fragment instanceof InicioFragment) {
+            inicioFragment = (InicioFragment) fragment;
+        }
+        return inicioFragment;
     }
 
     private void hideUiTransitionSplashWhenReady() {
