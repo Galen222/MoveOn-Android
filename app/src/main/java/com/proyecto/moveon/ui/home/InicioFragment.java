@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.home;
 
 import android.content.Intent;
@@ -7,6 +8,7 @@ import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -288,12 +290,19 @@ public class InicioFragment extends Fragment
             return;
         }
 
+        final boolean canSave = viewModel.canSaveTracking(state);
+        String dialogMessage = getString(R.string.tracking_dialog_stop_message);
+        String cannotSaveReason = viewModel.getCannotSaveReason(state);
+        if (!canSave && cannotSaveReason != null) {
+            dialogMessage = dialogMessage + "\n\n" + cannotSaveReason;
+        }
+
         // Orden visual esperado en Android (izquierda a derecha):
         // negativo = Descartar, neutral = Cancelar, positivo = Guardar.
         // Así la acción destructiva queda a la izquierda y la CTA principal a la derecha.
         stopDialog = new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.tracking_dialog_stop_title)
-                .setMessage(R.string.tracking_dialog_stop_message)
+                .setMessage(dialogMessage)
                 .setPositiveButton(R.string.tracking_dialog_stop_confirm,
                         (d, w) -> viewModel.stopAndSave())
                 .setNeutralButton(R.string.tracking_dialog_stop_cancel,
@@ -307,6 +316,19 @@ public class InicioFragment extends Fragment
                 })
                 .create();
 
+        stopDialog.setOnShowListener(dialog -> {
+            if (stopDialog == null) {
+                return;
+            }
+
+            Button saveButton = stopDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            if (saveButton == null) {
+                return;
+            }
+
+            saveButton.setEnabled(canSave);
+            saveButton.setAlpha(canSave ? 1.0f : 0.5f);
+        });
         stopDialog.setOnDismissListener(dialog -> stopDialog = null);
         stopDialog.show();
     }
@@ -721,7 +743,15 @@ public class InicioFragment extends Fragment
 
     @Override
     public void onSecondaryAction(@NonNull TrackingAlert.Type type) {
-        // "Finalizar" o "Guardar".
+        if (type == TrackingAlert.Type.STATIONARY_AUTO_PAUSE) {
+            // En auto-pausa por parada, "Finalizar" debe seguir exactamente
+            // el mismo flujo que el botón principal de stop.
+            onStopClicked();
+            return;
+        }
+
+        // En velocidad sospechosa mantenemos la acción directa de guardado,
+        // ya que el botón secundario se presenta explícitamente como "Guardar".
         viewModel.stopAndSave();
     }
 

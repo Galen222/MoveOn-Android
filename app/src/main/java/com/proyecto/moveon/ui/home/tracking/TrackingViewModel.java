@@ -1,8 +1,10 @@
+
 package com.proyecto.moveon.ui.home.tracking;
 
 import android.app.Application;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
@@ -118,7 +120,7 @@ public final class TrackingViewModel extends AndroidViewModel {
         TrackingState current = trackingState.getValue();
         trackingController.stopTracking();
 
-        if (current == null || current.getDistanceMeters() <= 0 || current.getMovingSeconds() <= 0) {
+        if (!canSaveTracking(current)) {
             trackingController.resetTracking();
             return;
         }
@@ -127,11 +129,58 @@ public final class TrackingViewModel extends AndroidViewModel {
     }
 
     /**
+     * Indica si una sesión concreta cumple los mínimos para persistirse.
+     *
+     * <p>La UI del diálogo de stop debe consultar este mismo criterio para no ofrecer
+     * una acción de guardado que en realidad terminaría descartando la sesión.</p>
+     */
+    public boolean canSaveTracking(@Nullable TrackingState state) {
+        return hasValidDistance(state) && hasValidMovingDuration(state);
+    }
+
+    /**
+     * Devuelve el motivo visible por el que una sesión no puede guardarse.
+     *
+     * <p>Cuando la sesión sí es válida devuelve {@code null} para que la UI no muestre
+     * texto extra en el diálogo.</p>
+     */
+    @Nullable
+    public String getCannotSaveReason(@Nullable TrackingState state) {
+        boolean invalidDistance = !hasValidDistance(state);
+        boolean invalidMovingDuration = !hasValidMovingDuration(state);
+
+        if (!invalidDistance && !invalidMovingDuration) {
+            return null;
+        }
+
+        if (invalidDistance && invalidMovingDuration) {
+            return getApplication().getString(
+                    R.string.tracking_dialog_stop_cannot_save_distance_and_moving_time);
+        }
+
+        if (invalidDistance) {
+            return getApplication().getString(
+                    R.string.tracking_dialog_stop_cannot_save_distance);
+        }
+
+        return getApplication().getString(
+                R.string.tracking_dialog_stop_cannot_save_moving_time);
+    }
+
+    /**
      * Devuelve {@code true} si la UI debe tratar la sesión como abierta.
      */
     public boolean isTrackingActive() {
         TrackingState state = trackingState.getValue();
         return state != null && state.isActive();
+    }
+
+    private boolean hasValidDistance(@Nullable TrackingState state) {
+        return state != null && state.getDistanceMeters() > 0;
+    }
+
+    private boolean hasValidMovingDuration(@Nullable TrackingState state) {
+        return state != null && state.getMovingSeconds() > 0;
     }
 
     private void loadUserWeight() {

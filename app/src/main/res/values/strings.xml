@@ -606,4 +606,10 @@
     <string name="stats_section_monthly">Mensual</string>
     <string name="stats_section_full_history">Completo</string>
     <string name="stats_desc_month_chart">Gráfico mensual por semanas</string>
+
+    <!-- Validación contextual del diálogo de stop -->
+    <string name="tracking_dialog_stop_cannot_save_distance_and_moving_time">La actividad no se puede guardar porque no hay distancia recorrida ni tiempo en movimiento.</string>
+    <string name="tracking_dialog_stop_cannot_save_distance">La actividad no se puede guardar porque no hay distancia recorrida.</string>
+    <string name="tracking_dialog_stop_cannot_save_moving_time">La actividad no se puede guardar porque no hay tiempo en movimiento.</string>
+
 </resources>

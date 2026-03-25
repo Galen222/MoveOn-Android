@@ -981,7 +981,7 @@
                 app:backgroundTint="@android:color/transparent" />
             <!-- ══════════════════════════════════════════════
                  ENLACE DISCRETO: ELIMINAR CUENTA
-                 ══════════════════════════════════════════════ -->
+                 ═════════════════════════════════════════════ -->
             <TextView
                 android:id="@+id/tv_delete_account"
                 android:layout_width="wrap_content"
@@ -991,10 +991,12 @@
                 android:layout_marginBottom="8dp"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="8dp"
+                android:clickable="true"
+                android:focusable="true"
                 android:text="@string/profile_btn_delete_account"
-                android:textSize="13sp"
+                android:textSize="14sp"
                 android:textColor="@color/textTertiary"
-                android:fontFamily="sans-serif"
+                android:fontFamily="sans-serif-medium"
                 android:background="?attr/selectableItemBackgroundBorderless" />
         </LinearLayout>
     </ScrollView>

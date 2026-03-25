@@ -424,4 +424,10 @@
     <string name="stats_section_monthly">Monthly</string>
     <string name="stats_section_full_history">Complete</string>
     <string name="stats_desc_month_chart">Monthly chart by weeks</string>
+
+    <!-- Stop dialog contextual validation -->
+    <string name="tracking_dialog_stop_cannot_save_distance_and_moving_time">The activity cannot be saved because there is no distance covered or moving time.</string>
+    <string name="tracking_dialog_stop_cannot_save_distance">The activity cannot be saved because there is no distance covered.</string>
+    <string name="tracking_dialog_stop_cannot_save_moving_time">The activity cannot be saved because there is no moving time.</string>
+
 </resources>
