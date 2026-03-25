@@ -82,8 +82,9 @@ public class RouteImageFullscreenDialogFragment extends DialogFragment {
         if (window == null) return;
 
         window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        // Igualamos el fondo del diálogo ampliado al mismo gris de la tarjeta que rodea la imagen.
         window.setBackgroundDrawable(new ColorDrawable(
-                ContextCompat.getColor(requireContext(), R.color.surfaceBackground)
+                ContextCompat.getColor(requireContext(), R.color.cardBackground)
         ));
         window.getDecorView().setPadding(0, 0, 0, 0);
     }

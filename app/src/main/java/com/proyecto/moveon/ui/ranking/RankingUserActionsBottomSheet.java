@@ -2,9 +2,12 @@ package com.proyecto.moveon.ui.ranking;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.InsetDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewParent;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -216,7 +219,6 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
             return;
         }
 
-
         reportDialogBinding = DialogReportRankingUserBinding.inflate(
                 LayoutInflater.from(requireContext())
         );
@@ -237,16 +239,13 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
                 .create();
 
         dialog.setOnShowListener(d -> {
+            // Primero limpiamos la fila de botones para que el sistema no deje una franja gris
+            // detrás del botón cancelar. Después reaplicamos los estilos de ambos botones.
+            styleReportDialogButtons(dialog);
+
             Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            Button negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-
             if (positive != null) {
-                stylePositiveDialogButton(positive);
                 positive.setOnClickListener(v -> submitReport());
-            }
-
-            if (negative != null) {
-                negative.setTextColor(ContextCompat.getColor(requireContext(), R.color.textSecondary));
             }
 
             // El estado inicial del botón depende de si ya hay alguna causa marcada.
@@ -323,19 +322,125 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
     }
 
     /**
+     * Aplica de forma centralizada el estilo visual de la botonera del diálogo de reporte.
+     *
+     * <p>Se limpia primero el fondo del panel inferior del {@link AlertDialog} para evitar que
+     * Android dibuje una franja gris completa detrás del botón cancelar. Después se estilizan
+     * ambos botones de forma explícita.</p>
+     *
+     * @param dialog diálogo de reporte ya visible.
+     */
+    private void styleReportDialogButtons(@NonNull AlertDialog dialog) {
+        clearReportDialogButtonPanelBackground(dialog);
+
+        Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        if (positive != null) {
+            stylePositiveDialogButton(positive);
+        }
+
+        Button negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+        if (negative != null) {
+            styleNegativeDialogButton(negative);
+        }
+    }
+
+    /**
+     * Limpia el fondo de la franja inferior del diálogo para que no "contamine" visualmente
+     * al botón cancelar en modo claro.
+     *
+     * <p>En algunos dispositivos el {@link AlertDialog} mantiene un panel inferior con color
+     * propio. Si el botón cancelar lleva un borde gris fino, ese panel puede hacer que parezca
+     * que toda la zona está rellena de gris. Por eso se fuerza el mismo blanco del modal tanto
+     * en el panel principal como en varios contenedores ancestros de la botonera.</p>
+     *
+     * @param dialog diálogo de reporte ya mostrado.
+     */
+    private void clearReportDialogButtonPanelBackground(@NonNull AlertDialog dialog) {
+        int panelColor = ContextCompat.getColor(requireContext(), R.color.surfaceBackground);
+
+        View buttonPanel = dialog.findViewById(androidx.appcompat.R.id.buttonPanel);
+        if (buttonPanel != null) {
+            buttonPanel.setBackgroundColor(panelColor);
+        }
+
+        View parentPanel = dialog.findViewById(androidx.appcompat.R.id.parentPanel);
+        if (parentPanel != null) {
+            parentPanel.setBackgroundColor(panelColor);
+        }
+
+        clearButtonAncestorsBackground(dialog.getButton(AlertDialog.BUTTON_POSITIVE), panelColor, 3);
+        clearButtonAncestorsBackground(dialog.getButton(AlertDialog.BUTTON_NEGATIVE), panelColor, 3);
+    }
+
+    /**
+     * Fuerza el mismo fondo blanco del modal en varios padres inmediatos del botón.
+     *
+     * @param button botón desde el que empezar a recorrer la jerarquía.
+     * @param color color a aplicar a los contenedores.
+     * @param maxLevels número máximo de ancestros a recorrer.
+     */
+    private void clearButtonAncestorsBackground(@Nullable Button button, int color, int maxLevels) {
+        if (button == null) return;
+
+        ViewParent parent = button.getParent();
+        int level = 0;
+
+        while (parent instanceof View && level < maxLevels) {
+            ((View) parent).setBackgroundColor(color);
+            parent = parent.getParent();
+            level++;
+        }
+    }
+
+    /**
      * Aplica el aspecto del botón principal del diálogo de reporte.
      *
-     * <p>Se fuerza fondo {@code greenPrimary} y texto {@code textOnGreen} para que el botón
-     * positivo tenga el mismo lenguaje visual que el resto de acciones primarias de la app.</p>
+     * <p>Se mantiene el relleno verde de la acción principal y se añade un borde negro fino,
+     * tal y como pediste, para reforzar visualmente el contorno del botón aceptar.</p>
      *
      * @param button botón positivo del diálogo.
      */
     private void stylePositiveDialogButton(@NonNull Button button) {
         int backgroundColor = ContextCompat.getColor(requireContext(), R.color.greenPrimary);
+        int strokeColor = ContextCompat.getColor(requireContext(), android.R.color.black);
         int textColor = ContextCompat.getColor(requireContext(), R.color.textOnGreen);
 
-        button.setBackgroundTintList(ColorStateList.valueOf(backgroundColor));
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setColor(backgroundColor);
+        drawable.setCornerRadius(dpToPx(12));
+        drawable.setStroke(dpToPx(1), strokeColor);
+
+        button.setBackground(new InsetDrawable(drawable, 0));
+        button.setBackgroundTintList((ColorStateList) null);
         button.setTextColor(textColor);
+        button.setAllCaps(false);
+    }
+
+    /**
+     * Aplica al botón cancelar un outlined real, con relleno blanco y borde gris fino.
+     *
+     * <p>El relleno blanco evita que, si el panel inferior del diálogo intenta pintar su propio
+     * color, visualmente parezca que el botón ocupa toda la banda inferior. Así el usuario ve
+     * un botón claro con contorno gris, no una franja gris completa.</p>
+     *
+     * @param button botón negativo del diálogo.
+     */
+    private void styleNegativeDialogButton(@NonNull Button button) {
+        int backgroundColor = ContextCompat.getColor(requireContext(), R.color.surfaceBackground);
+        int strokeColor = ContextCompat.getColor(requireContext(), R.color.dividerColor);
+        int textColor = ContextCompat.getColor(requireContext(), R.color.textPrimary);
+
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setColor(backgroundColor);
+        drawable.setCornerRadius(dpToPx(12));
+        drawable.setStroke(dpToPx(1), strokeColor);
+
+        button.setBackground(new InsetDrawable(drawable, 0));
+        button.setBackgroundTintList((ColorStateList) null);
+        button.setTextColor(textColor);
+        button.setAllCaps(false);
     }
 
     /**
@@ -347,6 +452,10 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
         DialogReportRankingUserBinding b = reportDialogBinding;
         AlertDialog dialog = reportDialog;
         if (b == null || dialog == null) return;
+
+        // Reaplicamos siempre el estilo porque algunos temas de AlertDialog vuelven a pintar
+        // la botonera al cambiar enabled/disabled y podrían perder el borde del cancelar.
+        styleReportDialogButtons(dialog);
 
         Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
         if (positive == null) return;
@@ -472,6 +581,10 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
 
             if (negative != null) {
                 negative.setEnabled(!loading);
+                // Reaplicamos también el outlined aquí porque algunos OEM lo resetean al
+                // alternar el estado enabled/disabled del botón negativo.
+                styleNegativeDialogButton(negative);
+                negative.setAlpha(loading ? 0.5f : 1f);
             }
 
             reportDialog.setCancelable(!loading);

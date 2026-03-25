@@ -16,6 +16,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/cardBackground"
         android:orientation="vertical">
 
         <!-- ── Cabecera: siempre visible ── -->
@@ -25,7 +26,8 @@
             android:layout_height="wrap_content"
             android:paddingHorizontal="12dp"
             android:paddingVertical="@dimen/stats_item_padding_vertical"
-            android:background="?attr/selectableItemBackground"
+            android:background="@color/cardBackground"
+            android:foreground="?attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true">
 
@@ -162,6 +164,7 @@
             android:id="@+id/layout_details"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/cardBackground"
             android:orientation="vertical"
             android:paddingHorizontal="12dp"
             android:paddingTop="10dp"

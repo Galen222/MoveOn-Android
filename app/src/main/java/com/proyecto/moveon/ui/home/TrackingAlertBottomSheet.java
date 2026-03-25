@@ -1,6 +1,8 @@
 package com.proyecto.moveon.ui.home;
 
 import android.os.Bundle;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,6 +10,10 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import androidx.core.content.ContextCompat;
+
+import com.google.android.material.button.MaterialButton;
+import com.proyecto.moveon.R;
 import com.proyecto.moveon.databinding.BottomSheetTrackingAlertBinding;
 import com.proyecto.moveon.utils.StringUtils;
 import com.proyecto.moveon.ui.common.BaseExpandedBottomSheetDialogFragment;
@@ -95,6 +101,13 @@ public final class TrackingAlertBottomSheet extends BaseExpandedBottomSheetDialo
             binding.btnTertiary.setVisibility(View.GONE);
         }
 
+        if (type == TrackingAlert.Type.STATIONARY_AUTO_PAUSE) {
+            styleOutlinedActionButton(binding.btnSecondary);
+            if (binding.btnTertiary.getVisibility() == View.VISIBLE) {
+                styleOutlinedActionButton(binding.btnTertiary);
+            }
+        }
+
         binding.btnPrimary.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onPrimaryAction(type);
@@ -117,10 +130,30 @@ public final class TrackingAlertBottomSheet extends BaseExpandedBottomSheetDialo
         });
     }
 
+    /**
+     * Replica el borde outlined del botón "Cerrar" del ranking en acciones secundarias.
+     */
+    private void styleOutlinedActionButton(@NonNull MaterialButton button) {
+        int strokeColor = ContextCompat.getColor(requireContext(), R.color.dividerColor);
+        int textColor = ContextCompat.getColor(requireContext(), R.color.textPrimary);
+
+        button.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+        button.setStrokeColor(ColorStateList.valueOf(strokeColor));
+        button.setStrokeWidth(dpToPx(1));
+        button.setCornerRadius(dpToPx(12));
+        button.setTextColor(textColor);
+        button.setInsetTop(0);
+        button.setInsetBottom(0);
+    }
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
     @Override
     public void onDestroyView() {
         binding = null;
         super.onDestroyView();
     }
 }
-
