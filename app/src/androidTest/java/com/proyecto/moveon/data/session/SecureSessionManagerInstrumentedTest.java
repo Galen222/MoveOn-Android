@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.data.session;
 
 import static org.junit.Assert.assertEquals;
@@ -20,6 +19,12 @@ import org.junit.runner.RunWith;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Tests instrumentados de {@link SecureSessionManager}.
+ *
+ * <p>Se validan especialmente los caminos críticos de autenticación:
+ * login, rotación de tokens y recuperación de metadatos derivados.</p>
+ */
 @RunWith(AndroidJUnit4.class)
 public class SecureSessionManagerInstrumentedTest {
 
@@ -62,12 +67,34 @@ public class SecureSessionManagerInstrumentedTest {
         assertEquals("uid_987", manager.getAccountKey());
     }
 
-
     @Test
     public void updateTokens_preservesUsernameAndRefreshesDerivedIdentity() {
         manager.saveLogin("alice", fakeJwtWithSub("111"), "refresh_old");
 
         manager.updateTokens(fakeJwtWithSub("222"), "refresh_new");
+
+        assertTrue(manager.isLoggedIn());
+        assertEquals("alice", manager.getUsername());
+        assertEquals("222", manager.getUserId());
+        assertEquals("uid_222", manager.getAccountKey());
+        assertEquals("refresh_new", manager.getRefreshToken());
+    }
+
+    @Test
+    public void saveLoginSync_publishesTokensImmediatelyForConcurrentReaders() {
+        manager.saveLoginSync("alice", fakeJwtWithSub("321"), "refresh_rotated");
+
+        assertTrue(manager.isLoggedIn());
+        assertEquals("alice", manager.getUsername());
+        assertEquals("321", manager.getUserId());
+        assertEquals("refresh_rotated", manager.getRefreshToken());
+    }
+
+    @Test
+    public void updateTokensSync_preservesUsernameAndRotatesRefreshTokenImmediately() {
+        manager.saveLogin("alice", fakeJwtWithSub("111"), "refresh_old");
+
+        manager.updateTokensSync(fakeJwtWithSub("222"), "refresh_new");
 
         assertTrue(manager.isLoggedIn());
         assertEquals("alice", manager.getUsername());
@@ -100,9 +127,15 @@ public class SecureSessionManagerInstrumentedTest {
         return (String) field.get(null);
     }
 
+    /**
+     * Genera un JWT sintético con {@code sub} y {@code exp}, que son los campos
+     * mínimos exigidos por {@link SecureSessionManager} para considerar válido
+     * el payload de sesión.
+     */
     private static String fakeJwtWithSub(String sub) {
+        long expEpochSeconds = (System.currentTimeMillis() / 1000L) + 3600L;
         String header = base64Url("{\"alg\":\"none\",\"typ\":\"JWT\"}");
-        String payload = base64Url("{\"sub\":\"" + sub + "\"}");
+        String payload = base64Url("{\"sub\":\"" + sub + "\",\"exp\":" + expEpochSeconds + "}");
         return header + "." + payload + ".signature";
     }
 
@@ -113,4 +146,3 @@ public class SecureSessionManagerInstrumentedTest {
         );
     }
 }
-

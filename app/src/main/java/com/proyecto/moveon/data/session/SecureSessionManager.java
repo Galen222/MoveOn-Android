@@ -21,6 +21,21 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
+/**
+ * Gestor centralizado de la sesión autenticada del usuario.
+ *
+ * <p>Responsabilidades principales:</p>
+ * <ul>
+ *     <li>Persistir usuario, access token y refresh token cifrados en {@link SharedPreferences}.</li>
+ *     <li>Derivar metadatos de sesión a partir del JWT, como el {@code userId}.</li>
+ *     <li>Exponer lecturas sincronizadas para que red, UI y repositorios vean un estado coherente.</li>
+ * </ul>
+ *
+ * <p>Importante para la rotación estricta de refresh tokens:
+ * cuando un refresh devuelve un nuevo par de tokens, el guardado debe poder hacerse
+ * de forma síncrona. Así evitamos que otro hilo lea el refresh antiguo justo después
+ * de un refresh exitoso y provoque una reutilización detectada por el backend.</p>
+ */
 public final class SecureSessionManager {
 
     private static final String PREF_NAME = "user_prefs_secure";
@@ -59,6 +74,12 @@ public final class SecureSessionManager {
         return instance;
     }
 
+    /**
+     * Foto inmutable del estado actual de sesión.
+     *
+     * <p>Se usa para leer acceso/refresh/identidad como un bloque coherente
+     * bajo el mismo lock, evitando combinaciones inconsistentes entre llamadas.</p>
+     */
     public static final class SessionSnapshot {
         @Nullable private final String username;
         @Nullable private final String accessToken;
@@ -106,18 +127,58 @@ public final class SecureSessionManager {
         this.prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
 
+    /**
+     * Guarda una sesión completa usando persistencia asíncrona.
+     *
+     * <p>Es apropiado para login interactivo y escrituras no críticas, donde la UI
+     * no depende de que el fichero se haya fsync-eado inmediatamente.</p>
+     */
     public void saveLogin(@Nullable String username,
                           @Nullable String accessToken,
                           @Nullable String refreshToken) {
         synchronized (sessionLock) {
-            saveLoginLocked(username, accessToken, refreshToken);
+            saveLoginLocked(username, accessToken, refreshToken, false);
         }
     }
 
+    /**
+     * Guarda una sesión completa forzando persistencia síncrona.
+     *
+     * <p>Debe usarse tras un refresh exitoso para publicar el nuevo refresh token
+     * antes de devolver el control al resto de hilos. Así reducimos al mínimo la
+     * ventana en la que otro flujo podría intentar reutilizar el refresh anterior.</p>
+     */
+    public void saveLoginSync(@Nullable String username,
+                              @Nullable String accessToken,
+                              @Nullable String refreshToken) {
+        synchronized (sessionLock) {
+            saveLoginLocked(username, accessToken, refreshToken, true);
+        }
+    }
+
+    /**
+     * Actualiza access/refresh preservando el usuario actual.
+     *
+     * <p>Persistencia asíncrona. Para el camino de refresh de red, preferir
+     * {@link #updateTokensSync(String, String)}.</p>
+     */
     public void updateTokens(@Nullable String accessToken, @Nullable String refreshToken) {
         synchronized (sessionLock) {
             String username = getDecryptedValueLocked(KEY_USERNAME_CT, KEY_USERNAME_IV);
-            saveLoginLocked(username, accessToken, refreshToken);
+            saveLoginLocked(username, accessToken, refreshToken, false);
+        }
+    }
+
+    /**
+     * Variante síncrona de {@link #updateTokens(String, String)}.
+     *
+     * <p>Útil cuando un flujo de autenticación necesita que los nuevos tokens queden
+     * visibles de inmediato para peticiones concurrentes.</p>
+     */
+    public void updateTokensSync(@Nullable String accessToken, @Nullable String refreshToken) {
+        synchronized (sessionLock) {
+            String username = getDecryptedValueLocked(KEY_USERNAME_CT, KEY_USERNAME_IV);
+            saveLoginLocked(username, accessToken, refreshToken, true);
         }
     }
 
@@ -202,9 +263,8 @@ public final class SecureSessionManager {
 
     public void logout() {
         synchronized (sessionLock) {
-            // BUG-N04: commit() en lugar de apply() para garantizar que los tokens
-            // se borran de disco antes de retornar. Si el proceso muere justo después,
-            // no quedarán tokens residuales en SharedPreferences.
+            // En logout sí queremos garantía dura: una vez retornamos no deben quedar
+            // restos de sesión pendientes de escribirse en disco.
             prefs.edit()
                     .remove(KEY_USERNAME_CT).remove(KEY_USERNAME_IV)
                     .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
@@ -216,7 +276,7 @@ public final class SecureSessionManager {
 
     public void clearAccessTokenOnly() {
         synchronized (sessionLock) {
-            // BUG-N04: commit() — misma razón que logout().
+            // Igual que en logout: el caller espera que el access desaparezca en el acto.
             prefs.edit()
                     .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
                     .commit();
@@ -279,9 +339,16 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Guarda usuario, access token, refresh token y metadatos derivados.
+     *
+     * @param persistSynchronously {@code true} para usar {@link SharedPreferences.Editor#commit()}
+     *                             y bloquear hasta que la escritura termine.
+     */
     private void saveLoginLocked(@Nullable String username,
                                  @Nullable String accessToken,
-                                 @Nullable String refreshToken) {
+                                 @Nullable String refreshToken,
+                                 boolean persistSynchronously) {
         try {
             SharedPreferences.Editor editor = prefs.edit();
             putEncrypted(editor, KEY_USERNAME_CT, KEY_USERNAME_IV, StringUtils.textOf(username));
@@ -295,7 +362,7 @@ public final class SecureSessionManager {
                 editor.remove(KEY_USER_ID_CT).remove(KEY_USER_ID_IV);
             }
 
-            editor.apply();
+            persistEditor(editor, persistSynchronously, "Error persistiendo sesión segura");
         } catch (Exception e) {
             throw new RuntimeException("Error guardando sesión segura", e);
         }
@@ -324,6 +391,7 @@ public final class SecureSessionManager {
             putEncrypted(editor, KEY_USER_ID_CT, KEY_USER_ID_IV, userId);
             editor.apply();
         } catch (Exception ignored) {
+            // No interrumpimos la lectura de sesión por un fallo no crítico de caché.
         }
     }
 
@@ -351,16 +419,16 @@ public final class SecureSessionManager {
 
         try {
             String[] parts = token.split("\\.");
-            // MEJ-06: Validación estructural del JWT.
-            // Un JWT válido tiene exactamente 3 segmentos: header.payload.signature.
-            // Con < 3 segmentos el token está malformado o manipulado.
+            // Validación estructural mínima del JWT.
+            // Solo aceptamos header.payload.signature para evitar payloads corruptos.
             if (parts.length != 3) return null;
 
             byte[] payloadBytes = Base64.decode(parts[1], Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
             String payloadJson = new String(payloadBytes, StandardCharsets.UTF_8);
             JSONObject payload = new JSONObject(payloadJson);
 
-            // Validar que el payload contenga los campos mínimos esperados.
+            // Para que la sesión sea utilizable necesitamos, como mínimo,
+            // la identidad (sub) y la expiración (exp).
             if (!payload.has("sub") || !payload.has("exp")) return null;
 
             return payload;
@@ -378,6 +446,12 @@ public final class SecureSessionManager {
         editor.putString(ivKey, enc.ivBase64);
     }
 
+    /**
+     * Lee y descifra un valor almacenado.
+     *
+     * <p>Si el material cifrado está corrupto, se limpia silenciosamente para que
+     * la siguiente lectura no vuelva a chocar contra el mismo dato inválido.</p>
+     */
     @Nullable
     private String getDecryptedValueLocked(String ctKey, String ivKey) {
         String ctBase64 = prefs.getString(ctKey, null);
@@ -389,6 +463,19 @@ public final class SecureSessionManager {
             prefs.edit().remove(ctKey).remove(ivKey).apply();
             return null;
         }
+    }
+
+    private void persistEditor(@NonNull SharedPreferences.Editor editor,
+                               boolean persistSynchronously,
+                               @NonNull String failureMessage) {
+        if (persistSynchronously) {
+            boolean committed = editor.commit();
+            if (!committed) {
+                throw new IllegalStateException(failureMessage);
+            }
+            return;
+        }
+        editor.apply();
     }
 
     private EncryptedValue encrypt(String plainText) throws Exception {
@@ -444,4 +531,3 @@ public final class SecureSessionManager {
         }
     }
 }
-

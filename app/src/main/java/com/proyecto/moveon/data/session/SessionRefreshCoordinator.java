@@ -19,11 +19,21 @@ import okhttp3.ResponseBody;
 import retrofit2.Response;
 
 /**
- * Coordinador único de refresh para toda la app.
+ * Coordinador único del refresh de sesión para toda la app.
  *
- * Dos disparadores distintos (proactivo al volver/arrancar y reactivo en 401)
- * pasan por este mismo motor para evitar reutilizar el mismo refresh token
- * en paralelo cuando el backend aplica rotación estricta.
+ * <p>Centraliza dos orígenes de renovación:</p>
+ * <ul>
+ *     <li>Refresh proactivo al volver a foreground.</li>
+ *     <li>Refresh reactivo cuando OkHttp recibe un 401 de un endpoint protegido.</li>
+ * </ul>
+ *
+ * <p>La meta es que, aunque haya varias peticiones compitiendo, solo exista un refresh
+ * real en vuelo y el resto de flujos reutilicen el resultado más reciente.</p>
+ *
+ * <p>Esta versión añade una mejora importante de testabilidad: la lógica de coordinación
+ * ya no depende rígidamente de Retrofit ni de {@link SecureSessionManager}. En producción
+ * se siguen usando ambos, pero internamente se adaptan a interfaces pequeñas para poder
+ * montar tests de concurrencia reales y baratos.</p>
  */
 public final class SessionRefreshCoordinator {
 
@@ -31,8 +41,8 @@ public final class SessionRefreshCoordinator {
 
     private static volatile SessionRefreshCoordinator instance;
 
-    private final Context appContext;
-    private final SecureSessionManager sessionManager;
+    private final SessionStore sessionStore;
+    private final RefreshBackend refreshBackend;
     private final Object monitor = new Object();
 
     private boolean refreshInFlight = false;
@@ -43,6 +53,36 @@ public final class SessionRefreshCoordinator {
         void onComplete(@NonNull RefreshOutcome outcome);
     }
 
+    /**
+     * Vista mínima y estable del almacenamiento de sesión.
+     *
+     * <p>La implementación de producción delega en {@link SecureSessionManager}, pero los tests
+     * pueden usar una implementación en memoria para simular carreras entre varios hilos.</p>
+     */
+    public interface SessionStore {
+        boolean isAccessTokenExpiringWithinSeconds(long leewaySeconds);
+
+        @NonNull
+        StoredSession getStoredSession();
+
+        void saveLoginSync(@Nullable String username,
+                           @Nullable String accessToken,
+                           @Nullable String refreshToken);
+
+        void logout();
+    }
+
+    /**
+     * Backend mínimo capaz de ejecutar {@code /token/refresh}.
+     *
+     * <p>Separarlo de Retrofit permite comprobar que dos 401 concurrentes terminan en una sola
+     * llamada real de refresh, que era el blindaje adicional que queríamos para el bug.</p>
+     */
+    public interface RefreshBackend {
+        @NonNull
+        BackendRefreshResult refresh(@NonNull String refreshToken) throws IOException;
+    }
+
     public enum Status {
         SUCCESS,
         SKIPPED,
@@ -50,6 +90,38 @@ public final class SessionRefreshCoordinator {
         TRANSIENT_ERROR
     }
 
+    /**
+     * Snapshot inmutable de sesión usado por el coordinador.
+     */
+    public static final class StoredSession {
+        @Nullable private final String username;
+        @Nullable private final String accessToken;
+        @Nullable private final String refreshToken;
+        @Nullable private final String userId;
+
+        public StoredSession(@Nullable String username,
+                             @Nullable String accessToken,
+                             @Nullable String refreshToken,
+                             @Nullable String userId) {
+            this.username = username;
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
+            this.userId = userId;
+        }
+
+        @Nullable public String getUsername() { return username; }
+        @Nullable public String getAccessToken() { return accessToken; }
+        @Nullable public String getRefreshToken() { return refreshToken; }
+        @Nullable public String getUserId() { return userId; }
+
+        public boolean hasRefreshToken() {
+            return StringUtils.hasText(refreshToken);
+        }
+    }
+
+    /**
+     * Resultado normalizado del intento de refresh.
+     */
     public static final class RefreshOutcome {
         @NonNull private final Status status;
         @Nullable private final String accessToken;
@@ -119,27 +191,112 @@ public final class SessionRefreshCoordinator {
         public boolean isTransientError() { return status == Status.TRANSIENT_ERROR; }
     }
 
+    /**
+     * Resultado crudo que devuelve el backend de refresh antes de adaptarlo a {@link RefreshOutcome}.
+     */
+    public static final class BackendRefreshResult {
+        private final boolean successful;
+        private final int httpCode;
+        @Nullable private final String accessToken;
+        @Nullable private final String refreshToken;
+        @Nullable private final String username;
+        @Nullable private final String retryAfter;
+        @Nullable private final String errorCode;
+        @Nullable private final String backendMessage;
+
+        private BackendRefreshResult(boolean successful,
+                                     int httpCode,
+                                     @Nullable String accessToken,
+                                     @Nullable String refreshToken,
+                                     @Nullable String username,
+                                     @Nullable String retryAfter,
+                                     @Nullable String errorCode,
+                                     @Nullable String backendMessage) {
+            this.successful = successful;
+            this.httpCode = httpCode;
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
+            this.username = username;
+            this.retryAfter = retryAfter;
+            this.errorCode = errorCode;
+            this.backendMessage = backendMessage;
+        }
+
+        @NonNull
+        public static BackendRefreshResult success(@NonNull String accessToken,
+                                                   @NonNull String refreshToken,
+                                                   @Nullable String username) {
+            return new BackendRefreshResult(true, 200, accessToken, refreshToken,
+                    username, null, null, null);
+        }
+
+        @NonNull
+        public static BackendRefreshResult failure(int httpCode,
+                                                   @Nullable String retryAfter,
+                                                   @Nullable String errorCode,
+                                                   @Nullable String backendMessage) {
+            return new BackendRefreshResult(false, httpCode, null, null,
+                    null, retryAfter, errorCode, backendMessage);
+        }
+
+        public boolean isSuccessful() { return successful; }
+        public int getHttpCode() { return httpCode; }
+        @Nullable public String getAccessToken() { return accessToken; }
+        @Nullable public String getRefreshToken() { return refreshToken; }
+        @Nullable public String getUsername() { return username; }
+        @Nullable public String getRetryAfter() { return retryAfter; }
+        @Nullable public String getErrorCode() { return errorCode; }
+        @Nullable public String getBackendMessage() { return backendMessage; }
+    }
+
     @NonNull
     public static SessionRefreshCoordinator getInstance(@NonNull Context context) {
         if (instance == null) {
             synchronized (SessionRefreshCoordinator.class) {
                 if (instance == null) {
-                    instance = new SessionRefreshCoordinator(context.getApplicationContext());
+                    Context appContext = context.getApplicationContext();
+                    SecureSessionManager sessionManager = SecureSessionManager.getInstance(appContext);
+                    instance = new SessionRefreshCoordinator(
+                            new SecureSessionStore(sessionManager),
+                            new RetrofitRefreshBackend(appContext)
+                    );
                 }
             }
         }
         return instance;
     }
 
-    private SessionRefreshCoordinator(@NonNull Context context) {
-        this.appContext = context.getApplicationContext();
-        this.sessionManager = SecureSessionManager.getInstance(this.appContext);
+    /**
+     * Fábrica orientada a tests.
+     *
+     * <p>Permite inyectar un almacén en memoria y un backend falso para verificar que,
+     * con dos 401 casi simultáneos, el coordinador hace un único refresh real.</p>
+     */
+    @NonNull
+    public static SessionRefreshCoordinator createForTests(@NonNull SessionStore sessionStore,
+                                                           @NonNull RefreshBackend refreshBackend) {
+        return new SessionRefreshCoordinator(sessionStore, refreshBackend);
     }
 
+    private SessionRefreshCoordinator(@NonNull SessionStore sessionStore,
+                                      @NonNull RefreshBackend refreshBackend) {
+        this.sessionStore = sessionStore;
+        this.refreshBackend = refreshBackend;
+    }
+
+    /**
+     * Indica si conviene renovar antes de que el token caduque del todo.
+     */
     public boolean shouldRefreshProactively() {
-        return sessionManager.isAccessTokenExpiringWithinSeconds(PROACTIVE_REFRESH_WINDOW_SECONDS);
+        return sessionStore.isAccessTokenExpiringWithinSeconds(PROACTIVE_REFRESH_WINDOW_SECONDS);
     }
 
+    /**
+     * Lanza un refresh en un hilo de trabajo.
+     *
+     * <p>Si otro refresh ya está en curso, este flujo quedará deduplicado
+     * por {@link #refreshBlocking(String, boolean)}.</p>
+     */
     public void ensureFreshSessionAsync(@NonNull Callback callback) {
         Thread worker = new Thread(() -> {
             RefreshOutcome outcome = refreshBlocking(null, false);
@@ -148,6 +305,15 @@ public final class SessionRefreshCoordinator {
         worker.start();
     }
 
+    /**
+     * Ejecuta o reutiliza un refresh de sesión.
+     *
+     * @param failedAuthorizationHeader cabecera Authorization del request que falló con 401.
+     *                                  Si ya existe una sesión más nueva en memoria, esta cabecera
+     *                                  permite detectarlo y reutilizarla sin volver a llamar al backend.
+     * @param forceRefresh              {@code true} cuando venimos de un 401 real y debemos intentar
+     *                                  renovar aunque no estemos aún dentro de la ventana proactiva.
+     */
     @NonNull
     public RefreshOutcome refreshBlocking(@Nullable String failedAuthorizationHeader,
                                           boolean forceRefresh) {
@@ -187,9 +353,9 @@ public final class SessionRefreshCoordinator {
             return RefreshOutcome.skipped();
         }
 
-        SecureSessionManager.SessionSnapshot snapshot = sessionManager.getSessionSnapshot();
+        StoredSession snapshot = sessionStore.getStoredSession();
         if (!snapshot.hasRefreshToken()) {
-            sessionManager.logout();
+            sessionStore.logout();
             return RefreshOutcome.unauthorized(401, null, "No refresh token available");
         }
 
@@ -198,7 +364,7 @@ public final class SessionRefreshCoordinator {
 
     @NonNull
     private RefreshOutcome buildOutcomeAfterWaitLocked(@Nullable String failedAuthorizationHeader,
-                                                        boolean forceRefresh) {
+                                                       boolean forceRefresh) {
         RefreshOutcome reused = tryReuseStoredSessionLocked(failedAuthorizationHeader);
         if (reused != null) {
             return reused;
@@ -215,7 +381,7 @@ public final class SessionRefreshCoordinator {
             }
         }
 
-        SecureSessionManager.SessionSnapshot snapshot = sessionManager.getSessionSnapshot();
+        StoredSession snapshot = sessionStore.getStoredSession();
         if (!snapshot.hasRefreshToken()) {
             return RefreshOutcome.unauthorized(401, null, "No refresh token available");
         }
@@ -225,8 +391,8 @@ public final class SessionRefreshCoordinator {
 
     @NonNull
     private RefreshOutcome adaptOutcomeForCallerLocked(@Nullable String failedAuthorizationHeader,
-                                                        boolean forceRefresh,
-                                                        @NonNull RefreshOutcome outcome) {
+                                                       boolean forceRefresh,
+                                                       @NonNull RefreshOutcome outcome) {
         RefreshOutcome reused = tryReuseStoredSessionLocked(failedAuthorizationHeader);
         if (reused != null) {
             return reused;
@@ -246,11 +412,15 @@ public final class SessionRefreshCoordinator {
         return outcome;
     }
 
+    /**
+     * Si el request que ha fallado llevaba un access token antiguo, devolvemos la sesión
+     * actualmente almacenada en vez de refrescar otra vez.
+     */
     @Nullable
     private RefreshOutcome tryReuseStoredSessionLocked(@Nullable String failedAuthorizationHeader) {
         if (!StringUtils.hasText(failedAuthorizationHeader)) return null;
 
-        SecureSessionManager.SessionSnapshot snapshot = sessionManager.getSessionSnapshot();
+        StoredSession snapshot = sessionStore.getStoredSession();
         String currentAccess = snapshot.getAccessToken();
         String currentRefresh = snapshot.getRefreshToken();
         if (!StringUtils.hasText(currentAccess) || !StringUtils.hasText(currentRefresh)) return null;
@@ -264,7 +434,7 @@ public final class SessionRefreshCoordinator {
 
     @Nullable
     private RefreshOutcome buildSuccessFromStoredSession() {
-        SecureSessionManager.SessionSnapshot snapshot = sessionManager.getSessionSnapshot();
+        StoredSession snapshot = sessionStore.getStoredSession();
         String currentAccess = snapshot.getAccessToken();
         String currentRefresh = snapshot.getRefreshToken();
         if (!StringUtils.hasText(currentAccess) || !StringUtils.hasText(currentRefresh)) {
@@ -284,50 +454,60 @@ public final class SessionRefreshCoordinator {
         }
     }
 
+    /**
+     * Realiza o reutiliza la llamada HTTP real a {@code /token/refresh}.
+     */
     @NonNull
     private RefreshOutcome executeRefreshNow() {
-        SecureSessionManager.SessionSnapshot snapshot = sessionManager.getSessionSnapshot();
+        StoredSession snapshot = sessionStore.getStoredSession();
         String refreshToken = snapshot.getRefreshToken();
         if (!StringUtils.hasText(refreshToken)) {
-            sessionManager.logout();
+            sessionStore.logout();
             return RefreshOutcome.unauthorized(401, null, "No refresh token available");
         }
 
         try {
-            Response<LoginResponseDto> refreshResp = RetrofitProvider.authApi(appContext)
-                    .refresh(new RefreshRequestDto(refreshToken))
-                    .execute();
+            BackendRefreshResult refreshResp = refreshBackend.refresh(refreshToken);
 
-            if (refreshResp.isSuccessful() && refreshResp.body() != null) {
-                LoginResponseDto body = refreshResp.body();
-                String newAccess = body.tokenAcceso;
-                String newRefresh = body.refreshToken;
+            if (refreshResp.isSuccessful()) {
+                String newAccess = refreshResp.getAccessToken();
+                String newRefresh = refreshResp.getRefreshToken();
 
                 if (!StringUtils.hasText(newAccess) || !StringUtils.hasText(newRefresh)) {
-                    sessionManager.logout();
+                    sessionStore.logout();
                     return RefreshOutcome.unauthorized(401, null, "Refresh response without valid tokens");
                 }
 
-                String username = StringUtils.hasText(body.nombreUsuario)
-                        ? body.nombreUsuario
+                String username = StringUtils.hasText(refreshResp.getUsername())
+                        ? refreshResp.getUsername()
                         : StringUtils.textOf(snapshot.getUsername());
 
-                sessionManager.saveLogin(username, newAccess, newRefresh);
+                // Punto crítico del bug:
+                // tras una rotación exitosa del refresh token, la publicación del nuevo
+                // par access/refresh debe ser síncrona para que ninguna petición tardía
+                // relea el refresh antiguo y provoque "reutilizacion_refresh_detectada".
+                sessionStore.saveLoginSync(username, newAccess, newRefresh);
                 return RefreshOutcome.success(newAccess, newRefresh);
             }
 
-            ParsedRefreshError parsed = parseError(refreshResp);
-            int code = refreshResp.code();
+            int code = refreshResp.getHttpCode();
             if (code == 401 || code == 403) {
-                sessionManager.logout();
-                return RefreshOutcome.unauthorized(code, parsed.errorCode, parsed.backendMessage);
+                sessionStore.logout();
+                return RefreshOutcome.unauthorized(code,
+                        refreshResp.getErrorCode(),
+                        refreshResp.getBackendMessage());
             }
 
             if (code == 429 || code >= 500) {
-                return RefreshOutcome.transientError(code, parsed.retryAfter, parsed.errorCode, parsed.backendMessage);
+                return RefreshOutcome.transientError(code,
+                        refreshResp.getRetryAfter(),
+                        refreshResp.getErrorCode(),
+                        refreshResp.getBackendMessage());
             }
 
-            return RefreshOutcome.unauthorized(code, parsed.errorCode, parsed.backendMessage);
+            return RefreshOutcome.unauthorized(code,
+                    refreshResp.getErrorCode(),
+                    refreshResp.getBackendMessage());
         } catch (IOException ioException) {
             return RefreshOutcome.transientError(0, null, null, ioException.getMessage());
         } catch (Exception e) {
@@ -335,66 +515,138 @@ public final class SessionRefreshCoordinator {
         }
     }
 
-    @NonNull
-    private ParsedRefreshError parseError(@NonNull Response<?> response) {
-        String retryAfter = response.headers().get("Retry-After");
-        ResponseBody errorBody = response.errorBody();
-        if (errorBody == null) {
-            return new ParsedRefreshError(retryAfter, null, null);
+    /**
+     * Adaptador de producción sobre {@link SecureSessionManager}.
+     */
+    private static final class SecureSessionStore implements SessionStore {
+        private final SecureSessionManager sessionManager;
+
+        private SecureSessionStore(@NonNull SecureSessionManager sessionManager) {
+            this.sessionManager = sessionManager;
         }
 
-        try {
-            String raw = errorBody.string();
-            if (!StringUtils.hasText(raw)) {
+        @Override
+        public boolean isAccessTokenExpiringWithinSeconds(long leewaySeconds) {
+            return sessionManager.isAccessTokenExpiringWithinSeconds(leewaySeconds);
+        }
+
+        @NonNull
+        @Override
+        public StoredSession getStoredSession() {
+            SecureSessionManager.SessionSnapshot snapshot = sessionManager.getSessionSnapshot();
+            return new StoredSession(
+                    snapshot.getUsername(),
+                    snapshot.getAccessToken(),
+                    snapshot.getRefreshToken(),
+                    snapshot.getUserId()
+            );
+        }
+
+        @Override
+        public void saveLoginSync(@Nullable String username,
+                                  @Nullable String accessToken,
+                                  @Nullable String refreshToken) {
+            sessionManager.saveLoginSync(username, accessToken, refreshToken);
+        }
+
+        @Override
+        public void logout() {
+            sessionManager.logout();
+        }
+    }
+
+    /**
+     * Adaptador de producción sobre Retrofit.
+     */
+    private static final class RetrofitRefreshBackend implements RefreshBackend {
+        private final Context appContext;
+
+        private RetrofitRefreshBackend(@NonNull Context appContext) {
+            this.appContext = appContext.getApplicationContext();
+        }
+
+        @NonNull
+        @Override
+        public BackendRefreshResult refresh(@NonNull String refreshToken) throws IOException {
+            Response<LoginResponseDto> refreshResp = RetrofitProvider.authApi(appContext)
+                    .refresh(new RefreshRequestDto(refreshToken))
+                    .execute();
+
+            if (refreshResp.isSuccessful() && refreshResp.body() != null) {
+                LoginResponseDto body = refreshResp.body();
+                return BackendRefreshResult.success(body.tokenAcceso, body.refreshToken, body.nombreUsuario);
+            }
+
+            ParsedRefreshError parsed = parseError(refreshResp);
+            return BackendRefreshResult.failure(
+                    refreshResp.code(),
+                    parsed.retryAfter,
+                    parsed.errorCode,
+                    parsed.backendMessage
+            );
+        }
+
+        @NonNull
+        private ParsedRefreshError parseError(@NonNull Response<?> response) {
+            String retryAfter = response.headers().get("Retry-After");
+            ResponseBody errorBody = response.errorBody();
+            if (errorBody == null) {
                 return new ParsedRefreshError(retryAfter, null, null);
             }
 
-            JsonElement root = JsonParser.parseString(raw);
-            if (root == null || !root.isJsonObject()) {
-                return new ParsedRefreshError(retryAfter, null, raw);
+            try {
+                String raw = errorBody.string();
+                if (!StringUtils.hasText(raw)) {
+                    return new ParsedRefreshError(retryAfter, null, null);
+                }
+
+                JsonElement root = JsonParser.parseString(raw);
+                if (root == null || !root.isJsonObject()) {
+                    return new ParsedRefreshError(retryAfter, null, raw);
+                }
+
+                JsonObject obj = root.getAsJsonObject();
+                String errorCode = getAsString(obj, "error_code");
+                String message = firstNonEmpty(
+                        getAsString(obj, "mensaje"),
+                        getAsString(obj, "message"),
+                        getAsString(obj, "error")
+                );
+
+                if (!StringUtils.hasText(message) && obj.has("detail")) {
+                    JsonElement detail = obj.get("detail");
+                    if (detail != null && detail.isJsonPrimitive()) {
+                        message = detail.getAsString();
+                    }
+                }
+
+                return new ParsedRefreshError(retryAfter, errorCode, message);
+            } catch (Exception ignored) {
+                return new ParsedRefreshError(retryAfter, null, null);
+            } finally {
+                errorBody.close();
             }
+        }
 
-            JsonObject obj = root.getAsJsonObject();
-            String errorCode = getAsString(obj, "error_code");
-            String message = firstNonEmpty(
-                    getAsString(obj, "mensaje"),
-                    getAsString(obj, "message"),
-                    getAsString(obj, "error")
-            );
+        @Nullable
+        private String getAsString(@NonNull JsonObject obj, @NonNull String key) {
+            if (!obj.has(key) || obj.get(key) == null || !obj.get(key).isJsonPrimitive()) {
+                return null;
+            }
+            String value = obj.get(key).getAsString();
+            return StringUtils.hasText(value) ? value : null;
+        }
 
-            if (!StringUtils.hasText(message) && obj.has("detail")) {
-                JsonElement detail = obj.get("detail");
-                if (detail != null && detail.isJsonPrimitive()) {
-                    message = detail.getAsString();
+        @Nullable
+        private String firstNonEmpty(@Nullable String... values) {
+            if (values == null) return null;
+            for (String value : values) {
+                if (StringUtils.hasText(value)) {
+                    return value;
                 }
             }
-
-            return new ParsedRefreshError(retryAfter, errorCode, message);
-        } catch (Exception ignored) {
-            return new ParsedRefreshError(retryAfter, null, null);
-        } finally {
-            errorBody.close();
-        }
-    }
-
-    @Nullable
-    private String getAsString(@NonNull JsonObject obj, @NonNull String key) {
-        if (!obj.has(key) || obj.get(key) == null || !obj.get(key).isJsonPrimitive()) {
             return null;
         }
-        String value = obj.get(key).getAsString();
-        return StringUtils.hasText(value) ? value : null;
-    }
-
-    @Nullable
-    private String firstNonEmpty(@Nullable String... values) {
-        if (values == null) return null;
-        for (String value : values) {
-            if (StringUtils.hasText(value)) {
-                return value;
-            }
-        }
-        return null;
     }
 
     private static final class ParsedRefreshError {

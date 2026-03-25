@@ -17,6 +17,14 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
 
+/**
+ * {@link Authenticator} de OkHttp para endpoints protegidos.
+ *
+ * <p>Cuando un endpoint protegido devuelve 401, este autenticador delega la renovación
+ * en {@link SessionRefreshCoordinator}. La clave es que el coordinador deduplica refreshes,
+ * de forma que varias respuestas 401 casi simultáneas no terminan en múltiples llamadas a
+ * {@code /token/refresh} con el mismo refresh token rotado.</p>
+ */
 public class TokenAuthenticator implements Authenticator {
 
     private static final HttpUrl TARGET_URL = HttpUrl.get(com.proyecto.moveon.BuildConfig.BASE_URL);
@@ -26,7 +34,17 @@ public class TokenAuthenticator implements Authenticator {
     private final SessionRefreshCoordinator sessionRefreshCoordinator;
 
     public TokenAuthenticator(Context context) {
-        this.sessionRefreshCoordinator = SessionRefreshCoordinator.getInstance(context.getApplicationContext());
+        this(SessionRefreshCoordinator.getInstance(context.getApplicationContext()));
+    }
+
+    /**
+     * Constructor adicional para tests.
+     *
+     * <p>Permite inyectar un coordinador con backend y almacenamiento falsos para validar
+     * escenarios de concurrencia de forma determinista.</p>
+     */
+    TokenAuthenticator(@NonNull SessionRefreshCoordinator sessionRefreshCoordinator) {
+        this.sessionRefreshCoordinator = sessionRefreshCoordinator;
     }
 
     @Nullable
@@ -71,6 +89,9 @@ public class TokenAuthenticator implements Authenticator {
         return result;
     }
 
+    /**
+     * Excepción checked que encapsula errores transitorios durante refresh.
+     */
     public static class RefreshFailedException extends IOException {
         private final int code;
         @Nullable private final String retryAfter;
