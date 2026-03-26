@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.stats;
 
 import android.content.Context;
@@ -34,8 +33,10 @@ import com.proyecto.moveon.ui.profile.ShareRoutePreviewBottomSheet;
 import com.proyecto.moveon.ui.ranking.RankingFragment;
 
 import java.time.LocalDate;
+import java.time.format.TextStyle;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Fragmento de estadísticas y resumen histórico del usuario.
@@ -164,9 +165,39 @@ public class StatsFragment extends Fragment {
     }
 
     private void bindCard5RecentActivity(@NonNull StatsResumen r) {
+        bindRecentActivityLabels();
         binding.tvTodayDistance.setText(formatDistance(r.todayDistanceMeters));
         binding.tvYesterdayDistance.setText(formatDistance(r.yesterdayDistanceMeters));
         binding.tvDay2Distance.setText(formatDistance(r.twoDaysAgoDistanceMeters));
+    }
+
+    private void bindRecentActivityLabels() {
+        if (binding == null) return;
+
+        final Locale locale = getAppLocale();
+        final LocalDate today = LocalDate.now();
+
+        binding.tvRecentDay0Label.setText(getString(R.string.stats_period_today));
+        binding.tvRecentDay1Label.setText(formatWeekdayLabel(today.minusDays(1), locale));
+        binding.tvRecentDay2Label.setText(formatWeekdayLabel(today.minusDays(2), locale));
+    }
+
+    @NonNull
+    private Locale getAppLocale() {
+        final Context localizedContext = AppLanguageManager.localizedContext(requireContext());
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            return localizedContext.getResources().getConfiguration().getLocales().get(0);
+        }
+        return localizedContext.getResources().getConfiguration().locale;
+    }
+
+    @NonNull
+    private String formatWeekdayLabel(@NonNull LocalDate date, @NonNull Locale locale) {
+        String label = date.getDayOfWeek().getDisplayName(TextStyle.FULL, locale);
+        if (label.isEmpty()) {
+            return label;
+        }
+        return label.substring(0, 1).toUpperCase(locale) + label.substring(1);
     }
 
     private void bindCard6MonthComparison(@NonNull StatsResumen r) {

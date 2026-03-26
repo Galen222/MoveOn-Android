@@ -188,7 +188,6 @@ public class ProfileFragment extends Fragment {
         final String notIndicated = getString(R.string.profile_not_indicated);
 
         binding.tvUserName.setText(perfil.nombreUsuario);
-        binding.tvUserEmail.setText(perfil.email);
         binding.tvUserPoints.setText(
                 getString(R.string.profile_puntos_formato, perfil.totalPuntos));
 

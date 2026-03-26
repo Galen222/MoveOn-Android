@@ -100,6 +100,7 @@
                         android:orientation="horizontal">
 
                         <TextView
+                            android:id="@+id/tv_recent_day0_label"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -125,6 +126,7 @@
                         android:orientation="horizontal">
 
                         <TextView
+                            android:id="@+id/tv_recent_day1_label"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -146,10 +148,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:baselineAligned="false"
-                        android:minHeight="@dimen/stats_metric_row_height"
                         android:orientation="horizontal">
 
                         <TextView
+                            android:id="@+id/tv_recent_day2_label"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
