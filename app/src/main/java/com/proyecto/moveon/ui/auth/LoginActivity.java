@@ -1,5 +1,6 @@
 package com.proyecto.moveon.ui.auth;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -18,10 +19,11 @@ import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends AppCompatActivity implements SocialAuthManager.Listener {
 
     private ActivityLoginBinding binding;
     private AuthViewModel viewModel;
+    private SocialAuthManager socialAuthManager;
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -41,6 +43,8 @@ public class LoginActivity extends AppCompatActivity {
 
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        socialAuthManager = new SocialAuthManager(this, this);
 
         loadRememberedAccount();
         setupListeners();
@@ -62,6 +66,11 @@ public class LoginActivity extends AppCompatActivity {
                 NavigationUtils.goToActivity(this, RegisterActivity.class)
         );
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
+        binding.btnGoogleLogin.setOnClickListener(v -> {
+            clearErrors();
+            setLoading(true);
+            socialAuthManager.signInWithGoogle();
+        });
 
         binding.etUsuarioCorreo.setOnFocusChangeListener((v, f) -> { if (f) binding.tilUsuarioCorreo.setError(null); });
         binding.etPassword.setOnFocusChangeListener((v, f) -> { if (f) binding.tilPassword.setError(null); });
@@ -144,6 +153,9 @@ public class LoginActivity extends AppCompatActivity {
         binding.btnRegistrar.setEnabled(!loading);
         binding.btnOlvidarPassword.setEnabled(!loading);
         binding.cbRecordarCuenta.setEnabled(!loading);
+        binding.btnGoogleLogin.setEnabled(!loading);
+        binding.tilUsuarioCorreo.setEnabled(!loading);
+        binding.tilPassword.setEnabled(!loading);
         binding.btnLogin.setText(loading ? getString(R.string.login_btn_entrando) : getString(R.string.login_btn_entrar));
     }
 
@@ -155,6 +167,24 @@ public class LoginActivity extends AppCompatActivity {
     private void goToMain() {
         NavigationUtils.goToActivityAndClearTask(this, MainActivity.class);
     }
+
+    @Override
+    public void onGoogleTokenReady(@NonNull String idToken) {
+        viewModel.loginWithSocial(com.proyecto.moveon.domain.auth.SocialAuthProvider.GOOGLE, idToken);
+    }
+
+    @Override
+    public void onSocialFlowError(@NonNull String message) {
+        setLoading(false);
+        TopSnackbar.error(binding.getRoot(), message);
+    }
+
+    @Override
+    public void onSocialFlowCanceled() {
+        setLoading(false);
+        TopSnackbar.warning(binding.getRoot(), getString(R.string.social_auth_canceled));
+    }
+
 
     @Override
     protected void onDestroy() {

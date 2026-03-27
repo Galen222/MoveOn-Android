@@ -1,3 +1,4 @@
+
 sdk.dir=
 # Clave para conectar con el Backend
 APP_ID=
@@ -12,3 +13,5 @@ MOVEON_BACKEND=PRODUCCION
 MOVEON_PROD_BASE_URL=https://www.mibackend.com/
 # Clave de la API Google Maps
 MAPS_API_KEY=
+# OAuth Google (Sign in with Google)
+GOOGLE_WEB_CLIENT_ID=

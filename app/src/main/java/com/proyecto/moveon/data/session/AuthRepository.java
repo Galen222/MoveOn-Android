@@ -20,6 +20,7 @@ import com.proyecto.moveon.data.session.dto.ResetearPasswordRequestDto;
 import com.proyecto.moveon.data.session.mapper.AuthMapper;
 import com.proyecto.moveon.domain.auth.LoginSession;
 import com.proyecto.moveon.domain.auth.RegisterInput;
+import com.proyecto.moveon.domain.auth.SocialRegisterInput;
 import com.proyecto.moveon.utils.StringUtils;
 
 import retrofit2.Call;
@@ -44,6 +45,42 @@ public class AuthRepository extends BaseRepository {
     public void login(String identificador, String password, Callback<LoginSession> callback) {
         Call<LoginResponseDto> call =
                 RetrofitProvider.authApi(appContext).login(AuthMapper.toLoginRequest(identificador, password));
+
+        trackCall(call);
+        call.enqueue(new retrofit2.Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<LoginResponseDto> c,
+                                   @NonNull Response<LoginResponseDto> response) {
+                untrackCall(call);
+
+                if (!response.isSuccessful()) {
+                    callback.onResult(ApiResult.failure(ApiErrorParser.fromHttp(appContext, response)));
+                    return;
+                }
+
+                LoginResponseDto body = response.body();
+                if (body == null || !StringUtils.hasText(body.tokenAcceso) || !StringUtils.hasText(body.refreshToken)) {
+                    callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_respuesta_invalida))));
+                    return;
+                }
+
+                callback.onResult(ApiResult.success(AuthMapper.toDomain(body)));
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<LoginResponseDto> c, @NonNull Throwable t) {
+                untrackCall(call);
+                if (call.isCanceled()) return;
+                callback.onResult(ApiResult.failure(ApiErrorParser.fromThrowable(appContext, t, false)));
+            }
+        });
+    }
+
+
+    public void loginSocial(String provider, String token, Callback<LoginSession> callback) {
+        Call<LoginResponseDto> call =
+                RetrofitProvider.authApi(appContext)
+                        .loginSocial(AuthMapper.toSocialAuthRequest(provider, token));
 
         trackCall(call);
         call.enqueue(new retrofit2.Callback<>() {
@@ -104,6 +141,42 @@ public class AuthRepository extends BaseRepository {
 
             @Override
             public void onFailure(@NonNull Call<RegisterResponseDto> c, @NonNull Throwable t) {
+                untrackCall(call);
+                if (call.isCanceled()) return;
+                callback.onResult(ApiResult.failure(ApiErrorParser.fromThrowable(appContext, t, false)));
+            }
+        });
+    }
+
+
+    public void registerSocial(SocialRegisterInput input, Callback<LoginSession> callback) {
+        Call<LoginResponseDto> call =
+                RetrofitProvider.authApi(appContext)
+                        .registerSocial(AuthMapper.toSocialRegisterRequest(input));
+
+        trackCall(call);
+        call.enqueue(new retrofit2.Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<LoginResponseDto> c,
+                                   @NonNull Response<LoginResponseDto> response) {
+                untrackCall(call);
+
+                if (!response.isSuccessful()) {
+                    callback.onResult(ApiResult.failure(ApiErrorParser.fromHttp(appContext, response)));
+                    return;
+                }
+
+                LoginResponseDto body = response.body();
+                if (body == null || !StringUtils.hasText(body.tokenAcceso) || !StringUtils.hasText(body.refreshToken)) {
+                    callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_respuesta_invalida))));
+                    return;
+                }
+
+                callback.onResult(ApiResult.success(AuthMapper.toDomain(body)));
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<LoginResponseDto> c, @NonNull Throwable t) {
                 untrackCall(call);
                 if (call.isCanceled()) return;
                 callback.onResult(ApiResult.failure(ApiErrorParser.fromThrowable(appContext, t, false)));

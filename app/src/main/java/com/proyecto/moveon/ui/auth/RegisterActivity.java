@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
@@ -25,6 +26,8 @@ import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.core.validation.AppInputValidator;
 import com.proyecto.moveon.databinding.ActivityRegisterBinding;
 import com.proyecto.moveon.domain.auth.RegisterInput;
+import com.proyecto.moveon.domain.auth.SocialAuthProvider;
+import com.proyecto.moveon.domain.auth.SocialRegisterInput;
 import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
@@ -49,7 +52,7 @@ import java.time.format.DateTimeFormatter;
  * <p>En esta versión se mantiene el rango mínimo permitido desde 1900, pero la fecha por defecto del
  * selector pasa a ser el <strong>1 de enero de 2000</strong> cuando el campo todavía está vacío.</p>
  */
-public class RegisterActivity extends AppCompatActivity {
+public class RegisterActivity extends AppCompatActivity implements SocialAuthManager.Listener {
 
     /** Versión del texto legal aceptado por el usuario durante el registro. */
     private static final String EULA_VERSION = "1.0";
@@ -65,6 +68,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     /** ViewModel que centraliza registro, login automático y estado de la pantalla. */
     private AuthViewModel viewModel;
+    private SocialAuthManager socialAuthManager;
 
     /**
      * Aplica el idioma configurado antes de crear la jerarquía de vistas.
@@ -90,6 +94,8 @@ public class RegisterActivity extends AppCompatActivity {
 
         binding = ActivityRegisterBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        socialAuthManager = new SocialAuthManager(this, this);
 
         setupEulaCheckbox();
         setupListeners();
@@ -173,6 +179,7 @@ public class RegisterActivity extends AppCompatActivity {
         binding.btnIniciarSesion.setOnClickListener(v -> finish());
         binding.etFechaNacimiento.setOnClickListener(v -> showDatePicker());
         binding.btnCrearCuenta.setOnClickListener(v -> attemptRegister());
+        binding.btnGoogleRegister.setOnClickListener(v -> attemptSocialRegister(SocialAuthProvider.GOOGLE));
 
         // Al enfocar cada campo se limpia su error para mejorar la UX.
         binding.etUsuario.setOnFocusChangeListener((v, hasFocus) -> {
@@ -465,6 +472,78 @@ public class RegisterActivity extends AppCompatActivity {
         viewModel.registerAndAutoLogin(input);
     }
 
+    private void attemptSocialRegister(@NonNull String provider) {
+        clearErrors();
+
+        if (!validateSocialRegisterFields()) {
+            return;
+        }
+
+        if (!SocialAuthProvider.GOOGLE.equals(provider)) {
+            TopSnackbar.error(binding.getRoot(), getString(R.string.social_google_generic_error));
+            return;
+        }
+
+        setLoading(true);
+        socialAuthManager.signInWithGoogle();
+    }
+
+    private boolean validateSocialRegisterFields() {
+        AppInputValidator.ValidationResult<String> nombreUsuarioResult =
+                AppInputValidator.validateUsername(
+                        this,
+                        StringUtils.textOf(binding.etUsuario.getText()),
+                        true
+                );
+
+        AppInputValidator.ValidationResult<String> fechaNacimientoResult =
+                AppInputValidator.validateBirthDate(
+                        this,
+                        StringUtils.textOf(binding.etFechaNacimiento.getText()),
+                        true
+                );
+
+        boolean valid = true;
+
+        if (!nombreUsuarioResult.isValid()) {
+            binding.tilUsuario.setError(nombreUsuarioResult.getErrorMessage());
+            valid = false;
+        }
+
+        if (!fechaNacimientoResult.isValid()) {
+            binding.tilFechaNacimiento.setError(fechaNacimientoResult.getErrorMessage());
+            valid = false;
+        }
+
+        if (!binding.cbEula.isChecked()) {
+            binding.tvEulaError.setVisibility(View.VISIBLE);
+            valid = false;
+        }
+
+        return valid;
+    }
+
+    @Nullable
+    private SocialRegisterInput buildSocialRegisterInput(@NonNull String provider, @NonNull String token) {
+        if (!validateSocialRegisterFields()) {
+            return null;
+        }
+
+        String fechaAceptacion = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                .withZone(ZoneOffset.UTC)
+                .format(Instant.now());
+
+        return new SocialRegisterInput(
+                provider,
+                token,
+                StringUtils.textOf(binding.etUsuario.getText()),
+                StringUtils.textOf(binding.etFechaNacimiento.getText()),
+                true,
+                fechaAceptacion,
+                EULA_VERSION
+        );
+    }
+
     // -------------------------------------------------------------------------
     // Helpers de UI
     // -------------------------------------------------------------------------
@@ -493,7 +572,14 @@ public class RegisterActivity extends AppCompatActivity {
      */
     private void setLoading(boolean loading) {
         binding.btnCrearCuenta.setEnabled(!loading);
+        binding.btnGoogleRegister.setEnabled(!loading);
         binding.btnIniciarSesion.setEnabled(!loading);
+        binding.tilUsuario.setEnabled(!loading);
+        binding.tilUsuarioCorreo.setEnabled(!loading);
+        binding.tilFechaNacimiento.setEnabled(!loading);
+        binding.tilPassword.setEnabled(!loading);
+        binding.tilConfirmarPassword.setEnabled(!loading);
+        binding.cbEula.setEnabled(!loading);
         binding.btnCrearCuenta.setText(
                 loading
                         ? getString(R.string.registro_btn_creando)
@@ -516,6 +602,29 @@ public class RegisterActivity extends AppCompatActivity {
     /**
      * Libera la referencia al binding para evitar fugas de memoria.
      */
+    @Override
+    public void onGoogleTokenReady(@NonNull String idToken) {
+        SocialRegisterInput input = buildSocialRegisterInput(SocialAuthProvider.GOOGLE, idToken);
+        if (input == null) {
+            setLoading(false);
+            return;
+        }
+        viewModel.registerWithSocial(input);
+    }
+
+    @Override
+    public void onSocialFlowError(@NonNull String message) {
+        setLoading(false);
+        TopSnackbar.error(binding.getRoot(), message);
+    }
+
+    @Override
+    public void onSocialFlowCanceled() {
+        setLoading(false);
+        TopSnackbar.warning(binding.getRoot(), getString(R.string.social_auth_canceled));
+    }
+
+
     @Override
     protected void onDestroy() {
         super.onDestroy();

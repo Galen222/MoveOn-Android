@@ -612,4 +612,12 @@
     <string name="tracking_dialog_stop_cannot_save_distance">La actividad no se puede guardar porque no hay distancia recorrida.</string>
     <string name="tracking_dialog_stop_cannot_save_moving_time">La actividad no se puede guardar porque no hay tiempo en movimiento.</string>
 
+
+    <string name="social_google_continue">Continuar con Google</string>
+    <string name="social_auth_canceled">Operación cancelada.</string>
+    <string name="social_google_not_configured">Falta configurar GOOGLE_WEB_CLIENT_ID en local.properties.</string>
+    <string name="social_google_generic_error">No se pudo completar la autenticación con Google.</string>
+    <string name="social_google_invalid_token">Google no devolvió un token válido.</string>
+    <string name="vm_registro_social_completado">Registro con Google completado</string>
+
 </resources>

@@ -430,4 +430,12 @@
     <string name="tracking_dialog_stop_cannot_save_distance">The activity cannot be saved because there is no distance covered.</string>
     <string name="tracking_dialog_stop_cannot_save_moving_time">The activity cannot be saved because there is no moving time.</string>
 
+
+    <string name="social_google_continue">Continue with Google</string>
+    <string name="social_auth_canceled">Operation canceled.</string>
+    <string name="social_google_not_configured">GOOGLE_WEB_CLIENT_ID is missing in local.properties.</string>
+    <string name="social_google_generic_error">Google authentication could not be completed.</string>
+    <string name="social_google_invalid_token">Google did not return a valid token.</string>
+    <string name="vm_registro_social_completado">Social registration completed</string>
+
 </resources>

@@ -15,6 +15,7 @@ import com.proyecto.moveon.data.session.AuthRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.domain.auth.LoginSession;
 import com.proyecto.moveon.domain.auth.RegisterInput;
+import com.proyecto.moveon.domain.auth.SocialRegisterInput;
 import com.proyecto.moveon.ui.common.UiState;
 
 public class AuthViewModel extends AndroidViewModel {
@@ -78,6 +79,18 @@ public class AuthViewModel extends AndroidViewModel {
         });
     }
 
+    public void loginWithSocial(String provider, String token) {
+        loginState.setValue(UiState.loading());
+
+        authRepository.loginSocial(provider, token, result -> {
+            if (result.isSuccess()) {
+                handleLoginSuccess(result, loginState);
+            } else {
+                loginState.postValue(UiState.error(errorOrDefault(result)));
+            }
+        });
+    }
+
     // ── Registro + auto-login ────────────────────────────────────────────────
 
     // MEJ-03: Callback hell eliminado extrayendo cada nivel a un método con
@@ -86,6 +99,11 @@ public class AuthViewModel extends AndroidViewModel {
     public void registerAndAutoLogin(RegisterInput input) {
         registerState.setValue(UiState.loading());
         authRepository.register(input, regResult -> handleRegisterResult(input, regResult));
+    }
+
+    public void registerWithSocial(SocialRegisterInput input) {
+        registerState.setValue(UiState.loading());
+        authRepository.registerSocial(input, result -> handleSocialRegisterResult(result));
     }
 
     private void handleRegisterResult(RegisterInput input, ApiResult<String> regResult) {
@@ -114,6 +132,17 @@ public class AuthViewModel extends AndroidViewModel {
             registerState.postValue(UiState.error(ApiError.local(
                     getString(R.string.vm_error_login_post_registro, err.getMessage())
             )));
+        }
+    }
+
+    private void handleSocialRegisterResult(@NonNull ApiResult<LoginSession> result) {
+        if (result.isSuccess() && result.data != null) {
+            LoginSession s = result.data;
+            sessionManager.saveLogin(s.nombreUsuario, s.tokenAcceso, s.refreshToken);
+            registerState.postValue(UiState.success(getString(R.string.vm_registro_social_completado)));
+            loginState.postValue(UiState.success(s));
+        } else {
+            registerState.postValue(UiState.error(errorOrDefault(result)));
         }
     }
 

@@ -9,6 +9,8 @@ import com.proyecto.moveon.data.session.dto.RefreshRequestDto;
 import com.proyecto.moveon.data.session.dto.RegisterRequestDto;
 import com.proyecto.moveon.data.session.dto.RegisterResponseDto;
 import com.proyecto.moveon.data.session.dto.ResetearPasswordRequestDto;
+import com.proyecto.moveon.data.session.dto.SocialAuthRequestDto;
+import com.proyecto.moveon.data.session.dto.SocialRegisterRequestDto;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -21,6 +23,12 @@ public interface MoveOnApi {
 
     @POST("registro")
     Call<RegisterResponseDto> register(@Body RegisterRequestDto body);
+
+    @POST("login/social")
+    Call<LoginResponseDto> loginSocial(@Body SocialAuthRequestDto body);
+
+    @POST("registro/social")
+    Call<LoginResponseDto> registerSocial(@Body SocialRegisterRequestDto body);
 
     @POST("token/refresh")
     Call<LoginResponseDto> refresh(@Body RefreshRequestDto body);

@@ -184,11 +184,7 @@ public class StatsFragment extends Fragment {
 
     @NonNull
     private Locale getAppLocale() {
-        final Context localizedContext = AppLanguageManager.localizedContext(requireContext());
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            return localizedContext.getResources().getConfiguration().getLocales().get(0);
-        }
-        return localizedContext.getResources().getConfiguration().locale;
+        return AppLanguageManager.getActiveLocale(requireContext());
     }
 
     @NonNull

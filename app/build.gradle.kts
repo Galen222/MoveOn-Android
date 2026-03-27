@@ -104,6 +104,7 @@ val appSessionCacheTtlMs = localProp("APP_SESSION_CACHE_TTL_MS", "240000").trim(
  * AndroidManifest a través del manifestPlaceholders.
  */
 val mapsApiKey = localProp("MAPS_API_KEY", "")
+val googleWebClientId = localProp("GOOGLE_WEB_CLIENT_ID", "").trim()
 
 android {
     namespace = "com.proyecto.moveon"
@@ -127,8 +128,9 @@ android {
         buildConfigField("String", "MOVEON_BACKEND", "\"$moveonBackend\"")
         buildConfigField("String", "APP_ID", "\"$appId\"")
         buildConfigField("long", "APP_SESSION_CACHE_TTL_MS", "${appSessionCacheTtlMs}L")
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
 
-        // Inyecta MAPS_API_KEY en AndroidManifest.xml como ${MAPS_API_KEY}
+        // Inyecta claves necesarias en recursos/manifest.
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
 
         // Exporta el esquema de Room para poder auditar migraciones y escribir tests.
@@ -205,6 +207,11 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
     implementation(libs.android.maps.utils)
+
+    // Autenticación con Google
+    implementation(libs.credentials)
+    implementation(libs.credentials.play.services.auth)
+    implementation(libs.googleid)
 
     // Pruebas (Testing Unitario y de Interfaz)
     testImplementation(libs.junit)

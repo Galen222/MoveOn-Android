@@ -48,6 +48,7 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
 
+
         <!-- Provider necesario para compartir el PNG temporal mediante content:// -->
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -3,8 +3,11 @@ package com.proyecto.moveon.data.session.mapper;
 import com.proyecto.moveon.data.session.dto.LoginRequestDto;
 import com.proyecto.moveon.data.session.dto.LoginResponseDto;
 import com.proyecto.moveon.data.session.dto.RegisterRequestDto;
+import com.proyecto.moveon.data.session.dto.SocialAuthRequestDto;
+import com.proyecto.moveon.data.session.dto.SocialRegisterRequestDto;
 import com.proyecto.moveon.domain.auth.LoginSession;
 import com.proyecto.moveon.domain.auth.RegisterInput;
+import com.proyecto.moveon.domain.auth.SocialRegisterInput;
 import com.proyecto.moveon.utils.StringUtils;
 
 public final class AuthMapper {
@@ -20,6 +23,22 @@ public final class AuthMapper {
                 input.nombreUsuario,
                 input.email,
                 input.password,
+                input.fechaNacimiento,
+                input.aceptaTerminos,
+                input.fechaAceptacionTerminos,
+                input.versionTerminos
+        );
+    }
+
+    public static SocialAuthRequestDto toSocialAuthRequest(String provider, String token) {
+        return new SocialAuthRequestDto(provider, token);
+    }
+
+    public static SocialRegisterRequestDto toSocialRegisterRequest(SocialRegisterInput input) {
+        return new SocialRegisterRequestDto(
+                input.provider,
+                input.token,
+                input.nombreUsuario,
                 input.fechaNacimiento,
                 input.aceptaTerminos,
                 input.fechaAceptacionTerminos,
