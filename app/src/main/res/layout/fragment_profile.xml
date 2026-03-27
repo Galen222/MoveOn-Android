@@ -623,8 +623,8 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/profile_item_theme"
-                            android:textSize="15sp"
-                            android:textColor="@color/textPrimary" />
+                            android:textSize="12sp"
+                            android:textColor="@color/textTertiary" />
 
                         <com.google.android.material.button.MaterialButtonToggleGroup
                             android:id="@+id/toggle_theme_mode"
