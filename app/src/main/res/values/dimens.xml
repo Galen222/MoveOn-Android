@@ -14,7 +14,7 @@
     <!-- Auth screens - tamaños -->
     <dimen name="auth_logo_size_login">140dp</dimen>
     <dimen name="auth_logo_size_register">100dp</dimen>
-    <dimen name="auth_logo_margin_top_login">80dp</dimen>
+    <dimen name="auth_logo_margin_top_login">32dp</dimen>
     <dimen name="auth_logo_margin_top_register">32dp</dimen>
     <dimen name="auth_button_height">56dp</dimen>
     <dimen name="auth_button_radius">12dp</dimen>

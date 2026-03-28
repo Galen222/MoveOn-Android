@@ -363,6 +363,7 @@
     <string name="delete_account_item_profile">Your profile and personal data</string>
     <string name="delete_account_item_activities">All your activities and routes</string>
     <string name="delete_account_item_progress">Your points and progress</string>
+    <string name="delete_account_google_note">If you use Google to sign in, the link with Google will also be removed. Your Google account will not be deleted.</string>
     <string name="delete_account_sheet_confirm_instruction">Type DELETE to confirm</string>
     <string name="delete_account_sheet_confirm_hint">DELETE</string>
     <string name="delete_account_sheet_btn_delete">Delete permanently</string>
@@ -436,4 +437,10 @@
     <string name="social_google_invalid_token">Google did not return a valid token.</string>
     <string name="vm_registro_social_completado">Social registration completed</string>
 
+
+    <string name="social_google_not_registered">You do not have an account yet. Finish signing up with Google.</string>
+    <string name="social_google_complete_profile">Complete your birth date, accept the terms, and review the suggested username to finish signing up with Google.</string>
+    <string name="social_google_username_prefilled">We generated a username from your Google account.</string>
+    <string name="social_google_silent_sign_in_failed">Google session could not be restored automatically.</string>
 </resources>
+

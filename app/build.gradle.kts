@@ -52,7 +52,7 @@ private val allowedBackends = setOf("LOCAL", "LAN", "PRODUCCION")
 
 if (moveonBackend !in allowedBackends) {
     throw GradleException(
-        "MOVEON_BACKEND='$moveonBackend' no es válido. Usa uno de: ${allowedBackends.joinToString(", ")}" 
+        "MOVEON_BACKEND='$moveonBackend' no es válido. Usa uno de: ${allowedBackends.joinToString(", ")}"
     )
 }
 

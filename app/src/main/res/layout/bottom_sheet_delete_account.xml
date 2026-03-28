@@ -108,6 +108,15 @@
 
     </LinearLayout>
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:lineSpacingMultiplier="1.3"
+        android:text="@string/delete_account_google_note"
+        android:textColor="@color/textSecondary"
+        android:textSize="13sp" />
+
     <!-- Campo de confirmación -->
     <TextView
         android:layout_width="match_parent"

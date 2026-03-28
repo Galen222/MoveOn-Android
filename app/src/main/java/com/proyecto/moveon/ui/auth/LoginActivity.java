@@ -1,19 +1,21 @@
 package com.proyecto.moveon.ui.auth;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider;
-
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
-import com.proyecto.moveon.databinding.ActivityLoginBinding;
 import com.proyecto.moveon.core.validation.AppInputValidator;
+import com.proyecto.moveon.databinding.ActivityLoginBinding;
 import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
@@ -24,6 +26,9 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
     private ActivityLoginBinding binding;
     private AuthViewModel viewModel;
     private SocialAuthManager socialAuthManager;
+
+    @Nullable private SocialGoogleAccount pendingGoogleAccount;
+    private boolean pendingSilentGoogleLogin;
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -49,6 +54,7 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         loadRememberedAccount();
         setupListeners();
         observeViewModel();
+        socialAuthManager.trySilentSignInWithGoogle();
     }
 
     private void loadRememberedAccount() {
@@ -69,6 +75,7 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         binding.btnGoogleLogin.setOnClickListener(v -> {
             clearErrors();
             setLoading(true);
+            pendingSilentGoogleLogin = false;
             socialAuthManager.signInWithGoogle();
         });
 
@@ -89,18 +96,24 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
             }
 
             if (state.error != null) {
+                boolean silent = pendingSilentGoogleLogin;
+                pendingSilentGoogleLogin = false;
                 setLoading(false);
 
-                applyBackendErrors(state.error);
-
-                if (!state.error.hasFieldErrors()) {
-                    TopSnackbar.error(binding.getRoot(), state.error.getMessage());
+                if (handleSocialNotRegistered(state.error, silent)) {
+                    viewModel.resetLoginState();
+                    return;
                 }
 
+                applyBackendErrors(state.error);
+                if (!silent && !state.error.hasFieldErrors()) {
+                    TopSnackbar.error(binding.getRoot(), state.error.getMessage());
+                }
                 viewModel.resetLoginState();
             }
 
             if (state.data != null) {
+                pendingSilentGoogleLogin = false;
                 Toast.makeText(this,
                         getString(R.string.login_bienvenido, state.data.nombreUsuario),
                         Toast.LENGTH_SHORT).show();
@@ -109,6 +122,28 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
                 goToMain();
             }
         });
+    }
+
+    private boolean handleSocialNotRegistered(@NonNull ApiError error, boolean silent) {
+        if (!"SOCIAL_ACCOUNT_NOT_REGISTERED".equals(error.getErrorCode())) {
+            return false;
+        }
+        if (silent) {
+            return true;
+        }
+        if (pendingGoogleAccount != null) {
+            Intent intent = new Intent(this, RegisterActivity.class)
+                    .putExtra(RegisterActivity.EXTRA_GOOGLE_ID_TOKEN, pendingGoogleAccount.idToken)
+                    .putExtra(RegisterActivity.EXTRA_GOOGLE_DISPLAY_NAME, pendingGoogleAccount.displayName)
+                    .putExtra(RegisterActivity.EXTRA_GOOGLE_AVATAR_URL, pendingGoogleAccount.avatarUrl)
+                    .putExtra(RegisterActivity.EXTRA_GOOGLE_EMAIL, pendingGoogleAccount.email)
+                    .putExtra(RegisterActivity.EXTRA_OPENED_FROM_LOGIN_SOCIAL, true);
+            startActivity(intent);
+            TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_not_registered));
+        } else {
+            TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_not_registered));
+        }
+        return true;
     }
 
     private void applyBackendErrors(ApiError err) {
@@ -169,14 +204,21 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
     }
 
     @Override
-    public void onGoogleTokenReady(@NonNull String idToken) {
-        viewModel.loginWithSocial(com.proyecto.moveon.domain.auth.SocialAuthProvider.GOOGLE, idToken);
+    public void onGoogleAccountReady(@NonNull SocialGoogleAccount account, boolean silent) {
+        pendingGoogleAccount = account;
+        pendingSilentGoogleLogin = silent;
+        if (!silent) {
+            setLoading(true);
+        }
+        viewModel.loginWithSocial(com.proyecto.moveon.domain.auth.SocialAuthProvider.GOOGLE, account.idToken);
     }
 
     @Override
-    public void onSocialFlowError(@NonNull String message) {
-        setLoading(false);
-        TopSnackbar.error(binding.getRoot(), message);
+    public void onSocialFlowError(@NonNull String message, boolean silent) {
+        if (!silent) {
+            setLoading(false);
+            TopSnackbar.error(binding.getRoot(), message);
+        }
     }
 
     @Override
@@ -184,7 +226,6 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         setLoading(false);
         TopSnackbar.warning(binding.getRoot(), getString(R.string.social_auth_canceled));
     }
-
 
     @Override
     protected void onDestroy() {

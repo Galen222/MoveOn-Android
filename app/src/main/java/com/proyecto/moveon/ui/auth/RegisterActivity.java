@@ -33,58 +33,39 @@ import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
 
+import java.text.Normalizer;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * Pantalla de registro de usuario.
- *
- * <p>Responsabilidades principales:</p>
- * <ul>
- *     <li>Recoger y validar los datos del formulario de alta.</li>
- *     <li>Mostrar los textos legales de términos y política de privacidad.</li>
- *     <li>Permitir seleccionar la fecha de nacimiento con un {@link MaterialDatePicker}.</li>
- *     <li>Enviar el registro al {@link AuthViewModel} y, si todo va bien, iniciar sesión automáticamente.</li>
- * </ul>
- *
- * <p>En esta versión se mantiene el rango mínimo permitido desde 1900, pero la fecha por defecto del
- * selector pasa a ser el <strong>1 de enero de 2000</strong> cuando el campo todavía está vacío.</p>
- */
 public class RegisterActivity extends AppCompatActivity implements SocialAuthManager.Listener {
 
-    /** Versión del texto legal aceptado por el usuario durante el registro. */
+    public static final String EXTRA_GOOGLE_ID_TOKEN = "extra_google_id_token";
+    public static final String EXTRA_GOOGLE_DISPLAY_NAME = "extra_google_display_name";
+    public static final String EXTRA_GOOGLE_AVATAR_URL = "extra_google_avatar_url";
+    public static final String EXTRA_GOOGLE_EMAIL = "extra_google_email";
+    public static final String EXTRA_OPENED_FROM_LOGIN_SOCIAL = "extra_opened_from_login_social";
+
     private static final String EULA_VERSION = "1.0";
-
-    /** Edad mínima requerida para crear una cuenta. */
     private static final int MIN_AGE_YEARS = 18;
-
-    /** Fecha por defecto que se mostrará al abrir el selector por primera vez. */
     private static final LocalDate DEFAULT_BIRTH_DATE = LocalDate.of(2000, 1, 1);
+    private static final int MAX_SOCIAL_USERNAME_RETRIES = 12;
 
-    /** Binding de la vista asociado a {@code activity_register.xml}. */
     private ActivityRegisterBinding binding;
-
-    /** ViewModel que centraliza registro, login automático y estado de la pantalla. */
     private AuthViewModel viewModel;
     private SocialAuthManager socialAuthManager;
 
-    /**
-     * Aplica el idioma configurado antes de crear la jerarquía de vistas.
-     *
-     * @param newBase contexto base proporcionado por Android.
-     */
+    @Nullable private SocialGoogleAccount pendingGoogleAccount;
+    private int socialUsernameRetryCount;
+
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(AppLanguageManager.wrapContext(newBase));
     }
 
-    /**
-     * Inicializa tema, ViewModel, binding y listeners de la pantalla de registro.
-     *
-     * @param savedInstanceState estado previo de la activity si Android la recrea.
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ThemeManager.applySavedTheme(this);
@@ -100,15 +81,23 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         setupEulaCheckbox();
         setupListeners();
         observeViewModel();
+        restorePendingGoogleAccountFromExtras();
     }
 
-    // -------------------------------------------------------------------------
-    // Configuración de UI
-    // -------------------------------------------------------------------------
+    private void restorePendingGoogleAccountFromExtras() {
+        String idToken = getIntent().getStringExtra(EXTRA_GOOGLE_ID_TOKEN);
+        if (!StringUtils.hasText(idToken)) return;
 
-    /**
-     * Configura el texto legal con enlaces pulsables para términos y política.
-     */
+        pendingGoogleAccount = new SocialGoogleAccount(
+                idToken,
+                getIntent().getStringExtra(EXTRA_GOOGLE_EMAIL),
+                getIntent().getStringExtra(EXTRA_GOOGLE_DISPLAY_NAME),
+                getIntent().getStringExtra(EXTRA_GOOGLE_AVATAR_URL)
+        );
+        suggestUsernameFromGoogle(pendingGoogleAccount, true);
+        TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_complete_profile));
+    }
+
     private void setupEulaCheckbox() {
         String terminos = getString(R.string.registro_eula_link_terminos);
         String politica = getString(R.string.registro_eula_link_politica);
@@ -118,49 +107,27 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
 
         int startTerminos = plantilla.indexOf(terminos);
         int endTerminos = startTerminos + terminos.length();
-        spannable.setSpan(
-                buildLinkSpan(true),
-                startTerminos,
-                endTerminos,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-        );
+        spannable.setSpan(buildLinkSpan(true), startTerminos, endTerminos, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         int startPolitica = plantilla.indexOf(politica);
         int endPolitica = startPolitica + politica.length();
-        spannable.setSpan(
-                buildLinkSpan(false),
-                startPolitica,
-                endPolitica,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-        );
+        spannable.setSpan(buildLinkSpan(false), startPolitica, endPolitica, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         binding.tvEulaText.setText(spannable);
         binding.tvEulaText.setMovementMethod(LinkMovementMethod.getInstance());
         binding.tvEulaText.setHighlightColor(getColor(android.R.color.transparent));
 
         binding.cbEula.setOnCheckedChangeListener((buttonView, checked) -> {
-            // Si el usuario marca el checkbox, ocultamos el mensaje visual de error.
-            if (checked) {
-                binding.tvEulaError.setVisibility(View.GONE);
-            }
+            if (checked) binding.tvEulaError.setVisibility(View.GONE);
         });
     }
 
-    /**
-     * Crea un span clicable para abrir uno de los dos diálogos legales.
-     *
-     * @param isTerminos {@code true} para términos; {@code false} para política.
-     * @return span listo para insertarse en el texto legal.
-     */
     private ClickableSpan buildLinkSpan(boolean isTerminos) {
         return new ClickableSpan() {
             @Override
             public void onClick(@NonNull View widget) {
-                if (isTerminos) {
-                    showTerminosDialog();
-                } else {
-                    showPoliticaDialog();
-                }
+                if (isTerminos) showTerminosDialog();
+                else showPoliticaDialog();
             }
 
             @Override
@@ -172,40 +139,19 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         };
     }
 
-    /**
-     * Registra todos los listeners de interacción del formulario.
-     */
     private void setupListeners() {
         binding.btnIniciarSesion.setOnClickListener(v -> finish());
         binding.etFechaNacimiento.setOnClickListener(v -> showDatePicker());
         binding.btnCrearCuenta.setOnClickListener(v -> attemptRegister());
         binding.btnGoogleRegister.setOnClickListener(v -> attemptSocialRegister(SocialAuthProvider.GOOGLE));
 
-        // Al enfocar cada campo se limpia su error para mejorar la UX.
-        binding.etUsuario.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) binding.tilUsuario.setError(null);
-        });
-        binding.etUsuarioCorreo.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) binding.tilUsuarioCorreo.setError(null);
-        });
-        binding.etFechaNacimiento.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) binding.tilFechaNacimiento.setError(null);
-        });
-        binding.etPassword.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) binding.tilPassword.setError(null);
-        });
-        binding.etConfirmarPassword.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) binding.tilConfirmarPassword.setError(null);
-        });
+        binding.etUsuario.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) binding.tilUsuario.setError(null); });
+        binding.etUsuarioCorreo.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) binding.tilUsuarioCorreo.setError(null); });
+        binding.etFechaNacimiento.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) binding.tilFechaNacimiento.setError(null); });
+        binding.etPassword.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) binding.tilPassword.setError(null); });
+        binding.etConfirmarPassword.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) binding.tilConfirmarPassword.setError(null); });
     }
 
-    // -------------------------------------------------------------------------
-    // Observadores del ViewModel
-    // -------------------------------------------------------------------------
-
-    /**
-     * Observa el estado del registro y del login automático posterior.
-     */
     private void observeViewModel() {
         viewModel.getRegisterState().observe(this, state -> {
             if (state == null) return;
@@ -216,13 +162,17 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
             }
 
             if (state.error != null) {
+                if (shouldRetrySocialUsername(state.error)) {
+                    regenerateSocialUsernameAndRetry();
+                    return;
+                }
+
                 setLoading(false);
                 applyBackendErrors(state.error);
 
                 if (!state.error.hasFieldErrors()) {
                     TopSnackbar.error(binding.getRoot(), state.error.getMessage());
                 }
-
                 viewModel.resetRegisterState();
             }
         });
@@ -231,54 +181,44 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
             if (state == null) return;
 
             if (state.data != null) {
-                Toast.makeText(
-                        this,
-                        getString(R.string.login_bienvenido, state.data.nombreUsuario),
-                        Toast.LENGTH_SHORT
-                ).show();
-
+                Toast.makeText(this, getString(R.string.login_bienvenido, state.data.nombreUsuario), Toast.LENGTH_SHORT).show();
                 viewModel.resetLoginState();
                 NavigationUtils.goToActivityAndClearTask(this, MainActivity.class);
             }
         });
     }
 
-    // -------------------------------------------------------------------------
-    // Diálogos legales
-    // -------------------------------------------------------------------------
+    private boolean shouldRetrySocialUsername(@NonNull ApiError error) {
+        return pendingGoogleAccount != null
+                && "USERNAME_ALREADY_IN_USE".equals(error.getErrorCode())
+                && socialUsernameRetryCount < MAX_SOCIAL_USERNAME_RETRIES;
+    }
 
-    /**
-     * Muestra el diálogo con los términos y condiciones.
-     */
+    private void regenerateSocialUsernameAndRetry() {
+        socialUsernameRetryCount++;
+        suggestUsernameFromGoogle(pendingGoogleAccount, false);
+        SocialRegisterInput input = buildSocialRegisterInput(SocialAuthProvider.GOOGLE, pendingGoogleAccount.idToken);
+        if (input != null) {
+            viewModel.registerWithSocial(input);
+            return;
+        }
+        setLoading(false);
+        viewModel.resetRegisterState();
+    }
+
     private void showTerminosDialog() {
-        showLegalDialog(
-                getString(R.string.registro_eula_titulo_terminos),
-                getString(R.string.registro_eula_contenido_terminos)
-        );
+        showLegalDialog(getString(R.string.registro_eula_titulo_terminos), getString(R.string.registro_eula_contenido_terminos));
     }
 
-    /**
-     * Muestra el diálogo con la política de privacidad.
-     */
     private void showPoliticaDialog() {
-        showLegalDialog(
-                getString(R.string.registro_eula_titulo_politica),
-                getString(R.string.registro_eula_contenido_politica)
-        );
+        showLegalDialog(getString(R.string.registro_eula_titulo_politica), getString(R.string.registro_eula_contenido_politica));
     }
 
-    /**
-     * Construye y muestra un diálogo legal genérico.
-     *
-     * @param title título del diálogo.
-     * @param content contenido del texto legal.
-     */
     private void showLegalDialog(String title, String content) {
         new AlertDialog.Builder(this)
                 .setTitle(title)
                 .setMessage(content)
                 .setPositiveButton(R.string.registro_eula_btn_aceptar, (dialog, which) -> {
-                    // Si acepta desde el diálogo, marcamos el checkbox automáticamente.
                     binding.cbEula.setChecked(true);
                     dialog.dismiss();
                 })
@@ -286,28 +226,10 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                 .show();
     }
 
-    // -------------------------------------------------------------------------
-    // DatePicker con edad mínima de 18 años
-    // -------------------------------------------------------------------------
-
-    /**
-     * Abre el selector de fecha de nacimiento.
-     *
-     * <p>Comportamiento:</p>
-     * <ul>
-     *     <li>Fecha mínima seleccionable: 1900-01-01.</li>
-     *     <li>Fecha máxima seleccionable: hoy menos 18 años.</li>
-     *     <li>Si el campo ya tiene valor, se reutiliza esa fecha.</li>
-     *     <li>Si el campo está vacío, la selección inicial será 2000-01-01.</li>
-     * </ul>
-     */
     private void showDatePicker() {
         LocalDate maxAllowedDate = LocalDate.now(ZoneOffset.UTC).minusYears(MIN_AGE_YEARS);
         long maxAllowedMillis = maxAllowedDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
-        long minMillis = LocalDate.of(1900, 1, 1)
-                .atStartOfDay(ZoneOffset.UTC)
-                .toInstant()
-                .toEpochMilli();
+        long minMillis = LocalDate.of(1900, 1, 1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
 
         CalendarConstraints constraints = new CalendarConstraints.Builder()
                 .setStart(minMillis)
@@ -322,143 +244,51 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         String currentText = StringUtils.textOf(binding.etFechaNacimiento.getText());
         if (!currentText.isEmpty()) {
             try {
-                // Si el campo ya tiene fecha válida, la usamos como selección inicial.
                 LocalDate parsed = LocalDate.parse(currentText);
                 long millis = parsed.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
                 builder.setSelection(millis);
             } catch (Exception ignored) {
-                // Si el contenido del campo estuviera corrupto o mal formateado,
-                // hacemos fallback a la fecha por defecto para no romper la UX.
                 builder.setSelection(getDefaultBirthDateSelectionMillis(maxAllowedDate));
             }
         } else {
-            // Caso solicitado: al abrir por primera vez, arrancar en el año 2000.
             builder.setSelection(getDefaultBirthDateSelectionMillis(maxAllowedDate));
         }
 
         MaterialDatePicker<Long> picker = builder.build();
         picker.addOnPositiveButtonClickListener(selection -> {
-            LocalDate selectedDate = Instant.ofEpochMilli(selection)
-                    .atZone(ZoneOffset.UTC)
-                    .toLocalDate();
-
-            String fecha = selectedDate.toString();
-            binding.etFechaNacimiento.setText(fecha);
+            LocalDate selectedDate = Instant.ofEpochMilli(selection).atZone(ZoneOffset.UTC).toLocalDate();
+            binding.etFechaNacimiento.setText(selectedDate.toString());
             binding.tilFechaNacimiento.setError(null);
         });
-
         picker.show(getSupportFragmentManager(), "registro_date_picker");
     }
 
-    /**
-     * Devuelve la fecha inicial del DatePicker en milisegundos.
-     *
-     * <p>Se usa 2000-01-01 como fecha por defecto. Aun así, por seguridad la ajustamos si en
-     * algún momento dejara de ser válida frente al límite de edad máxima permitido.</p>
-     *
-     * @param maxAllowedDate fecha máxima permitida por la regla de mayoría de edad.
-     * @return instante en milisegundos UTC para inicializar el calendario.
-     */
     private long getDefaultBirthDateSelectionMillis(@NonNull LocalDate maxAllowedDate) {
-        LocalDate safeDefaultDate = DEFAULT_BIRTH_DATE.isAfter(maxAllowedDate)
-                ? maxAllowedDate
-                : DEFAULT_BIRTH_DATE;
-
-        return safeDefaultDate
-                .atStartOfDay(ZoneOffset.UTC)
-                .toInstant()
-                .toEpochMilli();
+        LocalDate safeDefaultDate = DEFAULT_BIRTH_DATE.isAfter(maxAllowedDate) ? maxAllowedDate : DEFAULT_BIRTH_DATE;
+        return safeDefaultDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
     }
 
-    // -------------------------------------------------------------------------
-    // Validación y envío
-    // -------------------------------------------------------------------------
-
-    /**
-     * Valida el formulario y, si es correcto, solicita el registro al ViewModel.
-     */
     private void attemptRegister() {
         clearErrors();
 
-        AppInputValidator.ValidationResult<String> nombreUsuarioResult =
-                AppInputValidator.validateUsername(
-                        this,
-                        StringUtils.textOf(binding.etUsuario.getText()),
-                        true
-                );
-
-        AppInputValidator.ValidationResult<String> correoResult =
-                AppInputValidator.validateEmail(
-                        this,
-                        StringUtils.textOf(binding.etUsuarioCorreo.getText()),
-                        true
-                );
-
-        AppInputValidator.ValidationResult<String> fechaNacimientoResult =
-                AppInputValidator.validateBirthDate(
-                        this,
-                        StringUtils.textOf(binding.etFechaNacimiento.getText()),
-                        true
-                );
-
-        AppInputValidator.ValidationResult<String> passwordResult =
-                AppInputValidator.validatePassword(
-                        this,
-                        StringUtils.textOf(binding.etPassword.getText()),
-                        true,
-                        false
-                );
-
-        AppInputValidator.ValidationResult<String> confirmarPasswordResult =
-                AppInputValidator.validatePasswordConfirmation(
-                        this,
-                        passwordResult.getValue(),
-                        StringUtils.textOf(binding.etConfirmarPassword.getText()),
-                        R.string.registro_error_passwords_distintas
-                );
+        AppInputValidator.ValidationResult<String> nombreUsuarioResult = AppInputValidator.validateUsername(this, StringUtils.textOf(binding.etUsuario.getText()), true);
+        AppInputValidator.ValidationResult<String> correoResult = AppInputValidator.validateEmail(this, StringUtils.textOf(binding.etUsuarioCorreo.getText()), true);
+        AppInputValidator.ValidationResult<String> fechaNacimientoResult = AppInputValidator.validateBirthDate(this, StringUtils.textOf(binding.etFechaNacimiento.getText()), true);
+        AppInputValidator.ValidationResult<String> passwordResult = AppInputValidator.validatePassword(this, StringUtils.textOf(binding.etPassword.getText()), true, false);
+        AppInputValidator.ValidationResult<String> confirmarPasswordResult = AppInputValidator.validatePasswordConfirmation(this, passwordResult.getValue(), StringUtils.textOf(binding.etConfirmarPassword.getText()), R.string.registro_error_passwords_distintas);
 
         boolean eulaAceptado = binding.cbEula.isChecked();
         boolean valid = true;
 
-        if (!nombreUsuarioResult.isValid()) {
-            binding.tilUsuario.setError(nombreUsuarioResult.getErrorMessage());
-            valid = false;
-        }
+        if (!nombreUsuarioResult.isValid()) { binding.tilUsuario.setError(nombreUsuarioResult.getErrorMessage()); valid = false; }
+        if (!correoResult.isValid()) { binding.tilUsuarioCorreo.setError(correoResult.getErrorMessage()); valid = false; }
+        if (!fechaNacimientoResult.isValid()) { binding.tilFechaNacimiento.setError(fechaNacimientoResult.getErrorMessage()); valid = false; }
+        if (!passwordResult.isValid()) { binding.tilPassword.setError(passwordResult.getErrorMessage()); valid = false; }
+        if (!confirmarPasswordResult.isValid()) { binding.tilConfirmarPassword.setError(confirmarPasswordResult.getErrorMessage()); valid = false; }
+        if (!eulaAceptado) { binding.tvEulaError.setVisibility(View.VISIBLE); valid = false; }
+        if (!valid) return;
 
-        if (!correoResult.isValid()) {
-            binding.tilUsuarioCorreo.setError(correoResult.getErrorMessage());
-            valid = false;
-        }
-
-        if (!fechaNacimientoResult.isValid()) {
-            binding.tilFechaNacimiento.setError(fechaNacimientoResult.getErrorMessage());
-            valid = false;
-        }
-
-        if (!passwordResult.isValid()) {
-            binding.tilPassword.setError(passwordResult.getErrorMessage());
-            valid = false;
-        }
-
-        if (!confirmarPasswordResult.isValid()) {
-            binding.tilConfirmarPassword.setError(confirmarPasswordResult.getErrorMessage());
-            valid = false;
-        }
-
-        if (!eulaAceptado) {
-            binding.tvEulaError.setVisibility(View.VISIBLE);
-            valid = false;
-        }
-
-        if (!valid) {
-            return;
-        }
-
-        // Guardamos la fecha de aceptación legal en UTC y en formato estable para backend.
-        String fechaAceptacion = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
-                .withZone(ZoneOffset.UTC)
-                .format(Instant.now());
-
+        String fechaAceptacion = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC).format(Instant.now());
         RegisterInput input = new RegisterInput(
                 nombreUsuarioResult.getValue(),
                 correoResult.getValue(),
@@ -468,71 +298,33 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                 fechaAceptacion,
                 EULA_VERSION
         );
-
         viewModel.registerAndAutoLogin(input);
     }
 
     private void attemptSocialRegister(@NonNull String provider) {
         clearErrors();
-
-        if (!validateSocialRegisterFields()) {
-            return;
-        }
-
         if (!SocialAuthProvider.GOOGLE.equals(provider)) {
             TopSnackbar.error(binding.getRoot(), getString(R.string.social_google_generic_error));
             return;
         }
-
         setLoading(true);
         socialAuthManager.signInWithGoogle();
     }
 
-    private boolean validateSocialRegisterFields() {
-        AppInputValidator.ValidationResult<String> nombreUsuarioResult =
-                AppInputValidator.validateUsername(
-                        this,
-                        StringUtils.textOf(binding.etUsuario.getText()),
-                        true
-                );
-
-        AppInputValidator.ValidationResult<String> fechaNacimientoResult =
-                AppInputValidator.validateBirthDate(
-                        this,
-                        StringUtils.textOf(binding.etFechaNacimiento.getText()),
-                        true
-                );
-
+    private boolean validatePendingSocialFields() {
+        AppInputValidator.ValidationResult<String> nombreUsuarioResult = AppInputValidator.validateUsername(this, StringUtils.textOf(binding.etUsuario.getText()), true);
+        AppInputValidator.ValidationResult<String> fechaNacimientoResult = AppInputValidator.validateBirthDate(this, StringUtils.textOf(binding.etFechaNacimiento.getText()), true);
         boolean valid = true;
-
-        if (!nombreUsuarioResult.isValid()) {
-            binding.tilUsuario.setError(nombreUsuarioResult.getErrorMessage());
-            valid = false;
-        }
-
-        if (!fechaNacimientoResult.isValid()) {
-            binding.tilFechaNacimiento.setError(fechaNacimientoResult.getErrorMessage());
-            valid = false;
-        }
-
-        if (!binding.cbEula.isChecked()) {
-            binding.tvEulaError.setVisibility(View.VISIBLE);
-            valid = false;
-        }
-
+        if (!nombreUsuarioResult.isValid()) { binding.tilUsuario.setError(nombreUsuarioResult.getErrorMessage()); valid = false; }
+        if (!fechaNacimientoResult.isValid()) { binding.tilFechaNacimiento.setError(fechaNacimientoResult.getErrorMessage()); valid = false; }
+        if (!binding.cbEula.isChecked()) { binding.tvEulaError.setVisibility(View.VISIBLE); valid = false; }
         return valid;
     }
 
     @Nullable
     private SocialRegisterInput buildSocialRegisterInput(@NonNull String provider, @NonNull String token) {
-        if (!validateSocialRegisterFields()) {
-            return null;
-        }
-
-        String fechaAceptacion = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
-                .withZone(ZoneOffset.UTC)
-                .format(Instant.now());
-
+        if (!validatePendingSocialFields()) return null;
+        String fechaAceptacion = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC).format(Instant.now());
         return new SocialRegisterInput(
                 provider,
                 token,
@@ -544,15 +336,44 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         );
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers de UI
-    // -------------------------------------------------------------------------
+    private void suggestUsernameFromGoogle(@Nullable SocialGoogleAccount account, boolean announce) {
+        if (account == null) return;
+        String suggested = buildSuggestedUsername(account.displayName);
+        binding.etUsuario.setText(suggested);
+        binding.etUsuario.setSelection(suggested.length());
+        binding.tilUsuario.setError(null);
+        if (announce) {
+            TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_username_prefilled));
+        }
+    }
 
-    /**
-     * Mapea errores de validación del backend a los campos del formulario.
-     *
-     * @param err error devuelto por la API.
-     */
+    @NonNull
+    private String buildSuggestedUsername(@Nullable String displayName) {
+        String base = normalizeUsernameBase(displayName);
+        if (base.length() > 46) {
+            base = base.substring(0, 46);
+        }
+        int digits = ThreadLocalRandom.current().nextInt(1000, 10000);
+        return base + digits;
+    }
+
+    @NonNull
+    private String normalizeUsernameBase(@Nullable String displayName) {
+        String raw = StringUtils.hasText(displayName) ? displayName : "moveon";
+        String normalized = Normalizer.normalize(raw, Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .replaceAll("[^A-Za-z0-9]", "")
+                .toLowerCase(Locale.ROOT)
+                .trim();
+        if (normalized.length() < 5) {
+            normalized = (normalized + "moveon");
+        }
+        if (normalized.length() < 5) {
+            normalized = "moveon";
+        }
+        return normalized;
+    }
+
     private void applyBackendErrors(ApiError err) {
         String usuarioError = err.firstFieldMessage("nombre_usuario", "usuario", "nombreUsuario");
         String emailError = err.firstFieldMessage("email", "correo");
@@ -565,11 +386,6 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         if (StringUtils.hasText(fechaError)) binding.tilFechaNacimiento.setError(fechaError);
     }
 
-    /**
-     * Activa o desactiva el estado de carga de la pantalla.
-     *
-     * @param loading {@code true} si hay una operación en curso.
-     */
     private void setLoading(boolean loading) {
         binding.btnCrearCuenta.setEnabled(!loading);
         binding.btnGoogleRegister.setEnabled(!loading);
@@ -580,16 +396,9 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         binding.tilPassword.setEnabled(!loading);
         binding.tilConfirmarPassword.setEnabled(!loading);
         binding.cbEula.setEnabled(!loading);
-        binding.btnCrearCuenta.setText(
-                loading
-                        ? getString(R.string.registro_btn_creando)
-                        : getString(R.string.registro_btn_crear)
-        );
+        binding.btnCrearCuenta.setText(loading ? getString(R.string.registro_btn_creando) : getString(R.string.registro_btn_crear));
     }
 
-    /**
-     * Limpia todos los errores visibles del formulario.
-     */
     private void clearErrors() {
         binding.tilUsuario.setError(null);
         binding.tilUsuarioCorreo.setError(null);
@@ -599,23 +408,25 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         binding.tvEulaError.setVisibility(View.GONE);
     }
 
-    /**
-     * Libera la referencia al binding para evitar fugas de memoria.
-     */
     @Override
-    public void onGoogleTokenReady(@NonNull String idToken) {
-        SocialRegisterInput input = buildSocialRegisterInput(SocialAuthProvider.GOOGLE, idToken);
+    public void onGoogleAccountReady(@NonNull SocialGoogleAccount account, boolean silent) {
+        pendingGoogleAccount = account;
+        socialUsernameRetryCount = 0;
+        suggestUsernameFromGoogle(account, true);
+
+        SocialRegisterInput input = buildSocialRegisterInput(SocialAuthProvider.GOOGLE, account.idToken);
         if (input == null) {
             setLoading(false);
+            TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_complete_profile));
             return;
         }
         viewModel.registerWithSocial(input);
     }
 
     @Override
-    public void onSocialFlowError(@NonNull String message) {
+    public void onSocialFlowError(@NonNull String message, boolean silent) {
         setLoading(false);
-        TopSnackbar.error(binding.getRoot(), message);
+        if (!silent) TopSnackbar.error(binding.getRoot(), message);
     }
 
     @Override
@@ -623,7 +434,6 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         setLoading(false);
         TopSnackbar.warning(binding.getRoot(), getString(R.string.social_auth_canceled));
     }
-
 
     @Override
     protected void onDestroy() {

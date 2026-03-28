@@ -19,7 +19,7 @@
             android:id="@+id/ivMoveOn"
             android:layout_width="@dimen/auth_logo_size_login"
             android:layout_height="@dimen/auth_logo_size_login"
-            android:layout_marginTop="@dimen/auth_logo_margin_top_login"
+            android:layout_marginTop="@dimen/auth_logo_margin_top_register"
             android:contentDescription="@string/login_logo_desc"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -156,20 +156,30 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/btnOlvidarPassword" />
 
-        <!-- Divisor con "O" -->
-        <View
-            android:id="@+id/divider1"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGoogleLogin"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="1dp"
+            android:layout_height="@dimen/auth_button_height"
             android:layout_marginStart="@dimen/auth_margin_horizontal"
-            android:layout_marginEnd="@dimen/auth_divider_margin_side"
-            android:background="@color/dividerColor"
-            app:layout_constraintEnd_toStartOf="@+id/tvOr"
+            android:layout_marginTop="@dimen/auth_field_spacing"
+            android:layout_marginEnd="@dimen/auth_margin_horizontal"
+            android:fontFamily="sans-serif-medium"
+            android:text="@string/social_google_continue"
+            android:textColor="@color/textPrimary"
+            android:textSize="@dimen/auth_button_text_size"
+            app:cornerRadius="@dimen/auth_button_radius"
+            app:strokeColor="@color/dividerColor"
+            app:strokeWidth="2dp"
+            app:icon="@drawable/ic_google"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:iconTint="@null"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="@+id/tvOr"
-            app:layout_constraintTop_toBottomOf="@+id/btnLogin"
-            app:layout_constraintVertical_bias="0.5" />
+            app:layout_constraintTop_toBottomOf="@+id/btnLogin" />
 
+        <!-- Divisor con "O" -->
         <TextView
             android:id="@+id/tvOr"
             android:layout_width="wrap_content"
@@ -179,7 +189,19 @@
             android:textColor="@color/textSecondary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btnLogin" />
+            app:layout_constraintTop_toBottomOf="@+id/btnGoogleLogin" />
+
+        <View
+            android:id="@+id/divider1"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginStart="@dimen/auth_margin_horizontal"
+            android:layout_marginEnd="@dimen/auth_divider_margin_side"
+            android:background="@color/dividerColor"
+            app:layout_constraintBottom_toBottomOf="@+id/tvOr"
+            app:layout_constraintEnd_toStartOf="@+id/tvOr"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tvOr" />
 
         <View
             android:id="@+id/divider2"
@@ -188,30 +210,10 @@
             android:layout_marginStart="@dimen/auth_divider_margin_side"
             android:layout_marginEnd="@dimen/auth_margin_horizontal"
             android:background="@color/dividerColor"
+            app:layout_constraintBottom_toBottomOf="@+id/tvOr"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/tvOr"
-            app:layout_constraintBottom_toBottomOf="@+id/tvOr"
-            app:layout_constraintTop_toBottomOf="@+id/btnLogin"
-            app:layout_constraintVertical_bias="0.5" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnGoogleLogin"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_height="@dimen/auth_button_height"
-            android:layout_marginStart="@dimen/auth_margin_horizontal"
-            android:layout_marginTop="@dimen/auth_section_spacing"
-            android:layout_marginEnd="@dimen/auth_margin_horizontal"
-            android:fontFamily="sans-serif-medium"
-            android:text="@string/social_google_continue"
-            android:textColor="@color/textPrimary"
-            android:textSize="@dimen/auth_button_text_size"
-            app:cornerRadius="@dimen/auth_button_radius"
-            app:strokeColor="@color/dividerColor"
-            app:strokeWidth="2dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvOr" />
+            app:layout_constraintTop_toTopOf="@+id/tvOr" />
 
         <!-- Botón Registrar -->
         <com.google.android.material.button.MaterialButton
@@ -232,7 +234,7 @@
             app:strokeWidth="2dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btnGoogleLogin" />
-
+            app:layout_constraintTop_toBottomOf="@+id/tvOr" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>
+

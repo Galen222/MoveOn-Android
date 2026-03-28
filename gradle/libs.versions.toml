@@ -23,8 +23,8 @@ workRuntime = "2.11.1"
 
 [libraries]
 android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version = "4.1.1" }
-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
+credentials = { module = "androidx.credentials:credentials", version = "1.5.0" }
+credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version = "1.5.0" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version = "1.2.0" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -45,7 +45,7 @@ lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmode
 converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "converterGson" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
-work-runtime = { module = "androidx.work:work-runtime", version.ref = "workRuntime" }
+work-runtime = { module = "androidx.work:work-runtime", version = "2.11.2" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

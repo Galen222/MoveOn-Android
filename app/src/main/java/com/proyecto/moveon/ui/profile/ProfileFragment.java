@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.profile;
 
 import android.net.Uri;
@@ -33,6 +32,7 @@ import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.databinding.FragmentProfileBinding;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
 import com.proyecto.moveon.ui.auth.LoginActivity;
+import com.proyecto.moveon.ui.auth.SocialAuthManager;
 import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
@@ -453,8 +453,13 @@ public class ProfileFragment extends Fragment {
                 deleteAccountSheet.dismiss();
                 deleteAccountSheet = null;
             }
-            goToLogin();
+            handleAccountDeleted();
         });
+    }
+
+    private void handleAccountDeleted() {
+        SocialAuthManager.disableSilentGoogleSignIn(requireContext());
+        goToLogin();
     }
 
     // ── Eliminar cuenta ───────────────────────────────────────────────────────

@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.profile;
 
 import android.app.Application;

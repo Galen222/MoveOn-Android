@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.auth;
 
 import android.app.Application;
@@ -225,4 +224,5 @@ public class AuthViewModel extends AndroidViewModel {
         super.onCleared();
     }
 }
+
 
