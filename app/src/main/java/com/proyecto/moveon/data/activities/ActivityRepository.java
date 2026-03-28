@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.data.activities;
 
 import android.content.Context;
@@ -14,6 +15,7 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.api.ApiResult;
@@ -91,7 +93,7 @@ public final class ActivityRepository {
         String accountKey = sessionManager.getAccountKey();
         if (accountKey == null) {
             callback.onResult(ApiResult.failure(
-                    ApiError.local(appContext.getString(R.string.error_no_sesion_activa))
+                    ApiError.local(AppLanguageManager.getString(appContext, R.string.error_no_sesion_activa))
             ));
             return;
         }
@@ -190,7 +192,7 @@ public final class ActivityRepository {
                 if (callback != null) {
                     callback.onComplete(result.error != null
                             ? result.error
-                            : ApiError.local(appContext.getString(R.string.error_cargando_actividades)));
+                            : ApiError.local(AppLanguageManager.getString(appContext, R.string.error_cargando_actividades)));
                 }
                 return;
             }
@@ -211,14 +213,14 @@ public final class ActivityRepository {
 
             if (entity == null) {
                 callback.onResult(ApiResult.failure(
-                        ApiError.local(appContext.getString(R.string.error_actividad_no_encontrada))));
+                        ApiError.local(AppLanguageManager.getString(appContext, R.string.error_actividad_no_encontrada))));
                 return;
             }
 
             if (entity.remoteId == null || !ActivitySyncState.SYNCED.equals(entity.syncState)) {
                 callback.onResult(ApiResult.failure(
                         ApiError.typed(ApiErrorType.VALIDATION,
-                                appContext.getString(R.string.error_actividad_pendiente_sync))));
+                                AppLanguageManager.getString(appContext, R.string.error_actividad_pendiente_sync))));
                 return;
             }
 
@@ -229,7 +231,7 @@ public final class ActivityRepository {
                     callback.onResult(ApiResult.failure(
                             result.error != null
                                     ? result.error
-                                    : ApiError.local(appContext.getString(R.string.error_eliminando_actividad))));
+                                    : ApiError.local(AppLanguageManager.getString(appContext, R.string.error_eliminando_actividad))));
                     return;
                 }
 
@@ -301,72 +303,72 @@ public final class ActivityRepository {
     private ApiError validateRequest(@NonNull GuardarActividadRequestDto request) {
         if (!VALID_TIPOS.contains(request.tipo)) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_tipo_actividad_invalido));
+                    AppLanguageManager.getString(appContext, R.string.error_tipo_actividad_invalido));
         }
         if (request.distancia <= 0 || request.distancia > 300000) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_distancia_invalida));
+                    AppLanguageManager.getString(appContext, R.string.error_distancia_invalida));
         }
         if (request.duracionTotal <= 0 || request.duracionTotal > 86400) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_duracion_invalida));
+                    AppLanguageManager.getString(appContext, R.string.error_duracion_invalida));
         }
         if (request.duracionMovimiento <= 0 || request.duracionMovimiento > request.duracionTotal) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_tracking_moving_duration_invalid));
+                    AppLanguageManager.getString(appContext, R.string.error_tracking_moving_duration_invalid));
         }
         if (request.duracionParado < 0 || request.duracionParado > request.duracionTotal) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_tracking_stopped_duration_invalid));
+                    AppLanguageManager.getString(appContext, R.string.error_tracking_stopped_duration_invalid));
         }
         if ((request.duracionMovimiento + request.duracionParado) != request.duracionTotal) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_tracking_total_duration_mismatch));
+                    AppLanguageManager.getString(appContext, R.string.error_tracking_total_duration_mismatch));
         }
         if (request.duracionPausaManual < 0 || request.duracionPausaManual > 86400) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_tracking_manual_pause_invalid));
+                    AppLanguageManager.getString(appContext, R.string.error_tracking_manual_pause_invalid));
         }
         if (request.caloriasQuemadas <= 0 || request.caloriasQuemadas > 10000) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_calorias_invalidas));
+                    AppLanguageManager.getString(appContext, R.string.error_calorias_invalidas));
         }
         if (request.ritmoMedioMovimiento <= 0 || request.ritmoMedioMovimiento > 3600) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_tracking_average_pace_invalid));
+                    AppLanguageManager.getString(appContext, R.string.error_tracking_average_pace_invalid));
         }
         if (request.ritmoMedioTotal <= 0 || request.ritmoMedioTotal > 3600) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_tracking_average_pace_invalid));
+                    AppLanguageManager.getString(appContext, R.string.error_tracking_average_pace_invalid));
         }
         if (request.velocidadMediaKmhX100 <= 0 || request.velocidadMediaKmhX100 > 5000) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_tracking_average_speed_invalid));
+                    AppLanguageManager.getString(appContext, R.string.error_tracking_average_speed_invalid));
         }
         if (request.velocidadMaxKmhX100 <= 0 || request.velocidadMaxKmhX100 > 10000
                 || request.velocidadMaxKmhX100 < request.velocidadMediaKmhX100) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_tracking_max_speed_invalid));
+                    AppLanguageManager.getString(appContext, R.string.error_tracking_max_speed_invalid));
         }
         if (request.autoPausas < 0 || request.autoPausas > 500
                 || request.pausasManuales < 0 || request.pausasManuales > 500
                 || request.alertasVelocidad < 0 || request.alertasVelocidad > 500) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_tracking_counter_invalid));
+                    AppLanguageManager.getString(appContext, R.string.error_tracking_counter_invalid));
         }
         if (StringUtils.hasText(request.rutaPolilinea) && request.rutaPolilinea.trim().length() < 2) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_polilinea_invalida));
+                    AppLanguageManager.getString(appContext, R.string.error_polilinea_invalida));
         }
         try {
             OffsetDateTime fecha = OffsetDateTime.parse(request.fechaRuta);
             if (fecha.isAfter(OffsetDateTime.now().plusMinutes(1))) {
                 return ApiError.typed(ApiErrorType.VALIDATION,
-                        appContext.getString(R.string.error_fecha_futura));
+                        AppLanguageManager.getString(appContext, R.string.error_fecha_futura));
             }
         } catch (Exception e) {
             return ApiError.typed(ApiErrorType.VALIDATION,
-                    appContext.getString(R.string.error_formato_fecha_invalido));
+                    AppLanguageManager.getString(appContext, R.string.error_formato_fecha_invalido));
         }
         return null;
     }
@@ -393,3 +395,4 @@ public final class ActivityRepository {
         }
     }
 }
+

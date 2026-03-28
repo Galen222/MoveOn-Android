@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.data.profile.sync;
 
 import android.content.Context;
@@ -9,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.data.local.entity.PerfilCacheEntity;
@@ -183,7 +185,7 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
         // FIX: Usa shouldKeepRetrying en vez de lógica inline sin límite.
         ApiError error = result.error != null
                 ? result.error
-                : ApiError.local(appContext.getString(R.string.error_sincronizando_perfil));
+                : ApiError.local(AppLanguageManager.getString(appContext, R.string.error_sincronizando_perfil));
 
         if (shouldKeepRetrying(op, error)) {
             return UpdateResult.queued();
@@ -248,7 +250,7 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
                 // FIX: Usa shouldKeepRetrying en vez de lógica inline sin límite.
                 ApiError error = result.error != null
                         ? result.error
-                        : ApiError.local(appContext.getString(R.string.error_sincronizando_perfil));
+                        : ApiError.local(AppLanguageManager.getString(appContext, R.string.error_sincronizando_perfil));
 
                 if (shouldKeepRetrying(op, error)) {
                     // Si un patch sigue siendo retryable detenemos el ciclo para reintentar luego.
@@ -472,3 +474,4 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
         return PhotoSyncHelper.isRetryableError(error);
     }
 }
+

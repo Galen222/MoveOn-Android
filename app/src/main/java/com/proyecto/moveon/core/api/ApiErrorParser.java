@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.core.api;
 
 import android.content.Context;
@@ -11,6 +12,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.utils.StringUtils;
 
 import java.io.IOException;
@@ -49,6 +51,7 @@ public final class ApiErrorParser {
      */
     @NonNull
     public static ApiError fromHttp(@NonNull Context context, @NonNull Response<?> response) {
+        context = AppLanguageManager.localizedContext(context);
         int code = response.code();
         String raw = null;
         ResponseBody eb = response.errorBody();
@@ -460,3 +463,4 @@ public final class ApiErrorParser {
         @NonNull final Map<String, List<String>> fieldErrors = new HashMap<>();
     }
 }
+

@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.profile;
 
 import android.app.Application;
@@ -97,7 +98,7 @@ public class ProfileViewModel extends AndroidViewModel {
 
     public void loadPerfil() {
         if (accountKey == null) {
-            perfilState.setValue(UiState.error(ApiError.local(getApplication().getString(R.string.error_no_sesion_activa))));
+            perfilState.setValue(UiState.error(ApiError.local(AppLanguageManager.getString(getApplication(), R.string.error_no_sesion_activa))));
             return;
         }
 
@@ -116,12 +117,12 @@ public class ProfileViewModel extends AndroidViewModel {
 
     public void updatePerfil(@NonNull JsonObject patchJson) {
         if (accountKey == null) {
-            updateState.setValue(UiState.error(ApiError.local(getApplication().getString(R.string.error_no_sesion_activa))));
+            updateState.setValue(UiState.error(ApiError.local(AppLanguageManager.getString(getApplication(), R.string.error_no_sesion_activa))));
             return;
         }
 
         if (patchJson.isEmpty()) {
-            updateState.setValue(UiState.error(ApiError.local(getApplication().getString(R.string.error_no_hay_cambios))));
+            updateState.setValue(UiState.error(ApiError.local(AppLanguageManager.getString(getApplication(), R.string.error_no_hay_cambios))));
             return;
         }
 
@@ -136,7 +137,7 @@ public class ProfileViewModel extends AndroidViewModel {
         perfilRepository.applyLocalPatchAndEnqueue(accountKey, patchJson, result -> {
             if (PerfilRepository.UpdateResult.STATUS_FAILED.equals(result.status)) {
                 updateState.postValue(UiState.error(
-                        result.error != null ? result.error : ApiError.local(getApplication().getString(R.string.vm_error_generico))));
+                        result.error != null ? result.error : ApiError.local(AppLanguageManager.getString(getApplication(), R.string.vm_error_generico))));
             } else {
                 lastFailedPatchJson = null;
                 updateState.postValue(UiState.success(result.status));
@@ -146,7 +147,7 @@ public class ProfileViewModel extends AndroidViewModel {
 
     public void uploadPhoto(@NonNull File file) {
         if (accountKey == null) {
-            photoState.setValue(UiState.error(ApiError.local(getApplication().getString(R.string.error_no_sesion_activa))));
+            photoState.setValue(UiState.error(ApiError.local(AppLanguageManager.getString(getApplication(), R.string.error_no_sesion_activa))));
             return;
         }
 
@@ -159,7 +160,7 @@ public class ProfileViewModel extends AndroidViewModel {
         perfilRepository.uploadPhotoLocalFirst(accountKey, file, result -> {
             if (PerfilRepository.UpdateResult.STATUS_FAILED.equals(result.status)) {
                 photoState.postValue(UiState.error(
-                        result.error != null ? result.error : ApiError.local(getApplication().getString(R.string.vm_error_generico))));
+                        result.error != null ? result.error : ApiError.local(AppLanguageManager.getString(getApplication(), R.string.vm_error_generico))));
             } else {
                 lastFailedPhotoPath = null;
                 photoState.postValue(UiState.success(result.status));
@@ -199,7 +200,7 @@ public class ProfileViewModel extends AndroidViewModel {
                         result.data != null ? result.data : "OK"));
             } else {
                 logoutState.postValue(UiState.error(
-                        result.error != null ? result.error : ApiError.local(getApplication().getString(R.string.vm_error_generico))));
+                        result.error != null ? result.error : ApiError.local(AppLanguageManager.getString(getApplication(), R.string.vm_error_generico))));
             }
         });
     }
@@ -217,7 +218,7 @@ public class ProfileViewModel extends AndroidViewModel {
             } else {
                 deleteAccountState.postValue(UiState.error(
                         result.error != null ? result.error
-                                : ApiError.local(getApplication().getString(R.string.vm_error_generico))));
+                                : ApiError.local(AppLanguageManager.getString(getApplication(), R.string.vm_error_generico))));
             }
         });
     }
@@ -240,3 +241,4 @@ public class ProfileViewModel extends AndroidViewModel {
         super.onCleared();
     }
 }
+

@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.core.i18n;
 
 import android.content.Context;
@@ -6,6 +7,7 @@ import android.content.res.Resources;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.os.LocaleListCompat;
 
@@ -116,6 +118,16 @@ public final class AppLanguageManager {
             return stored;
         }
         return resolveSystemFallbackLanguage(context);
+    }
+
+
+    @NonNull
+    public static String getString(@NonNull Context context, @StringRes int resId, Object... args) {
+        Context localized = localizedContext(context);
+        if (args == null || args.length == 0) {
+            return localized.getString(resId);
+        }
+        return localized.getString(resId, args);
     }
 
     public static boolean hasManualSelection(@NonNull Context context) {

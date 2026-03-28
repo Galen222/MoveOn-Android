@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.profile;
 
 import android.app.Application;
@@ -9,6 +10,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.app.ServiceLocator;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.data.activities.ActivityRepository;
@@ -59,7 +61,7 @@ public class ShareRoutesViewModel extends AndroidViewModel {
     public void load() {
         if (accountKey == null) {
             state.setValue(UiState.error(ApiError.local(
-                    getApplication().getString(R.string.error_no_sesion_activa)
+                    AppLanguageManager.getString(getApplication(), R.string.error_no_sesion_activa)
             )));
             return;
         }
@@ -103,3 +105,4 @@ public class ShareRoutesViewModel extends AndroidViewModel {
         activityRepository.cancelAll();
     }
 }
+

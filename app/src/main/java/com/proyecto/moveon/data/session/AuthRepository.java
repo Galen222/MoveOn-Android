@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.data.session;
 
 import android.content.Context;
@@ -5,6 +6,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorParser;
 import com.proyecto.moveon.core.api.ApiResult;
@@ -60,7 +62,7 @@ public class AuthRepository extends BaseRepository {
 
                 LoginResponseDto body = response.body();
                 if (body == null || !StringUtils.hasText(body.tokenAcceso) || !StringUtils.hasText(body.refreshToken)) {
-                    callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_respuesta_invalida))));
+                    callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_respuesta_invalida))));
                     return;
                 }
 
@@ -96,7 +98,7 @@ public class AuthRepository extends BaseRepository {
 
                 LoginResponseDto body = response.body();
                 if (body == null || !StringUtils.hasText(body.tokenAcceso) || !StringUtils.hasText(body.refreshToken)) {
-                    callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_respuesta_invalida))));
+                    callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_respuesta_invalida))));
                     return;
                 }
 
@@ -134,7 +136,7 @@ public class AuthRepository extends BaseRepository {
 
                 RegisterResponseDto body = response.body();
                 String msg = (body != null && StringUtils.hasText(body.mensaje))
-                        ? body.mensaje : appContext.getString(R.string.repo_registro_completado);
+                        ? body.mensaje : AppLanguageManager.getString(appContext, R.string.repo_registro_completado);
 
                 callback.onResult(ApiResult.success(msg));
             }
@@ -168,7 +170,7 @@ public class AuthRepository extends BaseRepository {
 
                 LoginResponseDto body = response.body();
                 if (body == null || !StringUtils.hasText(body.tokenAcceso) || !StringUtils.hasText(body.refreshToken)) {
-                    callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_respuesta_invalida))));
+                    callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_respuesta_invalida))));
                     return;
                 }
 
@@ -206,7 +208,7 @@ public class AuthRepository extends BaseRepository {
 
                 LoginResponseDto body = response.body();
                 if (body == null || !StringUtils.hasText(body.tokenAcceso) || !StringUtils.hasText(body.refreshToken)) {
-                    callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_respuesta_invalida))));
+                    callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_respuesta_invalida))));
                     return;
                 }
 
@@ -244,7 +246,7 @@ public class AuthRepository extends BaseRepository {
 
                 MessageResponseDto body = response.body();
                 String msg = (body != null && StringUtils.hasText(body.mensaje))
-                        ? body.mensaje : appContext.getString(R.string.repo_logout_ok);
+                        ? body.mensaje : AppLanguageManager.getString(appContext, R.string.repo_logout_ok);
 
                 callback.onResult(ApiResult.success(msg));
             }
@@ -282,7 +284,7 @@ public class AuthRepository extends BaseRepository {
 
                 MessageResponseDto body = response.body();
                 String msg = (body != null && StringUtils.hasText(body.mensaje))
-                        ? body.mensaje : appContext.getString(R.string.repo_recuperacion_enviada);
+                        ? body.mensaje : AppLanguageManager.getString(appContext, R.string.repo_recuperacion_enviada);
 
                 callback.onResult(ApiResult.success(msg));
             }
@@ -321,7 +323,7 @@ public class AuthRepository extends BaseRepository {
 
                 MessageResponseDto body = response.body();
                 String msg = (body != null && StringUtils.hasText(body.mensaje))
-                        ? body.mensaje : appContext.getString(R.string.repo_password_reseteada);
+                        ? body.mensaje : AppLanguageManager.getString(appContext, R.string.repo_password_reseteada);
 
                 callback.onResult(ApiResult.success(msg));
             }
@@ -335,3 +337,4 @@ public class AuthRepository extends BaseRepository {
         });
     }
 }
+

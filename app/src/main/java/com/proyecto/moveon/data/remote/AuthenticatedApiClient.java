@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.data.remote;
 
 import android.content.Context;
@@ -7,6 +8,7 @@ import androidx.annotation.NonNull;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorParser;
 import com.proyecto.moveon.core.api.ApiResult;
@@ -52,7 +54,7 @@ public final class AuthenticatedApiClient extends BaseRepository {
 
     public <T> void get(String url, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
-            callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida))));
+            callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida))));
             return;
         }
         enqueueCall(RetrofitProvider.protectedApi(appContext).get(sanitizeUrl(url)), mapper, callback);
@@ -60,14 +62,14 @@ public final class AuthenticatedApiClient extends BaseRepository {
 
     public <T> ApiResult<T> getBlocking(String url, Mapper<JsonElement, T> mapper) {
         if (isInvalidUrl(url)) {
-            return ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida)));
+            return ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida)));
         }
         return executeCall(RetrofitProvider.protectedApi(appContext).get(sanitizeUrl(url)), mapper);
     }
 
     public <T> void postJson(String url, JsonElement body, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
-            callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida))));
+            callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida))));
             return;
         }
         enqueueCall(RetrofitProvider.protectedApi(appContext).post(sanitizeUrl(url), body), mapper, callback);
@@ -75,14 +77,14 @@ public final class AuthenticatedApiClient extends BaseRepository {
 
     public <T> ApiResult<T> postJsonBlocking(String url, JsonElement body, Mapper<JsonElement, T> mapper) {
         if (isInvalidUrl(url)) {
-            return ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida)));
+            return ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida)));
         }
         return executeCall(RetrofitProvider.protectedApi(appContext).post(sanitizeUrl(url), body), mapper);
     }
 
     public <T> void patchJson(String url, JsonElement body, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
-            callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida))));
+            callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida))));
             return;
         }
         enqueueCall(RetrofitProvider.protectedApi(appContext).patch(sanitizeUrl(url), body), mapper, callback);
@@ -90,14 +92,14 @@ public final class AuthenticatedApiClient extends BaseRepository {
 
     public <T> ApiResult<T> patchJsonBlocking(String url, JsonElement body, Mapper<JsonElement, T> mapper) {
         if (isInvalidUrl(url)) {
-            return ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida)));
+            return ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida)));
         }
         return executeCall(RetrofitProvider.protectedApi(appContext).patch(sanitizeUrl(url), body), mapper);
     }
 
     public <T> void delete(String url, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
-            callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida))));
+            callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida))));
             return;
         }
         enqueueCall(RetrofitProvider.protectedApi(appContext).delete(sanitizeUrl(url)), mapper, callback);
@@ -105,14 +107,14 @@ public final class AuthenticatedApiClient extends BaseRepository {
 
     public <T> ApiResult<T> deleteBlocking(String url, Mapper<JsonElement, T> mapper) {
         if (isInvalidUrl(url)) {
-            return ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida)));
+            return ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida)));
         }
         return executeCall(RetrofitProvider.protectedApi(appContext).delete(sanitizeUrl(url)), mapper);
     }
 
     public <T> void postMultipart(String url, MultipartBody.Part file, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
-            callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida))));
+            callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida))));
             return;
         }
         enqueueCall(RetrofitProvider.protectedApi(appContext).postMultipart(sanitizeUrl(url), file), mapper, callback);
@@ -120,7 +122,7 @@ public final class AuthenticatedApiClient extends BaseRepository {
 
     public <T> ApiResult<T> postMultipartBlocking(String url, MultipartBody.Part file, Mapper<JsonElement, T> mapper) {
         if (isInvalidUrl(url)) {
-            return ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_url_invalida)));
+            return ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida)));
         }
         return executeCall(RetrofitProvider.protectedApi(appContext).postMultipart(sanitizeUrl(url), file), mapper);
     }
@@ -141,7 +143,7 @@ public final class AuthenticatedApiClient extends BaseRepository {
                     if (body == null) body = JsonParser.parseString("{}");
                     callback.onResult(ApiResult.success(mapper.map(body)));
                 } catch (Exception e) {
-                    callback.onResult(ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_respuesta_invalida))));
+                    callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_respuesta_invalida))));
                 }
             }
 
@@ -168,9 +170,10 @@ public final class AuthenticatedApiClient extends BaseRepository {
         } catch (IOException e) {
             return ApiResult.failure(ApiErrorParser.fromThrowable(appContext, e, call.isCanceled()));
         } catch (Exception e) {
-            return ApiResult.failure(ApiError.local(appContext.getString(R.string.api_error_respuesta_invalida)));
+            return ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_respuesta_invalida)));
         } finally {
             untrackCall(call);
         }
     }
 }
+

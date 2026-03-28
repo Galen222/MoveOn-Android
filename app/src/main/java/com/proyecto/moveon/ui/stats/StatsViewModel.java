@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.stats;
 
 import android.app.Application;
@@ -10,6 +11,7 @@ import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.app.ServiceLocator;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.data.activities.ActivityRepository;
@@ -112,7 +114,7 @@ public class StatsViewModel extends AndroidViewModel {
     public void load() {
         if (accountKey == null) {
             statsState.setValue(UiState.error(ApiError.local(
-                    getApplication().getString(R.string.vm_error_generico))));
+                    AppLanguageManager.getString(getApplication(), R.string.vm_error_generico))));
             return;
         }
 
@@ -158,11 +160,11 @@ public class StatsViewModel extends AndroidViewModel {
         actividadRepository.borrarActividad(localId, result -> {
             if (result.isSuccess()) {
                 deleteEvent.postValue(new Event<>(UiState.success(
-                        getApplication().getString(R.string.stats_delete_ok))));
+                        AppLanguageManager.getString(getApplication(), R.string.stats_delete_ok))));
             } else {
                 ApiError error = result.error != null
                         ? result.error
-                        : ApiError.local(getApplication().getString(R.string.stats_delete_error));
+                        : ApiError.local(AppLanguageManager.getString(getApplication(), R.string.stats_delete_error));
                 deleteEvent.postValue(new Event<>(UiState.error(error)));
             }
         });
@@ -225,3 +227,4 @@ public class StatsViewModel extends AndroidViewModel {
         super.onCleared();
     }
 }
+

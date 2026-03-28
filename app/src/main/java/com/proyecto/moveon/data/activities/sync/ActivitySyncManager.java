@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.data.activities.sync;
 
 import android.content.Context;
@@ -5,6 +6,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.api.ApiResult;
@@ -62,7 +64,7 @@ public final class ActivitySyncManager {
 
                 ApiError error = result.error != null
                         ? result.error
-                        : ApiError.local(appContext.getString(R.string.error_sincronizando_actividad));
+                        : ApiError.local(AppLanguageManager.getString(appContext, R.string.error_sincronizando_actividad));
 
                 if (isRetryable(error)) {
                     entity.lastError = error.getMessage();

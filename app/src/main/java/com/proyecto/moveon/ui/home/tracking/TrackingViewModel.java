@@ -1,4 +1,5 @@
 
+
 package com.proyecto.moveon.ui.home.tracking;
 
 import android.app.Application;
@@ -13,6 +14,7 @@ import androidx.lifecycle.Observer;
 
 import com.google.maps.android.PolyUtil;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.app.ServiceLocator;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
 import com.proyecto.moveon.data.activities.ActivityRepository;
@@ -154,16 +156,16 @@ public final class TrackingViewModel extends AndroidViewModel {
         }
 
         if (invalidDistance && invalidMovingDuration) {
-            return getApplication().getString(
+            return AppLanguageManager.getString(getApplication(), 
                     R.string.tracking_dialog_stop_cannot_save_distance_and_moving_time);
         }
 
         if (invalidDistance) {
-            return getApplication().getString(
+            return AppLanguageManager.getString(getApplication(), 
                     R.string.tracking_dialog_stop_cannot_save_distance);
         }
 
-        return getApplication().getString(
+        return AppLanguageManager.getString(getApplication(), 
                 R.string.tracking_dialog_stop_cannot_save_moving_time);
     }
 
@@ -207,8 +209,8 @@ public final class TrackingViewModel extends AndroidViewModel {
         saveState.setValue(UiState.loading());
 
         String activityTypeLabel = (state.getActivityType() == TrackingState.ActivityType.RUNNING_ACTIVITY)
-                ? getApplication().getString(R.string.activity_type_run)
-                : getApplication().getString(R.string.activity_type_walk);
+                ? AppLanguageManager.getString(getApplication(), R.string.activity_type_run)
+                : AppLanguageManager.getString(getApplication(), R.string.activity_type_walk);
 
         String tipo = ProfileValueLocalizer.canonicalActivityTypeFromLabel(getApplication(), activityTypeLabel);
         if (tipo == null) {
@@ -264,7 +266,7 @@ public final class TrackingViewModel extends AndroidViewModel {
             } else {
                 String message = result.error != null
                         ? result.error.getMessage()
-                        : getApplication().getString(R.string.vm_error_generico);
+                        : AppLanguageManager.getString(getApplication(), R.string.vm_error_generico);
                 saveState.postValue(UiState.error(result.error));
                 errorEvent.postValue(new Event<>(message));
             }

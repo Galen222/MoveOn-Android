@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.data.profile.sync;
 
 import android.content.Context;
@@ -6,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.api.ApiResult;
@@ -107,7 +109,7 @@ public final class PhotoSyncHelper {
 
         ApiError error = uploadResult.error != null
                 ? uploadResult.error
-                : ApiError.local(appContext.getString(R.string.error_subiendo_foto));
+                : ApiError.local(AppLanguageManager.getString(appContext, R.string.error_subiendo_foto));
         if (isRetryableError(error)) {
             PerfilCacheEntity refreshed = bridge.getOrCreateCache(accountKey);
             refreshed.photoSyncState = STATE_PENDING;
@@ -152,7 +154,7 @@ public final class PhotoSyncHelper {
 
         ApiError error = uploadResult.error != null
                 ? uploadResult.error
-                : ApiError.local(appContext.getString(R.string.error_subiendo_foto));
+                : ApiError.local(AppLanguageManager.getString(appContext, R.string.error_subiendo_foto));
         if (isRetryableError(error)) {
             cache.photoLastError = error.getMessage();
             cache.dirty          = true;
@@ -237,7 +239,7 @@ public final class PhotoSyncHelper {
                         entity.photoSyncState        = previous != null
                                 && StringUtils.hasText(previous.pendingLocalPhotoPath)
                                 ? previous.photoSyncState : STATE_FAILED;
-                        entity.photoLastError        = appContext.getString(
+                        entity.photoLastError        = AppLanguageManager.getString(appContext, 
                                 R.string.error_actualizando_foto_local);
                     }
                 }
@@ -316,3 +318,4 @@ public final class PhotoSyncHelper {
         local.saveCache(current);
     }
 }
+

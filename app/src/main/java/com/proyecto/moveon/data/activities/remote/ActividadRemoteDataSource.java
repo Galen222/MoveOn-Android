@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.data.activities.remote;
 
 import android.content.Context;
@@ -9,6 +10,7 @@ import androidx.annotation.NonNull;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
@@ -88,7 +90,7 @@ public class ActividadRemoteDataSource {
             if (!result.isSuccess()) {
                 return ApiResult.failure(result.error != null
                         ? result.error
-                        : ApiError.local(appContext.getString(R.string.error_cargando_actividades)));
+                        : ApiError.local(AppLanguageManager.getString(appContext, R.string.error_cargando_actividades)));
             }
 
             ActividadesPageDto page = result.data;
@@ -112,3 +114,4 @@ public class ActividadRemoteDataSource {
         api.cancelAll();
     }
 }
+

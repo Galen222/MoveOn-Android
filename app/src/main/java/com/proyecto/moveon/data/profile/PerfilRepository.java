@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.data.profile;
 
 import android.content.Context;
@@ -15,6 +16,7 @@ import androidx.work.WorkManager;
 
 import com.google.gson.JsonObject;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
@@ -94,7 +96,7 @@ public class PerfilRepository {
                 if (callback != null) {
                     callback.onComplete(result.error != null
                             ? result.error
-                            : ApiError.local(appContext.getString(R.string.error_cargando_perfil)));
+                            : ApiError.local(AppLanguageManager.getString(appContext, R.string.error_cargando_perfil)));
                 }
                 return;
             }
@@ -113,7 +115,7 @@ public class PerfilRepository {
         if (patchJson.isEmpty()) {
             if (callback != null) {
                 callback.onComplete(UpdateResult.failed(
-                        ApiError.local(appContext.getString(R.string.error_no_hay_cambios))));
+                        ApiError.local(AppLanguageManager.getString(appContext, R.string.error_no_hay_cambios))));
             }
             return;
         }
@@ -142,7 +144,7 @@ public class PerfilRepository {
             } catch (IOException e) {
                 if (callback != null) {
                     callback.onComplete(UpdateResult.failed(
-                            ApiError.local(appContext.getString(R.string.error_guardando_foto_local))));
+                            ApiError.local(AppLanguageManager.getString(appContext, R.string.error_guardando_foto_local))));
                 }
             }
         });
@@ -178,7 +180,7 @@ public class PerfilRepository {
             } else {
                 callback.onResult(ApiResult.failure(
                         result.error != null ? result.error
-                                : ApiError.local(appContext.getString(R.string.vm_error_generico))));
+                                : ApiError.local(AppLanguageManager.getString(appContext, R.string.vm_error_generico))));
             }
         }));
     }
@@ -242,3 +244,4 @@ public class PerfilRepository {
         }
     }
 }
+

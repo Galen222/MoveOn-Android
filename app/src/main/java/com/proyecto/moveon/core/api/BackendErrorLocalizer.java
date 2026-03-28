@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.core.api;
 
 import android.content.Context;
@@ -7,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.utils.StringUtils;
 
 import java.util.Locale;
@@ -19,6 +21,7 @@ public final class BackendErrorLocalizer {
     public static String localize(@NonNull Context context,
                                   @Nullable String errorCode,
                                   @Nullable String retryAfterSeconds) {
+        context = AppLanguageManager.localizedContext(context);
         if (!StringUtils.hasText(errorCode)) return null;
 
         String normalized = normalizeErrorCode(errorCode);
@@ -45,3 +48,4 @@ public final class BackendErrorLocalizer {
                 .replaceAll("^_+|_+$", "");
     }
 }
+

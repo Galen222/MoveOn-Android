@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.auth;
 
 import android.app.Application;
@@ -8,6 +9,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.app.ServiceLocator;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiResult;
@@ -211,8 +213,8 @@ public class AuthViewModel extends AndroidViewModel {
 
     @NonNull
     private String getString(int resId, Object... args) {
-        if (args.length == 0) return getApplication().getString(resId);
-        return getApplication().getString(resId, args);
+        if (args.length == 0) return AppLanguageManager.getString(getApplication(), resId);
+        return AppLanguageManager.getString(getApplication(), resId, args);
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -223,3 +225,4 @@ public class AuthViewModel extends AndroidViewModel {
         super.onCleared();
     }
 }
+
