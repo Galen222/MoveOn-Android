@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.profile;
 
 import android.net.Uri;
@@ -8,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -68,10 +70,10 @@ public class ProfileFragment extends Fragment {
     // ── ActivityResult launchers ──────────────────────────────────────────────
     // Se registran en onCreate() según el ciclo de vida de Fragment.
     //
-    // pickImageLauncher usa GetContent: el contrato correcto para seleccionar
-    // imágenes. Recibe el MIME type como String y devuelve la Uri seleccionada,
-    // evitando completamente StartActivityForResult.
-    private ActivityResultLauncher<String> pickImageLauncher;
+    // pickImageLauncher usa PickVisualMedia: el contrato recomendado para
+    // seleccionar imágenes con el picker del sistema. Devuelve la Uri elegida
+    // y evita pedir permisos amplios de fotos o vídeos.
+    private ActivityResultLauncher<PickVisualMediaRequest> pickImageLauncher;
     private ActivityResultLauncher<String[]> trackingRequirementPermissionLauncher;
 
     public ProfileFragment() {}
@@ -83,7 +85,7 @@ public class ProfileFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         pickImageLauncher = registerForActivityResult(
-                new ActivityResultContracts.GetContent(),
+                new ActivityResultContracts.PickVisualMedia(),
                 uri -> {
                     if (uri == null) return;
                     File file = uriToFile(uri);
@@ -306,8 +308,12 @@ public class ProfileFragment extends Fragment {
                 trackingHelper.handleTrackingRequirementAction(
                         TrackingRequirementsManager.Requirement.GPS));
 
-        // GetContent lanza el selector del sistema con el MIME type indicado
-        binding.fabChangePhoto.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
+        // PickVisualMedia abre el picker del sistema limitado a imágenes.
+        binding.fabChangePhoto.setOnClickListener(v -> pickImageLauncher.launch(
+                new PickVisualMediaRequest.Builder()
+                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                        .build()
+        ));
 
         binding.btnLogout.setOnClickListener(v -> viewModel.logout());
         binding.tvDeleteAccount.setOnClickListener(v -> showDeleteAccountBottomSheet());
