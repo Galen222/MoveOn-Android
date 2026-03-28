@@ -202,11 +202,9 @@
     <string name="tracking_activity_saved_ok">¡Actividad guardada correctamente!</string>
     <string name="tracking_permission_denied">Se necesita permiso de ubicación para registrar la actividad.</string>
     <string name="tracking_requirements_needed_title">Requisitos necesarios</string>
-    <string name="tracking_requirements_needed_message">Para iniciar una actividad debes activar estos requisitos:
-%1$s</string>
+    <string name="tracking_requirements_needed_message">Para iniciar una actividad debes activar estos requisitos:\n%1$s</string>
     <string name="tracking_requirements_blocked_title">Requisitos bloqueados</string>
-    <string name="tracking_requirements_blocked_message">Estos requisitos están bloqueados por el sistema. Debes activarlos desde ajustes para iniciar una actividad:
-%1$s</string>
+    <string name="tracking_requirements_blocked_message">Estos requisitos están bloqueados por el sistema. Debes activarlos desde ajustes para iniciar una actividad:\n%1$s</string>
     <string name="tracking_requirements_go_settings">Ir a ajustes</string>
     <string name="tracking_device_location_disabled_title">GPS desactivado</string>
     <string name="tracking_device_location_disabled_message">Para iniciar una actividad debes activar el GPS.</string>

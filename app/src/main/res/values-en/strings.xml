@@ -121,11 +121,9 @@
     <string name="tracking_activity_saved_ok">Activity saved successfully!</string>
     <string name="tracking_permission_denied">Location permission is required to record the activity.</string>
     <string name="tracking_requirements_needed_title">Required requirements</string>
-    <string name="tracking_requirements_needed_message">To start an activity you must enable these requirements:
-%1$s</string>
+    <string name="tracking_requirements_needed_message">To start an activity you must enable these requirements:\n%1$s</string>
     <string name="tracking_requirements_blocked_title">Blocked requirements</string>
-    <string name="tracking_requirements_blocked_message">These requirements are blocked by the system. You must enable them in settings to start an activity:
-%1$s</string>
+    <string name="tracking_requirements_blocked_message">These requirements are blocked by the system. You must enable them in settings to start an activity:\n%1$s</string>
     <string name="tracking_requirements_go_settings">Open settings</string>
     <string name="tracking_device_location_disabled_title">GPS is turned off</string>
     <string name="tracking_device_location_disabled_message">To start an activity you must enable GPS.</string>
