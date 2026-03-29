@@ -3,6 +3,7 @@ package com.proyecto.moveon.ui.auth;
 import android.app.Application;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -17,6 +18,7 @@ import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.domain.auth.LoginSession;
 import com.proyecto.moveon.domain.auth.RegisterInput;
 import com.proyecto.moveon.domain.auth.SocialRegisterInput;
+import com.proyecto.moveon.domain.auth.SocialAuthProvider;
 import com.proyecto.moveon.ui.common.UiState;
 
 public class AuthViewModel extends AndroidViewModel {
@@ -61,6 +63,16 @@ public class AuthViewModel extends AndroidViewModel {
 
     public String getRememberedIdentifier() { return sessionManager.getRememberedIdentifier(); }
 
+    /**
+     * Devuelve {@code true} solo cuando la última sesión recuperable pertenece a Google.
+     *
+     * <p>Esto evita lanzar comprobaciones silenciosas de Google en instalaciones o sesiones
+     * que nunca se autenticaron con ese provider.</p>
+     */
+    public boolean shouldTrySilentGoogleSignIn() {
+        return SocialAuthProvider.GOOGLE.equals(sessionManager.getAuthProvider());
+    }
+
     public void saveRememberedIdentifier(String identifier, boolean remember) {
         if (remember) sessionManager.saveRememberedIdentifier(identifier);
         else          sessionManager.saveRememberedIdentifier(null);
@@ -73,7 +85,7 @@ public class AuthViewModel extends AndroidViewModel {
 
         authRepository.login(identificador, password, result -> {
             if (result.isSuccess()) {
-                handleLoginSuccess(result, loginState);
+                handleLoginSuccess(result, loginState, null);
             } else {
                 loginState.postValue(UiState.error(errorOrDefault(result)));
             }
@@ -85,7 +97,7 @@ public class AuthViewModel extends AndroidViewModel {
 
         authRepository.loginSocial(provider, token, result -> {
             if (result.isSuccess()) {
-                handleLoginSuccess(result, loginState);
+                handleLoginSuccess(result, loginState, provider);
             } else {
                 loginState.postValue(UiState.error(errorOrDefault(result)));
             }
@@ -125,7 +137,7 @@ public class AuthViewModel extends AndroidViewModel {
     private void handleAutoLoginResult(String registerMsg, ApiResult<LoginSession> loginResult) {
         if (loginResult.isSuccess() && loginResult.data != null) {
             LoginSession s = loginResult.data;
-            sessionManager.saveLogin(s.nombreUsuario, s.tokenAcceso, s.refreshToken);
+            sessionManager.saveLoginWithProvider(s.nombreUsuario, s.tokenAcceso, s.refreshToken, null);
             registerState.postValue(UiState.success(registerMsg));
             loginState.postValue(UiState.success(s));
         } else {
@@ -139,7 +151,7 @@ public class AuthViewModel extends AndroidViewModel {
     private void handleSocialRegisterResult(@NonNull ApiResult<LoginSession> result) {
         if (result.isSuccess() && result.data != null) {
             LoginSession s = result.data;
-            sessionManager.saveLogin(s.nombreUsuario, s.tokenAcceso, s.refreshToken);
+            sessionManager.saveLoginWithProvider(s.nombreUsuario, s.tokenAcceso, s.refreshToken, SocialAuthProvider.GOOGLE);
             registerState.postValue(UiState.success(getString(R.string.vm_registro_social_completado)));
             loginState.postValue(UiState.success(s));
         } else {
@@ -199,10 +211,11 @@ public class AuthViewModel extends AndroidViewModel {
     }
 
     private void handleLoginSuccess(@NonNull ApiResult<LoginSession> result,
-                                    @NonNull MutableLiveData<UiState<LoginSession>> target) {
+                                    @NonNull MutableLiveData<UiState<LoginSession>> target,
+                                    @Nullable String authProvider) {
         LoginSession s = result.data;
         if (s != null) {
-            sessionManager.saveLogin(s.nombreUsuario, s.tokenAcceso, s.refreshToken);
+            sessionManager.saveLoginWithProvider(s.nombreUsuario, s.tokenAcceso, s.refreshToken, authProvider);
             target.postValue(UiState.success(s));
         } else {
             target.postValue(UiState.error(
@@ -224,5 +237,3 @@ public class AuthViewModel extends AndroidViewModel {
         super.onCleared();
     }
 }
-
-

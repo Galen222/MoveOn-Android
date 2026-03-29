@@ -587,7 +587,7 @@
     <string name="delete_account_item_profile">Tu perfil y datos personales</string>
     <string name="delete_account_item_activities">Todas tus actividades y rutas</string>
     <string name="delete_account_item_progress">Tus puntos y progreso</string>
-    <string name="delete_account_google_note">Si usas Google para iniciar sesión, también se eliminará la vinculación con Google. Tu cuenta de Google no se borrará.</string>
+    <string name="delete_account_item_google_link">Vinculación con Google</string>
     <string name="delete_account_sheet_confirm_instruction">Escribe ELIMINAR para confirmar</string>
     <string name="delete_account_sheet_confirm_hint">ELIMINAR</string>
     <string name="delete_account_sheet_btn_delete">Eliminar definitivamente</string>

@@ -363,7 +363,7 @@
     <string name="delete_account_item_profile">Your profile and personal data</string>
     <string name="delete_account_item_activities">All your activities and routes</string>
     <string name="delete_account_item_progress">Your points and progress</string>
-    <string name="delete_account_google_note">If you use Google to sign in, the link with Google will also be removed. Your Google account will not be deleted.</string>
+    <string name="delete_account_item_google_link">Google link</string>
     <string name="delete_account_sheet_confirm_instruction">Type DELETE to confirm</string>
     <string name="delete_account_sheet_confirm_hint">DELETE</string>
     <string name="delete_account_sheet_btn_delete">Delete permanently</string>

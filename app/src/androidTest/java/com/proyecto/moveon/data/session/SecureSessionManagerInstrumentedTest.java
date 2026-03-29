@@ -3,6 +3,7 @@ package com.proyecto.moveon.data.session;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -110,6 +111,40 @@ public class SecureSessionManagerInstrumentedTest {
 
         assertEquals("456", manager.getUserId());
         assertEquals("uid_456", manager.getAccountKey());
+    }
+
+    @Test
+    public void saveLoginWithProvider_persistsGoogleProvider() {
+        manager.saveLoginWithProvider(
+                "alice",
+                fakeJwtWithSub("456"),
+                "refresh_456",
+                "google"
+        );
+
+        assertEquals("google", manager.getAuthProvider());
+        assertTrue(manager.isLoggedWithGoogle());
+    }
+
+    @Test
+    public void logout_clearsProviderAndDisablesSilentGoogleSignIn() {
+        manager.saveLoginWithProvider(
+                "alice",
+                fakeJwtWithSub("456"),
+                "refresh_456",
+                "google"
+        );
+        context.getSharedPreferences("social_auth_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean("google_silent_enabled", true)
+                .commit();
+
+        manager.logout();
+
+        assertNull(manager.getAuthProvider());
+        assertFalse(manager.isLoggedWithGoogle());
+        assertFalse(context.getSharedPreferences("social_auth_prefs", Context.MODE_PRIVATE)
+                .getBoolean("google_silent_enabled", true));
     }
 
     private void removeEncryptedValue(String cipherFieldName, String ivFieldName) throws Exception {

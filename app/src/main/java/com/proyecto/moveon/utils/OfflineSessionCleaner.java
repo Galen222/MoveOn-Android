@@ -14,6 +14,12 @@ import com.proyecto.moveon.data.session.SecureSessionManager;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Limpia sesión y datos locales cuando la cuenta se cierra o se elimina.
+ *
+ * <p>Delegar el logout en {@link SecureSessionManager} garantiza que, además de los tokens,
+ * también se reinicien el provider persistido y el silent sign-in de Google.</p>
+ */
 public final class OfflineSessionCleaner {
 
     private OfflineSessionCleaner() {}

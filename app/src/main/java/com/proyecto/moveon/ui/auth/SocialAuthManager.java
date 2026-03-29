@@ -74,7 +74,17 @@ public final class SocialAuthManager {
         requestCredential(request, false);
     }
 
-    public void trySilentSignInWithGoogle() {
+    /**
+     * Intenta restaurar el acceso con Google solo cuando el caller confirma que la última
+     * sesión recuperable pertenecía a ese provider.
+     *
+     * <p>Así evitamos abrir Credential Manager o consultar Google en arranques donde la app
+     * ya sabe que el usuario venía de email/usuario u otro flujo no social.</p>
+     */
+    public void trySilentSignInWithGoogle(boolean lastSessionUsedGoogle) {
+        if (!lastSessionUsedGoogle) {
+            return;
+        }
         if (isGoogleMissingConfiguration() || !isSilentGoogleSignInEnabled(activity)) {
             return;
         }
@@ -106,7 +116,8 @@ public final class SocialAuthManager {
     }
 
     public static boolean isSilentGoogleSignInEnabled(@NonNull Context context) {
-        return preferences(context).getBoolean(KEY_GOOGLE_SILENT_ENABLED, true);
+        // Arrancamos desactivado por defecto: solo se habilita tras un acceso real con Google.
+        return preferences(context).getBoolean(KEY_GOOGLE_SILENT_ENABLED, false);
     }
 
     @NonNull

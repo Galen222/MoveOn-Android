@@ -9,6 +9,7 @@ import android.util.Base64;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.proyecto.moveon.domain.auth.SocialAuthProvider;
 import com.proyecto.moveon.utils.StringUtils;
 
 import org.json.JSONObject;
@@ -50,10 +51,16 @@ public final class SecureSessionManager {
     private static final String KEY_USERNAME_IV = "username_iv";
     private static final String KEY_USER_ID_CT = "user_id_ct";
     private static final String KEY_USER_ID_IV = "user_id_iv";
+    private static final String KEY_AUTH_PROVIDER_CT = "auth_provider_ct";
+    private static final String KEY_AUTH_PROVIDER_IV = "auth_provider_iv";
     private static final String KEY_REMEMBERED_ID_CT = "remembered_id_ct";
     private static final String KEY_REMEMBERED_ID_IV = "remembered_id_iv";
     private static final String KEY_SHOW_AUTO_PAUSE_ALERTS_CT = "show_auto_pause_alerts_ct";
     private static final String KEY_SHOW_AUTO_PAUSE_ALERTS_IV = "show_auto_pause_alerts_iv";
+
+    /** Preferencias separadas del flujo social usadas por el silent sign-in de Google. */
+    private static final String SOCIAL_AUTH_PREFS_NAME = "social_auth_prefs";
+    private static final String KEY_GOOGLE_SILENT_ENABLED = "google_silent_enabled";
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int GCM_TAG_LENGTH_BITS = 128;
 
@@ -85,21 +92,25 @@ public final class SecureSessionManager {
         @Nullable private final String accessToken;
         @Nullable private final String refreshToken;
         @Nullable private final String userId;
+        @Nullable private final String authProvider;
 
         private SessionSnapshot(@Nullable String username,
                                 @Nullable String accessToken,
                                 @Nullable String refreshToken,
-                                @Nullable String userId) {
+                                @Nullable String userId,
+                                @Nullable String authProvider) {
             this.username = username;
             this.accessToken = accessToken;
             this.refreshToken = refreshToken;
             this.userId = userId;
+            this.authProvider = authProvider;
         }
 
         @Nullable public String getUsername() { return username; }
         @Nullable public String getAccessToken() { return accessToken; }
         @Nullable public String getRefreshToken() { return refreshToken; }
         @Nullable public String getUserId() { return userId; }
+        @Nullable public String getAuthProvider() { return authProvider; }
 
         public boolean hasCompleteSession() {
             return StringUtils.hasText(accessToken) && StringUtils.hasText(refreshToken);
@@ -119,11 +130,12 @@ public final class SecureSessionManager {
         }
     }
 
+    private final Context appContext;
     private final SharedPreferences prefs;
     private final Object sessionLock = new Object();
 
     private SecureSessionManager(Context context) {
-        Context appContext = context.getApplicationContext();
+        this.appContext = context.getApplicationContext();
         this.prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
 
@@ -137,7 +149,7 @@ public final class SecureSessionManager {
                           @Nullable String accessToken,
                           @Nullable String refreshToken) {
         synchronized (sessionLock) {
-            saveLoginLocked(username, accessToken, refreshToken, false);
+            saveLoginLocked(username, accessToken, refreshToken, false, null, false);
         }
     }
 
@@ -152,7 +164,34 @@ public final class SecureSessionManager {
                               @Nullable String accessToken,
                               @Nullable String refreshToken) {
         synchronized (sessionLock) {
-            saveLoginLocked(username, accessToken, refreshToken, true);
+            saveLoginLocked(username, accessToken, refreshToken, true, null, false);
+        }
+    }
+
+    /**
+     * Guarda una sesión completa y actualiza explícitamente el provider de autenticación.
+     *
+     * <p>Usar {@code authProvider = null} para un login tradicional por email/usuario y
+     * {@link SocialAuthProvider#GOOGLE} para un login social con Google.</p>
+     */
+    public void saveLoginWithProvider(@Nullable String username,
+                                      @Nullable String accessToken,
+                                      @Nullable String refreshToken,
+                                      @Nullable String authProvider) {
+        synchronized (sessionLock) {
+            saveLoginLocked(username, accessToken, refreshToken, false, authProvider, true);
+        }
+    }
+
+    /**
+     * Variante síncrona de {@link #saveLoginWithProvider(String, String, String, String)}.
+     */
+    public void saveLoginSyncWithProvider(@Nullable String username,
+                                          @Nullable String accessToken,
+                                          @Nullable String refreshToken,
+                                          @Nullable String authProvider) {
+        synchronized (sessionLock) {
+            saveLoginLocked(username, accessToken, refreshToken, true, authProvider, true);
         }
     }
 
@@ -165,7 +204,7 @@ public final class SecureSessionManager {
     public void updateTokens(@Nullable String accessToken, @Nullable String refreshToken) {
         synchronized (sessionLock) {
             String username = getDecryptedValueLocked(KEY_USERNAME_CT, KEY_USERNAME_IV);
-            saveLoginLocked(username, accessToken, refreshToken, false);
+            saveLoginLocked(username, accessToken, refreshToken, false, null, false);
         }
     }
 
@@ -178,7 +217,7 @@ public final class SecureSessionManager {
     public void updateTokensSync(@Nullable String accessToken, @Nullable String refreshToken) {
         synchronized (sessionLock) {
             String username = getDecryptedValueLocked(KEY_USERNAME_CT, KEY_USERNAME_IV);
-            saveLoginLocked(username, accessToken, refreshToken, true);
+            saveLoginLocked(username, accessToken, refreshToken, true, null, false);
         }
     }
 
@@ -248,6 +287,25 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Devuelve el provider con el que se autenticó la sesión actual o la última sesión recuperable.
+     */
+    @Nullable
+    public String getAuthProvider() {
+        synchronized (sessionLock) {
+            return readSessionSnapshotLocked().getAuthProvider();
+        }
+    }
+
+    /**
+     * Indica si la sesión actual o recuperable pertenece a un acceso con Google.
+     */
+    public boolean isLoggedWithGoogle() {
+        synchronized (sessionLock) {
+            return SocialAuthProvider.GOOGLE.equals(readSessionSnapshotLocked().getAuthProvider());
+        }
+    }
+
     @NonNull
     public SessionSnapshot getSessionSnapshot() {
         synchronized (sessionLock) {
@@ -261,16 +319,28 @@ public final class SecureSessionManager {
         return "uid_" + userId.trim();
     }
 
+    /**
+     * Cierra la sesión local y limpia también las pistas usadas para el acceso social automático.
+     *
+     * <p>Además de borrar usuario/tokens/provider, desactiva el silent sign-in de Google
+     * para que el siguiente arranque no vuelva a intentar un reingreso automático por inercia.</p>
+     */
     public void logout() {
         synchronized (sessionLock) {
             // En logout sí queremos garantía dura: una vez retornamos no deben quedar
             // restos de sesión pendientes de escribirse en disco.
-            prefs.edit()
+            boolean committed = prefs.edit()
                     .remove(KEY_USERNAME_CT).remove(KEY_USERNAME_IV)
                     .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
                     .remove(KEY_REFRESH_TOKEN_CT).remove(KEY_REFRESH_TOKEN_IV)
                     .remove(KEY_USER_ID_CT).remove(KEY_USER_ID_IV)
+                    .remove(KEY_AUTH_PROVIDER_CT).remove(KEY_AUTH_PROVIDER_IV)
                     .commit();
+            if (!committed) {
+                throw new IllegalStateException("Error limpiando sesión segura");
+            }
+
+            disableSilentGoogleSignInLocked();
         }
     }
 
@@ -348,7 +418,9 @@ public final class SecureSessionManager {
     private void saveLoginLocked(@Nullable String username,
                                  @Nullable String accessToken,
                                  @Nullable String refreshToken,
-                                 boolean persistSynchronously) {
+                                 boolean persistSynchronously,
+                                 @Nullable String authProvider,
+                                 boolean replaceAuthProvider) {
         try {
             SharedPreferences.Editor editor = prefs.edit();
             putEncrypted(editor, KEY_USERNAME_CT, KEY_USERNAME_IV, StringUtils.textOf(username));
@@ -360,6 +432,11 @@ public final class SecureSessionManager {
                 putEncrypted(editor, KEY_USER_ID_CT, KEY_USER_ID_IV, userId);
             } else {
                 editor.remove(KEY_USER_ID_CT).remove(KEY_USER_ID_IV);
+            }
+
+            if (replaceAuthProvider) {
+                // En login tradicional limpiamos el provider previo; en login social guardamos Google.
+                putEncryptedOrRemove(editor, KEY_AUTH_PROVIDER_CT, KEY_AUTH_PROVIDER_IV, authProvider);
             }
 
             persistEditor(editor, persistSynchronously, "Error persistiendo sesión segura");
@@ -375,6 +452,7 @@ public final class SecureSessionManager {
         String refreshToken = getDecryptedValueLocked(KEY_REFRESH_TOKEN_CT, KEY_REFRESH_TOKEN_IV);
 
         String userId = getDecryptedValueLocked(KEY_USER_ID_CT, KEY_USER_ID_IV);
+        String authProvider = getDecryptedValueLocked(KEY_AUTH_PROVIDER_CT, KEY_AUTH_PROVIDER_IV);
         if (!StringUtils.hasText(userId)) {
             userId = extractUserIdFromAccessToken(accessToken);
             if (StringUtils.hasText(userId)) {
@@ -382,7 +460,7 @@ public final class SecureSessionManager {
             }
         }
 
-        return new SessionSnapshot(username, accessToken, refreshToken, userId);
+        return new SessionSnapshot(username, accessToken, refreshToken, userId, authProvider);
     }
 
     private void persistUserIdQuietlyLocked(@NonNull String userId) {
@@ -437,6 +515,18 @@ public final class SecureSessionManager {
         }
     }
 
+
+    private void putEncryptedOrRemove(@NonNull SharedPreferences.Editor editor,
+                                      @NonNull String ctKey,
+                                      @NonNull String ivKey,
+                                      @Nullable String plainText) throws Exception {
+        if (StringUtils.hasText(plainText)) {
+            putEncrypted(editor, ctKey, ivKey, plainText.trim());
+            return;
+        }
+        editor.remove(ctKey).remove(ivKey);
+    }
+
     private void putEncrypted(SharedPreferences.Editor editor,
                               String ctKey,
                               String ivKey,
@@ -462,6 +552,24 @@ public final class SecureSessionManager {
         } catch (Exception e) {
             prefs.edit().remove(ctKey).remove(ivKey).apply();
             return null;
+        }
+    }
+
+
+    /**
+     * Desactiva el intento de silent sign-in con persistencia síncrona para que el cambio
+     * quede aplicado antes de abandonar la pantalla o el proceso actual.
+     */
+    private void disableSilentGoogleSignInLocked() {
+        SharedPreferences socialPrefs = appContext.getSharedPreferences(
+                SOCIAL_AUTH_PREFS_NAME,
+                Context.MODE_PRIVATE
+        );
+        boolean committed = socialPrefs.edit()
+                .putBoolean(KEY_GOOGLE_SILENT_ENABLED, false)
+                .commit();
+        if (!committed) {
+            throw new IllegalStateException("Error desactivando el silent sign-in de Google");
         }
     }
 

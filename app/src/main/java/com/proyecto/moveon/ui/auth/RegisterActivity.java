@@ -67,6 +67,15 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
     @Nullable private SocialGoogleAccount pendingGoogleAccount;
     private int socialUsernameRetryCount;
 
+    /**
+     * Controla si al cerrar esta pantalla debe aplicarse el fade de vuelta a Login.
+     *
+     * <p>Se mantiene activo para cierres normales (botón "Iniciar sesión", gesto atrás o botón
+     * atrás del sistema), pero se desactiva cuando el flujo realmente navega hacia otra pantalla
+     * distinta, como Main tras completar el registro.</p>
+     */
+    private boolean shouldApplyReturnFade = true;
+
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(AppLanguageManager.wrapContext(newBase));
@@ -157,10 +166,7 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
     }
 
     private void setupListeners() {
-        binding.btnIniciarSesion.setOnClickListener(v -> {
-            finish();
-            applyFadeCloseTransition();
-        });
+        binding.btnIniciarSesion.setOnClickListener(v -> finish());
         binding.etFechaNacimiento.setOnClickListener(v -> showDatePicker());
         binding.btnCrearCuenta.setOnClickListener(v -> {
             if (pendingGoogleAccount != null) {
@@ -211,6 +217,10 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                 showGoogleLoading(false, false, null, 0, 0);
                 Toast.makeText(this, getString(R.string.login_bienvenido, state.data.nombreUsuario), Toast.LENGTH_SHORT).show();
                 viewModel.resetLoginState();
+
+                // Desde aquí ya no estamos "volviendo" a Login, sino avanzando a Main.
+                // Por eso desactivamos el fade de cierre para no mezclar animaciones opuestas.
+                shouldApplyReturnFade = false;
                 NavigationUtils.goToActivityAndClearTask(this, MainActivity.class);
                 applyFadeOpenTransition();
             }
@@ -581,6 +591,21 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                     android.R.anim.fade_in,
                     android.R.anim.fade_out
             );
+        }
+    }
+
+    /**
+     * Aplica el mismo fade de retorno tanto si el usuario pulsa el botón de la pantalla como si
+     * sale con el gesto atrás o con el botón atrás del sistema.
+     *
+     * <p>Centralizar la animación en {@link #finish()} evita depender de un único botón y deja
+     * consistente cualquier cierre que vuelva a la pantalla anterior.</p>
+     */
+    @Override
+    public void finish() {
+        super.finish();
+        if (shouldApplyReturnFade) {
+            applyFadeCloseTransition();
         }
     }
 

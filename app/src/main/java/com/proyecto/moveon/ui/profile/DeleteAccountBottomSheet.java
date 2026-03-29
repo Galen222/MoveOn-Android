@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.databinding.BottomSheetDeleteAccountBinding;
 import com.proyecto.moveon.ui.common.BaseExpandedBottomSheetDialogFragment;
 
@@ -24,6 +25,9 @@ import com.proyecto.moveon.ui.common.BaseExpandedBottomSheetDialogFragment;
 public class DeleteAccountBottomSheet extends BaseExpandedBottomSheetDialogFragment {
 
     public static final String TAG = "delete_account_sheet";
+
+    /** Gestor de sesión usado para decidir si la cuenta actual está vinculada con Google. */
+    @Nullable private SecureSessionManager sessionManager;
 
     public interface OnDeleteConfirmedListener {
         void onDeleteAccountConfirmed();
@@ -39,6 +43,7 @@ public class DeleteAccountBottomSheet extends BaseExpandedBottomSheetDialogFragm
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
+        sessionManager = SecureSessionManager.getInstance(context);
     }
 
     public void setOnDeleteConfirmedListener(@Nullable OnDeleteConfirmedListener listener) {
@@ -58,6 +63,7 @@ public class DeleteAccountBottomSheet extends BaseExpandedBottomSheetDialogFragm
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         String confirmWord = getString(R.string.profile_delete_confirm_word);
+        bindGoogleLinkItem();
 
         binding.etConfirm.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -80,9 +86,30 @@ public class DeleteAccountBottomSheet extends BaseExpandedBottomSheetDialogFragm
     }
 
     @Override
+    public void onDetach() {
+        sessionManager = null;
+        listener = null;
+        super.onDetach();
+    }
+
+    @Override
     public void onDestroyView() {
         binding = null;
         super.onDestroyView();
+    }
+
+    /**
+     * Muestra el cuarto elemento solo cuando la sesión actual pertenece a Google.
+     */
+    private void bindGoogleLinkItem() {
+        BottomSheetDeleteAccountBinding b = binding;
+        if (b == null) return;
+
+        boolean showGoogleLink = sessionManager != null && sessionManager.isLoggedWithGoogle();
+
+        // El separador previo también se oculta para no dejar un hueco visual.
+        b.deleteAccountGoogleDivider.setVisibility(showGoogleLink ? View.VISIBLE : View.GONE);
+        b.tvDeleteAccountGoogleLink.setVisibility(showGoogleLink ? View.VISIBLE : View.GONE);
     }
 
     /**

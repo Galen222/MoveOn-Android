@@ -55,7 +55,7 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         loadRememberedAccount();
         setupListeners();
         observeViewModel();
-        socialAuthManager.trySilentSignInWithGoogle();
+        socialAuthManager.trySilentSignInWithGoogle(viewModel.shouldTrySilentGoogleSignIn());
     }
 
     private void loadRememberedAccount() {
@@ -69,10 +69,7 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
     }
 
     private void setupListeners() {
-        binding.btnRegistrar.setOnClickListener(v -> {
-            NavigationUtils.goToActivity(this, RegisterActivity.class);
-            applyFadeOpenTransition();
-        });
+        binding.btnRegistrar.setOnClickListener(v -> openRegisterWithFade(null));
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
         binding.btnGoogleLogin.setOnClickListener(v -> {
             clearErrors();
@@ -141,13 +138,32 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
                     .putExtra(RegisterActivity.EXTRA_GOOGLE_AVATAR_URL, pendingGoogleAccount.avatarUrl)
                     .putExtra(RegisterActivity.EXTRA_GOOGLE_EMAIL, pendingGoogleAccount.email)
                     .putExtra(RegisterActivity.EXTRA_OPENED_FROM_LOGIN_SOCIAL, true);
-            startActivity(intent);
-            applyFadeOpenTransition();
+            openRegisterWithFade(intent);
             TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_not_registered));
         } else {
             TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_not_registered));
         }
         return true;
+    }
+
+
+    /**
+     * Abre la pantalla de registro con un fade real también en Android 10+.
+     *
+     * <p>Se evita delegar esta navegación en utilidades genéricas porque aquí sí queremos
+     * forzar explícitamente la animación de entrada. Si no se hace así, algunos dispositivos
+     * muestran la transición vertical por defecto del sistema.</p>
+     *
+     * @param customIntent intent ya preparado para registro social. Si es {@code null}, se abre
+     *                     el registro estándar.
+     */
+    private void openRegisterWithFade(@Nullable Intent customIntent) {
+        Intent intent = customIntent != null ? customIntent : new Intent(this, RegisterActivity.class);
+        startActivity(intent);
+
+        // Forzamos fade real en la navegación Login -> Registro para que coincida visualmente
+        // con el desvanecimiento que ya se percibe al cerrar Registro y volver a Login.
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private void applyBackendErrors(ApiError err) {
