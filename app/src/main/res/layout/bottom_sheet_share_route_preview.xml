@@ -23,29 +23,25 @@
             android:layout_marginBottom="12dp"
             android:background="@color/dividerColor" />
 
+        <!--
+            Título centrado según el nuevo copy solicitado.
+            Se deja a ancho completo para que el centrado visual sea consistente.
+        -->
         <TextView
             android:id="@+id/tvShareRoutePreviewTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:text="@string/share_routes_preview_title"
+            android:textAlignment="center"
             android:textColor="@color/textPrimary"
             android:textSize="24sp"
             android:fontFamily="sans-serif-medium" />
 
-        <TextView
-            android:id="@+id/tvShareRoutePreviewSubtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="12dp"
-            android:text="@string/share_routes_preview_subtitle"
-            android:textColor="@color/textSecondary"
-            android:textSize="16sp" />
-
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="12dp"
             app:cardBackgroundColor="@color/cardBackground"
             app:cardCornerRadius="20dp"
             app:cardElevation="0dp"
@@ -68,15 +64,8 @@
                     android:contentDescription="@string/share_routes_preview_image_content_description"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackgroundBorderless"
-                    android:scaleType="fitCenter" />
-
-                <TextView
-                    android:id="@+id/tvShareRoutePreviewSummary"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:textColor="@color/textSecondary"
-                    android:textSize="16sp" />
+                    android:scaleType="fitCenter"
+                    tools:ignore="ContentDescription" />
 
             </LinearLayout>
 

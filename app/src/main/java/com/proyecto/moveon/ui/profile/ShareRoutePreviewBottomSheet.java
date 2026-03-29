@@ -11,10 +11,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.fragment.app.FragmentManager;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentManager;
 
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.databinding.BottomSheetShareRoutePreviewBinding;
@@ -25,24 +24,40 @@ import com.proyecto.moveon.ui.common.BaseExpandedBottomSheetDialogFragment;
  *
  * <p>Se abre después de generar el PNG temporal. Desde aquí el usuario puede revisar la tarjeta,
  * cancelar o lanzar la acción de compartir.</p>
+ *
+ * <p>En esta revisión la previsualización ya no muestra el texto adjunto del share. Ese copy se
+ * sigue enviando en el intent de compartir, pero se oculta en la UI para dejar una tarjeta más
+ * limpia y centrada en la imagen.</p>
  */
 public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogFragment {
 
+    /** Tag estable del fragment para el {@link androidx.fragment.app.FragmentManager}. */
     public static final String TAG = "share_route_preview_sheet";
 
+    /** Argumento con la {@link Uri} serializada del PNG temporal. */
     private static final String ARG_URI = "arg_uri";
+
+    /** Argumento con el texto que debe enviarse junto a la imagen al compartir. */
     private static final String ARG_SHARE_TEXT = "arg_share_text";
 
+    /** Binding de la vista del bottom sheet. Se limpia en {@link #onDestroyView()}. */
+    @Nullable
     private BottomSheetShareRoutePreviewBinding binding;
+
+    /** Uri segura de la imagen generada con {@code FileProvider}. */
+    @Nullable
     private Uri previewUri;
+
+    /** Texto que se adjunta al intent de compartir, aunque no se muestre en la preview. */
+    @Nullable
     private String shareText;
 
     /**
      * Crea una nueva instancia del sheet de preview.
      *
-     * @param uri       Uri segura del PNG temporal generado con FileProvider.
-     * @param shareText Texto resumen que se enviará junto a la imagen.
-     * @return instancia del bottom sheet.
+     * @param uri Uri segura del PNG temporal generado con FileProvider.
+     * @param shareText texto resumen que se enviará junto a la imagen.
+     * @return instancia del bottom sheet lista para mostrarse.
      */
     @NonNull
     public static ShareRoutePreviewBottomSheet newInstance(@NonNull Uri uri,
@@ -68,8 +83,9 @@ public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogF
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        BottomSheetShareRoutePreviewBinding currentBinding = binding;
         Bundle args = getArguments();
-        if (args == null) {
+        if (currentBinding == null || args == null) {
             dismissAllowingStateLoss();
             return;
         }
@@ -84,32 +100,31 @@ public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogF
 
         previewUri = Uri.parse(uriString);
 
-        // Cargamos la imagen generada en el ImageView para que el usuario vea exactamente lo que se enviará.
-        binding.ivShareRoutePreview.setImageURI(previewUri);
-        binding.tvShareRoutePreviewSummary.setText(shareText);
-
-        binding.ivShareRoutePreview.setOnClickListener(v -> openFullscreenPreview());
-        binding.btnShareRouteNow.setOnClickListener(v -> shareRoute());
-        binding.btnClosePreview.setOnClickListener(v -> dismissAllowingStateLoss());
+        // La vista previa solo muestra la imagen. El texto del share se sigue enviando
+        // en el chooser, pero ya no se pinta en pantalla para mantener la tarjeta limpia.
+        currentBinding.ivShareRoutePreview.setImageURI(previewUri);
+        currentBinding.ivShareRoutePreview.setOnClickListener(v -> openFullscreenPreview());
+        currentBinding.btnShareRouteNow.setOnClickListener(v -> shareRoute());
+        currentBinding.btnClosePreview.setOnClickListener(v -> dismissAllowingStateLoss());
     }
 
-/**
- * Abre la imagen de preview a pantalla completa sobre el mismo fondo base de la app.
- */
-private void openFullscreenPreview() {
-    if (previewUri == null || !isAdded()) {
-        return;
-    }
+    /**
+     * Abre la imagen de preview a pantalla completa sobre el mismo fondo base de la app.
+     */
+    private void openFullscreenPreview() {
+        if (previewUri == null || !isAdded()) {
+            return;
+        }
 
-    FragmentManager fragmentManager = getParentFragmentManager();
-    if (fragmentManager.isStateSaved()) {
-        return;
-    }
+        FragmentManager fragmentManager = getParentFragmentManager();
+        if (fragmentManager.isStateSaved()) {
+            return;
+        }
 
-    RouteImageFullscreenDialogFragment
-            .newInstance(previewUri)
-            .show(fragmentManager, RouteImageFullscreenDialogFragment.TAG);
-}
+        RouteImageFullscreenDialogFragment
+                .newInstance(previewUri)
+                .show(fragmentManager, RouteImageFullscreenDialogFragment.TAG);
+    }
 
     /**
      * Abre el chooser de Android con la imagen y el texto resumen adjuntos.
@@ -139,7 +154,10 @@ private void openFullscreenPreview() {
     }
 
     /**
-     * Concede permisos explícitos de lectura para destinos que los exigen con content:// URIs.
+     * Concede permisos explícitos de lectura para destinos que los exigen con URIs {@code content://}.
+     *
+     * @param intent intent de compartir ya configurado.
+     * @param uri uri de la imagen temporal compartida.
      */
     private void grantReadPermissionToResolvedApps(@NonNull Intent intent, @NonNull Uri uri) {
         PackageManager pm = requireContext().getPackageManager();

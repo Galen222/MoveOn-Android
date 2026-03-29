@@ -211,7 +211,7 @@
     <string name="stats_goal_chevron_desc">Change goal</string>
     <string name="stats_desc_chart">Weekly chart</string>
     <string name="stats_desc_compare_icon">Comparison icon</string>
-    <string name="stats_item_share_route">Share routes</string>
+    <string name="stats_item_share_route">View route</string>
     <string name="stats_btn_ver_todas">See all activities</string>
     <string name="profile_default_username">User</string>
     <string name="profile_default_email">No email available</string>

@@ -24,10 +24,10 @@
     <string name="share_routes_polyline_available">Ruta disponible</string>
     <string name="share_routes_polyline_missing">Ruta no disponible</string>
     <string name="share_routes_share_text">Compartido desde MoveOn App, ¡tu app de running!</string>
-    <string name="share_routes_preview_title">Vista previa de la ruta</string>
+    <string name="share_routes_preview_title">Vista de la ruta</string>
     <string name="share_routes_preview_subtitle">Esta es la tarjeta que se enviará al compartir</string>
     <string name="share_routes_preview_share">Compartir</string>
-    <string name="share_routes_preview_close">Cancelar</string>
+    <string name="share_routes_preview_close">Cerrar</string>
     <string name="share_routes_preview_image_content_description">Imagen de vista previa de la ruta compartida</string>
     <string name="share_routes_image_subtitle">Tu actividad, lista para compartir</string>
     <string name="share_routes_image_map_title">Ruta completa</string>
@@ -36,6 +36,6 @@
     <string name="share_routes_image_summary_subtitle">Métricas clave de la actividad seleccionada</string>
     <string name="share_routes_legend_start">Inicio</string>
     <string name="share_routes_legend_end">Fin</string>
-<string name="share_routes_fullscreen_close_content_description">Cerrar vista de imagen completa</string>
-<string name="share_routes_fullscreen_image_content_description">Imagen completa de la ruta compartida</string>
+    <string name="share_routes_fullscreen_close_content_description">Cerrar vista de imagen completa</string>
+    <string name="share_routes_fullscreen_image_content_description">Imagen completa de la ruta compartida</string>
 </resources>
