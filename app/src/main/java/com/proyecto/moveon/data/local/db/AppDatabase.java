@@ -21,7 +21,7 @@ import com.proyecto.moveon.data.local.entity.UserPrefsEntity;
 /**
  * Base de datos local Room.
  *
- * <p>Versión 6: añade métricas avanzadas de tracking a las actividades.
+ * <p>Versión 7: añade persistencia local del ritmo máximo de actividad.
  * La migración es explícita para no perder historiales locales al actualizar.</p>
  */
 @Database(
@@ -31,7 +31,7 @@ import com.proyecto.moveon.data.local.entity.UserPrefsEntity;
                 ActividadEntity.class,
                 UserPrefsEntity.class
         },
-        version = 6,
+        version = 7,
         exportSchema = true
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -130,6 +130,14 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+
+    static final Migration MIGRATION_6_7 = new Migration(6, 7) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE `actividades_locales` ADD COLUMN `ritmo_maximo` INTEGER NOT NULL DEFAULT 0");
+        }
+    };
+
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
@@ -139,7 +147,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                     AppDatabase.class,
                                     "moveon_local.db"
                             )
-                            .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
+                            .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                             .fallbackToDestructiveMigration(true)
                             .build();
                 }

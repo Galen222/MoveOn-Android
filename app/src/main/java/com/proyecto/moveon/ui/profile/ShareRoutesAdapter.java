@@ -15,12 +15,19 @@ import com.proyecto.moveon.R;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 
 /**
- * Adapter del listado de rutas del bottom sheet.
+ * Adapter del listado de rutas mostradas en el bottom sheet de compartir.
+ *
+ * <p>Cada fila resume tipo, fecha, distancia, duración, ritmo y calorías.
+ * El ritmo de la línea resumen se pinta ya con la unidad {@code /km} para
+ * que el usuario vea el mismo formato que en el resto de pantallas.</p>
  */
 public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAdapter.RouteViewHolder> {
 
     /**
      * Callback simple para propagar el clic de una ruta al fragmento.
+     */
+    /**
+     * Callback simple para propagar al fragmento la ruta pulsada.
      */
     public interface OnRouteClickListener {
         void onRouteClick(@NonNull ActividadItem item);
@@ -52,6 +59,9 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
     @NonNull
     private final OnRouteClickListener listener;
 
+    /**
+     * @param listener callback invocado al pulsar una fila del listado.
+     */
     public ShareRoutesAdapter(@NonNull OnRouteClickListener listener) {
         super(DIFF_CALLBACK);
         this.listener = listener;
@@ -95,7 +105,12 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
             String distance = ShareRouteFormatter.formatDistance(context, item.distanciaMetros);
             String duration = ShareRouteFormatter.formatDuration(context, item.duracionSegundos);
             String calories = context.getString(R.string.share_routes_kcal_value, item.caloriasQuemadas);
-            String pace = ShareRouteFormatter.formatPace(context, item.ritmoMedioTotalSegKm);
+            // El resumen del listado debe mostrar explícitamente la unidad final "/km"
+            // para mantener consistencia con la tarjeta compartida y con el historial.
+            String pace = ShareRouteFormatter.formatPaceWithUnit(
+                    context,
+                    item.ritmoMedioTotalSegKm
+            );
 
             tvTitle.setText(activityType);
             tvDate.setText(date);

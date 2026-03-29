@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.profile;
 
 import android.content.Context;
@@ -96,7 +95,30 @@ public final class ShareRouteFormatter {
 
         int minutes = secondsPerKm / 60;
         int seconds = secondsPerKm % 60;
-        return String.format(Locale.US, "%d'%02d\"/km", minutes, seconds);
+        return String.format(Locale.US, "%d'%02d\"", minutes, seconds);
+    }
+
+
+    /**
+     * Variante explícita para valores opcionales de ritmo.
+     *
+     * <p>Cuando el ritmo no existe todavía, reutiliza el placeholder estándar de la tarjeta.</p>
+     */
+    @NonNull
+    public static String formatOptionalPace(@NonNull Context context, int secondsPerKm) {
+        return formatPace(context, secondsPerKm);
+    }
+
+    /**
+     * Formatea el ritmo como min/km incluyendo explícitamente la unidad final.
+     */
+    @NonNull
+    public static String formatPaceWithUnit(@NonNull Context context, int secondsPerKm) {
+        String pace = formatPace(context, secondsPerKm);
+        if (pace.equals(context.getString(R.string.share_routes_pace_empty))) {
+            return pace;
+        }
+        return pace + "/km";
     }
 
     /**
@@ -130,4 +152,3 @@ public final class ShareRouteFormatter {
         return isoDate.length() >= 10 ? isoDate.substring(0, 10) : isoDate;
     }
 }
-

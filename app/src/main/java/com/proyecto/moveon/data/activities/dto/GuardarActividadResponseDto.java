@@ -22,6 +22,7 @@ public final class GuardarActividadResponseDto {
     @SerializedName("calorias_quemadas") public int caloriasQuemadas;
     @SerializedName("ritmo_medio_movimiento") public int ritmoMedioMovimiento;
     @SerializedName("ritmo_medio_total") public int ritmoMedioTotal;
+    @SerializedName("ritmo_maximo") public int ritmoMaximo;
     @SerializedName("velocidad_media_x100") public int velocidadMediaKmhX100;
     @SerializedName("velocidad_max_x100") public int velocidadMaxKmhX100;
     @SerializedName("auto_pausas") public int autoPausas;

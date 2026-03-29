@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.home;
 
 import android.content.Intent;
@@ -624,9 +623,15 @@ public class InicioFragment extends Fragment
                 state.getPace() != null ? state.getPace() : getString(R.string.tracking_default_pace)
         );
         binding.tvAveragePace.setText(
-                state.getAverageMovingPace() != null
-                        ? state.getAverageMovingPace()
+                state.getAverageElapsedPace() != null
+                        ? state.getAverageElapsedPace()
                         : getString(R.string.tracking_default_pace)
+        );
+        String maxPaceText = state.getMaxPace() != null
+                ? state.getMaxPace()
+                : getString(R.string.tracking_default_pace);
+        binding.tvMaxPaceSummary.setText(
+                getString(R.string.tracking_max_pace_inline_format, maxPaceText)
         );
         binding.tvPauseSummary.setText(
                 getString(

@@ -13,8 +13,10 @@
     <string name="share_routes_metric_date">Fecha</string>
     <string name="share_routes_metric_distance">Distancia</string>
     <string name="share_routes_metric_duration">Duración</string>
-    <string name="share_routes_metric_pace">Ritmo</string>
+    <string name="share_routes_metric_average_pace">Ritmo medio</string>
+    <string name="share_routes_metric_max_pace">Ritmo máximo</string>
     <string name="share_routes_metric_calories">Calorías</string>
+    <string name="share_routes_metric_paces">Ritmos</string>
     <string name="share_routes_generated_with">Generado con MoveOn</string>
     <string name="share_routes_generated_with_short">Hecho con MoveOn</string>
     <string name="share_routes_kcal_value">%1$d kcal</string>
@@ -36,6 +38,6 @@
     <string name="share_routes_image_summary_subtitle">Métricas clave de la actividad seleccionada</string>
     <string name="share_routes_legend_start">Inicio</string>
     <string name="share_routes_legend_end">Fin</string>
-    <string name="share_routes_fullscreen_close_content_description">Cerrar vista de imagen completa</string>
+    <string name="share_routes_fullscreen_close_content_description">Cerrar vista completa de la imagen</string>
     <string name="share_routes_fullscreen_image_content_description">Imagen completa de la ruta compartida</string>
 </resources>

@@ -19,6 +19,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 import androidx.annotation.DrawableRes;
@@ -74,6 +75,7 @@ public final class TrackingService extends Service implements SensorEventListene
         appContext.stopService(intent);
     }
 
+    private static final String TAG = "TrackingService";
     private static final String CHANNEL_ID = "moveon_tracking_channel";
     private static final int NOTIFICATION_ID = 1001;
     private static final String ACTION_RESTORE_NOTIFICATION =
@@ -100,12 +102,27 @@ public final class TrackingService extends Service implements SensorEventListene
      * <p>Reducirla acelera la reacción del clasificador y hace menos probable quedarse
      * "atascado" en walking durante los primeros segundos de carrera.</p>
      */
-    private static final int ACCEL_SAMPLE_WINDOW = 24;
+    private static final int ACCEL_SAMPLE_WINDOW = 20;
 
     /**
-     * Número de confirmaciones consecutivas necesarias antes de cambiar el tipo de actividad.
+     * Confirmaciones mínimas para promocionar a carrera.
      */
-    private static final int CONFIRM_STEPS = 2;
+    private static final int SENSOR_CONFIRM_STEPS_TO_RUNNING = 2;
+
+    /**
+     * Confirmaciones mínimas para degradar de carrera a caminata con acelerómetro.
+     */
+    private static final int SENSOR_CONFIRM_STEPS_TO_WALKING = 4;
+
+    /**
+     * Confirmaciones mínimas para promocionar a carrera mediante GPS.
+     */
+    private static final int GPS_CONFIRM_STEPS_TO_RUNNING = 2;
+
+    /**
+     * Confirmaciones mínimas para degradar de carrera a caminata mediante GPS.
+     */
+    private static final int GPS_CONFIRM_STEPS_TO_WALKING = 4;
 
     private static final float ACCEL_ALPHA = 0.2f;
     private static final float MIN_ACCEL_CHANGE = 0.05f;
@@ -142,13 +159,28 @@ public final class TrackingService extends Service implements SensorEventListene
      * Fallback por velocidad GPS para detectar carrera aunque el acelerómetro no rebote
      * lo suficiente como para superar el umbral de running.
      */
-    private static final float GPS_RUNNING_SPEED_THRESHOLD_MS = 2.40f; // ~8.64 km/h
+    private static final float GPS_RUNNING_SPEED_THRESHOLD_MS = 2.20f; // ~7.92 km/h
 
     /**
      * Umbral superior razonable para considerar que un movimiento válido todavía encaja
      * mejor con andar que con correr.
      */
-    private static final float GPS_WALKING_SPEED_THRESHOLD_MS = 2.00f; // ~7.20 km/h
+    private static final float GPS_WALKING_SPEED_THRESHOLD_MS = 1.70f; // ~6.12 km/h
+
+    /**
+     * Umbral claramente propio de carrera usado para forzar RUNNING cuando el GPS es inequívoco.
+     */
+    private static final float GPS_STRONG_RUNNING_SPEED_THRESHOLD_MS = 2.60f; // ~9.36 km/h
+
+    /**
+     * Ventana de gracia tras iniciar/reanudar para evitar degradaciones prematuras a caminata.
+     */
+    private static final long ACTIVITY_TYPE_DOWNGRADE_GRACE_MS = 12_000L;
+
+    /**
+     * Número mínimo de muestras recientes necesarias para consolidar un ritmo máximo útil.
+     */
+    private static final int MAX_PACE_MIN_SAMPLE_COUNT = 3;
 
     private final MutableLiveData<TrackingState> stateLiveData =
             new MutableLiveData<>(TrackingState.idle());
@@ -211,6 +243,9 @@ public final class TrackingService extends Service implements SensorEventListene
     private int suspiciousSpeedEventCount = 0;
     private int maxSpeedKmhX100 = 0;
 
+    /** Mejor ritmo sostenido detectado sobre ventana suavizada, en seg/km. */
+    private double maxPaceSecondsPerKm = Double.POSITIVE_INFINITY;
+
     @Nullable private Location lastAcceptedLocation = null;
     @Nullable private Location lastObservedLocation = null;
     private long lastObservedRealtimeMs = 0L;
@@ -218,6 +253,7 @@ public final class TrackingService extends Service implements SensorEventListene
     private long sessionStartedRealtimeMs = 0L;
     private long lastMovementRealtimeMs = 0L;
     private long lastMotionEvidenceRealtimeMs = 0L;
+    private long activityTypeDowngradeGraceDeadlineRealtimeMs = 0L;
     private boolean currentMovementSample = false;
 
     private final ArrayDeque<Float> recentMovingSpeeds = new ArrayDeque<>();
@@ -339,6 +375,7 @@ public final class TrackingService extends Service implements SensorEventListene
             gpsRunningConfirmCount = 0;
             gpsWalkingConfirmCount = 0;
             recentMovingSpeeds.clear();
+            armActivityTypeDowngradeGracePeriod();
             publishState();
             updateNotification();
             return;
@@ -374,6 +411,7 @@ public final class TrackingService extends Service implements SensorEventListene
         gpsRunningConfirmCount = 0;
         gpsWalkingConfirmCount = 0;
         recentMovingSpeeds.clear();
+        armActivityTypeDowngradeGracePeriod();
 
         startLocationUpdates();
         startAccelerometer();
@@ -562,6 +600,7 @@ public final class TrackingService extends Service implements SensorEventListene
             consecutiveStationarySamples = 0;
             trackSpeedWindow(resolvedSpeedMs);
             updateMaxSpeed(resolvedSpeedMs);
+            updateMaxPaceFromRecentWindow(nowRealtime);
 
             // Fallback: si la velocidad GPS encaja claramente con carrera o con andar,
             // se usa para reforzar el tipo de actividad aunque el acelerómetro sea pobre.
@@ -571,6 +610,7 @@ public final class TrackingService extends Service implements SensorEventListene
                     && consecutiveMovingSamples >= AUTO_RESUME_MOVING_CONSECUTIVE) {
                 currentStatus = TrackingState.Status.RUNNING;
                 currentPauseReason = TrackingState.PauseReason.NONE;
+                armActivityTypeDowngradeGracePeriod();
             }
 
             if (shouldAccumulateDistance(location, acceptedDeltaMeters, movingSample)) {
@@ -725,6 +765,110 @@ public final class TrackingService extends Service implements SensorEventListene
         }
     }
 
+    /**
+     * Calcula la velocidad media reciente a partir de la ventana suavizada de GPS.
+     */
+    private double getAverageRecentMovingSpeedMs() {
+        if (recentMovingSpeeds.isEmpty()) {
+            return 0.0;
+        }
+
+        double total = 0.0;
+        for (Float speed : recentMovingSpeeds) {
+            total += speed;
+        }
+        return total / recentMovingSpeeds.size();
+    }
+
+    /**
+     * Consolida el mejor ritmo sostenido reciente.
+     *
+     * <p>No usa el pico instantáneo bruto del GPS. En su lugar toma la media de la ventana
+     * reciente para acercarse más al comportamiento de un reloj deportivo y evitar falsos
+     * máximos por ruido o saltos aislados.</p>
+     */
+    private void updateMaxPaceFromRecentWindow(long nowRealtime) {
+        if (currentStatus != TrackingState.Status.RUNNING) {
+            return;
+        }
+        if (activityType != TrackingState.ActivityType.RUNNING_ACTIVITY) {
+            return;
+        }
+        if (recentMovingSpeeds.size() < MAX_PACE_MIN_SAMPLE_COUNT) {
+            return;
+        }
+        if (nowRealtime < activityTypeDowngradeGraceDeadlineRealtimeMs) {
+            return;
+        }
+
+        double averageSpeedMs = getAverageRecentMovingSpeedMs();
+        if (averageSpeedMs < GPS_RUNNING_SPEED_THRESHOLD_MS) {
+            return;
+        }
+
+        double paceSecondsPerKm = 1000.0 / averageSpeedMs;
+        if (paceSecondsPerKm >= 60.0 && paceSecondsPerKm <= 1800.0
+                && paceSecondsPerKm < maxPaceSecondsPerKm) {
+            maxPaceSecondsPerKm = paceSecondsPerKm;
+        }
+    }
+
+    /**
+     * Abre una ventana de protección temporal frente a degradaciones rápidas a WALKING.
+     */
+    private void armActivityTypeDowngradeGracePeriod() {
+        activityTypeDowngradeGraceDeadlineRealtimeMs =
+                SystemClock.elapsedRealtime() + ACTIVITY_TYPE_DOWNGRADE_GRACE_MS;
+    }
+
+    /**
+     * Indica si ya se puede degradar la sesión a WALKING.
+     */
+    private boolean canDowngradeActivityTypeToWalking() {
+        return SystemClock.elapsedRealtime() >= activityTypeDowngradeGraceDeadlineRealtimeMs;
+    }
+
+    /**
+     * Aplica el tipo de actividad final y deja una traza útil de depuración.
+     */
+    private void applyActivityType(@NonNull TrackingState.ActivityType newType,
+                                   @NonNull String source,
+                                   @NonNull String reason) {
+        if (activityType == newType) {
+            return;
+        }
+
+        TrackingState.ActivityType previousType = activityType;
+        activityType = newType;
+
+        if (newType == TrackingState.ActivityType.RUNNING_ACTIVITY) {
+            armActivityTypeDowngradeGracePeriod();
+        }
+
+        logClassificationChange(previousType, newType, source, reason);
+        publishState();
+    }
+
+    /**
+     * Registra el cambio de clasificación con suficiente contexto para depurar casos reales.
+     */
+    private void logClassificationChange(@NonNull TrackingState.ActivityType previousType,
+                                         @NonNull TrackingState.ActivityType newType,
+                                         @NonNull String source,
+                                         @NonNull String reason) {
+        Log.d(
+                TAG,
+                "activityType " + previousType + " -> " + newType
+                        + " source=" + source
+                        + " reason=" + reason
+                        + " sensorRun=" + runningConfirmCount
+                        + " sensorWalk=" + walkingConfirmCount
+                        + " gpsRun=" + gpsRunningConfirmCount
+                        + " gpsWalk=" + gpsWalkingConfirmCount
+                        + " avgSpeedMs=" + String.format(Locale.US, "%.2f", getAverageRecentMovingSpeedMs())
+        );
+    }
+
     private void enterAutoPause(
             @NonNull TrackingState.PauseReason pauseReason,
             @NonNull TrackingAlert.Type alertType) {
@@ -741,6 +885,10 @@ public final class TrackingService extends Service implements SensorEventListene
         if (pauseReason == TrackingState.PauseReason.STATIONARY) {
             autoPauseCount++;
         }
+
+        Log.d(TAG, "enterAutoPause reason=" + pauseReason + " moving=" + consecutiveMovingSamples
+                + " stationary=" + consecutiveStationarySamples
+                + " avgSpeedMs=" + String.format(Locale.US, "%.2f", getAverageRecentMovingSpeedMs()));
 
         trackingAlertLiveData.postValue(new TrackingAlert(alertType));
     }
@@ -814,19 +962,31 @@ public final class TrackingService extends Service implements SensorEventListene
             runningConfirmCount = 0;
         }
 
-        if (runningConfirmCount >= CONFIRM_STEPS
+        if (runningConfirmCount >= SENSOR_CONFIRM_STEPS_TO_RUNNING
                 && activityType != TrackingState.ActivityType.RUNNING_ACTIVITY) {
-            activityType = TrackingState.ActivityType.RUNNING_ACTIVITY;
-            publishState();
-        } else if (walkingConfirmCount >= CONFIRM_STEPS
-                && activityType != TrackingState.ActivityType.WALKING) {
-            activityType = TrackingState.ActivityType.WALKING;
-            publishState();
+            applyActivityType(
+                    TrackingState.ActivityType.RUNNING_ACTIVITY,
+                    "accelerometer",
+                    "mostlyRunning=" + mostlyRunning
+            );
+            return;
+        }
+
+        if (!mostlyRunning
+                && walkingConfirmCount >= SENSOR_CONFIRM_STEPS_TO_WALKING
+                && activityType == TrackingState.ActivityType.RUNNING_ACTIVITY
+                && canDowngradeActivityTypeToWalking()) {
+            applyActivityType(
+                    TrackingState.ActivityType.WALKING,
+                    "accelerometer",
+                    "mostlyRunning=" + mostlyRunning
+            );
         }
     }
 
     /**
      * Refuerza la clasificación andar/correr a partir de velocidad GPS.
+
      *
      * <p>Solo actúa cuando la muestra ya fue considerada movimiento real. De este modo
      * no degradamos la clasificación por deriva GPS en parado.</p>
@@ -836,27 +996,50 @@ public final class TrackingService extends Service implements SensorEventListene
             return;
         }
 
-        if (speedMs >= GPS_RUNNING_SPEED_THRESHOLD_MS) {
+        double averageRecentSpeedMs = getAverageRecentMovingSpeedMs();
+        boolean strongRunning = speedMs >= GPS_STRONG_RUNNING_SPEED_THRESHOLD_MS
+                || averageRecentSpeedMs >= GPS_STRONG_RUNNING_SPEED_THRESHOLD_MS;
+        boolean runningLike = speedMs >= GPS_RUNNING_SPEED_THRESHOLD_MS
+                || averageRecentSpeedMs >= GPS_RUNNING_SPEED_THRESHOLD_MS;
+        boolean walkingLike = speedMs <= GPS_WALKING_SPEED_THRESHOLD_MS
+                && averageRecentSpeedMs > 0.0
+                && averageRecentSpeedMs <= GPS_WALKING_SPEED_THRESHOLD_MS;
+
+        if (strongRunning) {
+            gpsRunningConfirmCount = GPS_CONFIRM_STEPS_TO_RUNNING;
+            gpsWalkingConfirmCount = 0;
+        } else if (runningLike) {
             gpsRunningConfirmCount++;
             gpsWalkingConfirmCount = 0;
-        } else if (speedMs <= GPS_WALKING_SPEED_THRESHOLD_MS) {
+        } else if (walkingLike) {
             gpsWalkingConfirmCount++;
             gpsRunningConfirmCount = 0;
         } else {
-            // Zona neutra: no forzamos cambio de estado si la velocidad cae entre umbrales.
+            // Zona neutra: reiniciamos confirmaciones para no arrastrar decisiones viejas.
             gpsRunningConfirmCount = 0;
             gpsWalkingConfirmCount = 0;
             return;
         }
 
-        if (gpsRunningConfirmCount >= CONFIRM_STEPS
+        if (gpsRunningConfirmCount >= GPS_CONFIRM_STEPS_TO_RUNNING
                 && activityType != TrackingState.ActivityType.RUNNING_ACTIVITY) {
-            activityType = TrackingState.ActivityType.RUNNING_ACTIVITY;
-            publishState();
-        } else if (gpsWalkingConfirmCount >= CONFIRM_STEPS
-                && activityType != TrackingState.ActivityType.WALKING) {
-            activityType = TrackingState.ActivityType.WALKING;
-            publishState();
+            applyActivityType(
+                    TrackingState.ActivityType.RUNNING_ACTIVITY,
+                    "gps",
+                    String.format(Locale.US, "speed=%.2f avg=%.2f", speedMs, averageRecentSpeedMs)
+            );
+            return;
+        }
+
+        if (walkingLike
+                && gpsWalkingConfirmCount >= GPS_CONFIRM_STEPS_TO_WALKING
+                && activityType == TrackingState.ActivityType.RUNNING_ACTIVITY
+                && canDowngradeActivityTypeToWalking()) {
+            applyActivityType(
+                    TrackingState.ActivityType.WALKING,
+                    "gps",
+                    String.format(Locale.US, "speed=%.2f avg=%.2f", speedMs, averageRecentSpeedMs)
+            );
         }
     }
 
@@ -968,11 +1151,7 @@ public final class TrackingService extends Service implements SensorEventListene
             return null;
         }
 
-        double total = 0.0;
-        for (Float speed : recentMovingSpeeds) {
-            total += speed;
-        }
-        double averageSpeedMs = total / recentMovingSpeeds.size();
+        double averageSpeedMs = getAverageRecentMovingSpeedMs();
         return formatPaceFromSpeed(averageSpeedMs);
     }
 
@@ -993,6 +1172,17 @@ public final class TrackingService extends Service implements SensorEventListene
     @Nullable
     private String calculateAverageElapsedPace() {
         return formatPaceFromTotals(elapsedSeconds, preciseDistanceMeters);
+    }
+
+    /**
+     * Devuelve el mejor ritmo sostenido detectado durante la sesión.
+     */
+    @Nullable
+    private String calculateMaxPace() {
+        if (!Double.isFinite(maxPaceSecondsPerKm)) {
+            return null;
+        }
+        return formatPaceFromSeconds(maxPaceSecondsPerKm);
     }
 
     /**
@@ -1051,6 +1241,7 @@ public final class TrackingService extends Service implements SensorEventListene
                 .pace(calculateInstantPace())
                 .averageMovingPace(calculateAverageMovingPace())
                 .averageElapsedPace(calculateAverageElapsedPace())
+                .maxPace(calculateMaxPace())
                 .maxSpeedKmhX100(maxSpeedKmhX100)
                 .autoPauseCount(autoPauseCount)
                 .manualPauseCount(manualPauseCount)
@@ -1084,11 +1275,13 @@ public final class TrackingService extends Service implements SensorEventListene
         manualPauseCount = 0;
         suspiciousSpeedEventCount = 0;
         maxSpeedKmhX100 = 0;
+        maxPaceSecondsPerKm = Double.POSITIVE_INFINITY;
         currentMovementSample = false;
         manualPauseStartedRealtimeMs = 0L;
         sessionStartedRealtimeMs = 0L;
         lastMovementRealtimeMs = 0L;
         lastMotionEvidenceRealtimeMs = 0L;
+        activityTypeDowngradeGraceDeadlineRealtimeMs = 0L;
         lastAcceptedLocation = null;
         lastObservedLocation = null;
         lastObservedRealtimeMs = 0L;
@@ -1247,7 +1440,7 @@ public final class TrackingService extends Service implements SensorEventListene
             tr(R.string.mo_tracking_notification_metric_distance)
     );
 
-    String averagePace = calculateAverageMovingPace();
+    String averagePace = calculateAverageElapsedPace();
     String paceText = averagePace != null
             ? averagePace + "/km"
             : tr(R.string.tracking_default_pace) + "/km";
@@ -1352,7 +1545,7 @@ private int resolveStatusPillBackground() {
 
 @NonNull
 private String buildCompactRightMetricValue() {
-    String averagePace = calculateAverageMovingPace();
+    String averagePace = calculateAverageElapsedPace();
     if (averagePace != null) {
         return averagePace + "/km";
     }
@@ -1618,7 +1811,7 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
                 formatElapsed(stoppedSeconds)
         );
 
-        String averagePace = calculateAverageMovingPace();
+        String averagePace = calculateAverageElapsedPace();
         String paceText = (averagePace != null ? averagePace : tr(R.string.tracking_default_pace)) + "/km";
         String caloriesText = tr(R.string.tracking_calories_format, calories);
         String paceCaloriesLine = tr(

@@ -21,6 +21,7 @@ public final class ActividadCreatePayload {
     private final int caloriasQuemadas;
     private final int ritmoMedioMovimiento;
     private final int ritmoMedioTotal;
+    private final int ritmoMaximo;
     private final int velocidadMediaKmhX100;
     private final int velocidadMaxKmhX100;
     private final int autoPausas;
@@ -40,6 +41,7 @@ public final class ActividadCreatePayload {
             int caloriasQuemadas,
             int ritmoMedioMovimiento,
             int ritmoMedioTotal,
+            int ritmoMaximo,
             int velocidadMediaKmhX100,
             int velocidadMaxKmhX100,
             int autoPausas,
@@ -57,6 +59,7 @@ public final class ActividadCreatePayload {
         this.caloriasQuemadas = caloriasQuemadas;
         this.ritmoMedioMovimiento = ritmoMedioMovimiento;
         this.ritmoMedioTotal = ritmoMedioTotal;
+        this.ritmoMaximo = ritmoMaximo;
         this.velocidadMediaKmhX100 = velocidadMediaKmhX100;
         this.velocidadMaxKmhX100 = velocidadMaxKmhX100;
         this.autoPausas = autoPausas;
@@ -79,6 +82,7 @@ public final class ActividadCreatePayload {
         json.addProperty("calorias_quemadas", caloriasQuemadas);
         json.addProperty("ritmo_medio_movimiento", ritmoMedioMovimiento);
         json.addProperty("ritmo_medio_total", ritmoMedioTotal);
+        json.addProperty("ritmo_maximo", ritmoMaximo);
         json.addProperty("velocidad_media_x100", velocidadMediaKmhX100);
         json.addProperty("velocidad_max_x100", velocidadMaxKmhX100);
         json.addProperty("auto_pausas", autoPausas);
@@ -107,6 +111,7 @@ public final class ActividadCreatePayload {
                 entity.caloriasQuemadas,
                 entity.ritmoMedioMovimiento,
                 entity.ritmoMedioTotal,
+                entity.ritmoMaximo,
                 entity.velocidadMediaKmhX100,
                 entity.velocidadMaxKmhX100,
                 entity.autoPausas,

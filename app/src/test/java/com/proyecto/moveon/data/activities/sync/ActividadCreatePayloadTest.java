@@ -23,6 +23,7 @@ public class ActividadCreatePayloadTest {
                 350,
                 330,
                 360,
+                280,
                 987,
                 1450,
                 2,
@@ -44,6 +45,7 @@ public class ActividadCreatePayloadTest {
         assertEquals(350, json.get("calorias_quemadas").getAsInt());
         assertEquals(330, json.get("ritmo_medio_movimiento").getAsInt());
         assertEquals(360, json.get("ritmo_medio_total").getAsInt());
+        assertEquals(280, json.get("ritmo_maximo").getAsInt());
         assertEquals(987, json.get("velocidad_media_x100").getAsInt());
         assertEquals(1450, json.get("velocidad_max_x100").getAsInt());
         assertEquals(2, json.get("auto_pausas").getAsInt());
@@ -68,6 +70,7 @@ public class ActividadCreatePayloadTest {
                 900,
                 420,
                 650,
+                800,
                 1,
                 1,
                 0,
@@ -96,6 +99,7 @@ public class ActividadCreatePayloadTest {
                 360,
                 1000,
                 1200,
+                1400,
                 1,
                 1,
                 2,
@@ -112,11 +116,13 @@ public class ActividadCreatePayloadTest {
         assertTrue(json.has("duracion_pausa_manual"));
         assertTrue(json.has("ritmo_medio_movimiento"));
         assertTrue(json.has("ritmo_medio_total"));
+        assertTrue(json.has("ritmo_maximo"));
         assertTrue(json.has("velocidad_media_x100"));
         assertTrue(json.has("velocidad_max_x100"));
         assertTrue(json.has("auto_pausas"));
         assertTrue(json.has("pausas_manuales"));
         assertTrue(json.has("alertas_velocidad"));
+        assertTrue(json.has("ruta_mapa_url"));
 
         assertFalse(json.has("duracion"));
     }
@@ -125,6 +131,7 @@ public class ActividadCreatePayloadTest {
     public void toJson_zeroValues_areValid() {
         ActividadCreatePayload payload = new ActividadCreatePayload(
                 "Caminar",
+                0,
                 0,
                 0,
                 0,
@@ -150,5 +157,8 @@ public class ActividadCreatePayloadTest {
         assertEquals(0, json.get("duracion_parado").getAsInt());
         assertEquals(0, json.get("duracion_pausa_manual").getAsInt());
         assertEquals(0, json.get("calorias_quemadas").getAsInt());
+        assertEquals(0, json.get("ritmo_maximo").getAsInt());
+        assertEquals(0, json.get("velocidad_max_x100").getAsInt());
+        assertTrue(json.get("ruta_mapa_url").isJsonNull());
     }
 }

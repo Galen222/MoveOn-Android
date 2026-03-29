@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.data.activities;
 
 import android.content.Context;
@@ -120,6 +119,7 @@ public final class ActivityRepository {
             entity.caloriasQuemadas = request.caloriasQuemadas;
             entity.ritmoMedioMovimiento = request.ritmoMedioMovimiento;
             entity.ritmoMedioTotal = request.ritmoMedioTotal;
+            entity.ritmoMaximo = request.ritmoMaximo;
             entity.velocidadMediaKmhX100 = request.velocidadMediaKmhX100;
             entity.velocidadMaxKmhX100 = request.velocidadMaxKmhX100;
             entity.autoPausas = request.autoPausas;
@@ -147,6 +147,7 @@ public final class ActivityRepository {
             dto.caloriasQuemadas = entity.caloriasQuemadas;
             dto.ritmoMedioMovimiento = entity.ritmoMedioMovimiento;
             dto.ritmoMedioTotal = entity.ritmoMedioTotal;
+            dto.ritmoMaximo = entity.ritmoMaximo;
             dto.velocidadMediaKmhX100 = entity.velocidadMediaKmhX100;
             dto.velocidadMaxKmhX100 = entity.velocidadMaxKmhX100;
             dto.autoPausas = entity.autoPausas;
@@ -286,6 +287,7 @@ public final class ActivityRepository {
                 entity.caloriasQuemadas,
                 entity.ritmoMedioMovimiento,
                 entity.ritmoMedioTotal,
+                entity.ritmoMaximo,
                 entity.velocidadMediaKmhX100,
                 entity.velocidadMaxKmhX100,
                 entity.autoPausas,
@@ -341,6 +343,10 @@ public final class ActivityRepository {
             return ApiError.typed(ApiErrorType.VALIDATION,
                     AppLanguageManager.getString(appContext, R.string.error_tracking_average_pace_invalid));
         }
+        if (request.ritmoMaximo < 0 || request.ritmoMaximo > 3600) {
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    AppLanguageManager.getString(appContext, R.string.error_tracking_max_pace_invalid));
+        }
         if (request.velocidadMediaKmhX100 <= 0 || request.velocidadMediaKmhX100 > 5000) {
             return ApiError.typed(ApiErrorType.VALIDATION,
                     AppLanguageManager.getString(appContext, R.string.error_tracking_average_speed_invalid));
@@ -395,4 +401,3 @@ public final class ActivityRepository {
         }
     }
 }
-

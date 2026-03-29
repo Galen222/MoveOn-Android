@@ -26,6 +26,7 @@ public class GuardarActividadRequestDtoTest {
                 350,
                 330,
                 360,
+                280,
                 987,
                 1450,
                 2,
@@ -44,6 +45,7 @@ public class GuardarActividadRequestDtoTest {
         assertEquals(350, dto.caloriasQuemadas);
         assertEquals(330, dto.ritmoMedioMovimiento);
         assertEquals(360, dto.ritmoMedioTotal);
+        assertEquals(280, dto.ritmoMaximo);
         assertEquals(987, dto.velocidadMediaKmhX100);
         assertEquals(1450, dto.velocidadMaxKmhX100);
         assertEquals(2, dto.autoPausas);
@@ -67,6 +69,7 @@ public class GuardarActividadRequestDtoTest {
                 900,
                 420,
                 650,
+                800,
                 1,
                 1,
                 0,
@@ -89,6 +92,7 @@ public class GuardarActividadRequestDtoTest {
                 200,
                 300,
                 360,
+                480,
                 1000,
                 1200,
                 1,
@@ -110,6 +114,7 @@ public class GuardarActividadRequestDtoTest {
         assertTrue(obj.has("calorias_quemadas"));
         assertTrue(obj.has("ritmo_medio_movimiento"));
         assertTrue(obj.has("ritmo_medio_total"));
+        assertTrue(obj.has("ritmo_maximo"));
         assertTrue(obj.has("velocidad_media_x100"));
         assertTrue(obj.has("velocidad_max_x100"));
         assertTrue(obj.has("auto_pausas"));
@@ -141,6 +146,7 @@ public class GuardarActividadRequestDtoTest {
                 100,
                 480,
                 520,
+                640,
                 760,
                 980,
                 2,
@@ -162,6 +168,7 @@ public class GuardarActividadRequestDtoTest {
         assertEquals(100, obj.get("calorias_quemadas").getAsInt());
         assertEquals(480, obj.get("ritmo_medio_movimiento").getAsInt());
         assertEquals(520, obj.get("ritmo_medio_total").getAsInt());
+        assertEquals(640, obj.get("ritmo_maximo").getAsInt());
         assertEquals(760, obj.get("velocidad_media_x100").getAsInt());
         assertEquals(980, obj.get("velocidad_max_x100").getAsInt());
         assertEquals(2, obj.get("auto_pausas").getAsInt());

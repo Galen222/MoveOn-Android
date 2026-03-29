@@ -13,8 +13,10 @@
     <string name="share_routes_metric_date">Date</string>
     <string name="share_routes_metric_distance">Distance</string>
     <string name="share_routes_metric_duration">Duration</string>
-    <string name="share_routes_metric_pace">Pace</string>
+    <string name="share_routes_metric_average_pace">Avg pace</string>
+    <string name="share_routes_metric_max_pace">Maximum pace</string>
     <string name="share_routes_metric_calories">Calories</string>
+    <string name="share_routes_metric_paces">Paces</string>
     <string name="share_routes_generated_with">Generated with MoveOn</string>
     <string name="share_routes_generated_with_short">Made with MoveOn</string>
     <string name="share_routes_kcal_value">%1$d kcal</string>

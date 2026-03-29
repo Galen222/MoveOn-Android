@@ -21,6 +21,7 @@ public final class ActividadItem {
     public final int caloriasQuemadas;
     public final int ritmoMedioMovimientoSegKm;
     public final int ritmoMedioTotalSegKm;
+    public final int ritmoMaximoSegKm;
     public final int velocidadMediaKmhX100;
     public final int velocidadMaxKmhX100;
     public final int autoPausas;
@@ -44,6 +45,7 @@ public final class ActividadItem {
             int caloriasQuemadas,
             int ritmoMedioMovimientoSegKm,
             int ritmoMedioTotalSegKm,
+            int ritmoMaximoSegKm,
             int velocidadMediaKmhX100,
             int velocidadMaxKmhX100,
             int autoPausas,
@@ -65,6 +67,7 @@ public final class ActividadItem {
         this.caloriasQuemadas = caloriasQuemadas;
         this.ritmoMedioMovimientoSegKm = ritmoMedioMovimientoSegKm;
         this.ritmoMedioTotalSegKm = ritmoMedioTotalSegKm;
+        this.ritmoMaximoSegKm = ritmoMaximoSegKm;
         this.velocidadMediaKmhX100 = velocidadMediaKmhX100;
         this.velocidadMaxKmhX100 = velocidadMaxKmhX100;
         this.autoPausas = autoPausas;

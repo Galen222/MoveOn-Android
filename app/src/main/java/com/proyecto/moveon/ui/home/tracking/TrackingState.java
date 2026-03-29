@@ -61,6 +61,7 @@ public final class TrackingState {
     @Nullable private final String pace;
     @Nullable private final String averageMovingPace;
     @Nullable private final String averageElapsedPace;
+    @Nullable private final String maxPace;
     private final int maxSpeedKmhX100;
     private final int autoPauseCount;
     private final int manualPauseCount;
@@ -81,6 +82,7 @@ public final class TrackingState {
             @Nullable String pace,
             @Nullable String averageMovingPace,
             @Nullable String averageElapsedPace,
+            @Nullable String maxPace,
             int maxSpeedKmhX100,
             int autoPauseCount,
             int manualPauseCount,
@@ -99,6 +101,7 @@ public final class TrackingState {
         this.pace = pace;
         this.averageMovingPace = averageMovingPace;
         this.averageElapsedPace = averageElapsedPace;
+        this.maxPace = maxPace;
         this.maxSpeedKmhX100 = maxSpeedKmhX100;
         this.autoPauseCount = autoPauseCount;
         this.manualPauseCount = manualPauseCount;
@@ -124,6 +127,7 @@ public final class TrackingState {
     @Nullable public String getPace() { return pace; }
     @Nullable public String getAverageMovingPace() { return averageMovingPace; }
     @Nullable public String getAverageElapsedPace() { return averageElapsedPace; }
+    @Nullable public String getMaxPace() { return maxPace; }
     public int getMaxSpeedKmhX100() { return maxSpeedKmhX100; }
     public int getAutoPauseCount() { return autoPauseCount; }
     public int getManualPauseCount() { return manualPauseCount; }
@@ -163,6 +167,7 @@ public final class TrackingState {
         @Nullable private String pace = null;
         @Nullable private String averageMovingPace = null;
         @Nullable private String averageElapsedPace = null;
+        @Nullable private String maxPace = null;
         private int maxSpeedKmhX100 = 0;
         private int autoPauseCount = 0;
         private int manualPauseCount = 0;
@@ -186,6 +191,7 @@ public final class TrackingState {
             pace = source.pace;
             averageMovingPace = source.averageMovingPace;
             averageElapsedPace = source.averageElapsedPace;
+            maxPace = source.maxPace;
             maxSpeedKmhX100 = source.maxSpeedKmhX100;
             autoPauseCount = source.autoPauseCount;
             manualPauseCount = source.manualPauseCount;
@@ -206,6 +212,7 @@ public final class TrackingState {
         public Builder pace(@Nullable String value) { this.pace = value; return this; }
         public Builder averageMovingPace(@Nullable String value) { this.averageMovingPace = value; return this; }
         public Builder averageElapsedPace(@Nullable String value) { this.averageElapsedPace = value; return this; }
+        public Builder maxPace(@Nullable String value) { this.maxPace = value; return this; }
         public Builder maxSpeedKmhX100(int value) { this.maxSpeedKmhX100 = value; return this; }
         public Builder autoPauseCount(int value) { this.autoPauseCount = value; return this; }
         public Builder manualPauseCount(int value) { this.manualPauseCount = value; return this; }
@@ -228,6 +235,7 @@ public final class TrackingState {
                     pace,
                     averageMovingPace,
                     averageElapsedPace,
+                    maxPace,
                     maxSpeedKmhX100,
                     autoPauseCount,
                     manualPauseCount,

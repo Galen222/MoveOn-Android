@@ -48,6 +48,10 @@ public final class ActividadResponseDto {
     @SerializedName("ritmo_medio_total")
     public int ritmoMedioTotal;
 
+    /** Mejor ritmo sostenido válido de la actividad, en segundos por kilómetro. */
+    @SerializedName("ritmo_maximo")
+    public int ritmoMaximo;
+
     @SerializedName("velocidad_media_x100")
     public int velocidadMediaKmhX100;
 

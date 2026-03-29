@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.stats;
 
 import android.content.Context;
@@ -28,23 +27,34 @@ import java.util.Set;
 /**
  * Adapter del historial de actividades.
  *
- * <p>La cabecera muestra distancia y tiempo total siempre visibles.
- * Al pulsar se expande un panel con calorías, ritmo medio,
- * tiempo en movimiento y tiempo parado.</p>
+ * <p>La cabecera de cada tarjeta muestra siempre la distancia y la duración total.
+ * Al pulsar la cabecera se expande un bloque de detalle con métricas adicionales:
+ * calorías, ritmo medio, ritmo máximo, tiempo en movimiento, tiempo parado y total,
+ * además de las acciones disponibles sobre la actividad.</p>
  *
- * <p>El estado de expansión se gestiona internamente con un {@link Set}
- * de {@code localId} expandidos. No se pierde al hacer scroll.</p>
+ * <p>Este archivo incluye una corrección explícita para el formato visual de los ritmos
+ * en el detalle expandido del historial. En lugar de depender solo de un recurso de texto,
+ * el valor mostrado se construye aquí de forma inequívoca como {@code mm'ss"/km}. Así se
+ * evita que en esta pantalla concreta vuelva a verse el ritmo sin la unidad final.</p>
  */
 public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapter.ViewHolder> {
 
+    /** Callback para propagar la acción de borrado al fragmento/pantalla contenedora. */
     public interface OnDeleteClickListener {
         void onDeleteClick(@NonNull ActividadItem item);
     }
 
+    /** Callback para propagar la acción de compartir/ver ruta al contenedor. */
     public interface OnShareClickListener {
         void onShareClick(@NonNull ActividadItem item);
     }
 
+    /**
+     * DiffUtil del historial.
+     *
+     * <p>Además de las métricas básicas, se compara también el ritmo máximo para que la fila
+     * se refresque correctamente si el backend o una resincronización cambian ese valor.</p>
+     */
     private static final DiffUtil.ItemCallback<ActividadItem> DIFF_CALLBACK =
             new DiffUtil.ItemCallback<>() {
                 @Override
@@ -60,18 +70,21 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
                             && a.duracionSegundos == b.duracionSegundos
                             && a.duracionMovimientoSegundos == b.duracionMovimientoSegundos
                             && a.duracionParadoSegundos == b.duracionParadoSegundos
-                            && a.ritmoMedioMovimientoSegKm == b.ritmoMedioMovimientoSegKm
+                            && a.ritmoMedioTotalSegKm == b.ritmoMedioTotalSegKm
+                            && a.ritmoMaximoSegKm == b.ritmoMaximoSegKm
                             && a.caloriasQuemadas == b.caloriasQuemadas
-                            && a.fechaRutaIso.equals(b.fechaRutaIso);
+                            && a.fechaRutaIso.equals(b.fechaRutaIso)
+                            && safeEquals(a.rutaPolilinea, b.rutaPolilinea);
                 }
             };
 
     @NonNull
     private final OnDeleteClickListener deleteListener;
+
     @NonNull
     private final OnShareClickListener shareListener;
 
-    /** Conjunto de localIds cuya card está actualmente expandida. */
+    /** Conjunto de {@code localId} cuya tarjeta está actualmente expandida. */
     private final Set<String> expandedIds = new HashSet<>();
 
     public ActividadAdapter(@NonNull OnDeleteClickListener deleteListener,
@@ -94,8 +107,7 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
         holder.bind(getItem(position));
     }
 
-    // ── ViewHolder ────────────────────────────────────────────────────────────
-
+    /** ViewHolder de cada tarjeta del historial. */
     public final class ViewHolder extends RecyclerView.ViewHolder {
 
         private final ItemActividadBinding binding;
@@ -105,10 +117,17 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
             this.binding = binding;
         }
 
+        /**
+         * Vincula una actividad con la tarjeta del historial.
+         *
+         * <p>Aquí está el fix principal: los campos de ritmo del detalle expandido se rellenan
+         * con un formateador propio que añade siempre {@code /km} al final cuando hay un ritmo
+         * válido, y también lo mantiene en el placeholder cuando el ritmo no existe.</p>
+         */
         void bind(@NonNull ActividadItem item) {
             final Context context = binding.getRoot().getContext();
 
-            // Icono y tipo de actividad
+            // Resolvemos el tipo canónico para mostrar siempre el icono y el label correctos.
             String canonicalTipo = ProfileValueLocalizer.canonicalActivityTypeFromLabel(context, item.tipo);
             final int iconRes;
             if ("Caminar".equals(canonicalTipo)) {
@@ -123,14 +142,14 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
                     ProfileValueLocalizer.displayActivityType(context, canonicalTipo)
             );
 
-            // Fecha
+            // La fecha se normaliza a la zona local igual que en las estadísticas.
             binding.tvActivityDate.setText(formatFecha(item.fechaRutaIso, context));
 
-            // Badge de sincronización pendiente
+            // Badge visual para actividades aún no sincronizadas.
             boolean pendiente = item.isPendingSync();
             binding.tvPendingBadge.setVisibility(pendiente ? View.VISIBLE : View.GONE);
 
-            // Cabecera: distancia y tiempo total siempre visibles
+            // Cabecera: visible aunque la tarjeta esté colapsada.
             binding.tvActivityDistance.setText(
                     context.getString(R.string.stats_format_km, item.distanciaMetros / 1000.0f)
             );
@@ -138,45 +157,52 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
                     formatDuracion(item.duracionSegundos, context)
             );
 
-            // Detalles del panel expandible
+            // Detalle expandido.
             binding.tvActivityCalories.setText(
                     context.getString(R.string.stats_format_kcal, item.caloriasQuemadas)
             );
+
+            // FIX EXPLÍCITO: no dependemos solo del recurso; aquí se compone siempre el "/km".
             binding.tvActivityPace.setText(
-                    context.getString(
-                            R.string.stats_item_pace_format,
-                            formatPace(item.ritmoMedioMovimientoSegKm)
-                    )
+                    formatPaceWithUnit(item.ritmoMedioTotalSegKm)
             );
+            binding.tvActivityMaxPace.setText(
+                    formatPaceWithUnit(item.ritmoMaximoSegKm)
+            );
+
             binding.tvActivityMoving.setText(
                     formatDuracion(item.duracionMovimientoSegundos, context)
             );
             binding.tvActivityStopped.setText(
                     formatDuracion(item.duracionParadoSegundos, context)
             );
+            binding.tvActivityTotal.setText(
+                    formatDuracion(item.duracionSegundos, context)
+            );
 
-            // Botón borrar (deshabilitado si está pendiente de sync)
+            // Si la actividad está pendiente de sync no permitimos borrarla para evitar estados raros.
             binding.btnDelete.setEnabled(!pendiente);
             binding.btnDelete.setAlpha(pendiente ? 0.3f : 1.0f);
             binding.btnDelete.setOnClickListener(v -> deleteListener.onDeleteClick(item));
 
-            // Botón compartir: visible solo si la actividad tiene polilínea
+            // El botón de ruta/compartir solo tiene sentido si existe polilínea guardada.
             boolean tienePolilinea = item.rutaPolilinea != null && !item.rutaPolilinea.isEmpty();
             binding.btnShareRoute.setVisibility(tienePolilinea ? View.VISIBLE : View.GONE);
             binding.viewShareDivider.setVisibility(tienePolilinea ? View.VISIBLE : View.GONE);
             if (tienePolilinea) {
                 binding.btnShareRoute.setOnClickListener(v -> shareListener.onShareClick(item));
+            } else {
+                binding.btnShareRoute.setOnClickListener(null);
             }
 
-            // Estado de expansión — aplicar sin animación durante bind
+            // Aplicamos el estado de expansión sin animación durante el bind para reciclar bien la vista.
             applyExpandState(item.localId, false);
 
-            // Toggle expand/collapse al pulsar la cabecera
+            // La cabecera hace toggle del detalle expandido.
             binding.layoutHeader.setOnClickListener(v -> toggleExpand(item.localId));
         }
 
-        // ── Expansión ─────────────────────────────────────────────────────────
-
+        /** Alterna el estado expandido/colapsado de una tarjeta. */
         private void toggleExpand(@NonNull String localId) {
             if (expandedIds.contains(localId)) {
                 expandedIds.remove(localId);
@@ -186,6 +212,12 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
             applyExpandState(localId, true);
         }
 
+        /**
+         * Aplica visualmente el estado expandido.
+         *
+         * @param localId   id local estable de la actividad.
+         * @param animate   {@code true} para animar el chevron; {@code false} durante el bind.
+         */
         private void applyExpandState(@NonNull String localId, boolean animate) {
             boolean expanded = expandedIds.contains(localId);
             int detailVisibility = expanded ? View.VISIBLE : View.GONE;
@@ -204,14 +236,11 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
             }
         }
 
-        // ── Formateo ──────────────────────────────────────────────────────────
-
         /**
          * Formatea la fecha de la actividad usando la zona horaria local del dispositivo.
          *
-         * <p>Bugfix: las estadísticas agrupan por fecha convertida a {@link ZoneId#systemDefault()}.
-         * Si aquí se usa {@code toLocalDate()} directamente sobre el offset original, la misma
-         * actividad puede verse en un día distinto al calculado en {@code StatsCalculator}.</p>
+         * <p>Esto mantiene alineada la fecha visual con la usada por los cálculos de estadísticas,
+         * evitando que una misma actividad aparezca en distinto día según la pantalla.</p>
          */
         @NonNull
         private String formatFecha(@NonNull String fechaIso, @NonNull Context context) {
@@ -229,24 +258,52 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
             }
         }
 
+        /** Formatea duraciones como minutos u horas y minutos, según corresponda. */
         @NonNull
         private String formatDuracion(int segundos, @NonNull Context context) {
             long horas = segundos / 3600L;
             long minutos = (segundos % 3600L) / 60L;
-            if (horas > 0) {
+            if (horas > 0L) {
                 return context.getString(R.string.stats_format_time_hm, horas, minutos);
             }
             return context.getString(R.string.stats_format_time_m, Math.max(1L, minutos));
         }
 
+        /**
+         * Devuelve el ritmo en formato base {@code mm'ss"} sin unidad.
+         *
+         * <p>Se separa de {@link #formatPaceWithUnit(int)} para dejar claro qué parte del valor
+         * es el tiempo puro y qué parte es la unidad visual que exige esta pantalla.</p>
+         */
         @NonNull
-        private String formatPace(int secondsPerKm) {
+        private String formatPaceValue(int secondsPerKm) {
             if (secondsPerKm <= 0) {
                 return "--'--\"";
             }
+
             int minutes = secondsPerKm / 60;
             int seconds = secondsPerKm % 60;
             return String.format(Locale.US, "%d'%02d\"", minutes, seconds);
         }
+
+        /**
+         * Devuelve el ritmo con unidad fija para el detalle del historial.
+         *
+         * <p>Se devuelve siempre con el sufijo {@code /km}, también para el placeholder,
+         * para que visualmente el bloque de métricas sea homogéneo y no dependa de estilos,
+         * resources o transformaciones externas.</p>
+         */
+        @NonNull
+        private String formatPaceWithUnit(int secondsPerKm) {
+            return formatPaceValue(secondsPerKm) + "/km";
+        }
+    }
+
+    /** Comparación null-safe para campos opcionales usados por el DiffUtil. */
+    private static boolean safeEquals(String a, String b) {
+        if (a == null) {
+            return b == null;
+        }
+        return a.equals(b);
     }
 }

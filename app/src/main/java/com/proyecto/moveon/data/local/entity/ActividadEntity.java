@@ -58,6 +58,10 @@ public class ActividadEntity {
     @ColumnInfo(name = "ritmo_medio_total")
     public int ritmoMedioTotal;
 
+    /** Mejor ritmo sostenido válido en seg/km. */
+    @ColumnInfo(name = "ritmo_maximo")
+    public int ritmoMaximo;
+
     @ColumnInfo(name = "velocidad_media_x100")
     public int velocidadMediaKmhX100;
 

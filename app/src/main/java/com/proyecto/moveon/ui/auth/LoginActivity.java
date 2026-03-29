@@ -160,10 +160,27 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
     private void openRegisterWithFade(@Nullable Intent customIntent) {
         Intent intent = customIntent != null ? customIntent : new Intent(this, RegisterActivity.class);
         startActivity(intent);
+        applyImmediateFadeTransition();
+    }
 
-        // Forzamos fade real en la navegación Login -> Registro para que coincida visualmente
-        // con el desvanecimiento que ya se percibe al cerrar Registro y volver a Login.
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+    /**
+     * Aplica el fade de navegación inmediatamente después de lanzar otra Activity.
+     *
+     * <p>En Android 14+ se usa la API nueva. En versiones anteriores se mantiene
+     * el fallback clásico, pero encapsulado y suprimiendo solo el warning local de
+     * deprecación para no ensuciar la compilación.</p>
+     */
+    @SuppressWarnings("deprecation")
+    private void applyImmediateFadeTransition() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(
+                    OVERRIDE_TRANSITION_OPEN,
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out
+            );
+        } else {
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        }
     }
 
     private void applyBackendErrors(ApiError err) {

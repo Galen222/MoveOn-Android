@@ -1,5 +1,3 @@
-
-
 package com.proyecto.moveon.ui.home.tracking;
 
 import android.app.Application;
@@ -236,6 +234,7 @@ public final class TrackingViewModel extends AndroidViewModel {
 
         int averageMovingPace = calculatePaceSecondsPerKm(state.getMovingSeconds(), state.getDistanceMeters());
         int averageElapsedPace = calculatePaceSecondsPerKm(state.getElapsedSeconds(), state.getDistanceMeters());
+        int maxPace = parsePaceTextToSecondsPerKm(state.getMaxPace());
         int averageSpeedKmhX100 = calculateAverageSpeedKmhX100(
                 state.getDistanceMeters(),
                 state.getMovingSeconds()
@@ -251,6 +250,7 @@ public final class TrackingViewModel extends AndroidViewModel {
                 calorias,
                 averageMovingPace,
                 averageElapsedPace,
+                maxPace,
                 averageSpeedKmhX100,
                 state.getMaxSpeedKmhX100(),
                 state.getAutoPauseCount(),
@@ -278,6 +278,25 @@ public final class TrackingViewModel extends AndroidViewModel {
             return 0;
         }
         return (int) Math.round((seconds * 1000.0) / distanceMeters);
+    }
+
+
+    private int parsePaceTextToSecondsPerKm(@Nullable String paceText) {
+        if (paceText == null || paceText.trim().isEmpty()) {
+            return 0;
+        }
+
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("(\\d+)'(\\d{2})\\\"")
+                .matcher(paceText.trim());
+
+        if (!matcher.matches()) {
+            return 0;
+        }
+
+        int minutes = Integer.parseInt(matcher.group(1));
+        int seconds = Integer.parseInt(matcher.group(2));
+        return (minutes * 60) + seconds;
     }
 
     private int calculateAverageSpeedKmhX100(int distanceMeters, long movingSeconds) {

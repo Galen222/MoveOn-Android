@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.stats;
 
 import android.content.Context;
@@ -357,17 +356,22 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         binding.tvActivityCalories.setText(
                 context.getString(R.string.stats_format_kcal, item.caloriasQuemadas)
         );
+        // Fix: este detalle expandido del historial usa un binder propio dentro del
+        // bottom sheet, distinto del adapter principal. Aquí es donde faltaba "/km".
         binding.tvActivityPace.setText(
-                context.getString(
-                        R.string.stats_item_pace_format,
-                        formatPace(item.ritmoMedioMovimientoSegKm)
-                )
+                formatPace(item.ritmoMedioTotalSegKm, context)
+        );
+        binding.tvActivityMaxPace.setText(
+                formatPace(item.ritmoMaximoSegKm, context)
         );
         binding.tvActivityMoving.setText(
                 formatDuracion(item.duracionMovimientoSegundos, context)
         );
         binding.tvActivityStopped.setText(
                 formatDuracion(item.duracionParadoSegundos, context)
+        );
+        binding.tvActivityTotal.setText(
+                formatDuracion(item.duracionSegundos, context)
         );
 
         binding.btnDelete.setEnabled(!pendiente);
@@ -495,15 +499,30 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         }
         return context.getString(R.string.stats_format_time_m, Math.max(1L, minutos));
     }
-
+    /**
+     * Formatea el ritmo para el detalle expandido del historial.
+     *
+     * <p>Fix real del bug reportado: este bottom sheet no reutiliza el
+     * {@link ActividadAdapter}, sino que vuelve a inflar y bindear
+     * {@link ItemActividadBinding} manualmente. Por eso el cambio anterior en
+     * el adapter principal no afectaba a esta vista. Aquí devolvemos siempre el
+     * valor final con la unidad {@code /km} ya incluida.</p>
+     */
     @NonNull
-    private String formatPace(int secondsPerKm) {
+    private String formatPace(int secondsPerKm, @NonNull Context context) {
+        String basePace;
         if (secondsPerKm <= 0) {
-            return "--'--\"";
+            basePace = "--'--\"";
+        } else {
+            int minutes = secondsPerKm / 60;
+            int seconds = secondsPerKm % 60;
+            basePace = String.format(Locale.US, "%d'%02d\"", minutes, seconds);
         }
-        int minutes = secondsPerKm / 60;
-        int seconds = secondsPerKm % 60;
-        return String.format(Locale.US, "%d'%02d\"", minutes, seconds);
+
+        // Añadimos la unidad aquí, de forma explícita, porque este detalle
+        // expandido del historial construye su propio texto y no pasa por el
+        // formatter del adapter principal.
+        return context.getString(R.string.stats_item_pace_format, basePace);
     }
 
     @NonNull
@@ -536,4 +555,3 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 }
-

@@ -10,6 +10,8 @@
     <string name="inicio_running">Running</string>
     <string name="tracking_label_pace">RHYTHM</string>
     <string name="tracking_default_pace">--\'--\"</string>
+    <string name="tracking_max_pace_inline_format">MAX %1$s</string>
+    <string name="tracking_default_max_pace_inline">MAX --\'--\"</string>
     <string name="inicio_desc_add">Add</string>
     <string name="inicio_desc_map">Map</string>
     <string name="inicio_desc_location">Current location</string>
@@ -202,6 +204,7 @@
     <string name="stats_item_label_stopped">Stopped time</string>
     <string name="stats_item_expand_desc">View activity details</string>
     <string name="stats_item_pace_format">%1$s/km</string>
+    <string name="stats_item_pace_and_max_format">%1$s/km · Máx %2$s/km</string>
     <string name="stats_section_calendar">Weekly</string>
     <string name="stats_calendar_week_range">%1$d–%2$d %3$s</string>
     <string name="stats_calendar_btn_more">See more months</string>
@@ -213,6 +216,8 @@
     <string name="stats_desc_compare_icon">Comparison icon</string>
     <string name="stats_item_share_route">View route</string>
     <string name="stats_btn_ver_todas">See all activities</string>
+    <string name="stats_item_label_max_pace">Max pace</string>
+    <string name="stats_item_label_total">Total</string>
     <string name="profile_default_username">User</string>
     <string name="profile_default_email">No email available</string>
     <string name="profile_not_indicated">Not specified</string>
@@ -415,6 +420,7 @@
     <string name="error_tracking_average_pace_invalid">Average pace is not valid</string>
     <string name="error_tracking_average_speed_invalid">Average speed is not valid</string>
     <string name="error_tracking_max_speed_invalid">Maximum speed is not valid</string>
+    <string name="error_tracking_max_pace_invalid">Maximum pace is not valid</string>
     <string name="error_tracking_counter_invalid">Tracking counters are not valid</string>
     <string name="error_tracking_total_duration_mismatch">Total time, moving time, and stopped time do not match</string>
 
@@ -456,5 +462,28 @@
     <string name="social_google_profile_ready">Your Google account is ready. Review the suggested username and finish the missing details.</string>
     <string name="social_google_username_helper">Suggested from Google. You can change it if you want.</string>
     <string name="social_google_account_detected">Google account selected</string>
+
+    <string name="ranking_user_report">Report</string>
+    <string name="ranking_user_close">Close</string>
+
+    <string name="ranking_report_dialog_title">Report %1$s</string>
+    <string name="ranking_report_dialog_title_generic">Report</string>
+    <string name="ranking_report_reason_section_title">Reason for report</string>
+    <string name="ranking_report_reason_name">Report name</string>
+    <string name="ranking_report_reason_name_desc">The username contains offensive, inappropriate or impersonating text.</string>
+    <string name="ranking_report_reason_photo">Report photo</string>
+    <string name="ranking_report_reason_photo_desc">The photo shows offensive or disallowed content.</string>
+    <string name="ranking_report_observaciones_section_title">Observations</string>
+    <string name="ranking_report_error_reason_required">Select at least one option</string>
+    <string name="ranking_report_error_observaciones_too_long">Observations cannot exceed 500 characters</string>
+    <string name="ranking_report_sending">Sending...</string>
+    <string name="ranking_report_success">Report sent correctly</string>
+    <string name="ranking_report_error_generic">Could not send the report. Please try again.</string>
+
+    <string name="backend_error_at_least_one_report_reason_required">Select at least one report option</string>
+    <string name="backend_error_cannot_report_yourself">You cannot report your own profile</string>
+    <string name="backend_error_report_email_send_failed">Could not send the report. Please try again later.</string>
+    <string name="backend_error_report_target_username_required">The reported username is required</string>
+    <string name="backend_error_report_target_username_empty">The reported username cannot be empty</string>
 
 </resources>

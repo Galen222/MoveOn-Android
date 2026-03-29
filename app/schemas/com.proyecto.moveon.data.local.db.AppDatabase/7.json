@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 6,
-    "identityHash": "413b523efe2116eb949c760051d60691",
+    "version": 7,
+    "identityHash": "f9628ab659e6242552845eb783d2c08f",
     "entities": [
       {
         "tableName": "perfil_cache",
@@ -199,7 +199,7 @@
       },
       {
         "tableName": "actividades_locales",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`localId` TEXT NOT NULL, `accountKey` TEXT NOT NULL, `remoteId` INTEGER, `tipo` TEXT NOT NULL, `distancia` INTEGER NOT NULL, `duracion_total` INTEGER NOT NULL, `duracion_movimiento` INTEGER NOT NULL, `duracion_parado` INTEGER NOT NULL, `duracion_pausa_manual` INTEGER NOT NULL, `calorias_quemadas` INTEGER NOT NULL, `ritmo_medio_movimiento` INTEGER NOT NULL, `ritmo_medio_total` INTEGER NOT NULL, `velocidad_media_x100` INTEGER NOT NULL, `velocidad_max_x100` INTEGER NOT NULL, `auto_pausas` INTEGER NOT NULL, `pausas_manuales` INTEGER NOT NULL, `alertas_velocidad` INTEGER NOT NULL, `ruta_polilinea` TEXT, `ruta_mapa_url` TEXT, `fecha_ruta` TEXT NOT NULL, `sync_state` TEXT NOT NULL, `last_error` TEXT, `created_at_ms` INTEGER NOT NULL, `updated_at_ms` INTEGER NOT NULL, PRIMARY KEY(`localId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`localId` TEXT NOT NULL, `accountKey` TEXT NOT NULL, `remoteId` INTEGER, `tipo` TEXT NOT NULL, `distancia` INTEGER NOT NULL, `duracion_total` INTEGER NOT NULL, `duracion_movimiento` INTEGER NOT NULL, `duracion_parado` INTEGER NOT NULL, `duracion_pausa_manual` INTEGER NOT NULL, `calorias_quemadas` INTEGER NOT NULL, `ritmo_medio_movimiento` INTEGER NOT NULL, `ritmo_medio_total` INTEGER NOT NULL, `ritmo_maximo` INTEGER NOT NULL, `velocidad_media_x100` INTEGER NOT NULL, `velocidad_max_x100` INTEGER NOT NULL, `auto_pausas` INTEGER NOT NULL, `pausas_manuales` INTEGER NOT NULL, `alertas_velocidad` INTEGER NOT NULL, `ruta_polilinea` TEXT, `ruta_mapa_url` TEXT, `fecha_ruta` TEXT NOT NULL, `sync_state` TEXT NOT NULL, `last_error` TEXT, `created_at_ms` INTEGER NOT NULL, `updated_at_ms` INTEGER NOT NULL, PRIMARY KEY(`localId`))",
         "fields": [
           {
             "fieldPath": "localId",
@@ -269,6 +269,12 @@
           {
             "fieldPath": "ritmoMedioTotal",
             "columnName": "ritmo_medio_total",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ritmoMaximo",
+            "columnName": "ritmo_maximo",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -410,7 +416,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '413b523efe2116eb949c760051d60691')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f9628ab659e6242552845eb783d2c08f')"
     ]
   }
 }

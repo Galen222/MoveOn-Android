@@ -200,23 +200,32 @@ public final class ShareRouteImageGenerator {
         float dividerY = dp(context, 1292);
         canvas.drawLine(dp(context, 58), dividerY, width - dp(context, 58), dividerY, dividerPaint);
 
-        // Tarjetas secundarias grandes.
+        // Tarjetas secundarias compactas: 3 bloques en una sola fila.
         float cardTop = dp(context, 1338);
-        float cardWidth = (width - dp(context, 58) - dp(context, 58) - dp(context, 18)) / 2f;
+        float cardGap = dp(context, 18);
+        float horizontalPadding = dp(context, 58);
+        float cardWidth = (width - horizontalPadding - horizontalPadding - (cardGap * 2f)) / 3f;
         float cardHeight = dp(context, 250);
-        float leftCardX = dp(context, 58);
-        float rightCardX = leftCardX + cardWidth + dp(context, 18);
+        float firstCardX = horizontalPadding;
+        float secondCardX = firstCardX + cardWidth + cardGap;
+        float thirdCardX = secondCardX + cardWidth + cardGap;
 
         drawMetricCard(canvas,
-                new RectF(leftCardX, cardTop, leftCardX + cardWidth, cardTop + cardHeight),
-                context.getString(R.string.share_routes_metric_pace).toUpperCase(Locale.getDefault()),
-                ShareRouteFormatter.formatPace(context, item.ritmoMedioTotalSegKm),
+                new RectF(firstCardX, cardTop, firstCardX + cardWidth, cardTop + cardHeight),
+                context.getString(R.string.share_routes_metric_calories).toUpperCase(Locale.getDefault()),
+                context.getString(R.string.share_routes_kcal_value, item.caloriasQuemadas),
                 metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint, context);
 
         drawMetricCard(canvas,
-                new RectF(rightCardX, cardTop, rightCardX + cardWidth, cardTop + cardHeight),
-                context.getString(R.string.share_routes_metric_calories).toUpperCase(Locale.getDefault()),
-                context.getString(R.string.share_routes_kcal_value, item.caloriasQuemadas),
+                new RectF(secondCardX, cardTop, secondCardX + cardWidth, cardTop + cardHeight),
+                context.getString(R.string.share_routes_metric_average_pace).toUpperCase(Locale.getDefault()),
+                ShareRouteFormatter.formatPaceWithUnit(context, item.ritmoMedioTotalSegKm),
+                metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint, context);
+
+        drawMetricCard(canvas,
+                new RectF(thirdCardX, cardTop, thirdCardX + cardWidth, cardTop + cardHeight),
+                context.getString(R.string.share_routes_metric_max_pace).toUpperCase(Locale.getDefault()),
+                ShareRouteFormatter.formatPaceWithUnit(context, item.ritmoMaximoSegKm),
                 metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint, context);
 
         return bitmap;

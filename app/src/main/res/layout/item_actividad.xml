@@ -172,14 +172,14 @@
             android:visibility="gone"
             tools:visibility="visible">
 
-            <!-- Métricas: dos columnas -->
+            <!-- Fila 1: calorías + ritmo medio + ritmo máximo -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:baselineAligned="false"
                 android:orientation="horizontal"
-                android:baselineAligned="false">
+                android:weightSum="3">
 
-                <!-- Columna izquierda: Calorías + En movimiento -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -190,38 +190,20 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/stats_item_label_calories"
-                        android:textSize="11sp"
-                        android:textColor="@color/textTertiary" />
+                        android:textColor="@color/textTertiary"
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/tv_activity_calories"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="10dp"
-                        android:textSize="13sp"
-                        android:textColor="@color/textPrimary"
                         android:fontFamily="sans-serif-medium"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="13sp"
                         tools:text="245 kcal" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/stats_item_label_moving"
-                        android:textSize="11sp"
-                        android:textColor="@color/textTertiary" />
-
-                    <TextView
-                        android:id="@+id/tv_activity_moving"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="13sp"
-                        android:textColor="@color/textPrimary"
-                        android:fontFamily="sans-serif-medium"
-                        tools:text="28 min" />
-
                 </LinearLayout>
 
-                <!-- Columna derecha: Ritmo medio + Parado -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -232,37 +214,121 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/stats_item_label_pace"
-                        android:textSize="11sp"
-                        android:textColor="@color/textTertiary" />
+                        android:textColor="@color/textTertiary"
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/tv_activity_pace"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="10dp"
-                        android:textSize="13sp"
-                        android:textColor="@color/textPrimary"
                         android:fontFamily="sans-serif-medium"
-                        tools:text="5'30&quot;/km" />
+                        android:textColor="@color/textPrimary"
+                        android:textSize="13sp"
+                        tools:text="5'30&quot;" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/stats_item_label_max_pace"
+                        android:textColor="@color/textTertiary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/tv_activity_max_pace"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="13sp"
+                        tools:text="4'45&quot;" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Fila 2: en movimiento + parado + total -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="horizontal"
+                android:weightSum="3">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/stats_item_label_moving"
+                        android:textColor="@color/textTertiary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/tv_activity_moving"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="13sp"
+                        tools:text="28 min" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/stats_item_label_stopped"
-                        android:textSize="11sp"
-                        android:textColor="@color/textTertiary" />
+                        android:textColor="@color/textTertiary"
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/tv_activity_stopped"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textSize="13sp"
-                        android:textColor="@color/textPrimary"
                         android:fontFamily="sans-serif-medium"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="13sp"
                         tools:text="5 min" />
-
                 </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/stats_item_label_total"
+                        android:textColor="@color/textTertiary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/tv_activity_total"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="13sp"
+                        tools:text="33 min" />
+                </LinearLayout>
             </LinearLayout>
 
             <!-- Divisor + botón compartir -->

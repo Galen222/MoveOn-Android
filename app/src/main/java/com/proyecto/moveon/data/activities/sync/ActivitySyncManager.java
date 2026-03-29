@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.data.activities.sync;
 
 import android.content.Context;
@@ -145,6 +144,7 @@ public final class ActivitySyncManager {
         entity.caloriasQuemadas      = dto.caloriasQuemadas;
         entity.ritmoMedioMovimiento  = dto.ritmoMedioMovimiento;
         entity.ritmoMedioTotal       = dto.ritmoMedioTotal;
+        entity.ritmoMaximo           = dto.ritmoMaximo;
         entity.velocidadMediaKmhX100 = dto.velocidadMediaKmhX100;
         entity.velocidadMaxKmhX100   = dto.velocidadMaxKmhX100;
         entity.autoPausas            = dto.autoPausas;

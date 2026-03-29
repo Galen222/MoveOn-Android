@@ -44,6 +44,10 @@ public final class GuardarActividadRequestDto {
     @SerializedName("ritmo_medio_total")
     public final int ritmoMedioTotal;
 
+    /** Mejor ritmo sostenido válido de la actividad, en segundos por kilómetro. */
+    @SerializedName("ritmo_maximo")
+    public final int ritmoMaximo;
+
     @SerializedName("velocidad_media_x100")
     public final int velocidadMediaKmhX100;
 
@@ -77,6 +81,7 @@ public final class GuardarActividadRequestDto {
             int caloriasQuemadas,
             int ritmoMedioMovimiento,
             int ritmoMedioTotal,
+            int ritmoMaximo,
             int velocidadMediaKmhX100,
             int velocidadMaxKmhX100,
             int autoPausas,
@@ -93,6 +98,7 @@ public final class GuardarActividadRequestDto {
         this.caloriasQuemadas = caloriasQuemadas;
         this.ritmoMedioMovimiento = ritmoMedioMovimiento;
         this.ritmoMedioTotal = ritmoMedioTotal;
+        this.ritmoMaximo = ritmoMaximo;
         this.velocidadMediaKmhX100 = velocidadMediaKmhX100;
         this.velocidadMaxKmhX100 = velocidadMaxKmhX100;
         this.autoPausas = autoPausas;
