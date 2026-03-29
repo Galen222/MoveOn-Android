@@ -435,6 +435,8 @@
     <string name="social_google_not_configured">GOOGLE_WEB_CLIENT_ID is missing in local.properties.</string>
     <string name="social_google_generic_error">Google authentication could not be completed.</string>
     <string name="social_google_invalid_token">Google did not return a valid token.</string>
+    <string name="social_google_provider_configuration_error">Google sign-in could not be completed. Check the OAuth setup, package name, and SHA fingerprints for the project.</string>
+    <string name="social_google_no_credentials">There is no Google account available to continue.</string>
     <string name="vm_registro_social_completado">Social registration completed</string>
 
 
@@ -442,5 +444,17 @@
     <string name="social_google_complete_profile">Complete your birth date, accept the terms, and review the suggested username to finish signing up with Google.</string>
     <string name="social_google_username_prefilled">We generated a username from your Google account.</string>
     <string name="social_google_silent_sign_in_failed">Google session could not be restored automatically.</string>
-</resources>
 
+    <string name="social_google_loading_title">Continuing with Google</string>
+    <string name="social_google_loading_message_signin">Checking your Google account to sign you in.</string>
+    <string name="social_google_loading_message_register">Connecting with Google to prepare your sign-up.</string>
+    <string name="social_google_loading_message_register_switch">Switching the Google account you will use to sign up.</string>
+    <string name="social_google_loading_message_finish">Creating your account and syncing your profile.</string>
+    <string name="social_google_loading_message_silent">Restoring your Google access.</string>
+    <string name="social_google_finish_register">Complete with Google</string>
+    <string name="social_google_change_account">Change Google account</string>
+    <string name="social_google_profile_ready">Your Google account is ready. Review the suggested username and finish the missing details.</string>
+    <string name="social_google_username_helper">Suggested from Google. You can change it if you want.</string>
+    <string name="social_google_account_detected">Google account selected</string>
+
+</resources>

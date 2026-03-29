@@ -1,21 +1,27 @@
 package com.proyecto.moveon.ui.auth;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextPaint;
+import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.datepicker.CalendarConstraints;
 import com.google.android.material.datepicker.DateValidatorPointBackward;
 import com.google.android.material.datepicker.MaterialDatePicker;
@@ -82,6 +88,7 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         setupListeners();
         observeViewModel();
         restorePendingGoogleAccountFromExtras();
+        renderSocialMode(null, false);
     }
 
     private void restorePendingGoogleAccountFromExtras() {
@@ -94,7 +101,7 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                 getIntent().getStringExtra(EXTRA_GOOGLE_DISPLAY_NAME),
                 getIntent().getStringExtra(EXTRA_GOOGLE_AVATAR_URL)
         );
-        suggestUsernameFromGoogle(pendingGoogleAccount, true);
+        applyPendingGoogleAccount(pendingGoogleAccount, true);
         TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_complete_profile));
     }
 
@@ -120,6 +127,16 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         binding.cbEula.setOnCheckedChangeListener((buttonView, checked) -> {
             if (checked) binding.tvEulaError.setVisibility(View.GONE);
         });
+
+        binding.etUsuario.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
+            @Override public void afterTextChanged(Editable s) {
+                if (pendingGoogleAccount != null) {
+                    binding.tilUsuario.setHelperText(getString(R.string.social_google_username_helper));
+                }
+            }
+        });
     }
 
     private ClickableSpan buildLinkSpan(boolean isTerminos) {
@@ -140,9 +157,18 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
     }
 
     private void setupListeners() {
-        binding.btnIniciarSesion.setOnClickListener(v -> finish());
+        binding.btnIniciarSesion.setOnClickListener(v -> {
+            finish();
+            applyFadeCloseTransition();
+        });
         binding.etFechaNacimiento.setOnClickListener(v -> showDatePicker());
-        binding.btnCrearCuenta.setOnClickListener(v -> attemptRegister());
+        binding.btnCrearCuenta.setOnClickListener(v -> {
+            if (pendingGoogleAccount != null) {
+                attemptCompleteGoogleRegister();
+            } else {
+                attemptRegister();
+            }
+        });
         binding.btnGoogleRegister.setOnClickListener(v -> attemptSocialRegister(SocialAuthProvider.GOOGLE));
 
         binding.etUsuario.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) binding.tilUsuario.setError(null); });
@@ -167,6 +193,7 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                     return;
                 }
 
+                showGoogleLoading(false, false, null, 0, 0);
                 setLoading(false);
                 applyBackendErrors(state.error);
 
@@ -181,9 +208,11 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
             if (state == null) return;
 
             if (state.data != null) {
+                showGoogleLoading(false, false, null, 0, 0);
                 Toast.makeText(this, getString(R.string.login_bienvenido, state.data.nombreUsuario), Toast.LENGTH_SHORT).show();
                 viewModel.resetLoginState();
                 NavigationUtils.goToActivityAndClearTask(this, MainActivity.class);
+                applyFadeOpenTransition();
             }
         });
     }
@@ -199,9 +228,13 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         suggestUsernameFromGoogle(pendingGoogleAccount, false);
         SocialRegisterInput input = buildSocialRegisterInput(SocialAuthProvider.GOOGLE, pendingGoogleAccount.idToken);
         if (input != null) {
+            showGoogleLoading(true, false, pendingGoogleAccount,
+                    R.string.social_google_loading_title,
+                    R.string.social_google_loading_message_finish);
             viewModel.registerWithSocial(input);
             return;
         }
+        showGoogleLoading(false, false, null, 0, 0);
         setLoading(false);
         viewModel.resetRegisterState();
     }
@@ -308,7 +341,30 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
             return;
         }
         setLoading(true);
+        showGoogleLoading(true, false, pendingGoogleAccount,
+                R.string.social_google_loading_title,
+                pendingGoogleAccount == null
+                        ? R.string.social_google_loading_message_register
+                        : R.string.social_google_loading_message_register_switch);
         socialAuthManager.signInWithGoogle();
+    }
+
+    private void attemptCompleteGoogleRegister() {
+        clearErrors();
+        if (pendingGoogleAccount == null) {
+            TopSnackbar.error(binding.getRoot(), getString(R.string.social_google_generic_error));
+            return;
+        }
+        SocialRegisterInput input = buildSocialRegisterInput(SocialAuthProvider.GOOGLE, pendingGoogleAccount.idToken);
+        if (input == null) {
+            TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_complete_profile));
+            return;
+        }
+        setLoading(true);
+        showGoogleLoading(true, false, pendingGoogleAccount,
+                R.string.social_google_loading_title,
+                R.string.social_google_loading_message_finish);
+        viewModel.registerWithSocial(input);
     }
 
     private boolean validatePendingSocialFields() {
@@ -336,12 +392,49 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         );
     }
 
+    private void applyPendingGoogleAccount(@NonNull SocialGoogleAccount account, boolean announce) {
+        pendingGoogleAccount = account;
+        socialUsernameRetryCount = 0;
+        renderSocialMode(account, true);
+        suggestUsernameFromGoogle(account, announce);
+        showGoogleLoading(false, false, null, 0, 0);
+        setLoading(false);
+    }
+
+    private void renderSocialMode(@Nullable SocialGoogleAccount account, boolean enabled) {
+        binding.cardGoogleSummary.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        binding.tilUsuarioCorreo.setVisibility(enabled ? View.GONE : View.VISIBLE);
+        binding.tilPassword.setVisibility(enabled ? View.GONE : View.VISIBLE);
+        binding.tilConfirmarPassword.setVisibility(enabled ? View.GONE : View.VISIBLE);
+        binding.btnCrearCuenta.setText(enabled
+                ? getString(R.string.social_google_finish_register)
+                : getString(R.string.registro_btn_crear));
+        binding.btnGoogleRegister.setText(enabled
+                ? getString(R.string.social_google_change_account)
+                : getString(R.string.social_google_continue));
+        binding.tvSubtitle.setText(enabled
+                ? getString(R.string.social_google_profile_ready)
+                : getString(R.string.registro_subtitulo));
+        binding.tilUsuario.setHelperText(enabled ? getString(R.string.social_google_username_helper) : null);
+
+        if (enabled) {
+            binding.tvGoogleSummaryName.setText(StringUtils.hasText(account != null ? account.displayName : null)
+                    ? account.displayName
+                    : getString(R.string.social_google_account_detected));
+            binding.tvGoogleSummaryEmail.setText(StringUtils.hasText(account != null ? account.email : null)
+                    ? account.email
+                    : getString(R.string.social_google_continue));
+            renderLoadingAvatar(binding.ivGoogleSummaryAvatar, account);
+        }
+    }
+
     private void suggestUsernameFromGoogle(@Nullable SocialGoogleAccount account, boolean announce) {
         if (account == null) return;
         String suggested = buildSuggestedUsername(account.displayName);
         binding.etUsuario.setText(suggested);
         binding.etUsuario.setSelection(suggested.length());
         binding.tilUsuario.setError(null);
+        binding.tilUsuario.setHelperText(getString(R.string.social_google_username_helper));
         if (announce) {
             TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_username_prefilled));
         }
@@ -396,7 +489,11 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         binding.tilPassword.setEnabled(!loading);
         binding.tilConfirmarPassword.setEnabled(!loading);
         binding.cbEula.setEnabled(!loading);
-        binding.btnCrearCuenta.setText(loading ? getString(R.string.registro_btn_creando) : getString(R.string.registro_btn_crear));
+        binding.btnCrearCuenta.setText(loading
+                ? getString(R.string.registro_btn_creando)
+                : (pendingGoogleAccount != null
+                    ? getString(R.string.social_google_finish_register)
+                    : getString(R.string.registro_btn_crear)));
     }
 
     private void clearErrors() {
@@ -408,31 +505,83 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         binding.tvEulaError.setVisibility(View.GONE);
     }
 
-    @Override
-    public void onGoogleAccountReady(@NonNull SocialGoogleAccount account, boolean silent) {
-        pendingGoogleAccount = account;
-        socialUsernameRetryCount = 0;
-        suggestUsernameFromGoogle(account, true);
-
-        SocialRegisterInput input = buildSocialRegisterInput(SocialAuthProvider.GOOGLE, account.idToken);
-        if (input == null) {
-            setLoading(false);
-            TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_complete_profile));
+    private void showGoogleLoading(boolean visible,
+                                   boolean silent,
+                                   @Nullable SocialGoogleAccount account,
+                                   @StringRes int titleRes,
+                                   @StringRes int messageRes) {
+        if (visible) {
+            if (titleRes != 0) binding.tvGoogleLoadingTitle.setText(titleRes);
+            if (messageRes != 0) binding.tvGoogleLoadingMessage.setText(messageRes);
+            renderLoadingAvatar(binding.ivGoogleLoadingAvatar, account);
+            binding.overlayGoogleLoading.setVisibility(View.VISIBLE);
+            binding.overlayGoogleLoading.setAlpha(0f);
+            binding.cardGoogleLoading.setScaleX(0.96f);
+            binding.cardGoogleLoading.setScaleY(0.96f);
+            binding.overlayGoogleLoading.animate().alpha(1f).setDuration(silent ? 180 : 220).start();
+            binding.cardGoogleLoading.animate().scaleX(1f).scaleY(1f).setDuration(silent ? 180 : 220).start();
             return;
         }
-        viewModel.registerWithSocial(input);
+        if (binding.overlayGoogleLoading.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        binding.overlayGoogleLoading.animate().alpha(0f).setDuration(160).withEndAction(() -> {
+            binding.overlayGoogleLoading.setVisibility(View.GONE);
+            binding.overlayGoogleLoading.setAlpha(1f);
+        }).start();
+    }
+
+    private void renderLoadingAvatar(@NonNull ImageView imageView, @Nullable SocialGoogleAccount account) {
+        String avatarUrl = account != null ? account.avatarUrl : null;
+        if (StringUtils.hasText(avatarUrl)) {
+            Glide.with(this)
+                    .load(avatarUrl)
+                    .placeholder(R.drawable.ic_google)
+                    .error(R.drawable.ic_google)
+                    .circleCrop()
+                    .into(imageView);
+            return;
+        }
+        imageView.setImageResource(R.drawable.ic_google);
+    }
+
+    @Override
+    public void onGoogleAccountReady(@NonNull SocialGoogleAccount account, boolean silent) {
+        applyPendingGoogleAccount(account, true);
     }
 
     @Override
     public void onSocialFlowError(@NonNull String message, boolean silent) {
+        showGoogleLoading(false, silent, null, 0, 0);
         setLoading(false);
         if (!silent) TopSnackbar.error(binding.getRoot(), message);
     }
 
     @Override
     public void onSocialFlowCanceled() {
+        showGoogleLoading(false, false, null, 0, 0);
         setLoading(false);
         TopSnackbar.warning(binding.getRoot(), getString(R.string.social_auth_canceled));
+    }
+
+    private void applyFadeOpenTransition() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(
+                    OVERRIDE_TRANSITION_OPEN,
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out
+            );
+        }
+    }
+
+    private void applyFadeCloseTransition() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(
+                    OVERRIDE_TRANSITION_CLOSE,
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out
+            );
+        }
     }
 
     @Override

@@ -1,3 +1,4 @@
+
 <resources>
     <!-- Márgenes generales -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
@@ -65,4 +66,14 @@
     <dimen name="stats_metric_row_height">56dp</dimen>
     <!-- label (12sp) + valor (20sp) + kcal (12sp) + márgenes ≈ 70dp -->
     <dimen name="stats_comparison_row_height">70dp</dimen>
+
+    <dimen name="auth_loading_overlay_margin">32dp</dimen>
+    <dimen name="auth_loading_card_radius">28dp</dimen>
+    <dimen name="auth_loading_card_padding">24dp</dimen>
+    <dimen name="auth_loading_avatar_size">56dp</dimen>
+    <dimen name="auth_loading_indicator_size">36dp</dimen>
+    <dimen name="auth_social_summary_avatar_size">44dp</dimen>
+    <dimen name="auth_social_summary_radius">20dp</dimen>
+
 </resources>
+

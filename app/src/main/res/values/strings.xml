@@ -617,6 +617,8 @@
     <string name="social_google_not_configured">Falta configurar GOOGLE_WEB_CLIENT_ID en local.properties.</string>
     <string name="social_google_generic_error">No se pudo completar la autenticación con Google.</string>
     <string name="social_google_invalid_token">Google no devolvió un token válido.</string>
+    <string name="social_google_provider_configuration_error">No se pudo completar el acceso con Google. Revisa la configuración OAuth, el package name y las huellas SHA del proyecto.</string>
+    <string name="social_google_no_credentials">No hay ninguna cuenta de Google disponible para continuar.</string>
     <string name="vm_registro_social_completado">Registro con Google completado</string>
 
 
@@ -624,4 +626,17 @@
     <string name="social_google_complete_profile">Completa tu fecha de nacimiento, acepta los términos y revisa el nombre sugerido para terminar el alta con Google.</string>
     <string name="social_google_username_prefilled">Hemos generado un nombre de usuario a partir de tu cuenta de Google.</string>
     <string name="social_google_silent_sign_in_failed">No se pudo restaurar automáticamente la sesión de Google.</string>
+
+    <string name="social_google_loading_title">Continuando con Google</string>
+    <string name="social_google_loading_message_signin">Comprobando tu cuenta de Google para iniciar sesión.</string>
+    <string name="social_google_loading_message_register">Conectando con Google para preparar tu registro.</string>
+    <string name="social_google_loading_message_register_switch">Cambiando la cuenta de Google que usarás para registrarte.</string>
+    <string name="social_google_loading_message_finish">Creando tu cuenta y sincronizando tu perfil.</string>
+    <string name="social_google_loading_message_silent">Restaurando tu acceso con Google.</string>
+    <string name="social_google_finish_register">Completar con Google</string>
+    <string name="social_google_change_account">Cambiar cuenta de Google</string>
+    <string name="social_google_profile_ready">Tu cuenta de Google ya está lista. Revisa el usuario sugerido y completa lo que falta.</string>
+    <string name="social_google_username_helper">Usuario sugerido desde Google. Puedes cambiarlo si quieres.</string>
+    <string name="social_google_account_detected">Cuenta de Google seleccionada</string>
+
 </resources>

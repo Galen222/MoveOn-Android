@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/surfaceBackground"
@@ -237,4 +241,71 @@
             app:layout_constraintTop_toBottomOf="@+id/tvOr" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>
+
+    <FrameLayout
+        android:id="@+id/overlayGoogleLoading"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#CCFFFFFF"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardGoogleLoading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="@dimen/auth_loading_overlay_margin"
+            app:cardBackgroundColor="@color/surfaceBackground"
+            app:cardCornerRadius="@dimen/auth_loading_card_radius"
+            app:cardElevation="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="@dimen/auth_loading_card_padding">
+
+                <ImageView
+                    android:id="@+id/ivGoogleLoadingAvatar"
+                    android:layout_width="@dimen/auth_loading_avatar_size"
+                    android:layout_height="@dimen/auth_loading_avatar_size"
+                    android:contentDescription="@string/social_google_continue"
+                    app:srcCompat="@drawable/ic_google" />
+
+                <TextView
+                    android:id="@+id/tvGoogleLoadingTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="@string/social_google_loading_title"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/tvGoogleLoadingMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="@string/social_google_loading_message_signin"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/progressGoogleLoading"
+                    android:layout_width="@dimen/auth_loading_indicator_size"
+                    android:layout_height="@dimen/auth_loading_indicator_size"
+                    android:layout_marginTop="18dp"
+                    app:indicatorColor="@color/greenPrimary"
+                    app:trackColor="@color/dividerColor" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
+</FrameLayout>
+
+
 

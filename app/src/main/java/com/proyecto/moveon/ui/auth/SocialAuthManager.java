@@ -1,9 +1,11 @@
+
 package com.proyecto.moveon.ui.auth;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.CancellationSignal;
 import android.util.Base64;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -34,6 +36,7 @@ import java.util.Locale;
 
 public final class SocialAuthManager {
 
+    private static final String TAG = "SocialAuthManager";
     private static final String PREFS_NAME = "social_auth_prefs";
     private static final String KEY_GOOGLE_SILENT_ENABLED = "google_silent_enabled";
 
@@ -132,14 +135,27 @@ public final class SocialAuthManager {
     }
 
     private void handleCredentialError(@NonNull GetCredentialException e, boolean silent) {
-        if (e instanceof GetCredentialCancellationException) {
-            if (!silent) {
-                listener.onSocialFlowCanceled();
-            }
+        logCredentialError(e, silent);
+
+        if (silent && e instanceof NoCredentialException) {
+            Log.i(TAG, "credential_no_credentials_silent");
             return;
         }
 
-        if (silent && e instanceof NoCredentialException) {
+        if (e instanceof GetCredentialCancellationException) {
+            if (isReauthFailure(e)) {
+                listener.onSocialFlowError(
+                        activity.getString(R.string.social_google_provider_configuration_error),
+                        silent
+                );
+                return;
+            }
+
+            if (!silent) {
+                listener.onSocialFlowCanceled();
+            } else {
+                Log.i(TAG, "credential_canceled_silent");
+            }
             return;
         }
 
@@ -190,18 +206,76 @@ public final class SocialAuthManager {
 
     @NonNull
     private String resolveGoogleErrorMessage(@NonNull GetCredentialException e, boolean silent) {
+        if (isReauthFailure(e) || looksLikeProviderConfigurationIssue(e)) {
+            return activity.getString(R.string.social_google_provider_configuration_error);
+        }
+
+        if (e instanceof NoCredentialException) {
+            return silent
+                    ? activity.getString(R.string.social_google_silent_sign_in_failed)
+                    : activity.getString(R.string.social_google_no_credentials);
+        }
+
         if (silent) {
             return activity.getString(R.string.social_google_silent_sign_in_failed);
         }
 
-        String raw = e.getMessage();
-        if (StringUtils.hasText(raw)) {
-            String normalized = raw.toLowerCase(Locale.ROOT);
-            if (normalized.contains("cancel")) {
-                return activity.getString(R.string.social_auth_canceled);
-            }
-        }
         return activity.getString(R.string.social_google_generic_error);
+    }
+
+    private void logCredentialError(@NonNull GetCredentialException e, boolean silent) {
+        Log.e(
+                TAG,
+                "credential_error"
+                        + " silent=" + silent
+                        + " exceptionClass=" + e.getClass().getName()
+                        + " rawMessage=" + sanitizeForLog(e.getMessage())
+                        + " appId=" + BuildConfig.APPLICATION_ID
+                        + " clientIdSuffix=" + clientIdSuffix(),
+                e
+        );
+    }
+
+    private boolean isReauthFailure(@NonNull GetCredentialException e) {
+        String normalized = normalizedMessage(e);
+        return normalized.contains("reauth failed")
+                || normalized.contains("account reauth failed");
+    }
+
+    private boolean looksLikeProviderConfigurationIssue(@NonNull GetCredentialException e) {
+        String normalized = normalizedMessage(e);
+        return normalized.contains("developer console is not set up correctly")
+                || normalized.contains("oauth")
+                || normalized.contains("unauthorized")
+                || normalized.contains("invalid audience")
+                || normalized.contains("sha")
+                || normalized.contains("package name")
+                || normalized.contains("configuration");
+    }
+
+    @NonNull
+    private String normalizedMessage(@NonNull GetCredentialException e) {
+        String raw = e.getMessage();
+        return raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
+    }
+
+    @NonNull
+    private String sanitizeForLog(@Nullable String value) {
+        if (!StringUtils.hasText(value)) {
+            return "<empty>";
+        }
+        String trimmed = value.trim().replace('\n', ' ').replace('\r', ' ');
+        return trimmed.length() > 240 ? trimmed.substring(0, 240) + "…" : trimmed;
+    }
+
+    @NonNull
+    private String clientIdSuffix() {
+        String clientId = BuildConfig.GOOGLE_WEB_CLIENT_ID;
+        if (!StringUtils.hasText(clientId)) {
+            return "<missing>";
+        }
+        int len = clientId.length();
+        return len <= 12 ? clientId : clientId.substring(len - 12);
     }
 
     @Nullable

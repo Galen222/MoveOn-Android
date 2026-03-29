@@ -2,6 +2,7 @@ package com.proyecto.moveon.ui.auth;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -68,9 +69,10 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
     }
 
     private void setupListeners() {
-        binding.btnRegistrar.setOnClickListener(v ->
-                NavigationUtils.goToActivity(this, RegisterActivity.class)
-        );
+        binding.btnRegistrar.setOnClickListener(v -> {
+            NavigationUtils.goToActivity(this, RegisterActivity.class);
+            applyFadeOpenTransition();
+        });
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
         binding.btnGoogleLogin.setOnClickListener(v -> {
             clearErrors();
@@ -82,9 +84,10 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         binding.etUsuarioCorreo.setOnFocusChangeListener((v, f) -> { if (f) binding.tilUsuarioCorreo.setError(null); });
         binding.etPassword.setOnFocusChangeListener((v, f) -> { if (f) binding.tilPassword.setError(null); });
 
-        binding.btnOlvidarPassword.setOnClickListener(v ->
-                NavigationUtils.goToActivity(this, ForgotPasswordActivity.class)
-        );
+        binding.btnOlvidarPassword.setOnClickListener(v -> {
+            NavigationUtils.goToActivity(this, ForgotPasswordActivity.class);
+            applyFadeOpenTransition();
+        });
     }
 
     private void observeViewModel() {
@@ -139,6 +142,7 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
                     .putExtra(RegisterActivity.EXTRA_GOOGLE_EMAIL, pendingGoogleAccount.email)
                     .putExtra(RegisterActivity.EXTRA_OPENED_FROM_LOGIN_SOCIAL, true);
             startActivity(intent);
+            applyFadeOpenTransition();
             TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_not_registered));
         } else {
             TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_not_registered));
@@ -201,6 +205,17 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
 
     private void goToMain() {
         NavigationUtils.goToActivityAndClearTask(this, MainActivity.class);
+        applyFadeOpenTransition();
+    }
+
+    private void applyFadeOpenTransition() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(
+                    OVERRIDE_TRANSITION_OPEN,
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out
+            );
+        }
     }
 
     @Override

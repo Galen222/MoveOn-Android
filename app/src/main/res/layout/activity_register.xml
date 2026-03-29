@@ -1,332 +1,460 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/surfaceBackground"
-    android:fillViewport="true">
+    android:layout_height="match_parent">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="@dimen/auth_section_spacing"
-        tools:context=".ui.auth.RegisterActivity">
+        android:layout_height="match_parent"
+        android:background="@color/surfaceBackground"
+        android:fillViewport="true">
 
-        <ImageView
-            android:id="@+id/ivMoveOn"
-            android:layout_width="@dimen/auth_logo_size_register"
-            android:layout_height="@dimen/auth_logo_size_register"
-            android:layout_marginTop="@dimen/auth_logo_margin_top_register"
-            android:contentDescription="@string/registro_logo_desc"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/moveon" />
-
-        <TextView
-            android:id="@+id/tvCrearCuenta"
-            android:layout_width="wrap_content"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/auth_title_margin_top"
-            android:fontFamily="sans-serif-medium"
-            android:text="@string/registro_titulo"
-            android:textColor="@color/textPrimary"
-            android:textSize="@dimen/auth_title_size"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ivMoveOn" />
+            android:paddingBottom="@dimen/auth_section_spacing"
+            tools:context=".ui.auth.RegisterActivity">
 
-        <TextView
-            android:id="@+id/tvSubtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/auth_subtitle_margin_top"
-            android:text="@string/registro_subtitulo"
-            android:textColor="@color/textSecondary"
-            android:textSize="@dimen/auth_subtitle_size"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvCrearCuenta" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilUsuario"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/auth_margin_horizontal"
-            android:layout_marginTop="@dimen/auth_first_field_margin_top"
-            android:layout_marginEnd="@dimen/auth_margin_horizontal"
-            android:hint="@string/registro_hint_usuario"
-            app:boxBackgroundMode="outline"
-            app:boxCornerRadiusBottomEnd="16dp"
-            app:boxCornerRadiusBottomStart="16dp"
-            app:boxCornerRadiusTopEnd="16dp"
-            app:boxCornerRadiusTopStart="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvSubtitle">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etUsuario"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="text"
-                android:maxLines="1" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilUsuarioCorreo"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/auth_margin_horizontal"
-            android:layout_marginTop="@dimen/auth_field_spacing"
-            android:layout_marginEnd="@dimen/auth_margin_horizontal"
-            android:hint="@string/registro_hint_correo"
-            app:boxBackgroundMode="outline"
-            app:boxCornerRadiusBottomEnd="16dp"
-            app:boxCornerRadiusBottomStart="16dp"
-            app:boxCornerRadiusTopEnd="16dp"
-            app:boxCornerRadiusTopStart="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tilUsuario">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etUsuarioCorreo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textEmailAddress"
-                android:maxLines="1" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilFechaNacimiento"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/auth_margin_horizontal"
-            android:layout_marginTop="@dimen/auth_field_spacing"
-            android:layout_marginEnd="@dimen/auth_margin_horizontal"
-            android:hint="@string/registro_hint_fecha"
-            app:boxBackgroundMode="outline"
-            app:boxCornerRadiusBottomEnd="16dp"
-            app:boxCornerRadiusBottomStart="16dp"
-            app:boxCornerRadiusTopEnd="16dp"
-            app:boxCornerRadiusTopStart="16dp"
-            app:endIconMode="custom"
-            app:endIconDrawable="@android:drawable/ic_menu_my_calendar"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tilUsuarioCorreo">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etFechaNacimiento"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clickable="true"
-                android:cursorVisible="false"
-                android:focusable="false"
-                android:focusableInTouchMode="false"
-                android:inputType="none"
-                android:maxLines="1" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilPassword"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/auth_margin_horizontal"
-            android:layout_marginTop="@dimen/auth_field_spacing"
-            android:layout_marginEnd="@dimen/auth_margin_horizontal"
-            android:hint="@string/registro_hint_password"
-            app:boxBackgroundMode="outline"
-            app:boxCornerRadiusBottomEnd="16dp"
-            app:boxCornerRadiusBottomStart="16dp"
-            app:boxCornerRadiusTopEnd="16dp"
-            app:boxCornerRadiusTopStart="16dp"
-            app:endIconMode="password_toggle"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tilFechaNacimiento">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textPassword"
-                android:maxLines="1" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilConfirmarPassword"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/auth_margin_horizontal"
-            android:layout_marginTop="@dimen/auth_field_spacing"
-            android:layout_marginEnd="@dimen/auth_margin_horizontal"
-            android:hint="@string/registro_hint_confirmar_password"
-            app:boxBackgroundMode="outline"
-            app:boxCornerRadiusBottomEnd="16dp"
-            app:boxCornerRadiusBottomStart="16dp"
-            app:boxCornerRadiusTopEnd="16dp"
-            app:boxCornerRadiusTopStart="16dp"
-            app:endIconMode="password_toggle"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tilPassword">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etConfirmarPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textPassword"
-                android:maxLines="1" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <LinearLayout
-            android:id="@+id/layoutEula"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/auth_margin_horizontal"
-            android:layout_marginTop="@dimen/auth_field_spacing"
-            android:layout_marginEnd="@dimen/auth_margin_horizontal"
-            android:gravity="top"
-            android:orientation="horizontal"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tilConfirmarPassword">
-
-            <CheckBox
-                android:id="@+id/cbEula"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minWidth="0dp"
-                android:minHeight="0dp" />
+            <ImageView
+                android:id="@+id/ivMoveOn"
+                android:layout_width="@dimen/auth_logo_size_register"
+                android:layout_height="@dimen/auth_logo_size_register"
+                android:layout_marginTop="@dimen/auth_logo_margin_top_register"
+                android:contentDescription="@string/registro_logo_desc"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/moveon" />
 
             <TextView
-                android:id="@+id/tvEulaText"
+                android:id="@+id/tvCrearCuenta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/auth_title_margin_top"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/registro_titulo"
+                android:textColor="@color/textPrimary"
+                android:textSize="@dimen/auth_title_size"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/ivMoveOn" />
+
+            <TextView
+                android:id="@+id/tvSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/auth_subtitle_margin_top"
+                android:text="@string/registro_subtitulo"
+                android:textColor="@color/textSecondary"
+                android:textSize="@dimen/auth_subtitle_size"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvCrearCuenta" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardGoogleSummary"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
+                android:layout_marginStart="@dimen/auth_margin_horizontal"
+                android:layout_marginTop="@dimen/auth_first_field_margin_top"
+                android:layout_marginEnd="@dimen/auth_margin_horizontal"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/surfaceBackground"
+                app:cardCornerRadius="@dimen/auth_button_radius"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/dividerColor"
+                app:strokeWidth="1dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvSubtitle">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:id="@+id/ivGoogleSummaryAvatar"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:contentDescription="@string/social_google_continue"
+                        app:srcCompat="@drawable/ic_google" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvGoogleSummaryName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:textColor="@color/textPrimary"
+                            android:textSize="16sp"
+                            tools:text="Juan Pérez" />
+
+                        <TextView
+                            android:id="@+id/tvGoogleSummaryEmail"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="@color/textSecondary"
+                            android:textSize="14sp"
+                            tools:text="juan@gmail.com" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilUsuario"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/auth_margin_horizontal"
+                android:layout_marginTop="@dimen/auth_first_field_margin_top"
+                android:layout_marginEnd="@dimen/auth_margin_horizontal"
+                android:hint="@string/registro_hint_usuario"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="16dp"
+                app:boxCornerRadiusBottomStart="16dp"
+                app:boxCornerRadiusTopEnd="16dp"
+                app:boxCornerRadiusTopStart="16dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/cardGoogleSummary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etUsuario"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilUsuarioCorreo"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/auth_margin_horizontal"
+                android:layout_marginTop="@dimen/auth_field_spacing"
+                android:layout_marginEnd="@dimen/auth_margin_horizontal"
+                android:hint="@string/registro_hint_correo"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="16dp"
+                app:boxCornerRadiusBottomStart="16dp"
+                app:boxCornerRadiusTopEnd="16dp"
+                app:boxCornerRadiusTopStart="16dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tilUsuario">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etUsuarioCorreo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textEmailAddress"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilFechaNacimiento"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/auth_margin_horizontal"
+                android:layout_marginTop="@dimen/auth_field_spacing"
+                android:layout_marginEnd="@dimen/auth_margin_horizontal"
+                android:hint="@string/registro_hint_fecha"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="16dp"
+                app:boxCornerRadiusBottomStart="16dp"
+                app:boxCornerRadiusTopEnd="16dp"
+                app:boxCornerRadiusTopStart="16dp"
+                app:endIconDrawable="@android:drawable/ic_menu_my_calendar"
+                app:endIconMode="custom"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tilUsuarioCorreo">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etFechaNacimiento"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:cursorVisible="false"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
+                    android:inputType="none"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPassword"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/auth_margin_horizontal"
+                android:layout_marginTop="@dimen/auth_field_spacing"
+                android:layout_marginEnd="@dimen/auth_margin_horizontal"
+                android:hint="@string/registro_hint_password"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="16dp"
+                app:boxCornerRadiusBottomStart="16dp"
+                app:boxCornerRadiusTopEnd="16dp"
+                app:boxCornerRadiusTopStart="16dp"
+                app:endIconMode="password_toggle"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tilFechaNacimiento">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilConfirmarPassword"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/auth_margin_horizontal"
+                android:layout_marginTop="@dimen/auth_field_spacing"
+                android:layout_marginEnd="@dimen/auth_margin_horizontal"
+                android:hint="@string/registro_hint_confirmar_password"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusBottomEnd="16dp"
+                app:boxCornerRadiusBottomStart="16dp"
+                app:boxCornerRadiusTopEnd="16dp"
+                app:boxCornerRadiusTopStart="16dp"
+                app:endIconMode="password_toggle"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tilPassword">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etConfirmarPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutEula"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/auth_margin_horizontal"
+                android:layout_marginTop="@dimen/auth_field_spacing"
+                android:layout_marginEnd="@dimen/auth_margin_horizontal"
+                android:gravity="top"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tilConfirmarPassword">
+
+                <CheckBox
+                    android:id="@+id/cbEula"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minHeight="0dp"
+                    android:minWidth="0dp" />
+
+                <TextView
+                    android:id="@+id/tvEulaText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp"
+                    tools:text="Acepto los Términos y la Política de Privacidad" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvEulaError"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/auth_margin_horizontal"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="@dimen/auth_margin_horizontal"
+                android:textColor="@color/error"
+                android:textSize="12sp"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/layoutEula"
+                tools:text="Debes aceptar los términos" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCrearCuenta"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/auth_button_height"
+                android:layout_marginStart="@dimen/auth_margin_horizontal"
+                android:layout_marginTop="@dimen/auth_section_spacing"
+                android:layout_marginEnd="@dimen/auth_margin_horizontal"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/registro_btn_crear"
+                android:textSize="@dimen/auth_button_text_size"
+                app:cornerRadius="@dimen/auth_button_radius"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvEulaError" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGoogleRegister"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/auth_button_height"
+                android:layout_marginStart="@dimen/auth_margin_horizontal"
+                android:layout_marginTop="@dimen/auth_field_spacing"
+                android:layout_marginEnd="@dimen/auth_margin_horizontal"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/social_google_continue"
+                android:textColor="@color/textPrimary"
+                android:textSize="@dimen/auth_button_text_size"
+                app:cornerRadius="@dimen/auth_button_radius"
+                app:icon="@drawable/ic_google"
+                app:iconGravity="textStart"
+                app:iconPadding="12dp"
+                app:iconTint="@null"
+                app:strokeColor="@color/dividerColor"
+                app:strokeWidth="2dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/btnCrearCuenta" />
+
+            <TextView
+                android:id="@+id/tvOrSocialRegister"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/auth_section_spacing"
+                android:text="@string/login_divisor"
                 android:textColor="@color/textSecondary"
-                android:textSize="14sp"
-                tools:text="Acepto los Términos y la Política de Privacidad" />
-        </LinearLayout>
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/btnGoogleRegister" />
 
-        <TextView
-            android:id="@+id/tvEulaError"
-            android:layout_width="0dp"
+            <View
+                android:id="@+id/dividerSocialRegisterLeft"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginStart="@dimen/auth_margin_horizontal"
+                android:layout_marginEnd="@dimen/auth_divider_margin_side"
+                android:background="@color/dividerColor"
+                app:layout_constraintBottom_toBottomOf="@+id/tvOrSocialRegister"
+                app:layout_constraintEnd_toStartOf="@+id/tvOrSocialRegister"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/tvOrSocialRegister" />
+
+            <View
+                android:id="@+id/dividerSocialRegisterRight"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginStart="@dimen/auth_divider_margin_side"
+                android:layout_marginEnd="@dimen/auth_margin_horizontal"
+                android:background="@color/dividerColor"
+                app:layout_constraintBottom_toBottomOf="@+id/tvOrSocialRegister"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/tvOrSocialRegister"
+                app:layout_constraintTop_toTopOf="@+id/tvOrSocialRegister" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnIniciarSesion"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/auth_button_height"
+                android:layout_marginStart="@dimen/auth_margin_horizontal"
+                android:layout_marginTop="@dimen/auth_section_spacing"
+                android:layout_marginEnd="@dimen/auth_margin_horizontal"
+                android:contentDescription="@string/registro_iniciar_sesion"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/registro_iniciar_sesion"
+                android:textColor="@color/greenPrimary"
+                android:textSize="@dimen/auth_button_text_size"
+                app:cornerRadius="@dimen/auth_button_radius"
+                app:strokeColor="@color/greenPrimary"
+                app:strokeWidth="2dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvOrSocialRegister" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <FrameLayout
+        android:id="@+id/overlayGoogleLoading"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#CCFFFFFF"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardGoogleLoading"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/auth_margin_horizontal"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="@dimen/auth_margin_horizontal"
-            android:textColor="@color/error"
-            android:textSize="12sp"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/layoutEula"
-            tools:text="Debes aceptar los términos" />
+            android:layout_gravity="center"
+            android:layout_margin="@dimen/auth_loading_overlay_margin"
+            app:cardBackgroundColor="@color/surfaceBackground"
+            app:cardCornerRadius="@dimen/auth_loading_card_radius"
+            app:cardElevation="8dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCrearCuenta"
-            style="@style/Widget.Material3.Button"
-            android:layout_width="0dp"
-            android:layout_height="@dimen/auth_button_height"
-            android:layout_marginStart="@dimen/auth_margin_horizontal"
-            android:layout_marginTop="@dimen/auth_section_spacing"
-            android:layout_marginEnd="@dimen/auth_margin_horizontal"
-            android:fontFamily="sans-serif-medium"
-            android:text="@string/registro_btn_crear"
-            android:textSize="@dimen/auth_button_text_size"
-            app:cornerRadius="@dimen/auth_button_radius"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvEulaError" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="@dimen/auth_loading_card_padding">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnGoogleRegister"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_height="@dimen/auth_button_height"
-            android:layout_marginStart="@dimen/auth_margin_horizontal"
-            android:layout_marginTop="@dimen/auth_field_spacing"
-            android:layout_marginEnd="@dimen/auth_margin_horizontal"
-            android:fontFamily="sans-serif-medium"
-            android:text="@string/social_google_continue"
-            android:textColor="@color/textPrimary"
-            android:textSize="@dimen/auth_button_text_size"
-            app:cornerRadius="@dimen/auth_button_radius"
-            app:icon="@drawable/ic_google"
-            app:iconGravity="textStart"
-            app:iconPadding="12dp"
-            app:iconTint="@null"
-            app:strokeColor="@color/dividerColor"
-            app:strokeWidth="2dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btnCrearCuenta" />
+                <ImageView
+                    android:id="@+id/ivGoogleLoadingAvatar"
+                    android:layout_width="@dimen/auth_loading_avatar_size"
+                    android:layout_height="@dimen/auth_loading_avatar_size"
+                    android:contentDescription="@string/social_google_continue"
+                    app:srcCompat="@drawable/ic_google" />
 
-        <TextView
-            android:id="@+id/tvOrSocialRegister"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/auth_section_spacing"
-            android:text="@string/login_divisor"
-            android:textColor="@color/textSecondary"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btnGoogleRegister" />
+                <TextView
+                    android:id="@+id/tvGoogleLoadingTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="@string/social_google_loading_title"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="18sp" />
 
-        <View
-            android:id="@+id/dividerSocialRegisterLeft"
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_marginStart="@dimen/auth_margin_horizontal"
-            android:layout_marginEnd="@dimen/auth_divider_margin_side"
-            android:background="@color/dividerColor"
-            app:layout_constraintBottom_toBottomOf="@+id/tvOrSocialRegister"
-            app:layout_constraintEnd_toStartOf="@+id/tvOrSocialRegister"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tvOrSocialRegister" />
+                <TextView
+                    android:id="@+id/tvGoogleLoadingMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="@string/social_google_loading_message_register"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp" />
 
-        <View
-            android:id="@+id/dividerSocialRegisterRight"
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_marginStart="@dimen/auth_divider_margin_side"
-            android:layout_marginEnd="@dimen/auth_margin_horizontal"
-            android:background="@color/dividerColor"
-            app:layout_constraintBottom_toBottomOf="@+id/tvOrSocialRegister"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/tvOrSocialRegister"
-            app:layout_constraintTop_toTopOf="@+id/tvOrSocialRegister" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnIniciarSesion"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_height="@dimen/auth_button_height"
-            android:layout_marginStart="@dimen/auth_margin_horizontal"
-            android:layout_marginTop="@dimen/auth_section_spacing"
-            android:layout_marginEnd="@dimen/auth_margin_horizontal"
-            android:contentDescription="@string/registro_iniciar_sesion"
-            android:fontFamily="sans-serif-medium"
-            android:text="@string/registro_iniciar_sesion"
-            android:textColor="@color/greenPrimary"
-            android:textSize="@dimen/auth_button_text_size"
-            app:cornerRadius="@dimen/auth_button_radius"
-            app:strokeColor="@color/greenPrimary"
-            app:strokeWidth="2dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvOrSocialRegister" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</androidx.core.widget.NestedScrollView>
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/progressGoogleLoading"
+                    android:layout_width="@dimen/auth_loading_indicator_size"
+                    android:layout_height="@dimen/auth_loading_indicator_size"
+                    android:layout_marginTop="18dp"
+                    app:indicatorColor="@color/greenPrimary"
+                    app:trackColor="@color/dividerColor" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
+</FrameLayout>
