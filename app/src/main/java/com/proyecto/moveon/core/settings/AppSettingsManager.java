@@ -15,6 +15,7 @@ import com.proyecto.moveon.core.theme.ThemeManager;
  * - modo de tema
  * - idioma de la app
  * - flags internos del flujo de permisos/requisitos del tracking
+ * - ajustes locales de tracking y auth social
  */
 public final class AppSettingsManager {
 
@@ -24,6 +25,9 @@ public final class AppSettingsManager {
     private static final String KEY_APP_LANGUAGE = "app_language";
     private static final String KEY_PACE_DISPLAY_MODE = "pace_display_mode";
     private static final String KEY_PENDING_UI_TRANSITION_SPLASH = "pending_ui_transition_splash";
+    private static final String KEY_SHOW_AUTO_PAUSE_ALERTS = "show_auto_pause_alerts";
+    private static final String KEY_AUTH_PROVIDER = "auth_provider";
+    private static final String KEY_GOOGLE_SILENT_ENABLED = "google_silent_enabled";
 
     private static final String KEY_TRACKING_LOCATION_PERMISSION_REQUESTED =
             "tracking_location_permission_requested";
@@ -115,6 +119,45 @@ public final class AppSettingsManager {
         return PACE_DISPLAY_MOVING.equals(getPaceDisplayMode(context));
     }
 
+    // ── Tracking / auth social locales ─────────────────────────────────────
+
+    public static boolean shouldShowAutoPauseAlertsByDefault(@NonNull Context context) {
+        return prefs(context).getBoolean(KEY_SHOW_AUTO_PAUSE_ALERTS, true);
+    }
+
+    public static void setShowAutoPauseAlertsByDefault(@NonNull Context context, boolean show) {
+        prefs(context).edit().putBoolean(KEY_SHOW_AUTO_PAUSE_ALERTS, show).apply();
+    }
+
+    @Nullable
+    public static String getAuthProvider(@NonNull Context context) {
+        return prefs(context).getString(KEY_AUTH_PROVIDER, null);
+    }
+
+    public static void setAuthProvider(@NonNull Context context, @Nullable String authProvider) {
+        SharedPreferences.Editor editor = prefs(context).edit();
+        if (authProvider == null || authProvider.trim().isEmpty()) {
+            editor.remove(KEY_AUTH_PROVIDER);
+        } else {
+            editor.putString(KEY_AUTH_PROVIDER, authProvider.trim());
+        }
+        editor.apply();
+    }
+
+    public static boolean isGoogleSilentSignInEnabled(@NonNull Context context) {
+        return prefs(context).getBoolean(KEY_GOOGLE_SILENT_ENABLED, false);
+    }
+
+    public static void setGoogleSilentSignInEnabled(@NonNull Context context, boolean enabled) {
+        prefs(context).edit().putBoolean(KEY_GOOGLE_SILENT_ENABLED, enabled).apply();
+    }
+
+    public static void clearSocialAuthState(@NonNull Context context) {
+        prefs(context).edit()
+                .remove(KEY_AUTH_PROVIDER)
+                .putBoolean(KEY_GOOGLE_SILENT_ENABLED, false)
+                .apply();
+    }
 
     public static void requestUiTransitionSplash(@NonNull Context context) {
         prefs(context).edit().putBoolean(KEY_PENDING_UI_TRANSITION_SPLASH, true).apply();

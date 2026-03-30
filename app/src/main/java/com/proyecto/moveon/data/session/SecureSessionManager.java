@@ -9,6 +9,7 @@ import android.util.Base64;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.domain.auth.SocialAuthProvider;
 import com.proyecto.moveon.utils.StringUtils;
 
@@ -51,16 +52,8 @@ public final class SecureSessionManager {
     private static final String KEY_USERNAME_IV = "username_iv";
     private static final String KEY_USER_ID_CT = "user_id_ct";
     private static final String KEY_USER_ID_IV = "user_id_iv";
-    private static final String KEY_AUTH_PROVIDER_CT = "auth_provider_ct";
-    private static final String KEY_AUTH_PROVIDER_IV = "auth_provider_iv";
     private static final String KEY_REMEMBERED_ID_CT = "remembered_id_ct";
     private static final String KEY_REMEMBERED_ID_IV = "remembered_id_iv";
-    private static final String KEY_SHOW_AUTO_PAUSE_ALERTS_CT = "show_auto_pause_alerts_ct";
-    private static final String KEY_SHOW_AUTO_PAUSE_ALERTS_IV = "show_auto_pause_alerts_iv";
-
-    /** Preferencias separadas del flujo social usadas por el silent sign-in de Google. */
-    private static final String SOCIAL_AUTH_PREFS_NAME = "social_auth_prefs";
-    private static final String KEY_GOOGLE_SILENT_ENABLED = "google_silent_enabled";
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int GCM_TAG_LENGTH_BITS = 128;
 
@@ -292,18 +285,14 @@ public final class SecureSessionManager {
      */
     @Nullable
     public String getAuthProvider() {
-        synchronized (sessionLock) {
-            return readSessionSnapshotLocked().getAuthProvider();
-        }
+        return AppSettingsManager.getAuthProvider(appContext);
     }
 
     /**
      * Indica si la sesión actual o recuperable pertenece a un acceso con Google.
      */
     public boolean isLoggedWithGoogle() {
-        synchronized (sessionLock) {
-            return SocialAuthProvider.GOOGLE.equals(readSessionSnapshotLocked().getAuthProvider());
-        }
+        return SocialAuthProvider.GOOGLE.equals(AppSettingsManager.getAuthProvider(appContext));
     }
 
     @NonNull
@@ -334,13 +323,12 @@ public final class SecureSessionManager {
                     .remove(KEY_ACCESS_TOKEN_CT).remove(KEY_ACCESS_TOKEN_IV)
                     .remove(KEY_REFRESH_TOKEN_CT).remove(KEY_REFRESH_TOKEN_IV)
                     .remove(KEY_USER_ID_CT).remove(KEY_USER_ID_IV)
-                    .remove(KEY_AUTH_PROVIDER_CT).remove(KEY_AUTH_PROVIDER_IV)
                     .commit();
             if (!committed) {
                 throw new IllegalStateException("Error limpiando sesión segura");
             }
 
-            disableSilentGoogleSignInLocked();
+            clearSocialAuthStateLocked();
         }
     }
 
@@ -380,33 +368,11 @@ public final class SecureSessionManager {
     }
 
     public boolean shouldShowAutoPauseAlertsByDefault() {
-        synchronized (sessionLock) {
-            String rawValue = getDecryptedValueLocked(
-                    KEY_SHOW_AUTO_PAUSE_ALERTS_CT,
-                    KEY_SHOW_AUTO_PAUSE_ALERTS_IV
-            );
-            if (!StringUtils.hasText(rawValue)) {
-                return true;
-            }
-            return Boolean.parseBoolean(rawValue);
-        }
+        return AppSettingsManager.shouldShowAutoPauseAlertsByDefault(appContext);
     }
 
     public void setShowAutoPauseAlertsByDefault(boolean show) {
-        synchronized (sessionLock) {
-            try {
-                SharedPreferences.Editor editor = prefs.edit();
-                putEncrypted(
-                        editor,
-                        KEY_SHOW_AUTO_PAUSE_ALERTS_CT,
-                        KEY_SHOW_AUTO_PAUSE_ALERTS_IV,
-                        Boolean.toString(show)
-                );
-                editor.apply();
-            } catch (Exception e) {
-                throw new RuntimeException("Error guardando preferencia de avisos de auto-pausa", e);
-            }
-        }
+        AppSettingsManager.setShowAutoPauseAlertsByDefault(appContext, show);
     }
 
     /**
@@ -434,12 +400,12 @@ public final class SecureSessionManager {
                 editor.remove(KEY_USER_ID_CT).remove(KEY_USER_ID_IV);
             }
 
+            persistEditor(editor, persistSynchronously, "Error persistiendo sesión segura");
+
             if (replaceAuthProvider) {
                 // En login tradicional limpiamos el provider previo; en login social guardamos Google.
-                putEncryptedOrRemove(editor, KEY_AUTH_PROVIDER_CT, KEY_AUTH_PROVIDER_IV, authProvider);
+                persistAuthProvider(authProvider, persistSynchronously);
             }
-
-            persistEditor(editor, persistSynchronously, "Error persistiendo sesión segura");
         } catch (Exception e) {
             throw new RuntimeException("Error guardando sesión segura", e);
         }
@@ -452,7 +418,7 @@ public final class SecureSessionManager {
         String refreshToken = getDecryptedValueLocked(KEY_REFRESH_TOKEN_CT, KEY_REFRESH_TOKEN_IV);
 
         String userId = getDecryptedValueLocked(KEY_USER_ID_CT, KEY_USER_ID_IV);
-        String authProvider = getDecryptedValueLocked(KEY_AUTH_PROVIDER_CT, KEY_AUTH_PROVIDER_IV);
+        String authProvider = AppSettingsManager.getAuthProvider(appContext);
         if (!StringUtils.hasText(userId)) {
             userId = extractUserIdFromAccessToken(accessToken);
             if (StringUtils.hasText(userId)) {
@@ -556,20 +522,31 @@ public final class SecureSessionManager {
     }
 
 
+    private void persistAuthProvider(@Nullable String authProvider, boolean persistSynchronously) {
+        SharedPreferences.Editor editor = appContext
+                .getSharedPreferences(AppSettingsManager.PREFS, Context.MODE_PRIVATE)
+                .edit();
+        if (StringUtils.hasText(authProvider)) {
+            editor.putString("auth_provider", authProvider.trim());
+        } else {
+            editor.remove("auth_provider");
+        }
+        persistEditor(editor, persistSynchronously, "Error persistiendo el provider de autenticación");
+    }
+
     /**
-     * Desactiva el intento de silent sign-in con persistencia síncrona para que el cambio
-     * quede aplicado antes de abandonar la pantalla o el proceso actual.
+     * Limpia el provider persistido y desactiva el silent sign-in de Google con persistencia
+     * síncrona para que el cambio quede aplicado antes de abandonar la pantalla o el proceso actual.
      */
-    private void disableSilentGoogleSignInLocked() {
-        SharedPreferences socialPrefs = appContext.getSharedPreferences(
-                SOCIAL_AUTH_PREFS_NAME,
-                Context.MODE_PRIVATE
-        );
-        boolean committed = socialPrefs.edit()
-                .putBoolean(KEY_GOOGLE_SILENT_ENABLED, false)
-                .commit();
+    private void clearSocialAuthStateLocked() {
+        SharedPreferences.Editor editor = appContext
+                .getSharedPreferences(AppSettingsManager.PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .remove("auth_provider")
+                .putBoolean("google_silent_enabled", false);
+        boolean committed = editor.commit();
         if (!committed) {
-            throw new IllegalStateException("Error desactivando el silent sign-in de Google");
+            throw new IllegalStateException("Error limpiando el estado social local");
         }
     }
 

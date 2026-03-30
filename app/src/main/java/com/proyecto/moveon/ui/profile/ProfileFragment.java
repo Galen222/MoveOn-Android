@@ -175,15 +175,15 @@ public class ProfileFragment extends Fragment {
     }
 
     private void syncAutoPauseAlertsToggle() {
-        if (binding == null || secureSessionManager == null) return;
+        if (binding == null) return;
 
         binding.switchAutoPauseAlerts.setOnCheckedChangeListener(null);
         binding.switchAutoPauseAlerts.setChecked(
-                secureSessionManager.shouldShowAutoPauseAlertsByDefault()
+                AppSettingsManager.shouldShowAutoPauseAlertsByDefault(requireContext())
         );
         binding.switchAutoPauseAlerts.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (!buttonView.isPressed() || secureSessionManager == null) return;
-            secureSessionManager.setShowAutoPauseAlertsByDefault(isChecked);
+            if (!buttonView.isPressed()) return;
+            AppSettingsManager.setShowAutoPauseAlertsByDefault(requireContext(), isChecked);
         });
     }
 

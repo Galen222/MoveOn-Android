@@ -2,7 +2,6 @@
 package com.proyecto.moveon.ui.auth;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.CancellationSignal;
 import android.util.Base64;
 import android.util.Log;
@@ -25,6 +24,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 import com.proyecto.moveon.BuildConfig;
+import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.utils.StringUtils;
 
@@ -37,8 +37,6 @@ import java.util.Locale;
 public final class SocialAuthManager {
 
     private static final String TAG = "SocialAuthManager";
-    private static final String PREFS_NAME = "social_auth_prefs";
-    private static final String KEY_GOOGLE_SILENT_ENABLED = "google_silent_enabled";
 
     public interface Listener {
         void onGoogleAccountReady(@NonNull SocialGoogleAccount account, boolean silent);
@@ -108,21 +106,16 @@ public final class SocialAuthManager {
     }
 
     public static void enableSilentGoogleSignIn(@NonNull Context context) {
-        preferences(context).edit().putBoolean(KEY_GOOGLE_SILENT_ENABLED, true).apply();
+        AppSettingsManager.setGoogleSilentSignInEnabled(context, true);
     }
 
     public static void disableSilentGoogleSignIn(@NonNull Context context) {
-        preferences(context).edit().putBoolean(KEY_GOOGLE_SILENT_ENABLED, false).apply();
+        AppSettingsManager.setGoogleSilentSignInEnabled(context, false);
     }
 
     public static boolean isSilentGoogleSignInEnabled(@NonNull Context context) {
         // Arrancamos desactivado por defecto: solo se habilita tras un acceso real con Google.
-        return preferences(context).getBoolean(KEY_GOOGLE_SILENT_ENABLED, false);
-    }
-
-    @NonNull
-    private static SharedPreferences preferences(@NonNull Context context) {
-        return context.getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        return AppSettingsManager.isGoogleSilentSignInEnabled(context);
     }
 
     private void requestCredential(@NonNull GetCredentialRequest request, boolean silent) {
