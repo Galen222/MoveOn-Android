@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.settings.PaceDisplayUtils;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 
 /**
@@ -48,6 +49,8 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
                     if (!oldItem.fechaRutaIso.equals(newItem.fechaRutaIso)) return false;
                     if (oldItem.distanciaMetros != newItem.distanciaMetros) return false;
                     if (oldItem.duracionSegundos != newItem.duracionSegundos) return false;
+                    if (oldItem.ritmoMedioMovimientoSegKm != newItem.ritmoMedioMovimientoSegKm) return false;
+                    if (oldItem.ritmoMedioTotalSegKm != newItem.ritmoMedioTotalSegKm) return false;
                     if (oldItem.caloriasQuemadas != newItem.caloriasQuemadas) return false;
 
                     if (oldItem.rutaPolilinea == null && newItem.rutaPolilinea == null) return true;
@@ -109,7 +112,7 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
             // para mantener consistencia con la tarjeta compartida y con el historial.
             String pace = ShareRouteFormatter.formatPaceWithUnit(
                     context,
-                    item.ritmoMedioTotalSegKm
+                    PaceDisplayUtils.getPreferredAveragePaceSeconds(context, item)
             );
 
             tvTitle.setText(activityType);

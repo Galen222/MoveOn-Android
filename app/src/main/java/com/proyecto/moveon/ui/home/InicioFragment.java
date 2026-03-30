@@ -28,6 +28,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.settings.PaceDisplayUtils;
 import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.databinding.FragmentInicioBinding;
@@ -622,9 +623,10 @@ public class InicioFragment extends Fragment
         binding.tvPace.setText(
                 state.getPace() != null ? state.getPace() : getString(R.string.tracking_default_pace)
         );
+        String preferredAveragePace = PaceDisplayUtils.getPreferredAveragePaceText(requireContext(), state);
         binding.tvAveragePace.setText(
-                state.getAverageElapsedPace() != null
-                        ? state.getAverageElapsedPace()
+                preferredAveragePace != null
+                        ? preferredAveragePace
                         : getString(R.string.tracking_default_pace)
         );
         String maxPaceText = state.getMaxPace() != null

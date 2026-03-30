@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.settings.PaceDisplayUtils;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 import com.proyecto.moveon.utils.StringUtils;
 
@@ -219,7 +220,10 @@ public final class ShareRouteImageGenerator {
         drawMetricCard(canvas,
                 new RectF(secondCardX, cardTop, secondCardX + cardWidth, cardTop + cardHeight),
                 context.getString(R.string.share_routes_metric_average_pace).toUpperCase(Locale.getDefault()),
-                ShareRouteFormatter.formatPaceWithUnit(context, item.ritmoMedioTotalSegKm),
+                ShareRouteFormatter.formatPaceWithUnit(
+                        context,
+                        PaceDisplayUtils.getPreferredAveragePaceSeconds(context, item)
+                ),
                 metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint, context);
 
         drawMetricCard(canvas,

@@ -22,6 +22,7 @@ public final class AppSettingsManager {
 
     private static final String KEY_THEME_MODE = "theme_mode";
     private static final String KEY_APP_LANGUAGE = "app_language";
+    private static final String KEY_PACE_DISPLAY_MODE = "pace_display_mode";
     private static final String KEY_PENDING_UI_TRANSITION_SPLASH = "pending_ui_transition_splash";
 
     private static final String KEY_TRACKING_LOCATION_PERMISSION_REQUESTED =
@@ -30,6 +31,11 @@ public final class AppSettingsManager {
             "tracking_activity_permission_requested";
     private static final String KEY_TRACKING_NOTIFICATIONS_PERMISSION_REQUESTED =
             "tracking_notifications_permission_requested";
+
+
+
+    public static final String PACE_DISPLAY_TOTAL = "total";
+    public static final String PACE_DISPLAY_MOVING = "moving";
 
     private AppSettingsManager() {}
 
@@ -86,6 +92,29 @@ public final class AppSettingsManager {
     public static void clearAppLanguage(@NonNull Context context) {
         prefs(context).edit().remove(KEY_APP_LANGUAGE).apply();
     }
+
+    // ── Ritmo medio ─────────────────────────────────────────────────────────
+
+    @NonNull
+    public static String getPaceDisplayMode(@NonNull Context context) {
+        String value = prefs(context).getString(KEY_PACE_DISPLAY_MODE, PACE_DISPLAY_TOTAL);
+        if (PACE_DISPLAY_MOVING.equals(value)) {
+            return PACE_DISPLAY_MOVING;
+        }
+        return PACE_DISPLAY_TOTAL;
+    }
+
+    public static void setPaceDisplayMode(@NonNull Context context, @Nullable String mode) {
+        String safeMode = PACE_DISPLAY_MOVING.equals(mode)
+                ? PACE_DISPLAY_MOVING
+                : PACE_DISPLAY_TOTAL;
+        prefs(context).edit().putString(KEY_PACE_DISPLAY_MODE, safeMode).apply();
+    }
+
+    public static boolean isPaceDisplayMoving(@NonNull Context context) {
+        return PACE_DISPLAY_MOVING.equals(getPaceDisplayMode(context));
+    }
+
 
     public static void requestUiTransitionSplash(@NonNull Context context) {
         prefs(context).edit().putBoolean(KEY_PENDING_UI_TRANSITION_SPLASH, true).apply();

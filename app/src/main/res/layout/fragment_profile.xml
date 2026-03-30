@@ -513,8 +513,8 @@
             </com.google.android.material.card.MaterialCardView>
 
             <!-- ══════════════════════════════════════════════
-                 TARJETA: PRIVACIDAD Y APARIENCIA
-                 (Perfil visible + Tema)
+                 TARJETA: AJUSTES
+                 (Perfil público + auto-pausa + ritmo + tema + idioma)
                  ══════════════════════════════════════════════ -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -549,14 +549,29 @@
                         android:paddingVertical="@dimen/profile_item_padding_vertical">
 
                         <TextView
+                            android:id="@+id/tv_public_profile_subtitle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:text="@string/profile_subtitle_privacy"
+                            android:textSize="12sp"
+                            android:textColor="@color/textTertiary"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/switch_public_profile"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toTopOf="@id/tv_public_profile_label"
+                            app:layout_constraintVertical_chainStyle="packed" />
+
+                        <TextView
+                            android:id="@+id/tv_public_profile_label"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="@string/profile_item_public_profile"
                             android:textSize="15sp"
                             android:textColor="@color/textPrimary"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toStartOf="@id/switch_public_profile"
-                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/tv_public_profile_subtitle"
                             app:layout_constraintBottom_toBottomOf="parent" />
 
                         <com.google.android.material.switchmaterial.SwitchMaterial
@@ -584,14 +599,29 @@
                         android:paddingVertical="@dimen/profile_item_padding_vertical">
 
                         <TextView
+                            android:id="@+id/tv_auto_pause_subtitle"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:text="@string/profile_subtitle_notifications"
+                            android:textSize="12sp"
+                            android:textColor="@color/textTertiary"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/switch_auto_pause_alerts"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toTopOf="@id/tv_auto_pause_label"
+                            app:layout_constraintVertical_chainStyle="packed" />
+
+                        <TextView
+                            android:id="@+id/tv_auto_pause_label"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="@string/profile_item_auto_pause_alerts"
                             android:textSize="15sp"
                             android:textColor="@color/textPrimary"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toStartOf="@id/switch_auto_pause_alerts"
-                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/tv_auto_pause_subtitle"
                             app:layout_constraintBottom_toBottomOf="parent" />
 
                         <com.google.android.material.switchmaterial.SwitchMaterial
@@ -609,6 +639,67 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
+                        android:background="@color/dividerColor" />
+
+                    <!-- Ritmo medio -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingTop="@dimen/profile_item_padding_vertical"
+                        android:paddingBottom="0dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/profile_item_average_pace"
+                            android:textSize="12sp"
+                            android:textColor="@color/textTertiary" />
+
+                        <com.google.android.material.button.MaterialButtonToggleGroup
+                            android:id="@+id/toggle_pace_display_mode"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            app:singleSelection="true"
+                            app:selectionRequired="true">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_pace_total"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="@string/profile_pace_total"
+                                android:textAllCaps="false"
+                                app:backgroundTint="@color/theme_mode_button_bg"
+                                android:textColor="@color/theme_mode_button_text"
+                                app:strokeColor="@color/theme_mode_button_stroke"
+                                app:strokeWidth="1dp"
+                                tools:ignore="ButtonStyle" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_pace_moving"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="@string/profile_pace_moving"
+                                android:textAllCaps="false"
+                                app:backgroundTint="@color/theme_mode_button_bg"
+                                android:textColor="@color/theme_mode_button_text"
+                                app:strokeColor="@color/theme_mode_button_stroke"
+                                app:strokeWidth="1dp"
+                                tools:ignore="ButtonStyle" />
+
+                        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="@dimen/profile_item_padding_vertical"
                         android:background="@color/dividerColor" />
 
                     <!-- Tema -->
@@ -677,15 +768,71 @@
                                 tools:ignore="ButtonStyle" />
 
                         </com.google.android.material.button.MaterialButtonToggleGroup>
-
                     </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="@dimen/profile_item_padding_vertical"
+                        android:background="@color/dividerColor" />
+
+                    <!-- Idioma -->
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/item_language"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="@dimen/profile_item_min_height"
+                        android:paddingTop="@dimen/profile_item_padding_vertical"
+                        android:paddingBottom="0dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground">
+
+                        <TextView
+                            android:id="@+id/tv_language_label"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="@string/profile_item_language"
+                            android:textSize="12sp"
+                            android:textColor="@color/textTertiary"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/iv_arrow_language"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toTopOf="@id/tv_language_value"
+                            app:layout_constraintVertical_chainStyle="packed" />
+
+                        <TextView
+                            android:id="@+id/tv_language_value"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textSize="15sp"
+                            android:textColor="@color/textPrimary"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/iv_arrow_language"
+                            app:layout_constraintTop_toBottomOf="@id/tv_language_label"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            tools:text="English" />
+
+                        <ImageView
+                            android:id="@+id/iv_arrow_language"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/arrow_icon"
+                            android:contentDescription="@null"
+                            app:tint="@color/textTertiary"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <!-- ══════════════════════════════════════════════
-                 TARJETA: PERMISOS E IDIOMA
-                 (Requisitos de tracking + Selector de idioma)
+                 TARJETA: PERMISOS
+                 (Requisitos de tracking)
                  ══════════════════════════════════════════════ -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -759,7 +906,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="@dimen/profile_item_padding_vertical"
                         android:background="@color/dividerColor" />
 
                     <!-- Reconocimiento de actividad -->
@@ -807,7 +954,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="@dimen/profile_item_padding_vertical"
                         android:background="@color/dividerColor" />
 
                     <!-- Notificaciones -->
@@ -855,7 +1002,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="@dimen/profile_item_padding_vertical"
                         android:background="@color/dividerColor" />
 
                     <!-- Ubicación del dispositivo -->
@@ -900,62 +1047,7 @@
                             app:layout_constraintTop_toBottomOf="@id/tv_tracking_device_location_status" />
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginTop="10dp"
-                        android:background="@color/dividerColor" />
 
-                    <!-- Idioma -->
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:id="@+id/item_language"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:minHeight="@dimen/profile_item_min_height"
-                        android:paddingTop="@dimen/profile_item_padding_vertical"
-                        android:paddingBottom="0dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground">
-
-                        <TextView
-                            android:id="@+id/tv_language_label"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:text="@string/profile_item_language"
-                            android:textSize="12sp"
-                            android:textColor="@color/textTertiary"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintEnd_toStartOf="@id/iv_arrow_language"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toTopOf="@id/tv_language_value"
-                            app:layout_constraintVertical_chainStyle="packed" />
-
-                        <TextView
-                            android:id="@+id/tv_language_value"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:textSize="15sp"
-                            android:textColor="@color/textPrimary"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintEnd_toStartOf="@id/iv_arrow_language"
-                            app:layout_constraintTop_toBottomOf="@id/tv_language_label"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            tools:text="English" />
-
-                        <ImageView
-                            android:id="@+id/iv_arrow_language"
-                            android:layout_width="16dp"
-                            android:layout_height="16dp"
-                            android:src="@drawable/arrow_icon"
-                            android:contentDescription="@null"
-                            app:tint="@color/textTertiary"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent" />
-
-                    </androidx.constraintlayout.widget.ConstraintLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

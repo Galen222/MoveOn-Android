@@ -41,6 +41,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.maps.android.PolyUtil;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
+import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.ui.main.MainActivity;
 
 import java.util.ArrayDeque;
@@ -1174,6 +1175,17 @@ public final class TrackingService extends Service implements SensorEventListene
         return formatPaceFromTotals(elapsedSeconds, preciseDistanceMeters);
     }
 
+    @Nullable
+    private String calculatePreferredAveragePace() {
+        if (AppSettingsManager.isPaceDisplayMoving(this)) {
+            String movingPace = calculateAverageMovingPace();
+            if (movingPace != null) {
+                return movingPace;
+            }
+        }
+        return calculateAverageElapsedPace();
+    }
+
     /**
      * Devuelve el mejor ritmo sostenido detectado durante la sesión.
      */
@@ -1440,7 +1452,7 @@ public final class TrackingService extends Service implements SensorEventListene
             tr(R.string.mo_tracking_notification_metric_distance)
     );
 
-    String averagePace = calculateAverageElapsedPace();
+    String averagePace = calculatePreferredAveragePace();
     String paceText = averagePace != null
             ? averagePace + "/km"
             : tr(R.string.tracking_default_pace) + "/km";
@@ -1545,7 +1557,7 @@ private int resolveStatusPillBackground() {
 
 @NonNull
 private String buildCompactRightMetricValue() {
-    String averagePace = calculateAverageElapsedPace();
+    String averagePace = calculatePreferredAveragePace();
     if (averagePace != null) {
         return averagePace + "/km";
     }
@@ -1811,7 +1823,7 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
                 formatElapsed(stoppedSeconds)
         );
 
-        String averagePace = calculateAverageElapsedPace();
+        String averagePace = calculatePreferredAveragePace();
         String paceText = (averagePace != null ? averagePace : tr(R.string.tracking_default_pace)) + "/km";
         String caloriesText = tr(R.string.tracking_calories_format, calories);
         String paceCaloriesLine = tr(

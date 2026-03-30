@@ -23,6 +23,7 @@ import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
+import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.core.validation.AppInputValidator;
@@ -120,6 +121,7 @@ public class ProfileFragment extends Fragment {
         setupListeners();
         observeViewModel();
         syncThemeToggleWithSavedMode();
+        syncPaceDisplayToggleWithSavedMode();
         syncLanguageSelectionText();
         viewModel.loadPerfil();
 
@@ -142,6 +144,7 @@ public class ProfileFragment extends Fragment {
     public void onResume() {
         super.onResume();
         syncThemeToggleWithSavedMode();
+        syncPaceDisplayToggleWithSavedMode();
         syncLanguageSelectionText();
         syncAutoPauseAlertsToggle();
         trackingHelper.updateTrackingRequirementsUi();
@@ -167,6 +170,7 @@ public class ProfileFragment extends Fragment {
         binding.tvUserName.setText(username);
         syncLanguageSelectionText();
         syncAutoPauseAlertsToggle();
+        syncPaceDisplayToggleWithSavedMode();
         trackingHelper.updateTrackingRequirementsUi();
     }
 
@@ -293,6 +297,18 @@ public class ProfileFragment extends Fragment {
                 ThemeManager.saveAndApply(requireContext(), newMode);
                 requireActivity().recreate();
             });
+        });
+
+        binding.togglePaceDisplayMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) return;
+
+            final String newMode;
+            if (checkedId == R.id.btn_pace_moving) newMode = AppSettingsManager.PACE_DISPLAY_MOVING;
+            else if (checkedId == R.id.btn_pace_total) newMode = AppSettingsManager.PACE_DISPLAY_TOTAL;
+            else return;
+
+            if (newMode.equals(AppSettingsManager.getPaceDisplayMode(requireContext()))) return;
+            AppSettingsManager.setPaceDisplayMode(requireContext(), newMode);
         });
 
         binding.tvTrackingLocationAction.setOnClickListener(v ->
@@ -481,6 +497,19 @@ public class ProfileFragment extends Fragment {
         else                                            targetId = R.id.btn_theme_system;
         if (binding.toggleThemeMode.getCheckedButtonId() != targetId) {
             binding.toggleThemeMode.check(targetId);
+        }
+    }
+
+    private void syncPaceDisplayToggleWithSavedMode() {
+        if (binding == null) return;
+
+        final String mode = AppSettingsManager.getPaceDisplayMode(requireContext());
+        final int targetId = AppSettingsManager.PACE_DISPLAY_MOVING.equals(mode)
+                ? R.id.btn_pace_moving
+                : R.id.btn_pace_total;
+
+        if (binding.togglePaceDisplayMode.getCheckedButtonId() != targetId) {
+            binding.togglePaceDisplayMode.check(targetId);
         }
     }
 

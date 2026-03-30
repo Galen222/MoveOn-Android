@@ -19,6 +19,7 @@ import com.proyecto.moveon.ui.common.BaseExpandedBottomSheetDialogFragment;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
+import com.proyecto.moveon.core.settings.PaceDisplayUtils;
 import com.proyecto.moveon.databinding.ItemActividadBinding;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 import com.proyecto.moveon.domain.activity.StatsResumen;
@@ -359,7 +360,7 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         // Fix: este detalle expandido del historial usa un binder propio dentro del
         // bottom sheet, distinto del adapter principal. Aquí es donde faltaba "/km".
         binding.tvActivityPace.setText(
-                formatPace(item.ritmoMedioTotalSegKm, context)
+                formatPace(PaceDisplayUtils.getPreferredAveragePaceSeconds(context, item), context)
         );
         binding.tvActivityMaxPace.setText(
                 formatPace(item.ritmoMaximoSegKm, context)

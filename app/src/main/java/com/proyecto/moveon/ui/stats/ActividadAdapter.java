@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
+import com.proyecto.moveon.core.settings.PaceDisplayUtils;
 import com.proyecto.moveon.databinding.ItemActividadBinding;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 
@@ -70,6 +71,7 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
                             && a.duracionSegundos == b.duracionSegundos
                             && a.duracionMovimientoSegundos == b.duracionMovimientoSegundos
                             && a.duracionParadoSegundos == b.duracionParadoSegundos
+                            && a.ritmoMedioMovimientoSegKm == b.ritmoMedioMovimientoSegKm
                             && a.ritmoMedioTotalSegKm == b.ritmoMedioTotalSegKm
                             && a.ritmoMaximoSegKm == b.ritmoMaximoSegKm
                             && a.caloriasQuemadas == b.caloriasQuemadas
@@ -164,7 +166,7 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
 
             // FIX EXPLÍCITO: no dependemos solo del recurso; aquí se compone siempre el "/km".
             binding.tvActivityPace.setText(
-                    formatPaceWithUnit(item.ritmoMedioTotalSegKm)
+                    formatPaceWithUnit(PaceDisplayUtils.getPreferredAveragePaceSeconds(context, item))
             );
             binding.tvActivityMaxPace.setText(
                     formatPaceWithUnit(item.ritmoMaximoSegKm)
