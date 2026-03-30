@@ -720,4 +720,52 @@
     <string name="share_routes_fullscreen_close_content_description">Cerrar vista completa de la imagen</string>
     <string name="share_routes_fullscreen_image_content_description">Imagen completa de la ruta compartida</string>
 
+
+    <!-- Acerca de -->
+    <string name="profile_item_information">Información</string>
+    <string name="profile_item_about">Acerca de</string>
+    <string name="profile_about_title">Acerca de</string>
+    <string name="profile_about_version_value">Versión %1$s</string>
+    <string name="profile_about_terms_subtitle">Consulta las condiciones de uso</string>
+    <string name="profile_about_privacy_subtitle">Consulta cómo se tratan tus datos</string>
+    <string name="profile_about_contact">Contacto</string>
+    <string name="profile_about_contact_subtitle">Mandanos un correo electronico</string>
+    <string name="profile_about_contact_subject">Consulta sobre %1$s</string>
+    <string name="profile_about_contact_chooser">Enviar correo con…</string>
+    <string name="profile_about_contact_no_app">No se encontró ninguna app de correo instalada.</string>
+    <string name="profile_about_licenses">Licencias</string>
+    <string name="profile_about_licenses_subtitle">Bibliotecas y SDKs de terceros</string>
+    <string name="profile_about_licenses_title">Licencias</string>
+    <string name="profile_about_licenses_content" tools:ignore="TypographyOther"><![CDATA[Resumen de licencias y avisos
+
+AndroidX
+• AppCompat, Activity, Lifecycle, ConstraintLayout, RecyclerView, Room y WorkManager
+• Licencia: Apache License 2.0
+
+Material Components for Android
+• Componentes visuales y estilos Material
+• Licencia: Apache License 2.0
+
+Retrofit
+• Cliente HTTP tipado para la API
+• Licencia: Apache License 2.0
+
+OkHttp y Logging Interceptor
+• Red y registro de peticiones
+• Licencia: Apache License 2.0
+
+Gson / Converter Gson
+• Serialización y parseo JSON
+• Licencia: Apache License 2.0
+
+Glide
+• Carga y caché de imágenes
+• Licencia principal: Apache License 2.0
+
+Google Maps SDK for Android y Google Play services
+• Mapas, ubicación y servicios de identidad
+• Uso sujeto a los términos y condiciones de Google
+
+Las marcas, licencias y avisos pertenecen a sus respectivos titulares. Si necesitas el texto completo de alguna licencia o un aviso adicional, puedes escribir a info.moveon.app@gmail.com.]]></string>
+
 </resources>

@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.profile;
 
 import android.net.Uri;
@@ -342,6 +343,9 @@ public class ProfileFragment extends Fragment {
         binding.btnLogout.setOnClickListener(v -> viewModel.logout());
         binding.tvDeleteAccount.setOnClickListener(v -> showDeleteAccountBottomSheet());
         binding.itemLanguage.setOnClickListener(v -> dialogHelper.showLanguageDialog());
+        binding.itemAbout.setOnClickListener(v ->
+                AboutAppBottomSheet.newInstance()
+                        .show(getChildFragmentManager(), AboutAppBottomSheet.TAG));
 
         binding.itemFullName.setOnClickListener(v -> dialogHelper.showEditTextDialog(
                 getString(R.string.profile_label_fullname),

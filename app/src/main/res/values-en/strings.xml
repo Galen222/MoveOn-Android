@@ -532,4 +532,52 @@
     <string name="share_routes_fullscreen_close_content_description">Close full image view</string>
     <string name="share_routes_fullscreen_image_content_description">Full shared route image</string>
 
+
+    <!-- About -->
+    <string name="profile_item_information">Information</string>
+    <string name="profile_item_about">About</string>
+    <string name="profile_about_title">About</string>
+    <string name="profile_about_version_value">Version %1$s</string>
+    <string name="profile_about_terms_subtitle">Read the terms of use</string>
+    <string name="profile_about_privacy_subtitle">Review how your data is handled</string>
+    <string name="profile_about_contact">Contact</string>
+    <string name="profile_about_contact_subtitle">Send us an email</string>
+    <string name="profile_about_contact_subject">Question about %1$s</string>
+    <string name="profile_about_contact_chooser">Send email with…</string>
+    <string name="profile_about_contact_no_app">No email app was found on this device.</string>
+    <string name="profile_about_licenses">Licenses</string>
+    <string name="profile_about_licenses_subtitle">Third-party libraries and SDKs</string>
+    <string name="profile_about_licenses_title">Licenses</string>
+    <string name="profile_about_licenses_content" tools:ignore="TypographyOther"><![CDATA[Licenses and notices summary
+
+AndroidX
+• AppCompat, Activity, Lifecycle, ConstraintLayout, RecyclerView, Room, and WorkManager
+• License: Apache License 2.0
+
+Material Components for Android
+• Material visual components and styles
+• License: Apache License 2.0
+
+Retrofit
+• Typed HTTP client for the API
+• License: Apache License 2.0
+
+OkHttp and Logging Interceptor
+• Networking and request logging
+• License: Apache License 2.0
+
+Gson / Converter Gson
+• JSON serialization and parsing
+• License: Apache License 2.0
+
+Glide
+• Image loading and caching
+• Main license: Apache License 2.0
+
+Google Maps SDK for Android and Google Play services
+• Maps, location, and identity services
+• Use is subject to Google terms and conditions
+
+Trademarks, licenses, and notices belong to their respective owners. If you need the full text of any license or an additional notice, you can write to info.moveon.app@gmail.com.]]></string>
+
 </resources>
