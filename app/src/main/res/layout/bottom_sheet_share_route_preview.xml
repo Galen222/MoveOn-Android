@@ -24,9 +24,7 @@
             android:background="@color/dividerColor" />
 
         <!--
-            Título centrado según el nuevo copy solicitado.
-            Se deja a ancho completo para que el centrado visual sea consistente.
-        -->
+            Se deja ancho completo para que el centrado visual sea consistente.
         <TextView
             android:id="@+id/tvShareRoutePreviewTitle"
             android:layout_width="match_parent"
@@ -37,6 +35,8 @@
             android:textColor="@color/textPrimary"
             android:textSize="24sp"
             android:fontFamily="sans-serif-medium" />
+
+         -->
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
