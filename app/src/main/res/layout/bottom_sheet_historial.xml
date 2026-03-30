@@ -36,7 +36,6 @@
                 android:layout_weight="1"
                 android:text="@string/stats_historial_title"
                 android:textColor="@color/textPrimary"
-                android:textStyle="bold"
                 android:textSize="20sp" />
 
             <ImageButton
@@ -74,6 +73,6 @@
             app:strokeWidth="1dp"
             tools:ignore="ButtonStyle" />
 
-
     </LinearLayout>
+
 </androidx.core.widget.NestedScrollView>

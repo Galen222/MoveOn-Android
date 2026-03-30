@@ -23,20 +23,13 @@
             android:layout_marginBottom="12dp"
             android:background="@color/dividerColor" />
 
-        <!--
-            Se deja ancho completo para que el centrado visual sea consistente.
         <TextView
             android:id="@+id/tvShareRoutePreviewTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
             android:text="@string/share_routes_preview_title"
-            android:textAlignment="center"
             android:textColor="@color/textPrimary"
-            android:textSize="24sp"
-            android:fontFamily="sans-serif-medium" />
-
-         -->
+            android:textSize="20sp" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"

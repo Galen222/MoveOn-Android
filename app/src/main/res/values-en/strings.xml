@@ -517,7 +517,7 @@
     <string name="share_routes_polyline_available">Route available</string>
     <string name="share_routes_polyline_missing">No route available</string>
     <string name="share_routes_share_text">Shared from MoveOn App, your running app!</string>
-    <string name="share_routes_preview_title">Route view</string>
+    <string name="share_routes_preview_title">View route</string>
     <string name="share_routes_preview_subtitle">This is the image card that will be shared</string>
     <string name="share_routes_preview_share">Share</string>
     <string name="share_routes_preview_close">Close</string>

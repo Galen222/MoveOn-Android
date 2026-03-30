@@ -8,16 +8,14 @@
     android:orientation="vertical"
     android:background="@color/surfaceBackground">
 
-    <!-- Cabecera fija: handle + título + chips -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingTop="12dp"
         android:paddingBottom="8dp"
-        android:background="@color/cardBackground">
+        android:background="@color/surfaceBackground">
 
-        <!-- Handle visual -->
         <View
             android:layout_width="40dp"
             android:layout_height="4dp"
@@ -25,7 +23,6 @@
             android:layout_marginBottom="12dp"
             android:background="@color/dividerColor" />
 
-        <!-- Título y botón cerrar -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -38,7 +35,6 @@
                 android:layout_height="wrap_content"
                 android:text="@string/ranking_title"
                 android:textSize="20sp"
-                android:textStyle="bold"
                 android:textColor="@color/textPrimary"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/btn_ranking_close"
@@ -53,24 +49,23 @@
                 android:src="@drawable/ic_close_standard"
                 android:contentDescription="@string/ranking_close_desc"
                 android:padding="10dp"
-                app:tint="@color/textOnGreen"
                 android:scaleType="centerInside"
+                app:tint="@color/textOnGreen"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Filtros: España (siempre) + selector de provincia -->
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chip_group_filtro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingHorizontal="16dp"
+            android:paddingBottom="12dp"
             app:singleSelection="true"
             app:selectionRequired="true">
 
-            <!-- Chip España: muestra ranking nacional -->
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_espana"
                 style="@style/Widget.Material3.Chip.Filter"
@@ -84,7 +79,6 @@
                 app:chipStrokeColor="@color/ranking_chip_stroke"
                 app:chipStrokeWidth="1dp" />
 
-            <!-- Chip Provincia: abre selector con todas las provincias -->
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_provincia"
                 style="@style/Widget.Material3.Chip.Filter"
@@ -100,23 +94,25 @@
 
         </com.google.android.material.chip.ChipGroup>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="16dp"
+            android:background="@color/dividerColor" />
+
     </LinearLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/dividerColor" />
-
-    <!-- Área de contenido -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:background="@color/surfaceBackground">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_ranking"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@color/surfaceBackground"
             android:clipToPadding="false"
             android:paddingBottom="24dp"
             android:visibility="gone"
@@ -144,10 +140,10 @@
                 android:id="@+id/tv_ranking_empty"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="@string/ranking_empty"
                 android:textSize="15sp"
                 android:textColor="@color/textSecondary"
-                android:gravity="center"
-                android:text="@string/ranking_empty" />
+                android:gravity="center" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_ranking_retry"
