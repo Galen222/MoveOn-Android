@@ -121,7 +121,8 @@ public class ProfileFragment extends Fragment {
         setupListeners();
         observeViewModel();
         syncThemeToggleWithSavedMode();
-        syncPaceDisplayToggleWithSavedMode();
+        // Opción de selección de ritmo ocultada temporalmente en la UI.
+        // syncPaceDisplayToggleWithSavedMode();
         syncLanguageSelectionText();
         viewModel.loadPerfil();
 
@@ -144,7 +145,8 @@ public class ProfileFragment extends Fragment {
     public void onResume() {
         super.onResume();
         syncThemeToggleWithSavedMode();
-        syncPaceDisplayToggleWithSavedMode();
+        // Opción de selección de ritmo ocultada temporalmente en la UI.
+        // syncPaceDisplayToggleWithSavedMode();
         syncLanguageSelectionText();
         syncAutoPauseAlertsToggle();
         trackingHelper.updateTrackingRequirementsUi();
@@ -170,7 +172,8 @@ public class ProfileFragment extends Fragment {
         binding.tvUserName.setText(username);
         syncLanguageSelectionText();
         syncAutoPauseAlertsToggle();
-        syncPaceDisplayToggleWithSavedMode();
+        // Opción de selección de ritmo ocultada temporalmente en la UI.
+        // syncPaceDisplayToggleWithSavedMode();
         trackingHelper.updateTrackingRequirementsUi();
     }
 
@@ -299,6 +302,10 @@ public class ProfileFragment extends Fragment {
             });
         });
 
+        // Selector de ritmo medio ocultado temporalmente en la UI para no exponer
+        // esta preferencia durante el desarrollo. Se conserva el wiring por si
+        // más adelante se quiere reactivar el control en perfil.
+        /*
         binding.togglePaceDisplayMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
 
@@ -310,6 +317,7 @@ public class ProfileFragment extends Fragment {
             if (newMode.equals(AppSettingsManager.getPaceDisplayMode(requireContext()))) return;
             AppSettingsManager.setPaceDisplayMode(requireContext(), newMode);
         });
+        */
 
         binding.tvTrackingLocationAction.setOnClickListener(v ->
                 trackingHelper.handleTrackingRequirementAction(
@@ -500,6 +508,10 @@ public class ProfileFragment extends Fragment {
         }
     }
 
+    // Sincronización del toggle de ritmo desactivada temporalmente porque
+    // el control visual ya no se muestra en perfil. Se deja comentado para
+    // poder restaurarlo fácilmente en el futuro.
+    /*
     private void syncPaceDisplayToggleWithSavedMode() {
         if (binding == null) return;
 
@@ -512,6 +524,7 @@ public class ProfileFragment extends Fragment {
             binding.togglePaceDisplayMode.check(targetId);
         }
     }
+    */
 
     private void syncLanguageSelectionText() {
         if (binding == null || dialogHelper == null) return;

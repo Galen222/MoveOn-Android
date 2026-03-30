@@ -641,7 +641,16 @@
                         android:layout_height="1dp"
                         android:background="@color/dividerColor" />
 
-                    <!-- Ritmo medio -->
+                    <!--
+                    Selector de ritmo medio ocultado temporalmente.
+                    Se deja comentado para poder recuperarlo más adelante sin
+                    perder la estructura visual ni los ids asociados.
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/dividerColor" />
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -701,6 +710,7 @@
                         android:layout_height="1dp"
                         android:layout_marginTop="@dimen/profile_item_padding_vertical"
                         android:background="@color/dividerColor" />
+                    -->
 
                     <!-- Tema -->
                     <LinearLayout
