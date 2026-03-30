@@ -72,16 +72,19 @@
         <activity
             android:name=".ui.auth.LoginActivity"
             android:exported="false"
+            android:theme="@style/Theme.MoveOn.Auth"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".ui.auth.RegisterActivity"
             android:exported="false"
+            android:theme="@style/Theme.MoveOn.Auth"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".ui.auth.ForgotPasswordActivity"
             android:exported="false"
+            android:theme="@style/Theme.MoveOn.Auth"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- ── Servicios ── -->
@@ -108,3 +111,4 @@
     </application>
 
 </manifest>
+

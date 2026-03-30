@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="Base.Theme.MoveOn" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Base.Theme.MoveOn" parent="Theme.Material3.Dark.NoActionBar">
         <item name="fontFamily">@font/space_grotesk</item>
         <!-- =========================
              BRAND / PRIMARY (Material3)
@@ -9,10 +9,10 @@
         <item name="colorPrimary">@color/greenPrimary</item>
         <item name="colorOnPrimary">@color/textOnGreen</item>
         <item name="colorPrimaryContainer">@color/greenPrimaryVariant</item>
-        <item name="colorOnPrimaryContainer">@color/textPrimary</item>
+        <item name="colorOnPrimaryContainer">@color/textOnGreen</item>
 
         <item name="colorSecondary">@color/greenDark</item>
-        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorOnSecondary">@color/textPrimary</item>
         <item name="colorSecondaryContainer">@color/surfaceContainer</item>
         <item name="colorOnSecondaryContainer">@color/textPrimary</item>
 
@@ -25,18 +25,16 @@
         <!-- =========================
              SURFACES / BACKGROUND
              ========================= -->
-        <item name="colorSurface">@color/surfaceBackground</item>
+        <item name="colorSurface">@color/darkSurface</item>
         <item name="colorOnSurface">@color/textPrimary</item>
 
-        <!-- Material3 usa mucho SurfaceVariant -->
         <item name="colorSurfaceVariant">@color/cardBackground</item>
         <item name="colorOnSurfaceVariant">@color/textSecondary</item>
 
-        <!-- Background -->
-        <item name="android:colorBackground">@color/surfaceBackground</item>
+        <item name="android:colorBackground">@color/darkBackground</item>
         <item name="colorOnBackground">@color/textPrimary</item>
 
-        <!-- Surface containers (Material3) -->
+        <!-- Surface containers -->
         <item name="colorSurfaceContainer">@color/surfaceContainer</item>
         <item name="colorSurfaceContainerHigh">@color/surfaceContainerHigh</item>
         <item name="colorSurfaceContainerLow">@color/surfaceContainerLow</item>
@@ -50,17 +48,17 @@
         <item name="colorOutlineVariant">@color/outlineVariant</item>
 
         <item name="colorError">@color/error</item>
-        <item name="colorOnError">#FFFFFF</item>
+        <item name="colorOnError">@color/textPrimary</item>
         <item name="colorErrorContainer">@color/error</item>
-        <item name="colorOnErrorContainer">#FFFFFF</item>
+        <item name="colorOnErrorContainer">@color/textPrimary</item>
 
         <!-- =========================
              SYSTEM BARS
              ========================= -->
-        <item name="android:statusBarColor">@color/surfaceBackground</item>
-        <item name="android:navigationBarColor">@color/surfaceBackground</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:statusBarColor">@color/darkBackground</item>
+        <item name="android:navigationBarColor">@color/darkBackground</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
 
         <!-- Widgets -->
@@ -68,18 +66,23 @@
 
     </style>
 
+    <style name="MoveOnAuthWindowAnimation">
+        <item name="android:activityOpenEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:activityOpenExitAnimation">@android:anim/fade_out</item>
+        <item name="android:activityCloseEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:activityCloseExitAnimation">@android:anim/fade_out</item>
+    </style>
+
     <style name="Theme.MoveOn.Starting" parent="Theme.SplashScreen">
-
-        <!-- Fondo de splash (cambia solo con tu colors.xml / colors-night.xml) -->
-        <item name="windowSplashScreenBackground">@color/surfaceBackground</item>
-
-        <!-- Icono de splash -->
+        <item name="windowSplashScreenBackground">@color/darkBackground</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
-
-        <!-- Tema real de la app al terminar splash -->
         <item name="postSplashScreenTheme">@style/Theme.MoveOn</item>
     </style>
 
     <style name="Theme.MoveOn" parent="Base.Theme.MoveOn" />
+
+    <style name="Theme.MoveOn.Auth" parent="Theme.MoveOn">
+        <item name="android:windowAnimationStyle">@style/MoveOnAuthWindowAnimation</item>
+    </style>
 
 </resources>

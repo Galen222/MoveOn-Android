@@ -66,6 +66,13 @@
 
     </style>
 
+    <style name="MoveOnAuthWindowAnimation">
+        <item name="android:activityOpenEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:activityOpenExitAnimation">@android:anim/fade_out</item>
+        <item name="android:activityCloseEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:activityCloseExitAnimation">@android:anim/fade_out</item>
+    </style>
+
     <style name="Theme.MoveOn.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/darkBackground</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
@@ -73,5 +80,9 @@
     </style>
 
     <style name="Theme.MoveOn" parent="Base.Theme.MoveOn" />
+
+    <style name="Theme.MoveOn.Auth" parent="Theme.MoveOn">
+        <item name="android:windowAnimationStyle">@style/MoveOnAuthWindowAnimation</item>
+    </style>
 
 </resources>

@@ -23,7 +23,7 @@
             android:id="@+id/ivMoveOn"
             android:layout_width="@dimen/auth_logo_size_login"
             android:layout_height="@dimen/auth_logo_size_login"
-            android:layout_marginTop="@dimen/auth_logo_margin_top_register"
+            android:layout_marginTop="@dimen/auth_logo_margin_top_login"
             android:contentDescription="@string/login_logo_desc"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -306,6 +306,7 @@
         </com.google.android.material.card.MaterialCardView>
     </FrameLayout>
 </FrameLayout>
+
 
 
 

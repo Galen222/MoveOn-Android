@@ -2,7 +2,6 @@ package com.proyecto.moveon.ui.auth;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -69,7 +68,7 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
     }
 
     private void setupListeners() {
-        binding.btnRegistrar.setOnClickListener(v -> openRegisterWithFade(null));
+        binding.btnRegistrar.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
         binding.btnGoogleLogin.setOnClickListener(v -> {
             clearErrors();
@@ -81,10 +80,9 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         binding.etUsuarioCorreo.setOnFocusChangeListener((v, f) -> { if (f) binding.tilUsuarioCorreo.setError(null); });
         binding.etPassword.setOnFocusChangeListener((v, f) -> { if (f) binding.tilPassword.setError(null); });
 
-        binding.btnOlvidarPassword.setOnClickListener(v -> {
-            NavigationUtils.goToActivity(this, ForgotPasswordActivity.class);
-            applyFadeOpenTransition();
-        });
+        binding.btnOlvidarPassword.setOnClickListener(
+                v -> NavigationUtils.goToActivity(this, ForgotPasswordActivity.class)
+        );
     }
 
     private void observeViewModel() {
@@ -138,49 +136,12 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
                     .putExtra(RegisterActivity.EXTRA_GOOGLE_AVATAR_URL, pendingGoogleAccount.avatarUrl)
                     .putExtra(RegisterActivity.EXTRA_GOOGLE_EMAIL, pendingGoogleAccount.email)
                     .putExtra(RegisterActivity.EXTRA_OPENED_FROM_LOGIN_SOCIAL, true);
-            openRegisterWithFade(intent);
+            startActivity(intent);
             TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_not_registered));
         } else {
             TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_not_registered));
         }
         return true;
-    }
-
-
-    /**
-     * Abre la pantalla de registro con un fade real también en Android 10+.
-     *
-     * <p>Se evita delegar esta navegación en utilidades genéricas porque aquí sí queremos
-     * forzar explícitamente la animación de entrada. Si no se hace así, algunos dispositivos
-     * muestran la transición vertical por defecto del sistema.</p>
-     *
-     * @param customIntent intent ya preparado para registro social. Si es {@code null}, se abre
-     *                     el registro estándar.
-     */
-    private void openRegisterWithFade(@Nullable Intent customIntent) {
-        Intent intent = customIntent != null ? customIntent : new Intent(this, RegisterActivity.class);
-        startActivity(intent);
-        applyImmediateFadeTransition();
-    }
-
-    /**
-     * Aplica el fade de navegación inmediatamente después de lanzar otra Activity.
-     *
-     * <p>En Android 14+ se usa la API nueva. En versiones anteriores se mantiene
-     * el fallback clásico, pero encapsulado y suprimiendo solo el warning local de
-     * deprecación para no ensuciar la compilación.</p>
-     */
-    @SuppressWarnings("deprecation")
-    private void applyImmediateFadeTransition() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            overrideActivityTransition(
-                    OVERRIDE_TRANSITION_OPEN,
-                    android.R.anim.fade_in,
-                    android.R.anim.fade_out
-            );
-        } else {
-            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-        }
     }
 
     private void applyBackendErrors(ApiError err) {
@@ -238,17 +199,6 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
 
     private void goToMain() {
         NavigationUtils.goToActivityAndClearTask(this, MainActivity.class);
-        applyFadeOpenTransition();
-    }
-
-    private void applyFadeOpenTransition() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            overrideActivityTransition(
-                    OVERRIDE_TRANSITION_OPEN,
-                    android.R.anim.fade_in,
-                    android.R.anim.fade_out
-            );
-        }
     }
 
     @Override
@@ -281,3 +231,4 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         binding = null;
     }
 }
+
