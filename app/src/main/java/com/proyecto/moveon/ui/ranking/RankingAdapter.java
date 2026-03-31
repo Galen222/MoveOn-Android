@@ -123,10 +123,11 @@ public final class RankingAdapter
             int medalBackground = resolveMedalBackground(posicion);
             if (medalBackground != 0) {
                 tvPosicion.setBackgroundResource(medalBackground);
+                tvPosicion.setTextColor(ContextCompat.getColor(context, android.R.color.black));
             } else {
                 tvPosicion.setBackground(null);
+                tvPosicion.setTextColor(resolvePositionColor(context, posicion));
             }
-            tvPosicion.setTextColor(ContextCompat.getColor(context, android.R.color.black));
 
             String imageUrl = buildVersionedPhotoUrl(item.fotoPerfil, item.fotoVersion);
             if (imageUrl != null) {
