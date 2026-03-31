@@ -547,37 +547,7 @@
     <string name="profile_about_contact_no_app">No email app was found on this device.</string>
     <string name="profile_about_licenses">Licenses</string>
     <string name="profile_about_licenses_subtitle">Third-party libraries and SDKs</string>
-    <string name="profile_about_licenses_title">Licenses</string>
-    <string name="profile_about_licenses_content" tools:ignore="TypographyOther"><![CDATA[Licenses and notices summary
-
-AndroidX
-• AppCompat, Activity, Lifecycle, ConstraintLayout, RecyclerView, Room, and WorkManager
-• License: Apache License 2.0
-
-Material Components for Android
-• Material visual components and styles
-• License: Apache License 2.0
-
-Retrofit
-• Typed HTTP client for the API
-• License: Apache License 2.0
-
-OkHttp and Logging Interceptor
-• Networking and request logging
-• License: Apache License 2.0
-
-Gson / Converter Gson
-• JSON serialization and parsing
-• License: Apache License 2.0
-
-Glide
-• Image loading and caching
-• Main license: Apache License 2.0
-
-Google Maps SDK for Android and Google Play services
-• Maps, location, and identity services
-• Use is subject to Google terms and conditions
-
-Trademarks, licenses, and notices belong to their respective owners. If you need the full text of any license or an additional notice, you can write to info.moveon.app@gmail.com.]]></string>
+    <string name="profile_about_titulo_licencia">Licenses</string>
+    <string name="profile_about_contenido_licencia">Licenses and notices summary\n\nAndroidX\n• AppCompat, Activity, Lifecycle, ConstraintLayout, RecyclerView, Room, and WorkManager\n• License: Apache License 2.0\n\nMaterial Components for Android\n• Material visual components and styles\n• License: Apache License 2.0\n\nRetrofit\n• Typed HTTP client for the API\n• License: Apache License 2.0\n\nOkHttp and Logging Interceptor\n• Networking and request logging\n• License: Apache License 2.0\n\nGson / Converter Gson\n• JSON serialization and parsing\n• License: Apache License 2.0\n\nGlide\n• Image loading and caching\n• Main license: Apache License 2.0\n\nGoogle Maps SDK for Android and Google Play services\n• Maps, location, and identity services\n• Use is subject to Google terms and conditions\n\nTrademarks, licenses, and notices belong to their respective owners. If you need the full text of any license or an additional notice, you can write to info.moveon.app@gmail.com.</string>
 
 </resources>

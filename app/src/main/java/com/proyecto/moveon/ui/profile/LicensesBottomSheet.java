@@ -40,7 +40,7 @@ public class LicensesBottomSheet extends BaseExpandedBottomSheetDialogFragment {
         super.onViewCreated(view, savedInstanceState);
         if (binding == null) return;
 
-        binding.tvLicensesContent.setText(R.string.profile_about_licenses_content);
+        binding.tvLicensesContent.setText(R.string.profile_about_contenido_licencia);
         binding.btnCloseLicenses.setOnClickListener(v -> dismissAllowingStateLoss());
     }
 

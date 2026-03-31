@@ -63,9 +63,10 @@ public class AboutAppBottomSheet extends BaseExpandedBottomSheetDialogFragment {
                 getString(R.string.registro_eula_contenido_politica)
         ));
 
-        b.itemAboutLicenses.setOnClickListener(v ->
-                LicensesBottomSheet.newInstance()
-                        .show(getParentFragmentManager(), LicensesBottomSheet.TAG));
+        b.itemAboutLicenses.setOnClickListener(v -> openLegalSheet(
+                getString(R.string.profile_about_titulo_licencia),
+                getString(R.string.profile_about_contenido_licencia)
+        ));
 
         b.itemAboutContact.setOnClickListener(v -> openEmailApp());
 
@@ -100,3 +101,4 @@ public class AboutAppBottomSheet extends BaseExpandedBottomSheetDialogFragment {
         super.onDestroyView();
     }
 }
+
