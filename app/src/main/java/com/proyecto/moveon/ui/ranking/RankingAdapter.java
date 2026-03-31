@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -23,19 +24,9 @@ import com.proyecto.moveon.data.ranking.dto.RankingItemDto;
 import java.util.Locale;
 import java.util.Objects;
 
-/**
- * Adapter del ranking.
- *
- * <p>Además de pintar cada fila, expone un callback para detectar cuándo el
- * usuario pulsa sobre un integrante del ranking. Ese clic abre un bottom sheet
- * inferior con acciones rápidas, incluyendo el nuevo flujo de reporte.</p>
- */
 public final class RankingAdapter
         extends ListAdapter<RankingItemDto, RankingAdapter.ViewHolder> {
 
-    /**
-     * Listener para informar al Fragment del usuario pulsado.
-     */
     public interface OnUserClickListener {
         void onUserClick(@NonNull RankingItemDto item);
     }
@@ -61,9 +52,6 @@ public final class RankingAdapter
     @Nullable
     private final OnUserClickListener onUserClickListener;
 
-    /**
-     * @param onUserClickListener callback opcional para abrir el panel de acciones del usuario.
-     */
     public RankingAdapter(@Nullable OnUserClickListener onUserClickListener) {
         super(DIFF);
         this.onUserClickListener = onUserClickListener;
@@ -82,9 +70,6 @@ public final class RankingAdapter
         holder.bind(getItem(position), position + 1);
     }
 
-    /**
-     * Resuelve el color de la posición usando recursos para respetar tema claro/oscuro.
-     */
     private static int resolvePositionColor(@NonNull Context context, int posicion) {
         if (posicion == 1) return ContextCompat.getColor(context, R.color.ranking_position_gold);
         if (posicion == 2) return ContextCompat.getColor(context, R.color.ranking_position_silver);
@@ -92,13 +77,14 @@ public final class RankingAdapter
         return ContextCompat.getColor(context, R.color.ranking_position_default);
     }
 
-    /**
-     * Construye una URL de imagen cache-busting cuando existe foto remota.
-     *
-     * <p>La app ya usa {@code fotoVersion} como versión lógica de la foto. Si
-     * llega una URL no vacía, se le añade el parámetro {@code v=} para evitar
-     * mostrar una imagen obsoleta en caché.</p>
-     */
+    @DrawableRes
+    private static int resolveMedalBackground(int posicion) {
+        if (posicion == 1) return R.drawable.bg_ranking_medal_gold;
+        if (posicion == 2) return R.drawable.bg_ranking_medal_silver;
+        if (posicion == 3) return R.drawable.bg_ranking_medal_bronze;
+        return 0;
+    }
+
     @Nullable
     private static String buildVersionedPhotoUrl(@Nullable String photoUrl, int photoVersion) {
         if (photoUrl == null || photoUrl.trim().isEmpty()) {
@@ -107,9 +93,6 @@ public final class RankingAdapter
         return photoUrl + (photoUrl.contains("?") ? "&" : "?") + "v=" + photoVersion;
     }
 
-    /**
-     * ViewHolder simple de la fila del ranking.
-     */
     static final class ViewHolder extends RecyclerView.ViewHolder {
 
         private final TextView tvPosicion;
@@ -130,18 +113,22 @@ public final class RankingAdapter
             tvPuntos   = itemView.findViewById(R.id.tv_ranking_puntos);
         }
 
-        /**
-         * Vincula los datos del usuario a la fila visible.
-         */
         void bind(@NonNull RankingItemDto item, int posicion) {
+            Context context = itemView.getContext();
             tvPosicion.setText(String.format(Locale.US, "%d", posicion));
             tvNombre.setText(item.nombreUsuario);
             tvKm.setText(String.format(Locale.US, "%.2f km", item.totalMetros / 1000.0));
-            tvPuntos.setText(itemView.getContext()
-                    .getString(R.string.ranking_puntos_format, item.totalPuntos));
-            tvPosicion.setTextColor(resolvePositionColor(itemView.getContext(), posicion));
+            tvPuntos.setText(context.getString(R.string.ranking_puntos_format, item.totalPuntos));
 
-            // Render de la foto con placeholder consistente y versión de caché.
+            int medalBackground = resolveMedalBackground(posicion);
+            if (medalBackground != 0) {
+                tvPosicion.setBackgroundResource(medalBackground);
+                tvPosicion.setTextColor(ContextCompat.getColor(context, android.R.color.white));
+            } else {
+                tvPosicion.setBackground(null);
+                tvPosicion.setTextColor(resolvePositionColor(context, posicion));
+            }
+
             String imageUrl = buildVersionedPhotoUrl(item.fotoPerfil, item.fotoVersion);
             if (imageUrl != null) {
                 Glide.with(ivFoto.getContext())
@@ -159,7 +146,6 @@ public final class RankingAdapter
                         .into(ivFoto);
             }
 
-            // La pulsación se delega al Fragment para abrir el bottom sheet inferior.
             itemView.setOnClickListener(v -> {
                 if (onUserClickListener != null) {
                     onUserClickListener.onUserClick(item);
