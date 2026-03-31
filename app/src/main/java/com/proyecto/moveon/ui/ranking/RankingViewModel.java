@@ -15,31 +15,108 @@ import com.proyecto.moveon.ui.common.UiState;
 
 import java.util.List;
 
+/**
+ * ViewModel del ranking.
+ *
+ * <p>Este ViewModel expone un {@link UiState} con la lista del ranking nacional
+ * o provincial y corrige un problema de carreras entre peticiones sucesivas.</p>
+ *
+ * <p>Bug corregido:</p>
+ * <ul>
+ *     <li>La pantalla se abría cargando España automáticamente.</li>
+ *     <li>Si el usuario cambiaba rápido a una provincia, quedaban dos requests en vuelo:
+ *     la de España y la nueva de provincia.</li>
+ *     <li>Si la de España devolvía más tarde, podía repintar momentáneamente la lista vieja
+ *     antes de que llegase la respuesta correcta de provincia.</li>
+ * </ul>
+ *
+ * <p>Para evitarlo, esta versión aplica dos defensas:</p>
+ * <ol>
+ *     <li>Cancela las peticiones anteriores del repositorio antes de lanzar una nueva.</li>
+ *     <li>Asigna un identificador incremental a cada carga e ignora cualquier callback
+ *     tardío que ya no corresponda a la petición activa.</li>
+ * </ol>
+ */
 public final class RankingViewModel extends AndroidViewModel {
 
+    /** Repositorio del módulo de ranking. */
+    @NonNull
     private final RankingRepository repository;
 
+    /**
+     * Estado observable consumido por la UI.
+     *
+     * <p>Se inicializa con éxito vacío para que el observer del fragment pueda decidir
+     * cuándo mostrar loading, lista, vacío o error sin disparar una vista residual.</p>
+     */
+    @NonNull
     private final MutableLiveData<UiState<List<RankingItemDto>>> rankingState =
             new MutableLiveData<>(UiState.success(null));
 
+    /** Provincia actualmente seleccionada. {@code null} implica ranking España. */
     @Nullable
     private String provinciaActual = null;
 
+    /**
+     * Secuencia monótona de solicitudes de ranking.
+     *
+     * <p>Cada vez que se pide un ranking nuevo se incrementa este contador y el valor
+     * generado pasa a ser la única respuesta considerada válida.</p>
+     */
+    private int requestSequence = 0;
+
+    /** Identificador de la solicitud activa más reciente. */
+    private int activeRequestId = 0;
+
+    /**
+     * @param application contexto de aplicación necesario para construir el repositorio.
+     */
+    public RankingViewModel(@NonNull Application application) {
+        super(application);
+        repository = ServiceLocator.getInstance(application).newRankingRepository();
+
+        // Carga inicial del ranking nacional al abrir el bottom sheet.
+        cargarRanking(null);
+    }
+
+    /**
+     * Estado observable del ranking consumido por el fragment.
+     *
+     * @return LiveData con loading, datos o error.
+     */
     @NonNull
     public LiveData<UiState<List<RankingItemDto>>> getRankingState() {
         return rankingState;
     }
 
-    public RankingViewModel(@NonNull Application application) {
-        super(application);
-        repository = ServiceLocator.getInstance(application).newRankingRepository();
-        cargarRanking(null);
-    }
-
+    /**
+     * Carga el ranking para España o para una provincia concreta.
+     *
+     * <p>Esta versión invalida explícitamente cualquier respuesta anterior. Si una petición
+     * vieja devuelve tarde, su callback se ignora y no puede reintroducir una lista obsoleta
+     * en pantalla.</p>
+     *
+     * @param provincia provincia opcional; {@code null} o vacío implica ranking nacional.
+     */
     public void cargarRanking(@Nullable String provincia) {
         provinciaActual = provincia;
+
+        // Se genera un nuevo token lógico de petición antes de lanzar la request.
+        final int requestId = ++requestSequence;
+        activeRequestId = requestId;
+
+        // Se entra en loading inmediatamente para que la UI oculte cualquier contenido previo.
         rankingState.setValue(UiState.loading());
+
+        // Defensa 1: cancelar llamadas anteriores en vuelo asociadas a este repositorio.
+        repository.cancelAll();
+
         repository.obtenerRanking(provincia, result -> {
+            // Defensa 2: ignorar callbacks tardíos de requests ya obsoletas.
+            if (requestId != activeRequestId) {
+                return;
+            }
+
             if (result.isSuccess()) {
                 rankingState.postValue(UiState.success(result.data));
             } else {
@@ -48,6 +125,9 @@ public final class RankingViewModel extends AndroidViewModel {
         });
     }
 
+    /**
+     * Repite la última carga usando el filtro actualmente activo.
+     */
     public void recargar() {
         cargarRanking(provinciaActual);
     }

@@ -11,8 +11,6 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.DiffUtil;
-import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -21,40 +19,92 @@ import com.bumptech.glide.signature.ObjectKey;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.data.ranking.dto.RankingItemDto;
 
-import java.util.Locale;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-public final class RankingAdapter
-        extends ListAdapter<RankingItemDto, RankingAdapter.ViewHolder> {
+/**
+ * Adapter del ranking SIN AsyncListDiffer / ListAdapter.
+ *
+ * <p>Motivo de este cambio:</p>
+ * <ul>
+ *     <li>El ranking muestra como máximo 15 filas.</li>
+ *     <li>La pantalla cambia entre ámbitos mutuamente excluyentes
+ *     (España / provincia).</li>
+ *     <li>En este caso no aporta valor usar {@code ListAdapter}, porque su diff es asíncrono
+ *     y puede dejar visible la lista anterior durante un instante mientras calcula y aplica
+ *     la transición.</li>
+ * </ul>
+ *
+ * <p>Con un adapter clásico y una lista interna mutable, el vaciado del contenido y la
+ * sustitución por la nueva lista son síncronos en el hilo principal. Eso elimina el
+ * parpadeo del ranking anterior al cambiar de filtro.</p>
+ *
+ * <p>Esta versión asume que {@link RankingItemDto} ya incluye el campo {@code posicion}
+ * calculado por backend, que es la solución recomendada para el bug de puestos
+ * nacionales/provinciales.</p>
+ */
+public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.ViewHolder> {
 
+    /**
+     * Callback opcional al pulsar una fila del ranking.
+     */
     public interface OnUserClickListener {
         void onUserClick(@NonNull RankingItemDto item);
     }
 
-    private static final DiffUtil.ItemCallback<RankingItemDto> DIFF =
-            new DiffUtil.ItemCallback<>() {
-                @Override
-                public boolean areItemsTheSame(
-                        @NonNull RankingItemDto a, @NonNull RankingItemDto b) {
-                    return a.nombreUsuario.equals(b.nombreUsuario);
-                }
-
-                @Override
-                public boolean areContentsTheSame(
-                        @NonNull RankingItemDto a, @NonNull RankingItemDto b) {
-                    return a.totalPuntos == b.totalPuntos
-                            && a.totalMetros == b.totalMetros
-                            && a.fotoVersion == b.fotoVersion
-                            && Objects.equals(a.fotoPerfil, b.fotoPerfil);
-                }
-            };
+    @NonNull
+    private final List<RankingItemDto> items = new ArrayList<>();
 
     @Nullable
     private final OnUserClickListener onUserClickListener;
 
     public RankingAdapter(@Nullable OnUserClickListener onUserClickListener) {
-        super(DIFF);
         this.onUserClickListener = onUserClickListener;
+        setHasStableIds(true);
+    }
+
+    /**
+     * Sustituye completamente el contenido actual por una nueva lista.
+     *
+     * <p>Se hace de forma síncrona con {@link #notifyDataSetChanged()} porque el tamaño del
+     * ranking es muy pequeño y aquí prima la ausencia total de flicker sobre la animación
+     * incremental.</p>
+     */
+    public void setItems(@Nullable List<RankingItemDto> newItems) {
+        items.clear();
+        if (newItems != null && !newItems.isEmpty()) {
+            items.addAll(newItems);
+        }
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Vacía el adapter de forma inmediata.
+     *
+     * <p>Se usa justo antes de lanzar una nueva carga para garantizar que ninguna fila del
+     * ranking anterior pueda quedar visible.</p>
+     */
+    public void clearNow() {
+        if (items.isEmpty()) {
+            return;
+        }
+        items.clear();
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Devuelve una snapshot inmutable por si la UI necesitara inspeccionar el contenido actual.
+     */
+    @NonNull
+    public List<RankingItemDto> getItemsSnapshot() {
+        return Collections.unmodifiableList(new ArrayList<>(items));
+    }
+
+    @Override
+    public long getItemId(int position) {
+        RankingItemDto item = items.get(position);
+        return item.nombreUsuario != null ? item.nombreUsuario.hashCode() : RecyclerView.NO_ID;
     }
 
     @NonNull
@@ -67,21 +117,38 @@ public final class RankingAdapter
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(getItem(position), position + 1);
+        holder.bind(items.get(position));
+    }
+
+    @Override
+    public int getItemCount() {
+        return items.size();
     }
 
     private static int resolvePositionColor(@NonNull Context context, int posicion) {
-        if (posicion == 1) return ContextCompat.getColor(context, R.color.ranking_position_gold);
-        if (posicion == 2) return ContextCompat.getColor(context, R.color.ranking_position_silver);
-        if (posicion == 3) return ContextCompat.getColor(context, R.color.ranking_position_bronze);
+        if (posicion == 1) {
+            return ContextCompat.getColor(context, R.color.ranking_position_gold);
+        }
+        if (posicion == 2) {
+            return ContextCompat.getColor(context, R.color.ranking_position_silver);
+        }
+        if (posicion == 3) {
+            return ContextCompat.getColor(context, R.color.ranking_position_bronze);
+        }
         return ContextCompat.getColor(context, R.color.ranking_position_default);
     }
 
     @DrawableRes
     private static int resolveMedalBackground(int posicion) {
-        if (posicion == 1) return R.drawable.bg_ranking_medal_gold;
-        if (posicion == 2) return R.drawable.bg_ranking_medal_silver;
-        if (posicion == 3) return R.drawable.bg_ranking_medal_bronze;
+        if (posicion == 1) {
+            return R.drawable.bg_ranking_medal_gold;
+        }
+        if (posicion == 2) {
+            return R.drawable.bg_ranking_medal_silver;
+        }
+        if (posicion == 3) {
+            return R.drawable.bg_ranking_medal_bronze;
+        }
         return 0;
     }
 
@@ -100,24 +167,30 @@ public final class RankingAdapter
         private final TextView tvNombre;
         private final TextView tvKm;
         private final TextView tvPuntos;
-        @Nullable private final OnUserClickListener onUserClickListener;
+
+        @Nullable
+        private final OnUserClickListener onUserClickListener;
 
         ViewHolder(@NonNull View itemView,
                    @Nullable OnUserClickListener onUserClickListener) {
             super(itemView);
             this.onUserClickListener = onUserClickListener;
             tvPosicion = itemView.findViewById(R.id.tv_ranking_posicion);
-            ivFoto     = itemView.findViewById(R.id.iv_ranking_foto);
-            tvNombre   = itemView.findViewById(R.id.tv_ranking_nombre);
-            tvKm       = itemView.findViewById(R.id.tv_ranking_km);
-            tvPuntos   = itemView.findViewById(R.id.tv_ranking_puntos);
+            ivFoto = itemView.findViewById(R.id.iv_ranking_foto);
+            tvNombre = itemView.findViewById(R.id.tv_ranking_nombre);
+            tvKm = itemView.findViewById(R.id.tv_ranking_km);
+            tvPuntos = itemView.findViewById(R.id.tv_ranking_puntos);
         }
 
-        void bind(@NonNull RankingItemDto item, int posicion) {
+        void bind(@NonNull RankingItemDto item) {
             Context context = itemView.getContext();
-            tvPosicion.setText(String.format(Locale.US, "%d", posicion));
+
+            // Solución recomendada: la posición visible viene ya calculada desde backend.
+            int posicion = item.posicion;
+
+            tvPosicion.setText(String.valueOf(posicion));
             tvNombre.setText(item.nombreUsuario);
-            tvKm.setText(String.format(Locale.US, "%.2f km", item.totalMetros / 1000.0));
+            tvKm.setText(String.format(java.util.Locale.US, "%.2f km", item.totalMetros / 1000.0));
             tvPuntos.setText(context.getString(R.string.ranking_puntos_format, item.totalPuntos));
 
             int medalBackground = resolveMedalBackground(posicion);
