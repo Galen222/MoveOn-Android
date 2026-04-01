@@ -247,6 +247,8 @@
     <string name="profile_item_notifications">Notifications</string>
     <string name="profile_item_public_profile">Public profile</string>
     <string name="profile_item_auto_pause_alerts">Show auto-pause alerts</string>
+    <string name="profile_public_profile_description">Enable or disable visibility in the ranking</string>
+    <string name="profile_auto_pause_alerts_description">Enable or disable auto-pause notification during activities</string>
     <string name="profile_item_average_pace">Average pace</string>
     <string name="profile_pace_total">Total</string>
     <string name="profile_pace_moving">Moving</string>

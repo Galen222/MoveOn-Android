@@ -572,6 +572,20 @@
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toStartOf="@id/switch_public_profile"
                             app:layout_constraintTop_toBottomOf="@id/tv_public_profile_subtitle"
+                            app:layout_constraintBottom_toTopOf="@id/tv_public_profile_description" />
+
+                        <TextView
+                            android:id="@+id/tv_public_profile_description"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/profile_public_profile_description"
+                            android:textSize="12sp"
+                            android:textColor="@color/textSecondary"
+                            android:lineSpacingMultiplier="1.3"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/switch_public_profile"
+                            app:layout_constraintTop_toBottomOf="@id/tv_public_profile_label"
                             app:layout_constraintBottom_toBottomOf="parent" />
 
                         <com.google.android.material.switchmaterial.SwitchMaterial
@@ -622,6 +636,20 @@
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toStartOf="@id/switch_auto_pause_alerts"
                             app:layout_constraintTop_toBottomOf="@id/tv_auto_pause_subtitle"
+                            app:layout_constraintBottom_toTopOf="@id/tv_auto_pause_description" />
+
+                        <TextView
+                            android:id="@+id/tv_auto_pause_description"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/profile_auto_pause_alerts_description"
+                            android:textSize="12sp"
+                            android:textColor="@color/textSecondary"
+                            android:lineSpacingMultiplier="1.3"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toStartOf="@id/switch_auto_pause_alerts"
+                            app:layout_constraintTop_toBottomOf="@id/tv_auto_pause_label"
                             app:layout_constraintBottom_toBottomOf="parent" />
 
                         <com.google.android.material.switchmaterial.SwitchMaterial

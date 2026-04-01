@@ -411,6 +411,8 @@
     <!-- Ítems preferencias -->
     <string name="profile_item_public_profile">Perfil público</string>
     <string name="profile_item_auto_pause_alerts">Mostrar avisos de auto-pausa</string>
+    <string name="profile_public_profile_description">Activa o desactiva la visibilidad en el ranking</string>
+    <string name="profile_auto_pause_alerts_description">Activa o desactiva la notificación de auto-pausa durante las actividades</string>
     <string name="profile_item_average_pace">Ritmo medio</string>
     <string name="profile_pace_total">Total</string>
     <string name="profile_pace_moving">En movimiento</string>
