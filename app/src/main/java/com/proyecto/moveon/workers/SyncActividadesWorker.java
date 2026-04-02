@@ -6,7 +6,9 @@ import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.proyecto.moveon.R;
 import com.proyecto.moveon.app.ServiceLocator;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.sync.GlobalSyncNotifier;
 import com.proyecto.moveon.data.activities.ActivityRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
@@ -45,7 +47,11 @@ public class SyncActividadesWorker extends Worker {
 
         // Solo avisamos a la UI si la cola offline de verdad quedó completada en esta ejecución.
         if (!result.retry && result.completedPendingWork) {
-            GlobalSyncNotifier.getInstance().notifySyncCompleted();
+            // El texto se resuelve aquí para que el notifier global transporte el mensaje final,
+            // igual que ya hacen los notifiers de perfil y estadísticas.
+            GlobalSyncNotifier.getInstance().notifySyncCompleted(
+                    AppLanguageManager.getString(getApplicationContext(), R.string.sync_completed)
+            );
         }
 
         return result.retry ? Result.retry() : Result.success();

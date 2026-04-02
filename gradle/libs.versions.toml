@@ -20,6 +20,7 @@ lifecycleViewmodel = "2.10.0"
 converterGson = "3.0.0"
 roomRuntime = "2.8.4"
 workRuntime = "2.11.1"
+coreTesting = "2.2.0"
 
 [libraries]
 android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version = "4.1.1" }
@@ -46,6 +47,7 @@ converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", ve
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 work-runtime = { module = "androidx.work:work-runtime", version = "2.11.2" }
+core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "coreTesting" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

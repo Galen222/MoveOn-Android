@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.main;
 
 import android.content.Context;
@@ -19,12 +20,15 @@ import androidx.lifecycle.ViewModelProvider;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.auth.GlobalAuthManager;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
+import com.proyecto.moveon.core.profile.GlobalProfileNotifier;
+import com.proyecto.moveon.core.stats.GlobalStatsNotifier;
 import com.proyecto.moveon.core.network.ConnectivityObserver;
 import com.proyecto.moveon.core.sync.GlobalSyncNotifier;
 import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.databinding.ActivityMainBinding;
 import com.proyecto.moveon.ui.auth.LoginActivity;
+import com.proyecto.moveon.ui.common.GlobalSnackbarMessage;
 import com.proyecto.moveon.ui.common.SessionUiHelper;
 import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.ui.home.InicioFragment;
@@ -121,14 +125,35 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Observador global para avisar cuando una cola offline termina de sincronizarse.
-        // Se escucha en MainActivity para que el snackbar pueda aparecer desde cualquier pestaña.
-        GlobalSyncNotifier.getInstance().getSyncCompletedEvent().observe(this, ev -> {
+        // Igual que perfil y stats, el worker emite un GlobalSnackbarMessage y la Activity lo pinta.
+        GlobalSyncNotifier.getInstance().getMessageEvent().observe(this, ev -> {
             if (ev == null || binding == null) return;
 
-            String token = ev.getContentIfNotHandled();
-            if (token != null) {
-                // El mensaje se resuelve desde recursos para respetar el idioma activo de la app.
-                TopSnackbar.success(binding.getRoot(), getString(R.string.sync_completed));
+            GlobalSnackbarMessage message = ev.getContentIfNotHandled();
+            if (message != null) {
+                showGlobalSnackbarMessage(message);
+            }
+        });
+
+        // Observador global para los mensajes nacidos en ProfileFragment.
+        // Se resuelven aquí para que sobrevivan aunque el usuario cambie de pestaña.
+        GlobalProfileNotifier.getInstance().getMessageEvent().observe(this, ev -> {
+            if (ev == null || binding == null) return;
+
+            GlobalSnackbarMessage message = ev.getContentIfNotHandled();
+            if (message != null) {
+                showGlobalSnackbarMessage(message);
+            }
+        });
+
+        // Observador global para los mensajes nacidos en StatsFragment.
+        // Mismo criterio: el render final del snackbar depende de la Activity visible.
+        GlobalStatsNotifier.getInstance().getMessageEvent().observe(this, ev -> {
+            if (ev == null || binding == null) return;
+
+            GlobalSnackbarMessage message = ev.getContentIfNotHandled();
+            if (message != null) {
+                showGlobalSnackbarMessage(message);
             }
         });
 
@@ -201,6 +226,32 @@ public class MainActivity extends AppCompatActivity {
         }
 
         handleLaunchIntent(getIntent());
+    }
+
+    /**
+     * Pinta un snackbar global sobre la raíz de la actividad activa.
+     *
+     * <p>La Activity es el punto de render común de la app, así que el mensaje no depende
+     * de que el fragment que lo originó siga visible en pantalla.</p>
+     */
+    private void showGlobalSnackbarMessage(@NonNull GlobalSnackbarMessage message) {
+        if (binding == null) return;
+
+        switch (message.type) {
+            case SUCCESS:
+                TopSnackbar.success(binding.getRoot(), message.message);
+                return;
+            case WARNING:
+                TopSnackbar.warning(binding.getRoot(), message.message);
+                return;
+            case ERROR:
+                if (message.actionLabel != null && message.action != null) {
+                    TopSnackbar.error(binding.getRoot(), message.message, message.actionLabel, message.action);
+                } else {
+                    TopSnackbar.error(binding.getRoot(), message.message);
+                }
+                return;
+        }
     }
 
     @Override

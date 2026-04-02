@@ -1,4 +1,5 @@
 
+
 package com.proyecto.moveon.ui.profile;
 
 import android.net.Uri;
@@ -22,6 +23,7 @@ import com.bumptech.glide.signature.ObjectKey;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
+import com.proyecto.moveon.core.profile.GlobalProfileNotifier;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
 import com.proyecto.moveon.core.settings.AppSettingsManager;
@@ -35,7 +37,6 @@ import com.proyecto.moveon.databinding.FragmentProfileBinding;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
 import com.proyecto.moveon.ui.auth.LoginActivity;
 import com.proyecto.moveon.ui.auth.SocialAuthManager;
-import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
 
@@ -542,28 +543,45 @@ public class ProfileFragment extends Fragment {
 
     // ── Feedback helpers ──────────────────────────────────────────────────────
 
+    /**
+     * Reenvía un éxito del perfil al canal global de MainActivity.
+     *
+     * <p>Antes el mensaje se anclaba al root del fragment y podía quedar oculto si el usuario
+     * cambiaba inmediatamente a otra pestaña.</p>
+     */
     private void showSuccessFeedback(@NonNull CharSequence message) {
-        if (binding == null) return;
-        TopSnackbar.success(binding.getRoot(), message);
+        GlobalProfileNotifier.getInstance().notifySuccess(message);
     }
 
+    /**
+     * Reenvía un aviso del perfil al canal global de MainActivity.
+     */
     private void showWarningFeedback(@NonNull CharSequence message) {
-        if (binding == null) return;
-        TopSnackbar.warning(binding.getRoot(), message);
+        GlobalProfileNotifier.getInstance().notifyWarning(message);
     }
 
+    /**
+     * Reenvía un error simple del perfil al canal global de MainActivity.
+     */
     private void showErrorFeedback(@NonNull CharSequence message) {
-        if (binding == null) return;
-        TopSnackbar.error(binding.getRoot(), message);
+        GlobalProfileNotifier.getInstance().notifyError(message);
     }
 
+    /**
+     * Reenvía un error de API al canal global del perfil.
+     *
+     * <p>Cuando el error es recuperable se conserva también la acción de reintento para que el
+     * snackbar global siga ofreciendo el mismo comportamiento que tenía el snackbar local.</p>
+     */
     private void showApiError(@NonNull ApiError error, @Nullable Runnable retryAction) {
-        if (binding == null) return;
         if (retryAction != null && isRetryable(error)) {
-            TopSnackbar.error(binding.getRoot(), error.getMessage(),
-                    getString(R.string.stats_btn_retry), retryAction);
+            GlobalProfileNotifier.getInstance().notifyError(
+                    error.getMessage(),
+                    getString(R.string.stats_btn_retry),
+                    retryAction
+            );
         } else {
-            TopSnackbar.error(binding.getRoot(), error.getMessage());
+            GlobalProfileNotifier.getInstance().notifyError(error.getMessage());
         }
     }
 

@@ -6,7 +6,9 @@ import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.proyecto.moveon.R;
 import com.proyecto.moveon.app.ServiceLocator;
+import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.sync.GlobalSyncNotifier;
 import com.proyecto.moveon.data.profile.PerfilRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
@@ -45,7 +47,11 @@ public class SyncPerfilWorker extends Worker {
 
         // Solo mostramos el aviso cuando realmente se vació una cola pendiente de perfil.
         if (!syncResult.shouldRetry && syncResult.completedPendingWork) {
-            GlobalSyncNotifier.getInstance().notifySyncCompleted();
+            // El texto se resuelve aquí para mantener el mismo contrato homogéneo del resto
+            // de notifiers globales: todos transportan un GlobalSnackbarMessage listo para pintar.
+            GlobalSyncNotifier.getInstance().notifySyncCompleted(
+                    AppLanguageManager.getString(getApplicationContext(), R.string.sync_completed)
+            );
         }
 
         return syncResult.shouldRetry ? Result.retry() : Result.success();

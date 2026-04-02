@@ -200,6 +200,7 @@ dependencies {
 
     // Persistencia local / Sincronización offline-first y Trabajo en Background
     implementation(libs.room.runtime)
+    testImplementation(libs.core.testing)
     annotationProcessor(libs.room.compiler)
     implementation(libs.work.runtime)
 

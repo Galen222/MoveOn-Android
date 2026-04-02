@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.stats;
 
 import android.content.Context;
@@ -22,11 +23,11 @@ import com.google.android.material.slider.Slider;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
+import com.proyecto.moveon.core.stats.GlobalStatsNotifier;
 import com.proyecto.moveon.databinding.FragmentStatsBinding;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 import com.proyecto.moveon.domain.activity.StatsCalculator;
 import com.proyecto.moveon.domain.activity.StatsResumen;
-import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.ui.profile.ShareRouteFormatter;
 import com.proyecto.moveon.ui.profile.ShareRouteImageGenerator;
 import com.proyecto.moveon.ui.profile.ShareRoutePreviewBottomSheet;
@@ -107,9 +108,11 @@ public class StatsFragment extends Fragment {
             var state = event.getContentIfNotHandled();
             if (state == null) return;
             if (state.data != null) {
-                TopSnackbar.success(binding.getRoot(), getString(R.string.stats_delete_ok));
+                GlobalStatsNotifier.getInstance().notifySuccess(
+                        getString(R.string.stats_delete_ok));
             } else if (state.error != null) {
-                TopSnackbar.error(binding.getRoot(), state.error.getMessage());
+                GlobalStatsNotifier.getInstance().notifyError(
+                        state.error.getMessage());
             }
         });
     }
@@ -410,7 +413,8 @@ public class StatsFragment extends Fragment {
 
     private void onDeleteClick(@NonNull ActividadItem item) {
         if (item.isPendingSync()) {
-            TopSnackbar.warning(binding.getRoot(), getString(R.string.stats_delete_no_sync));
+            GlobalStatsNotifier.getInstance().notifyWarning(
+                    getString(R.string.stats_delete_no_sync));
             return;
         }
         new MaterialAlertDialogBuilder(requireContext())
@@ -447,7 +451,7 @@ public class StatsFragment extends Fragment {
                     isSharingInProgress = false;
                     if (binding == null || !isAdded()) return;
                     if (getChildFragmentManager().isStateSaved()) {
-                        TopSnackbar.error(binding.getRoot(),
+                        GlobalStatsNotifier.getInstance().notifyError(
                                 getString(R.string.share_routes_error_opening_preview));
                         return;
                     }
@@ -477,7 +481,7 @@ public class StatsFragment extends Fragment {
         activity.runOnUiThread(() -> {
             isSharingInProgress = false;
             if (binding != null) {
-                TopSnackbar.error(binding.getRoot(), getString(messageRes));
+                GlobalStatsNotifier.getInstance().notifyError(getString(messageRes));
             }
         });
     }
