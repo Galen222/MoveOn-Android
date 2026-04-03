@@ -13,6 +13,7 @@ import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import com.proyecto.moveon.BuildConfig;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.api.ApiError;
@@ -20,6 +21,7 @@ import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
 import com.proyecto.moveon.data.activities.dto.ActividadResponseDto;
+import com.proyecto.moveon.data.activities.dto.ActivityDiagnosticsRequestDto;
 import com.proyecto.moveon.data.activities.dto.BorrarActividadResponseDto;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadRequestDto;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadResponseDto;
@@ -36,6 +38,8 @@ import com.proyecto.moveon.utils.StringUtils;
 import com.proyecto.moveon.workers.SyncActividadesWorker;
 
 import java.time.OffsetDateTime;
+
+import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -66,6 +70,7 @@ public final class ActivityRepository {
     }
 
     private static final String ENDPOINT_PERFIL_INFO = "perfil/informacion";
+    private static final String ENDPOINT_ACTIVITY_DIAGNOSTICS = "actividad/diagnostico";
 
     private final Context appContext;
     private final SecureSessionManager sessionManager;
@@ -160,6 +165,28 @@ public final class ActivityRepository {
 
             callback.onResult(ApiResult.success(dto));
         });
+    }
+
+
+    /**
+     * Envía al backend un bloque automático de diagnóstico de tracking.
+     *
+     * <p>Es un flujo best-effort para builds internas: nunca debe romper el guardado
+     * normal de la actividad ni mostrar errores al usuario final.</p>
+     */
+    public void guardarActividadDiagnostico(@NonNull ActivityDiagnosticsRequestDto request) {
+        if (!BuildConfig.ACTIVITY_DIAGNOSTICS_ENABLED) {
+            return;
+        }
+
+        apiClient.postJson(
+                ENDPOINT_ACTIVITY_DIAGNOSTICS,
+                new com.google.gson.Gson().toJsonTree(request),
+                json -> new JsonObject(),
+                result -> {
+                    // Flujo deliberadamente silencioso. El diagnóstico no debe alterar la UX.
+                }
+        );
     }
 
     public void obtenerPerfil(@NonNull Callback<ProfileInfoDto> callback) {

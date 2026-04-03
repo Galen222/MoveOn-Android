@@ -6,6 +6,7 @@ import androidx.annotation.Nullable;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -68,6 +69,15 @@ public final class TrackingState {
     private final int suspiciousSpeedEventCount;
     @NonNull private final List<LatLng> routePoints;
     @Nullable private final String encodedPolyline;
+    private final long runningClassifiedSeconds;
+    private final long walkingClassifiedSeconds;
+    private final long sessionStartedAtEpochMs;
+    private final long sessionFinishedAtEpochMs;
+    private final long lastTimerTickAtEpochMs;
+    private final long serviceCreatedAtEpochMs;
+    private final long serviceDestroyedAtEpochMs;
+    private final int serviceRestartCount;
+    @NonNull private final List<DiagnosticEvent> diagnosticEvents;
 
     private TrackingState(
             @NonNull Status status,
@@ -88,7 +98,16 @@ public final class TrackingState {
             int manualPauseCount,
             int suspiciousSpeedEventCount,
             @NonNull List<LatLng> routePoints,
-            @Nullable String encodedPolyline) {
+            @Nullable String encodedPolyline,
+            long runningClassifiedSeconds,
+            long walkingClassifiedSeconds,
+            long sessionStartedAtEpochMs,
+            long sessionFinishedAtEpochMs,
+            long lastTimerTickAtEpochMs,
+            long serviceCreatedAtEpochMs,
+            long serviceDestroyedAtEpochMs,
+            int serviceRestartCount,
+            @NonNull List<DiagnosticEvent> diagnosticEvents) {
         this.status = status;
         this.pauseReason = pauseReason;
         this.activityType = activityType;
@@ -108,6 +127,15 @@ public final class TrackingState {
         this.suspiciousSpeedEventCount = suspiciousSpeedEventCount;
         this.routePoints = Collections.unmodifiableList(routePoints);
         this.encodedPolyline = encodedPolyline;
+        this.runningClassifiedSeconds = runningClassifiedSeconds;
+        this.walkingClassifiedSeconds = walkingClassifiedSeconds;
+        this.sessionStartedAtEpochMs = sessionStartedAtEpochMs;
+        this.sessionFinishedAtEpochMs = sessionFinishedAtEpochMs;
+        this.lastTimerTickAtEpochMs = lastTimerTickAtEpochMs;
+        this.serviceCreatedAtEpochMs = serviceCreatedAtEpochMs;
+        this.serviceDestroyedAtEpochMs = serviceDestroyedAtEpochMs;
+        this.serviceRestartCount = serviceRestartCount;
+        this.diagnosticEvents = Collections.unmodifiableList(new ArrayList<>(diagnosticEvents));
     }
 
     @NonNull
@@ -134,6 +162,15 @@ public final class TrackingState {
     public int getSuspiciousSpeedEventCount() { return suspiciousSpeedEventCount; }
     @NonNull public List<LatLng> getRoutePoints() { return routePoints; }
     @Nullable public String getEncodedPolyline() { return encodedPolyline; }
+    public long getRunningClassifiedSeconds() { return runningClassifiedSeconds; }
+    public long getWalkingClassifiedSeconds() { return walkingClassifiedSeconds; }
+    public long getSessionStartedAtEpochMs() { return sessionStartedAtEpochMs; }
+    public long getSessionFinishedAtEpochMs() { return sessionFinishedAtEpochMs; }
+    public long getLastTimerTickAtEpochMs() { return lastTimerTickAtEpochMs; }
+    public long getServiceCreatedAtEpochMs() { return serviceCreatedAtEpochMs; }
+    public long getServiceDestroyedAtEpochMs() { return serviceDestroyedAtEpochMs; }
+    public int getServiceRestartCount() { return serviceRestartCount; }
+    @NonNull public List<DiagnosticEvent> getDiagnosticEvents() { return diagnosticEvents; }
 
     public boolean isIdle() { return status == Status.IDLE; }
     public boolean isRunning() { return status == Status.RUNNING; }
@@ -174,6 +211,15 @@ public final class TrackingState {
         private int suspiciousSpeedEventCount = 0;
         @NonNull private List<LatLng> routePoints = Collections.emptyList();
         @Nullable private String encodedPolyline = null;
+        private long runningClassifiedSeconds = 0L;
+        private long walkingClassifiedSeconds = 0L;
+        private long sessionStartedAtEpochMs = 0L;
+        private long sessionFinishedAtEpochMs = 0L;
+        private long lastTimerTickAtEpochMs = 0L;
+        private long serviceCreatedAtEpochMs = 0L;
+        private long serviceDestroyedAtEpochMs = 0L;
+        private int serviceRestartCount = 0;
+        @NonNull private List<DiagnosticEvent> diagnosticEvents = Collections.emptyList();
 
         public Builder() {
         }
@@ -198,6 +244,15 @@ public final class TrackingState {
             suspiciousSpeedEventCount = source.suspiciousSpeedEventCount;
             routePoints = source.routePoints;
             encodedPolyline = source.encodedPolyline;
+            runningClassifiedSeconds = source.runningClassifiedSeconds;
+            walkingClassifiedSeconds = source.walkingClassifiedSeconds;
+            sessionStartedAtEpochMs = source.sessionStartedAtEpochMs;
+            sessionFinishedAtEpochMs = source.sessionFinishedAtEpochMs;
+            lastTimerTickAtEpochMs = source.lastTimerTickAtEpochMs;
+            serviceCreatedAtEpochMs = source.serviceCreatedAtEpochMs;
+            serviceDestroyedAtEpochMs = source.serviceDestroyedAtEpochMs;
+            serviceRestartCount = source.serviceRestartCount;
+            diagnosticEvents = source.diagnosticEvents;
         }
 
         public Builder status(@NonNull Status value) { this.status = value; return this; }
@@ -219,6 +274,15 @@ public final class TrackingState {
         public Builder suspiciousSpeedEventCount(int value) { this.suspiciousSpeedEventCount = value; return this; }
         public Builder routePoints(@NonNull List<LatLng> value) { this.routePoints = value; return this; }
         public Builder encodedPolyline(@Nullable String value) { this.encodedPolyline = value; return this; }
+        public Builder runningClassifiedSeconds(long value) { this.runningClassifiedSeconds = value; return this; }
+        public Builder walkingClassifiedSeconds(long value) { this.walkingClassifiedSeconds = value; return this; }
+        public Builder sessionStartedAtEpochMs(long value) { this.sessionStartedAtEpochMs = value; return this; }
+        public Builder sessionFinishedAtEpochMs(long value) { this.sessionFinishedAtEpochMs = value; return this; }
+        public Builder lastTimerTickAtEpochMs(long value) { this.lastTimerTickAtEpochMs = value; return this; }
+        public Builder serviceCreatedAtEpochMs(long value) { this.serviceCreatedAtEpochMs = value; return this; }
+        public Builder serviceDestroyedAtEpochMs(long value) { this.serviceDestroyedAtEpochMs = value; return this; }
+        public Builder serviceRestartCount(int value) { this.serviceRestartCount = value; return this; }
+        public Builder diagnosticEvents(@NonNull List<DiagnosticEvent> value) { this.diagnosticEvents = value; return this; }
 
         @NonNull
         public TrackingState build() {
@@ -241,8 +305,39 @@ public final class TrackingState {
                     manualPauseCount,
                     suspiciousSpeedEventCount,
                     routePoints,
-                    encodedPolyline
+                    encodedPolyline,
+                    runningClassifiedSeconds,
+                    walkingClassifiedSeconds,
+                    sessionStartedAtEpochMs,
+                    sessionFinishedAtEpochMs,
+                    lastTimerTickAtEpochMs,
+                    serviceCreatedAtEpochMs,
+                    serviceDestroyedAtEpochMs,
+                    serviceRestartCount,
+                    diagnosticEvents
             );
         }
+    }
+
+    /**
+     * Evento inmutable de diagnóstico de tracking.
+     *
+     * <p>Se usa para reconstruir qué ocurrió en sesiones problemáticas
+     * probadas por testers remotos sin acceso físico al dispositivo.</p>
+     */
+    public static final class DiagnosticEvent {
+        private final long atEpochMs;
+        @NonNull private final String type;
+        @Nullable private final String detail;
+
+        public DiagnosticEvent(long atEpochMs, @NonNull String type, @Nullable String detail) {
+            this.atEpochMs = atEpochMs;
+            this.type = type;
+            this.detail = detail;
+        }
+
+        public long getAtEpochMs() { return atEpochMs; }
+        @NonNull public String getType() { return type; }
+        @Nullable public String getDetail() { return detail; }
     }
 }

@@ -106,6 +106,12 @@ val appSessionCacheTtlMs = localProp("APP_SESSION_CACHE_TTL_MS", "240000").trim(
 val mapsApiKey = localProp("MAPS_API_KEY", "")
 val googleWebClientId = localProp("GOOGLE_WEB_CLIENT_ID", "").trim()
 
+/**
+ * Activa el envío automático de diagnósticos de tracking al backend
+ * al finalizar actividades de builds internas.
+ */
+val debugActivities = localProp("DEBUG_ACTIVITIES", "false").trim().equals("true", ignoreCase = true)
+
 android {
     namespace = "com.proyecto.moveon"
     compileSdk {
@@ -129,6 +135,7 @@ android {
         buildConfigField("String", "APP_ID", "\"$appId\"")
         buildConfigField("long", "APP_SESSION_CACHE_TTL_MS", "${appSessionCacheTtlMs}L")
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
+        buildConfigField("boolean", "ACTIVITY_DIAGNOSTICS_ENABLED", debugActivities.toString())
 
         // Inyecta claves necesarias en recursos/manifest.
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey

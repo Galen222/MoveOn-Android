@@ -15,3 +15,5 @@ MOVEON_PROD_BASE_URL=https://www.mibackend.com/
 MAPS_API_KEY=
 # OAuth Google (Sign in with Google)
 GOOGLE_WEB_CLIENT_ID=
+#Activa o desactiva envío de diagnotisco para las actividades
+DEBUG_ACTIVITIES=true

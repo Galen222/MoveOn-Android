@@ -13,12 +13,10 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.HttpUrl;
@@ -40,6 +38,8 @@ import okhttp3.ResponseBody;
  * </ol>
  */
 public class TokenAuthenticatorConcurrencyTest {
+
+    private static final MediaType JSON_MEDIA_TYPE = MediaType.get("application/json");
 
     @Test
     public void authenticate_twoConcurrent401s_performSingleRefreshAndReuseNewAccessToken()
@@ -122,7 +122,8 @@ public class TokenAuthenticatorConcurrencyTest {
                 .protocol(Protocol.HTTP_1_1)
                 .code(401)
                 .message("Unauthorized")
-                .body(ResponseBody.create(MediaType.parse("application/json"), "{}"))
+                // API no deprecada de OkHttp para construir un body de prueba.
+                .body(ResponseBody.create("{}", JSON_MEDIA_TYPE))
                 .build();
     }
 
@@ -193,7 +194,7 @@ public class TokenAuthenticatorConcurrencyTest {
     private static final class DelayedRefreshBackend implements SessionRefreshCoordinator.RefreshBackend {
         private final String nextAccessToken;
         private final String nextRefreshToken;
-        private final String username;
+        @Nullable private final String username;
         private final long delayMillis;
         private final AtomicInteger callCount = new AtomicInteger(0);
 
@@ -207,17 +208,19 @@ public class TokenAuthenticatorConcurrencyTest {
             this.delayMillis = delayMillis;
         }
 
-        @NonNull
         @Override
+        @NonNull
         public SessionRefreshCoordinator.BackendRefreshResult refresh(@NonNull String refreshToken)
                 throws IOException {
             callCount.incrementAndGet();
+
             try {
                 Thread.sleep(delayMillis);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new IOException("Interrupted while simulating refresh backend", e);
+                throw new IOException("Interrupted while simulating refresh", e);
             }
+
             return SessionRefreshCoordinator.BackendRefreshResult.success(
                     nextAccessToken,
                     nextRefreshToken,

@@ -11,17 +11,20 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 
 import com.google.maps.android.PolyUtil;
+import com.proyecto.moveon.BuildConfig;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.app.ServiceLocator;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
 import com.proyecto.moveon.data.activities.ActivityRepository;
+import com.proyecto.moveon.data.activities.dto.ActivityDiagnosticsRequestDto;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadRequestDto;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadResponseDto;
 import com.proyecto.moveon.data.profile.dto.ProfileInfoDto;
 import com.proyecto.moveon.ui.common.Event;
 import com.proyecto.moveon.ui.common.UiState;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -206,14 +209,7 @@ public final class TrackingViewModel extends AndroidViewModel {
     private void guardarActividad(@NonNull TrackingState state) {
         saveState.setValue(UiState.loading());
 
-        String activityTypeLabel = (state.getActivityType() == TrackingState.ActivityType.RUNNING_ACTIVITY)
-                ? AppLanguageManager.getString(getApplication(), R.string.activity_type_run)
-                : AppLanguageManager.getString(getApplication(), R.string.activity_type_walk);
-
-        String tipo = ProfileValueLocalizer.canonicalActivityTypeFromLabel(getApplication(), activityTypeLabel);
-        if (tipo == null) {
-            tipo = "Caminar";
-        }
+        String tipo = resolvePredominantActivityType(state);
 
         String encodedPolyline = state.getEncodedPolyline();
         if (encodedPolyline == null && !state.getRoutePoints().isEmpty()) {
@@ -263,6 +259,7 @@ public final class TrackingViewModel extends AndroidViewModel {
         repository.guardarActividad(request, result -> {
             if (result.isSuccess()) {
                 saveState.postValue(UiState.success(result.data));
+                sendDiagnosticsIfEnabled(state, result.data);
             } else {
                 String message = result.error != null
                         ? result.error.getMessage()
@@ -297,6 +294,98 @@ public final class TrackingViewModel extends AndroidViewModel {
         int minutes = Integer.parseInt(matcher.group(1));
         int seconds = Integer.parseInt(matcher.group(2));
         return (minutes * 60) + seconds;
+    }
+
+
+    /**
+     * Resuelve el tipo final de actividad usando predominio temporal de la sesión.
+     *
+     * <p>Se considera carrera si al menos el 60% del tiempo clasificado fue running.
+     * Así evitamos que la sesión completa quede marcada como caminar solo porque el
+     * usuario aflojó o caminó en los últimos segundos antes de guardar.</p>
+     */
+    @NonNull
+    private String resolvePredominantActivityType(@NonNull TrackingState state) {
+        long runningSeconds = state.getRunningClassifiedSeconds();
+        long walkingSeconds = state.getWalkingClassifiedSeconds();
+        long classifiedSeconds = runningSeconds + walkingSeconds;
+
+        boolean isRunning = classifiedSeconds > 0L
+                && (runningSeconds * 100L) >= (classifiedSeconds * 60L);
+
+        String activityTypeLabel = isRunning
+                ? AppLanguageManager.getString(getApplication(), R.string.activity_type_run)
+                : AppLanguageManager.getString(getApplication(), R.string.activity_type_walk);
+
+        String tipo = ProfileValueLocalizer.canonicalActivityTypeFromLabel(getApplication(), activityTypeLabel);
+        return tipo != null ? tipo : (isRunning ? "Correr" : "Caminar");
+    }
+
+    /**
+     * Envía el bloque de diagnóstico al backend solo en builds internas.
+     */
+    private void sendDiagnosticsIfEnabled(@NonNull TrackingState state,
+                                          @Nullable GuardarActividadResponseDto response) {
+        if (!BuildConfig.ACTIVITY_DIAGNOSTICS_ENABLED) {
+            return;
+        }
+
+        ActivityDiagnosticsRequestDto request = new ActivityDiagnosticsRequestDto();
+        if (response != null && response.id > 0) {
+            request.actividadId = response.id;
+        }
+        request.actividadLocalId = buildSyntheticLocalSessionId(state);
+        request.sessionStartedAt = toIsoOrNull(state.getSessionStartedAtEpochMs());
+        request.sessionFinishedAt = toIsoOrNull(state.getSessionFinishedAtEpochMs());
+        request.lastTimerTickAt = toIsoOrNull(state.getLastTimerTickAtEpochMs());
+        request.serviceCreatedAt = toIsoOrNull(state.getServiceCreatedAtEpochMs());
+        request.serviceDestroyedAt = toIsoOrNull(state.getServiceDestroyedAtEpochMs());
+        request.elapsedSeconds = safeToInt(state.getElapsedSeconds());
+        request.movingSeconds = safeToInt(state.getMovingSeconds());
+        request.stoppedSeconds = safeToInt(state.getStoppedSeconds());
+        request.manualPauseSeconds = safeToInt(state.getManualPausedSeconds());
+        request.distanceMeters = state.getDistanceMeters();
+        request.averagePaceTotal = calculatePaceSecondsPerKm(state.getElapsedSeconds(), state.getDistanceMeters());
+        request.averagePaceMoving = calculatePaceSecondsPerKm(state.getMovingSeconds(), state.getDistanceMeters());
+        request.maxPace = parsePaceTextToSecondsPerKm(state.getMaxPace());
+        request.autoPauses = state.getAutoPauseCount();
+        request.manualPauses = state.getManualPauseCount();
+        request.speedAlerts = state.getSuspiciousSpeedEventCount();
+        request.runningClassifiedSeconds = safeToInt(state.getRunningClassifiedSeconds());
+        request.walkingClassifiedSeconds = safeToInt(state.getWalkingClassifiedSeconds());
+        request.serviceRestartCount = state.getServiceRestartCount();
+        request.currentStatus = state.getStatus().name();
+        request.appVersion = BuildConfig.VERSION_NAME;
+        request.osVersion = android.os.Build.VERSION.RELEASE;
+        request.manufacturer = android.os.Build.MANUFACTURER;
+        request.model = android.os.Build.MODEL;
+
+        for (TrackingState.DiagnosticEvent event : state.getDiagnosticEvents()) {
+            ActivityDiagnosticsRequestDto.EventItem item = new ActivityDiagnosticsRequestDto.EventItem();
+            item.at = toIsoOrNull(event.getAtEpochMs());
+            item.tipo = event.getType();
+            item.detalle = event.getDetail();
+            request.eventLog.add(item);
+        }
+
+        repository.guardarActividadDiagnostico(request);
+    }
+
+    @Nullable
+    private String toIsoOrNull(long epochMs) {
+        if (epochMs <= 0L) {
+            return null;
+        }
+        return Instant.ofEpochMilli(epochMs).atOffset(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    }
+
+    @NonNull
+    private String buildSyntheticLocalSessionId(@NonNull TrackingState state) {
+        long seed = state.getSessionStartedAtEpochMs() > 0L
+                ? state.getSessionStartedAtEpochMs()
+                : System.currentTimeMillis();
+        return "tracking_" + seed;
     }
 
     private int calculateAverageSpeedKmhX100(int distanceMeters, long movingSeconds) {

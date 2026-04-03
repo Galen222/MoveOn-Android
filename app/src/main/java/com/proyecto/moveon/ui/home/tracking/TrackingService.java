@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
+import android.os.Build;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -39,12 +40,14 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.maps.android.PolyUtil;
+import com.proyecto.moveon.BuildConfig;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.ui.main.MainActivity;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -135,15 +138,15 @@ public final class TrackingService extends Service implements SensorEventListene
 
     private static final float MAX_HUMAN_SPEED_MS = 5.556f; // 20 km/h
     private static final int SPEED_ALERT_CONSECUTIVE = 3;
-    private static final int AUTO_PAUSE_STATIONARY_CONSECUTIVE = 2;
+    private static final int AUTO_PAUSE_STATIONARY_CONSECUTIVE = 4;
     private static final int AUTO_RESUME_MOVING_CONSECUTIVE = 2;
     private static final float MOVING_SPEED_THRESHOLD_MS = 0.90f;
     private static final float STATIONARY_SPEED_THRESHOLD_MS = 0.40f;
     private static final float MIN_VALID_DISTANCE_M = 4.0f;
     private static final float MAX_VALID_ACCURACY_FOR_SPEED_ALERT_M = 15f;
     private static final int SPEED_WINDOW_SIZE = 5;
-    private static final long STOPPED_GRACE_PERIOD_MS = 5_000L;
-    private static final long AUTO_PAUSE_INACTIVITY_MS = 8_000L;
+    private static final long STOPPED_GRACE_PERIOD_MS = 8_000L;
+    private static final long AUTO_PAUSE_INACTIVITY_MS = 15_000L;
     private static final float MOTION_EVIDENCE_DELTA_G = 0.08f;
     private static final long RECENT_MOTION_EVIDENCE_MS = 6_000L;
 
@@ -251,16 +254,28 @@ public final class TrackingService extends Service implements SensorEventListene
     @Nullable private Location lastObservedLocation = null;
     private long lastObservedRealtimeMs = 0L;
     private long manualPauseStartedRealtimeMs = 0L;
+    private long manualPausedAccumulatedMs = 0L;
     private long sessionStartedRealtimeMs = 0L;
+    private long sessionFinishedRealtimeMs = 0L;
     private long lastMovementRealtimeMs = 0L;
     private long lastMotionEvidenceRealtimeMs = 0L;
     private long activityTypeDowngradeGraceDeadlineRealtimeMs = 0L;
     private boolean currentMovementSample = false;
+    private long runningClassifiedSeconds = 0L;
+    private long walkingClassifiedSeconds = 0L;
+    private long sessionStartedAtEpochMs = 0L;
+    private long sessionFinishedAtEpochMs = 0L;
+    private long lastTimerTickAtEpochMs = 0L;
+    private long serviceCreatedAtEpochMs = 0L;
+    private long serviceDestroyedAtEpochMs = 0L;
+    private int serviceRestartCount = 0;
+    private final List<TrackingState.DiagnosticEvent> diagnosticEvents = new ArrayList<>();
 
     private final ArrayDeque<Float> recentMovingSpeeds = new ArrayDeque<>();
     private final List<LatLng> routePoints = new ArrayList<>();
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final TrackingSessionStore sessionStore = new TrackingSessionStore(this);
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     @Nullable private ScheduledFuture<?> timerFuture = null;
 
@@ -296,12 +311,15 @@ public final class TrackingService extends Service implements SensorEventListene
     @Override
     public void onCreate() {
         super.onCreate();
+        serviceCreatedAtEpochMs = System.currentTimeMillis();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         if (sensorManager != null) {
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         }
         createNotificationChannel();
+        logDiagnosticEvent("SERVICE_CREATED", null);
+        restoreSessionIfPossible();
     }
 
     @Override
@@ -344,6 +362,9 @@ public final class TrackingService extends Service implements SensorEventListene
 
     @Override
     public void onDestroy() {
+        serviceDestroyedAtEpochMs = System.currentTimeMillis();
+        logDiagnosticEvent("SERVICE_DESTROYED", null);
+        persistSessionSnapshot();
         stopTrackingInternal();
         try {
             scheduler.shutdownNow();
@@ -377,7 +398,9 @@ public final class TrackingService extends Service implements SensorEventListene
             gpsWalkingConfirmCount = 0;
             recentMovingSpeeds.clear();
             armActivityTypeDowngradeGracePeriod();
-            publishState();
+            persistSessionSnapshot();
+            persistSessionSnapshot();
+        publishState();
             updateNotification();
             return;
         }
@@ -396,8 +419,9 @@ public final class TrackingService extends Service implements SensorEventListene
 
         long nowRealtime = SystemClock.elapsedRealtime();
         if (sessionStartedRealtimeMs <= 0L) {
-            // Marca el inicio de la sesión para dar un pequeño margen antes de contar parado.
+            // Marca el inicio real de la sesión para que el tiempo total se derive de timestamps absolutos.
             sessionStartedRealtimeMs = nowRealtime;
+            sessionStartedAtEpochMs = System.currentTimeMillis();
         }
         if (lastMovementRealtimeMs <= 0L) {
             // Evita clasificar como parado el mismo segundo en que se pulsa iniciar.
@@ -440,10 +464,12 @@ public final class TrackingService extends Service implements SensorEventListene
         gpsWalkingConfirmCount = 0;
         manualPauseCount++;
         manualPauseStartedRealtimeMs = SystemClock.elapsedRealtime();
+        logDiagnosticEvent("MANUAL_PAUSE", null);
 
         stopTimer();
         stopLocationUpdates();
         stopAccelerometer();
+        persistSessionSnapshot();
         publishState();
         updateNotification();
     }
@@ -461,10 +487,15 @@ public final class TrackingService extends Service implements SensorEventListene
         }
 
         currentStatus = TrackingState.Status.FINISHED;
+        sessionFinishedRealtimeMs = SystemClock.elapsedRealtime();
+        sessionFinishedAtEpochMs = System.currentTimeMillis();
+        elapsedSeconds = computeElapsedSecondsNow();
+        logDiagnosticEvent("TRACKING_FINISHED", null);
         currentPauseReason = TrackingState.PauseReason.NONE;
         currentMovementSample = false;
 
         stopTrackingInternal();
+        persistSessionSnapshot();
         publishState();
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
@@ -479,7 +510,9 @@ public final class TrackingService extends Service implements SensorEventListene
         }
 
         stopTrackingInternal();
+        logDiagnosticEvent("TRACKING_RESET", null);
         resetInternalState();
+        sessionStore.clear();
         currentStatus = TrackingState.Status.IDLE;
         currentPauseReason = TrackingState.PauseReason.NONE;
         publishState();
@@ -891,6 +924,8 @@ public final class TrackingService extends Service implements SensorEventListene
                 + " stationary=" + consecutiveStationarySamples
                 + " avgSpeedMs=" + String.format(Locale.US, "%.2f", getAverageRecentMovingSpeedMs()));
 
+        logDiagnosticEvent("AUTO_PAUSE", pauseReason.name());
+        persistSessionSnapshot();
         trackingAlertLiveData.postValue(new TrackingAlert(alertType));
     }
 
@@ -1070,11 +1105,18 @@ public final class TrackingService extends Service implements SensorEventListene
                 return;
             }
 
-            elapsedSeconds++;
+            lastTimerTickAtEpochMs = System.currentTimeMillis();
+            elapsedSeconds = computeElapsedSecondsNow();
 
             if (currentStatus == TrackingState.Status.RUNNING) {
                 long nowRealtime = SystemClock.elapsedRealtime();
                 long inactivityMs = computeInactivityMs(nowRealtime);
+
+                if (activityType == TrackingState.ActivityType.RUNNING_ACTIVITY) {
+                    runningClassifiedSeconds++;
+                } else {
+                    walkingClassifiedSeconds++;
+                }
 
                 boolean motionStillFresh = hasRecentMotionEvidence(nowRealtime);
                 if (currentMovementSample && motionStillFresh) {
@@ -1097,6 +1139,7 @@ public final class TrackingService extends Service implements SensorEventListene
                 stoppedSeconds++;
             }
 
+            persistSessionSnapshot();
             publishState();
             updateNotification();
         }), 1L, 1L, TimeUnit.SECONDS);
@@ -1260,9 +1303,169 @@ public final class TrackingService extends Service implements SensorEventListene
                 .suspiciousSpeedEventCount(suspiciousSpeedEventCount)
                 .routePoints(new ArrayList<>(routePoints))
                 .encodedPolyline(encodedPolyline)
+                .runningClassifiedSeconds(runningClassifiedSeconds)
+                .walkingClassifiedSeconds(walkingClassifiedSeconds)
+                .sessionStartedAtEpochMs(sessionStartedAtEpochMs)
+                .sessionFinishedAtEpochMs(sessionFinishedAtEpochMs)
+                .lastTimerTickAtEpochMs(lastTimerTickAtEpochMs)
+                .serviceCreatedAtEpochMs(serviceCreatedAtEpochMs)
+                .serviceDestroyedAtEpochMs(serviceDestroyedAtEpochMs)
+                .serviceRestartCount(serviceRestartCount)
+                .diagnosticEvents(new ArrayList<>(diagnosticEvents))
                 .build();
 
         stateLiveData.postValue(state);
+    }
+
+
+    /**
+     * Calcula el tiempo total real a partir de timestamps absolutos de la sesión.
+     *
+     * <p>Ya no dependemos de un simple {@code elapsedSeconds++} en memoria como fuente
+     * única de verdad, porque eso pierde tiempo real si el proceso muere y luego el
+     * servicio se recrea.</p>
+     */
+    private long computeElapsedSecondsNow() {
+        if (sessionStartedRealtimeMs <= 0L) {
+            return 0L;
+        }
+
+        long referenceRealtimeMs = sessionFinishedRealtimeMs > 0L
+                ? sessionFinishedRealtimeMs
+                : SystemClock.elapsedRealtime();
+
+        long pausedMs = manualPausedAccumulatedMs;
+        if (currentStatus == TrackingState.Status.PAUSED && manualPauseStartedRealtimeMs > 0L) {
+            pausedMs += Math.max(0L, referenceRealtimeMs - manualPauseStartedRealtimeMs);
+        }
+
+        long activeMs = Math.max(0L, referenceRealtimeMs - sessionStartedRealtimeMs - pausedMs);
+        return TimeUnit.MILLISECONDS.toSeconds(activeMs);
+    }
+
+    /**
+     * Registra un evento compacto de diagnóstico y limita su tamaño para no crecer sin control.
+     */
+    private void logDiagnosticEvent(@NonNull String type, @Nullable String detail) {
+        diagnosticEvents.add(new TrackingState.DiagnosticEvent(System.currentTimeMillis(), type, detail));
+        if (diagnosticEvents.size() > 200) {
+            diagnosticEvents.remove(0);
+        }
+    }
+
+    /**
+     * Persiste un snapshot mínimo de la sesión viva para restauración tras muerte del proceso.
+     */
+    private void persistSessionSnapshot() {
+        if (currentStatus == TrackingState.Status.IDLE) {
+            sessionStore.clear();
+            return;
+        }
+
+        TrackingSessionStore.Snapshot snapshot = new TrackingSessionStore.Snapshot();
+        snapshot.status = currentStatus.name();
+        snapshot.pauseReason = currentPauseReason.name();
+        snapshot.activityType = activityType.name();
+        snapshot.elapsedSeconds = elapsedSeconds;
+        snapshot.movingSeconds = movingSeconds;
+        snapshot.stoppedSeconds = stoppedSeconds;
+        snapshot.manualPausedSeconds = manualPausedSeconds;
+        snapshot.manualPausedAccumulatedMs = manualPausedAccumulatedMs;
+        snapshot.distanceMeters = distanceMeters;
+        snapshot.preciseDistanceMeters = preciseDistanceMeters;
+        snapshot.calories = calories;
+        snapshot.caloriesAccumulator = caloriesAccumulator;
+        snapshot.maxSpeedKmhX100 = maxSpeedKmhX100;
+        snapshot.autoPauseCount = autoPauseCount;
+        snapshot.manualPauseCount = manualPauseCount;
+        snapshot.suspiciousSpeedEventCount = suspiciousSpeedEventCount;
+        snapshot.runningClassifiedSeconds = runningClassifiedSeconds;
+        snapshot.walkingClassifiedSeconds = walkingClassifiedSeconds;
+        snapshot.sessionStartedRealtimeMs = sessionStartedRealtimeMs;
+        snapshot.sessionFinishedRealtimeMs = sessionFinishedRealtimeMs;
+        snapshot.manualPauseStartedRealtimeMs = manualPauseStartedRealtimeMs;
+        snapshot.lastMovementRealtimeMs = lastMovementRealtimeMs;
+        snapshot.lastMotionEvidenceRealtimeMs = lastMotionEvidenceRealtimeMs;
+        snapshot.activityTypeDowngradeGraceDeadlineRealtimeMs = activityTypeDowngradeGraceDeadlineRealtimeMs;
+        snapshot.sessionStartedAtEpochMs = sessionStartedAtEpochMs;
+        snapshot.sessionFinishedAtEpochMs = sessionFinishedAtEpochMs;
+        snapshot.lastTimerTickAtEpochMs = lastTimerTickAtEpochMs;
+        snapshot.serviceCreatedAtEpochMs = serviceCreatedAtEpochMs;
+        snapshot.serviceDestroyedAtEpochMs = serviceDestroyedAtEpochMs;
+        snapshot.serviceRestartCount = serviceRestartCount;
+        if (!routePoints.isEmpty()) {
+            snapshot.encodedPolyline = PolyUtil.encode(routePoints);
+        }
+        snapshot.diagnosticEvents = new ArrayList<>(diagnosticEvents);
+        sessionStore.save(snapshot);
+    }
+
+    /**
+     * Restaura una sesión previa si el proceso murió mientras el tracking seguía vivo.
+     */
+    private void restoreSessionIfPossible() {
+        TrackingSessionStore.Snapshot snapshot = sessionStore.restore();
+        if (snapshot == null || TrackingState.Status.IDLE.name().equals(snapshot.status)) {
+            return;
+        }
+
+        try {
+            currentStatus = TrackingState.Status.valueOf(snapshot.status);
+            currentPauseReason = TrackingState.PauseReason.valueOf(snapshot.pauseReason);
+            activityType = TrackingState.ActivityType.valueOf(snapshot.activityType);
+        } catch (Exception ignored) {
+            sessionStore.clear();
+            return;
+        }
+
+        elapsedSeconds = snapshot.elapsedSeconds;
+        movingSeconds = snapshot.movingSeconds;
+        stoppedSeconds = snapshot.stoppedSeconds;
+        manualPausedSeconds = snapshot.manualPausedSeconds;
+        manualPausedAccumulatedMs = snapshot.manualPausedAccumulatedMs;
+        distanceMeters = snapshot.distanceMeters;
+        preciseDistanceMeters = snapshot.preciseDistanceMeters;
+        calories = snapshot.calories;
+        caloriesAccumulator = snapshot.caloriesAccumulator;
+        maxSpeedKmhX100 = snapshot.maxSpeedKmhX100;
+        autoPauseCount = snapshot.autoPauseCount;
+        manualPauseCount = snapshot.manualPauseCount;
+        suspiciousSpeedEventCount = snapshot.suspiciousSpeedEventCount;
+        runningClassifiedSeconds = snapshot.runningClassifiedSeconds;
+        walkingClassifiedSeconds = snapshot.walkingClassifiedSeconds;
+        sessionStartedRealtimeMs = snapshot.sessionStartedRealtimeMs;
+        sessionFinishedRealtimeMs = snapshot.sessionFinishedRealtimeMs;
+        manualPauseStartedRealtimeMs = snapshot.manualPauseStartedRealtimeMs;
+        lastMovementRealtimeMs = snapshot.lastMovementRealtimeMs;
+        lastMotionEvidenceRealtimeMs = snapshot.lastMotionEvidenceRealtimeMs;
+        activityTypeDowngradeGraceDeadlineRealtimeMs = snapshot.activityTypeDowngradeGraceDeadlineRealtimeMs;
+        sessionStartedAtEpochMs = snapshot.sessionStartedAtEpochMs;
+        sessionFinishedAtEpochMs = snapshot.sessionFinishedAtEpochMs;
+        lastTimerTickAtEpochMs = snapshot.lastTimerTickAtEpochMs;
+        if (snapshot.serviceCreatedAtEpochMs > 0L) {
+            serviceCreatedAtEpochMs = snapshot.serviceCreatedAtEpochMs;
+        }
+        serviceDestroyedAtEpochMs = snapshot.serviceDestroyedAtEpochMs;
+        serviceRestartCount = snapshot.serviceRestartCount + 1;
+        diagnosticEvents.clear();
+        if (snapshot.diagnosticEvents != null) {
+            diagnosticEvents.addAll(snapshot.diagnosticEvents);
+        }
+        if (snapshot.encodedPolyline != null && !snapshot.encodedPolyline.isEmpty()) {
+            routePoints.clear();
+            routePoints.addAll(PolyUtil.decode(snapshot.encodedPolyline));
+        }
+
+        logDiagnosticEvent("SERVICE_RESTORED", null);
+
+        if (currentStatus == TrackingState.Status.RUNNING
+                || currentStatus == TrackingState.Status.AUTO_PAUSED) {
+            startLocationUpdates();
+            startAccelerometer();
+            startTimer();
+        }
+
+        publishState();
     }
 
     private void stopTrackingInternal() {
@@ -1290,7 +1493,17 @@ public final class TrackingService extends Service implements SensorEventListene
         maxPaceSecondsPerKm = Double.POSITIVE_INFINITY;
         currentMovementSample = false;
         manualPauseStartedRealtimeMs = 0L;
+        manualPausedAccumulatedMs = 0L;
         sessionStartedRealtimeMs = 0L;
+        sessionFinishedRealtimeMs = 0L;
+        sessionStartedAtEpochMs = 0L;
+        sessionFinishedAtEpochMs = 0L;
+        lastTimerTickAtEpochMs = 0L;
+        serviceDestroyedAtEpochMs = 0L;
+        runningClassifiedSeconds = 0L;
+        walkingClassifiedSeconds = 0L;
+        serviceRestartCount = 0;
+        diagnosticEvents.clear();
         lastMovementRealtimeMs = 0L;
         lastMotionEvidenceRealtimeMs = 0L;
         activityTypeDowngradeGraceDeadlineRealtimeMs = 0L;
