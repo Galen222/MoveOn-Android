@@ -29,6 +29,14 @@ public final class TrackingSessionStore {
     private final SharedPreferences prefs;
     private final Gson gson = new Gson();
 
+    /**
+     * Crea el store usando siempre el contexto de aplicación.
+     *
+     * <p>El servicio debe instanciar este store desde {@code onCreate()} o más tarde,
+     * nunca en un inicializador de campo del propio {@link android.app.Service}, porque
+     * durante la construcción temprana Android todavía puede no haber adjuntado el
+     * contexto base y {@code getApplicationContext()} sería nulo.</p>
+     */
     public TrackingSessionStore(@NonNull Context context) {
         prefs = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }

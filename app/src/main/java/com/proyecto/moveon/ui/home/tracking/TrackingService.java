@@ -275,7 +275,14 @@ public final class TrackingService extends Service implements SensorEventListene
     private final List<LatLng> routePoints = new ArrayList<>();
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private final TrackingSessionStore sessionStore = new TrackingSessionStore(this);
+    /**
+     * Persistencia ligera de la sesión viva.
+     *
+     * <p>Se inicializa en {@link #onCreate()} y no en el inicializador de campo para evitar
+     * crashes durante la construcción del servicio, cuando Android todavía no ha adjuntado
+     * completamente el {@link Context} base.</p>
+     */
+    @Nullable private TrackingSessionStore sessionStore;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     @Nullable private ScheduledFuture<?> timerFuture = null;
 
@@ -311,6 +318,7 @@ public final class TrackingService extends Service implements SensorEventListene
     @Override
     public void onCreate() {
         super.onCreate();
+        sessionStore = new TrackingSessionStore(getApplicationContext());
         serviceCreatedAtEpochMs = System.currentTimeMillis();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -398,9 +406,9 @@ public final class TrackingService extends Service implements SensorEventListene
             gpsWalkingConfirmCount = 0;
             recentMovingSpeeds.clear();
             armActivityTypeDowngradeGracePeriod();
+            elapsedSeconds = computeElapsedSecondsNow();
             persistSessionSnapshot();
-            persistSessionSnapshot();
-        publishState();
+            publishState();
             updateNotification();
             return;
         }
@@ -466,6 +474,8 @@ public final class TrackingService extends Service implements SensorEventListene
         manualPauseStartedRealtimeMs = SystemClock.elapsedRealtime();
         logDiagnosticEvent("MANUAL_PAUSE", null);
 
+        // Recalcula el total real justo en el instante de pausar para no depender del último tick.
+        elapsedSeconds = computeElapsedSecondsNow();
         stopTimer();
         stopLocationUpdates();
         stopAccelerometer();
@@ -512,7 +522,9 @@ public final class TrackingService extends Service implements SensorEventListene
         stopTrackingInternal();
         logDiagnosticEvent("TRACKING_RESET", null);
         resetInternalState();
-        sessionStore.clear();
+        if (sessionStore != null) {
+            sessionStore.clear();
+        }
         currentStatus = TrackingState.Status.IDLE;
         currentPauseReason = TrackingState.PauseReason.NONE;
         publishState();
@@ -1358,7 +1370,13 @@ public final class TrackingService extends Service implements SensorEventListene
      */
     private void persistSessionSnapshot() {
         if (currentStatus == TrackingState.Status.IDLE) {
+            if (sessionStore != null) {
             sessionStore.clear();
+        }
+            return;
+        }
+
+        if (sessionStore == null) {
             return;
         }
 
@@ -1404,6 +1422,10 @@ public final class TrackingService extends Service implements SensorEventListene
      * Restaura una sesión previa si el proceso murió mientras el tracking seguía vivo.
      */
     private void restoreSessionIfPossible() {
+        if (sessionStore == null) {
+            return;
+        }
+
         TrackingSessionStore.Snapshot snapshot = sessionStore.restore();
         if (snapshot == null || TrackingState.Status.IDLE.name().equals(snapshot.status)) {
             return;
@@ -1414,7 +1436,9 @@ public final class TrackingService extends Service implements SensorEventListene
             currentPauseReason = TrackingState.PauseReason.valueOf(snapshot.pauseReason);
             activityType = TrackingState.ActivityType.valueOf(snapshot.activityType);
         } catch (Exception ignored) {
+            if (sessionStore != null) {
             sessionStore.clear();
+        }
             return;
         }
 
@@ -1465,6 +1489,8 @@ public final class TrackingService extends Service implements SensorEventListene
             startTimer();
         }
 
+        // Publica ya el total reconstruido desde timestamps absolutos, sin esperar al siguiente tick.
+        elapsedSeconds = computeElapsedSecondsNow();
         publishState();
     }
 
