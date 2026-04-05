@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.home.tracking;
 
 import android.app.Notification;
@@ -145,10 +146,10 @@ public final class TrackingService extends Service implements SensorEventListene
     private static final float MIN_VALID_DISTANCE_M = 4.0f;
     private static final float MAX_VALID_ACCURACY_FOR_SPEED_ALERT_M = 15f;
     private static final int SPEED_WINDOW_SIZE = 5;
-    private static final long STOPPED_GRACE_PERIOD_MS = 8_000L;
-    private static final long AUTO_PAUSE_INACTIVITY_MS = 15_000L;
+    private static final long STOPPED_GRACE_PERIOD_MS = 12_000L;
+    private static final long AUTO_PAUSE_INACTIVITY_MS = 20_000L;
     private static final float MOTION_EVIDENCE_DELTA_G = 0.08f;
-    private static final long RECENT_MOTION_EVIDENCE_MS = 6_000L;
+    private static final long RECENT_MOTION_EVIDENCE_MS = 8_000L;
 
     /**
      * Factor aplicado a la precisión actual para decidir cuánto debe medir un salto GPS
@@ -158,6 +159,32 @@ public final class TrackingService extends Service implements SensorEventListene
      * mueve de verdad pero el GPS tiene una precisión solo aceptable.</p>
      */
     private static final float MIN_MOVING_DISTANCE_ACCURACY_FACTOR = 0.35f;
+
+    /**
+     * Precisión máxima admitida para acumular distancia sobre la ruta.
+     *
+     * <p>El punto puede seguir sirviendo para estado o clasificación, pero no suma metros
+     * si la precisión es peor que este umbral porque ahí es donde suelen aparecer los
+     * saltos fantasma que inflan distancia frente al reloj.</p>
+     */
+    private static final float MAX_VALID_ACCURACY_FOR_DISTANCE_ACCUMULATION_M = 12.0f;
+
+    /**
+     * Umbral más estricto para sumar distancia que el usado para detectar movimiento.
+     *
+     * <p>La actividad puede seguir marcada como en movimiento con GPS aceptable, pero para
+     * añadir metros a la ruta exigimos un salto más claramente superior al error GPS.</p>
+     */
+    private static final float DISTANCE_ACCUMULATION_ACCURACY_FACTOR = 0.60f;
+
+    /**
+     * Confirmaciones mínimas consecutivas para empezar a acumular distancia.
+     *
+     * <p>Con esto evitamos contar un único salto aislado que parezca válido pero sea ruido.
+     * Cuando llega la segunda muestra consistente, se suma toda la distancia acumulada desde
+     * el último punto aceptado, así que no se pierden los metros legítimos entre ambas.</p>
+     */
+    private static final int DISTANCE_ACCUMULATION_CONFIRMATION_SAMPLES = 2;
 
     /**
      * Fallback por velocidad GPS para detectar carrera aunque el acelerómetro no rebote
@@ -184,7 +211,7 @@ public final class TrackingService extends Service implements SensorEventListene
     /**
      * Número mínimo de muestras recientes necesarias para consolidar un ritmo máximo útil.
      */
-    private static final int MAX_PACE_MIN_SAMPLE_COUNT = 3;
+    private static final int MAX_PACE_MIN_SAMPLE_COUNT = 5;
 
     private final MutableLiveData<TrackingState> stateLiveData =
             new MutableLiveData<>(TrackingState.idle());
@@ -246,6 +273,7 @@ public final class TrackingService extends Service implements SensorEventListene
     private int manualPauseCount = 0;
     private int suspiciousSpeedEventCount = 0;
     private int maxSpeedKmhX100 = 0;
+    private int consecutiveDistanceAccumulationSamples = 0;
 
     /** Mejor ritmo sostenido detectado sobre ventana suavizada, en seg/km. */
     private double maxPaceSecondsPerKm = Double.POSITIVE_INFINITY;
@@ -404,6 +432,7 @@ public final class TrackingService extends Service implements SensorEventListene
             consecutiveMovingSamples = 0;
             gpsRunningConfirmCount = 0;
             gpsWalkingConfirmCount = 0;
+            consecutiveDistanceAccumulationSamples = 0;
             recentMovingSpeeds.clear();
             armActivityTypeDowngradeGracePeriod();
             elapsedSeconds = computeElapsedSecondsNow();
@@ -443,6 +472,7 @@ public final class TrackingService extends Service implements SensorEventListene
         consecutiveMovingSamples = 0;
         gpsRunningConfirmCount = 0;
         gpsWalkingConfirmCount = 0;
+        consecutiveDistanceAccumulationSamples = 0;
         recentMovingSpeeds.clear();
         armActivityTypeDowngradeGracePeriod();
 
@@ -470,6 +500,7 @@ public final class TrackingService extends Service implements SensorEventListene
         recentMovingSpeeds.clear();
         gpsRunningConfirmCount = 0;
         gpsWalkingConfirmCount = 0;
+        consecutiveDistanceAccumulationSamples = 0;
         manualPauseCount++;
         manualPauseStartedRealtimeMs = SystemClock.elapsedRealtime();
         logDiagnosticEvent("MANUAL_PAUSE", null);
@@ -644,7 +675,7 @@ public final class TrackingService extends Service implements SensorEventListene
             lastMovementRealtimeMs = nowRealtime;
             consecutiveMovingSamples++;
             consecutiveStationarySamples = 0;
-            trackSpeedWindow(resolvedSpeedMs);
+            trackSpeedWindow(location, resolvedSpeedMs);
             updateMaxSpeed(resolvedSpeedMs);
             updateMaxPaceFromRecentWindow(nowRealtime);
 
@@ -657,6 +688,17 @@ public final class TrackingService extends Service implements SensorEventListene
                 currentStatus = TrackingState.Status.RUNNING;
                 currentPauseReason = TrackingState.PauseReason.NONE;
                 armActivityTypeDowngradeGracePeriod();
+            }
+
+            boolean accumulableDistanceSample = isDistanceAccumulableSample(
+                    location,
+                    acceptedDeltaMeters,
+                    movingSample
+            );
+            if (accumulableDistanceSample) {
+                consecutiveDistanceAccumulationSamples++;
+            } else {
+                consecutiveDistanceAccumulationSamples = 0;
             }
 
             if (shouldAccumulateDistance(location, acceptedDeltaMeters, movingSample)) {
@@ -673,6 +715,7 @@ public final class TrackingService extends Service implements SensorEventListene
         } else if (stationarySample) {
             consecutiveStationarySamples++;
             consecutiveMovingSamples = 0;
+            consecutiveDistanceAccumulationSamples = 0;
             recentMovingSpeeds.clear();
 
             if (currentStatus == TrackingState.Status.RUNNING
@@ -682,6 +725,8 @@ public final class TrackingService extends Service implements SensorEventListene
                         TrackingAlert.Type.STATIONARY_AUTO_PAUSE
                 );
             }
+        } else {
+            consecutiveDistanceAccumulationSamples = 0;
         }
 
         publishState();
@@ -770,7 +815,24 @@ public final class TrackingService extends Service implements SensorEventListene
             @NonNull Location location,
             float acceptedDeltaMeters,
             boolean movingSample) {
-        return movingSample && acceptedDeltaMeters >= getMovingDistanceThreshold(location);
+        return isDistanceAccumulableSample(location, acceptedDeltaMeters, movingSample)
+                && consecutiveDistanceAccumulationSamples >= DISTANCE_ACCUMULATION_CONFIRMATION_SAMPLES;
+    }
+
+    /**
+     * Decide si una muestra es lo bastante sólida como para sumar distancia real.
+     *
+     * <p>Este filtro es más estricto que el de movimiento general: la app puede seguir
+     * considerando que el usuario está activo, pero no añadirá metros hasta que el GPS
+     * tenga una precisión suficientemente buena y el salto supere un umbral más duro.</p>
+     */
+    private boolean isDistanceAccumulableSample(
+            @NonNull Location location,
+            float acceptedDeltaMeters,
+            boolean movingSample) {
+        return movingSample
+                && location.getAccuracy() <= MAX_VALID_ACCURACY_FOR_DISTANCE_ACCUMULATION_M
+                && acceptedDeltaMeters >= getDistanceAccumulationThreshold(location);
     }
 
     /**
@@ -778,6 +840,13 @@ public final class TrackingService extends Service implements SensorEventListene
      */
     private float getMovingDistanceThreshold(@NonNull Location location) {
         return Math.max(MIN_VALID_DISTANCE_M, location.getAccuracy() * MIN_MOVING_DISTANCE_ACCURACY_FACTOR);
+    }
+
+    /**
+     * Umbral reforzado para acumular distancia en la ruta.
+     */
+    private float getDistanceAccumulationThreshold(@NonNull Location location) {
+        return Math.max(MIN_VALID_DISTANCE_M, location.getAccuracy() * DISTANCE_ACCUMULATION_ACCURACY_FACTOR);
     }
 
     /**
@@ -791,8 +860,12 @@ public final class TrackingService extends Service implements SensorEventListene
         return (nowRealtime - lastEvidenceRealtimeMs) <= RECENT_MOTION_EVIDENCE_MS;
     }
 
-    private void trackSpeedWindow(float speedMs) {
+    private void trackSpeedWindow(@NonNull Location location, float speedMs) {
         if (speedMs <= 0f) {
+            return;
+        }
+        if (location.getAccuracy() > MAX_VALID_ACCURACY_FOR_DISTANCE_ACCUMULATION_M) {
+            // El mejor ritmo no debe contaminarse con velocidades calculadas sobre un fix flojo.
             return;
         }
         recentMovingSpeeds.addLast(speedMs);
@@ -926,6 +999,7 @@ public final class TrackingService extends Service implements SensorEventListene
         currentStatus = TrackingState.Status.AUTO_PAUSED;
         currentPauseReason = pauseReason;
         currentMovementSample = false;
+        consecutiveDistanceAccumulationSamples = 0;
         recentMovingSpeeds.clear();
 
         if (pauseReason == TrackingState.PauseReason.STATIONARY) {
@@ -1137,6 +1211,8 @@ public final class TrackingService extends Service implements SensorEventListene
                     caloriesAccumulator += calculateCaloriesPerSecond();
                     calories = (int) Math.round(caloriesAccumulator);
                 } else if (inactivityMs >= STOPPED_GRACE_PERIOD_MS) {
+                    // Dejamos una gracia algo mayor antes de etiquetar como parado para no penalizar
+                    // microcortes de GPS o tramos donde el acelerómetro llega con latencia.
                     currentMovementSample = false;
                     stoppedSeconds++;
                 }
@@ -1516,6 +1592,7 @@ public final class TrackingService extends Service implements SensorEventListene
         manualPauseCount = 0;
         suspiciousSpeedEventCount = 0;
         maxSpeedKmhX100 = 0;
+        consecutiveDistanceAccumulationSamples = 0;
         maxPaceSecondsPerKm = Double.POSITIVE_INFINITY;
         currentMovementSample = false;
         manualPauseStartedRealtimeMs = 0L;
