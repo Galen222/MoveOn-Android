@@ -56,8 +56,10 @@ public final class TrackingState {
     private final long elapsedSeconds;
     private final long movingSeconds;
     private final long stoppedSeconds;
+    private final long autoPausedSeconds;
     private final long manualPausedSeconds;
     private final int distanceMeters;
+    private final double preciseDistanceMeters;
     private final int calories;
     @Nullable private final String pace;
     @Nullable private final String averageMovingPace;
@@ -86,8 +88,10 @@ public final class TrackingState {
             long elapsedSeconds,
             long movingSeconds,
             long stoppedSeconds,
+            long autoPausedSeconds,
             long manualPausedSeconds,
             int distanceMeters,
+            double preciseDistanceMeters,
             int calories,
             @Nullable String pace,
             @Nullable String averageMovingPace,
@@ -114,8 +118,10 @@ public final class TrackingState {
         this.elapsedSeconds = elapsedSeconds;
         this.movingSeconds = movingSeconds;
         this.stoppedSeconds = stoppedSeconds;
+        this.autoPausedSeconds = autoPausedSeconds;
         this.manualPausedSeconds = manualPausedSeconds;
         this.distanceMeters = distanceMeters;
+        this.preciseDistanceMeters = preciseDistanceMeters;
         this.calories = calories;
         this.pace = pace;
         this.averageMovingPace = averageMovingPace;
@@ -149,8 +155,11 @@ public final class TrackingState {
     public long getElapsedSeconds() { return elapsedSeconds; }
     public long getMovingSeconds() { return movingSeconds; }
     public long getStoppedSeconds() { return stoppedSeconds; }
+    public long getAutoPausedSeconds() { return autoPausedSeconds; }
     public long getManualPausedSeconds() { return manualPausedSeconds; }
     public int getDistanceMeters() { return distanceMeters; }
+    public double getPreciseDistanceMeters() { return preciseDistanceMeters; }
+    public long getEffectiveElapsedSeconds() { return movingSeconds + stoppedSeconds; }
     public int getCalories() { return calories; }
     @Nullable public String getPace() { return pace; }
     @Nullable public String getAverageMovingPace() { return averageMovingPace; }
@@ -198,8 +207,10 @@ public final class TrackingState {
         private long elapsedSeconds = 0L;
         private long movingSeconds = 0L;
         private long stoppedSeconds = 0L;
+        private long autoPausedSeconds = 0L;
         private long manualPausedSeconds = 0L;
         private int distanceMeters = 0;
+        private double preciseDistanceMeters = 0.0;
         private int calories = 0;
         @Nullable private String pace = null;
         @Nullable private String averageMovingPace = null;
@@ -231,8 +242,10 @@ public final class TrackingState {
             elapsedSeconds = source.elapsedSeconds;
             movingSeconds = source.movingSeconds;
             stoppedSeconds = source.stoppedSeconds;
+            autoPausedSeconds = source.autoPausedSeconds;
             manualPausedSeconds = source.manualPausedSeconds;
             distanceMeters = source.distanceMeters;
+            preciseDistanceMeters = source.preciseDistanceMeters;
             calories = source.calories;
             pace = source.pace;
             averageMovingPace = source.averageMovingPace;
@@ -261,8 +274,10 @@ public final class TrackingState {
         public Builder elapsedSeconds(long value) { this.elapsedSeconds = value; return this; }
         public Builder movingSeconds(long value) { this.movingSeconds = value; return this; }
         public Builder stoppedSeconds(long value) { this.stoppedSeconds = value; return this; }
+        public Builder autoPausedSeconds(long value) { this.autoPausedSeconds = value; return this; }
         public Builder manualPausedSeconds(long value) { this.manualPausedSeconds = value; return this; }
         public Builder distanceMeters(int value) { this.distanceMeters = value; return this; }
+        public Builder preciseDistanceMeters(double value) { this.preciseDistanceMeters = value; return this; }
         public Builder calories(int value) { this.calories = value; return this; }
         public Builder pace(@Nullable String value) { this.pace = value; return this; }
         public Builder averageMovingPace(@Nullable String value) { this.averageMovingPace = value; return this; }
@@ -293,8 +308,10 @@ public final class TrackingState {
                     elapsedSeconds,
                     movingSeconds,
                     stoppedSeconds,
+                    autoPausedSeconds,
                     manualPausedSeconds,
                     distanceMeters,
+                    preciseDistanceMeters,
                     calories,
                     pace,
                     averageMovingPace,

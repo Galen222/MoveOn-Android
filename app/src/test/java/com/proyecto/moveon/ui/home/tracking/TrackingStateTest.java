@@ -83,8 +83,11 @@ public class TrackingStateTest {
         TrackingState state = new TrackingState.Builder()
                 .status(TrackingState.Status.RUNNING)
                 .activityType(TrackingState.ActivityType.RUNNING_ACTIVITY)
-                .elapsedSeconds(300)
+                                .elapsedSeconds(300)
+                .stoppedSeconds(40)
+                .autoPausedSeconds(25)
                 .distanceMeters(1500)
+                .preciseDistanceMeters(1500.4)
                 .calories(120)
                 .pace("5:30")
                 .routePoints(points)
@@ -95,6 +98,10 @@ public class TrackingStateTest {
         assertEquals(TrackingState.ActivityType.RUNNING_ACTIVITY, state.getActivityType());
         assertEquals(300L, state.getElapsedSeconds());
         assertEquals(1500, state.getDistanceMeters());
+        assertEquals(1500.4, state.getPreciseDistanceMeters(), 0.0001);
+        assertEquals(40L, state.getStoppedSeconds());
+        assertEquals(25L, state.getAutoPausedSeconds());
+        assertEquals(340L, state.getEffectiveElapsedSeconds());
         assertEquals(120, state.getCalories());
         assertEquals("5:30", state.getPace());
         assertEquals(2, state.getRoutePoints().size());
@@ -106,8 +113,11 @@ public class TrackingStateTest {
         TrackingState original = new TrackingState.Builder()
                 .status(TrackingState.Status.RUNNING)
                 .activityType(TrackingState.ActivityType.RUNNING_ACTIVITY)
-                .elapsedSeconds(120)
+                                .elapsedSeconds(120)
+                .stoppedSeconds(15)
+                .autoPausedSeconds(9)
                 .distanceMeters(500)
+                .preciseDistanceMeters(500.8)
                 .calories(40)
                 .pace("6:00")
                 .build();
@@ -118,6 +128,8 @@ public class TrackingStateTest {
         assertEquals(original.getActivityType(), copy.getActivityType());
         assertEquals(original.getElapsedSeconds(), copy.getElapsedSeconds());
         assertEquals(original.getDistanceMeters(), copy.getDistanceMeters());
+        assertEquals(original.getPreciseDistanceMeters(), copy.getPreciseDistanceMeters(), 0.0001);
+        assertEquals(original.getAutoPausedSeconds(), copy.getAutoPausedSeconds());
         assertEquals(original.getCalories(), copy.getCalories());
         assertEquals(original.getPace(), copy.getPace());
     }
@@ -171,3 +183,4 @@ public class TrackingStateTest {
         assertFalse(s5.isActive());
     }
 }
+

@@ -68,6 +68,7 @@ public final class TrackingSessionStore {
         public long elapsedSeconds;
         public long movingSeconds;
         public long stoppedSeconds;
+        public long autoPausedSeconds;
         public long manualPausedSeconds;
         public long manualPausedAccumulatedMs;
         public int distanceMeters;
@@ -84,6 +85,7 @@ public final class TrackingSessionStore {
         public long sessionFinishedRealtimeMs;
         public long manualPauseStartedRealtimeMs;
         public long lastMovementRealtimeMs;
+        public long lastAcceptedRealtimeMs;
         public long lastMotionEvidenceRealtimeMs;
         public long activityTypeDowngradeGraceDeadlineRealtimeMs;
         public long sessionStartedAtEpochMs;
@@ -96,3 +98,4 @@ public final class TrackingSessionStore {
         public List<TrackingState.DiagnosticEvent> diagnosticEvents = new ArrayList<>();
     }
 }
+

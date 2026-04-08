@@ -200,11 +200,10 @@ public final class TrackingViewModel extends AndroidViewModel {
     /**
      * Construye el DTO de guardado usando métricas ya depuradas por el servicio.
      *
-     * <p>{@code duracionParado} se calcula como {@code elapsed - moving} para
-     * garantizar que la constraint del backend se cumpla siempre
-     * ({@code duracion_movimiento + duracion_parado = duracion_total}),
-     * ya que pequeños desfases de redondeo entre contadores pueden provocar
-     * que {@code stoppedSeconds} no cuadre exactamente con {@code elapsedSeconds - movingSeconds}.</p>
+     * <p>La duración y el ritmo total se calculan con el tiempo efectivo de actividad
+     * ({@code moving + stopped}), excluyendo el tiempo pasado en auto-pausa. Esto acerca
+     * el histórico al comportamiento de un reloj deportivo y evita inflar artificialmente
+     * el ritmo total cuando el GPS o la detección de movimiento fuerzan pausas largas.</p>
      */
     private void guardarActividad(@NonNull TrackingState state) {
         saveState.setValue(UiState.loading());
@@ -224,12 +223,12 @@ public final class TrackingViewModel extends AndroidViewModel {
         // duracion_total y duracion_movimiento son los valores reales del servicio.
         // duracion_parado se deriva de la diferencia para garantizar que la suma
         // cuadre exactamente con lo que valida el backend.
-        int duracionTotal      = safeToInt(state.getElapsedSeconds());
+        int duracionTotal      = safeToInt(state.getEffectiveElapsedSeconds());
         int duracionMovimiento = safeToInt(state.getMovingSeconds());
-        int duracionParado     = Math.max(0, duracionTotal - duracionMovimiento);
+        int duracionParado     = safeToInt(state.getStoppedSeconds());
 
-        int averageMovingPace = calculatePaceSecondsPerKm(state.getMovingSeconds(), state.getDistanceMeters());
-        int averageElapsedPace = calculatePaceSecondsPerKm(state.getElapsedSeconds(), state.getDistanceMeters());
+        int averageMovingPace = calculatePaceSecondsPerKm(state.getMovingSeconds(), state.getPreciseDistanceMeters());
+        int averageElapsedPace = calculatePaceSecondsPerKm(state.getEffectiveElapsedSeconds(), state.getPreciseDistanceMeters());
         int maxPace = parsePaceTextToSecondsPerKm(state.getMaxPace());
         int averageSpeedKmhX100 = calculateAverageSpeedKmhX100(
                 state.getDistanceMeters(),
@@ -270,8 +269,8 @@ public final class TrackingViewModel extends AndroidViewModel {
         });
     }
 
-    private int calculatePaceSecondsPerKm(long seconds, int distanceMeters) {
-        if (seconds <= 0 || distanceMeters <= 0) {
+    private int calculatePaceSecondsPerKm(long seconds, double distanceMeters) {
+        if (seconds <= 0 || distanceMeters <= 0.0) {
             return 0;
         }
         return (int) Math.round((seconds * 1000.0) / distanceMeters);
@@ -345,8 +344,8 @@ public final class TrackingViewModel extends AndroidViewModel {
         request.stoppedSeconds = safeToInt(state.getStoppedSeconds());
         request.manualPauseSeconds = safeToInt(state.getManualPausedSeconds());
         request.distanceMeters = state.getDistanceMeters();
-        request.averagePaceTotal = calculatePaceSecondsPerKm(state.getElapsedSeconds(), state.getDistanceMeters());
-        request.averagePaceMoving = calculatePaceSecondsPerKm(state.getMovingSeconds(), state.getDistanceMeters());
+        request.averagePaceTotal = calculatePaceSecondsPerKm(state.getEffectiveElapsedSeconds(), state.getPreciseDistanceMeters());
+        request.averagePaceMoving = calculatePaceSecondsPerKm(state.getMovingSeconds(), state.getPreciseDistanceMeters());
         request.maxPace = parsePaceTextToSecondsPerKm(state.getMaxPace());
         request.autoPauses = state.getAutoPauseCount();
         request.manualPauses = state.getManualPauseCount();

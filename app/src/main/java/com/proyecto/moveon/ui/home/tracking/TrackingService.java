@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.home.tracking;
 
 import android.app.Notification;
@@ -213,6 +212,29 @@ public final class TrackingService extends Service implements SensorEventListene
      */
     private static final int MAX_PACE_MIN_SAMPLE_COUNT = 5;
 
+    /**
+     * Margen aplicado a la velocidad plausible para limitar saltos GPS grandes.
+     *
+     * <p>No recorta el movimiento normal, pero sí evita que uno o dos fixes ruidosos
+     * inflen decenas de metros frente a lo que haría un reloj deportivo.</p>
+     */
+    private static final float GPS_DISTANCE_CAP_SPEED_FACTOR = 1.35f;
+
+    /**
+     * Parte de la precisión actual que se permite sumar como holgura al cap dinámico.
+     */
+    private static final float GPS_DISTANCE_CAP_ACCURACY_WEIGHT = 0.35f;
+
+    /**
+     * Si un salto supera ampliamente el cap dinámico, se rechaza por completo.
+     */
+    private static final float GPS_DISTANCE_HARD_REJECT_MULTIPLIER = 2.40f;
+
+    /**
+     * Mínimo multiplicador sobre el umbral base para considerar un salto como totalmente implausible.
+     */
+    private static final float GPS_DISTANCE_HARD_REJECT_THRESHOLD_MULTIPLIER = 3.00f;
+
     private final MutableLiveData<TrackingState> stateLiveData =
             new MutableLiveData<>(TrackingState.idle());
     private final MutableLiveData<TrackingAlert> trackingAlertLiveData = new MutableLiveData<>();
@@ -246,6 +268,7 @@ public final class TrackingService extends Service implements SensorEventListene
     private long elapsedSeconds = 0L;
     private long movingSeconds = 0L;
     private long stoppedSeconds = 0L;
+    private long autoPausedSeconds = 0L;
     private long manualPausedSeconds = 0L;
 
     /**
@@ -280,6 +303,7 @@ public final class TrackingService extends Service implements SensorEventListene
 
     @Nullable private Location lastAcceptedLocation = null;
     @Nullable private Location lastObservedLocation = null;
+    private long lastAcceptedRealtimeMs = 0L;
     private long lastObservedRealtimeMs = 0L;
     private long manualPauseStartedRealtimeMs = 0L;
     private long manualPausedAccumulatedMs = 0L;
@@ -607,6 +631,7 @@ public final class TrackingService extends Service implements SensorEventListene
             // Primer fix de la sesión: queda registrado como punto observado y aceptado.
             lastObservedLocation = location;
             lastAcceptedLocation = location;
+            lastAcceptedRealtimeMs = nowRealtime;
             lastObservedRealtimeMs = nowRealtime;
 
             if (routePoints.isEmpty()) {
@@ -629,6 +654,7 @@ public final class TrackingService extends Service implements SensorEventListene
                 : observedDeltaMeters;
 
         long deltaTimeMs = computeDeltaTimeMs(lastObservedLocation, location, nowRealtime);
+        long acceptedDeltaTimeMs = computeAcceptedDeltaTimeMs(nowRealtime);
         float derivedSpeedMs = deltaTimeMs > 0
                 ? (observedDeltaMeters / (deltaTimeMs / 1000f))
                 : 0f;
@@ -690,9 +716,17 @@ public final class TrackingService extends Service implements SensorEventListene
                 armActivityTypeDowngradeGracePeriod();
             }
 
-            boolean accumulableDistanceSample = isDistanceAccumulableSample(
+            float sanitizedAcceptedDeltaMeters = sanitizeAcceptedDeltaMeters(
                     location,
                     acceptedDeltaMeters,
+                    acceptedDeltaTimeMs,
+                    resolvedSpeedMs,
+                    movingSample
+            );
+
+            boolean accumulableDistanceSample = isDistanceAccumulableSample(
+                    location,
+                    sanitizedAcceptedDeltaMeters,
                     movingSample
             );
             if (accumulableDistanceSample) {
@@ -701,16 +735,17 @@ public final class TrackingService extends Service implements SensorEventListene
                 consecutiveDistanceAccumulationSamples = 0;
             }
 
-            if (shouldAccumulateDistance(location, acceptedDeltaMeters, movingSample)) {
+            if (shouldAccumulateDistance(location, sanitizedAcceptedDeltaMeters, movingSample)) {
                 // Se suma la distancia desde el último punto aceptado, no desde el último
                 // observado. Así evitamos "evaporar" metros en saltos pequeños consecutivos.
                 //
-                // Importante: la acumulación interna se hace en double para que el ritmo medio
-                // use la distancia real acumulada y no la suma de redondeos de cada tramo.
-                preciseDistanceMeters += acceptedDeltaMeters;
+                // Además se aplica una segunda capa anti-ruido que limita saltos muy por encima
+                // de la velocidad humana plausible para el intervalo real entre puntos aceptados.
+                preciseDistanceMeters += sanitizedAcceptedDeltaMeters;
                 syncRoundedDistanceMeters();
                 acceptRoutePoint(location);
                 lastAcceptedLocation = location;
+                lastAcceptedRealtimeMs = nowRealtime;
             }
         } else if (stationarySample) {
             consecutiveStationarySamples++;
@@ -755,6 +790,92 @@ public final class TrackingService extends Service implements SensorEventListene
             return Math.max(1L, nowRealtime - lastObservedRealtimeMs);
         }
         return LOCATION_INTERVAL_MS;
+    }
+
+    private long computeAcceptedDeltaTimeMs(long nowRealtime) {
+        if (lastAcceptedRealtimeMs > 0L) {
+            return Math.max(1L, nowRealtime - lastAcceptedRealtimeMs);
+        }
+        if (lastObservedRealtimeMs > 0L) {
+            return Math.max(1L, nowRealtime - lastObservedRealtimeMs);
+        }
+        return LOCATION_INTERVAL_MS;
+    }
+
+    private float sanitizeAcceptedDeltaMeters(
+            @NonNull Location location,
+            float acceptedDeltaMeters,
+            long acceptedDeltaTimeMs,
+            float speedMs,
+            boolean movingSample) {
+        if (!movingSample || acceptedDeltaMeters <= 0f) {
+            return 0f;
+        }
+
+        float threshold = getDistanceAccumulationThreshold(location);
+        if (acceptedDeltaMeters < threshold) {
+            return acceptedDeltaMeters;
+        }
+
+        float plausibleSpeedMs = getPlausibleDistanceSpeedReferenceMs(speedMs);
+        float intervalSeconds = Math.max(1f, acceptedDeltaTimeMs / 1000f);
+        float slackMeters = Math.min(
+                location.getAccuracy(),
+                MAX_VALID_ACCURACY_FOR_DISTANCE_ACCUMULATION_M
+        ) * GPS_DISTANCE_CAP_ACCURACY_WEIGHT;
+        float dynamicCapMeters = Math.max(
+                threshold,
+                (plausibleSpeedMs * intervalSeconds * GPS_DISTANCE_CAP_SPEED_FACTOR) + slackMeters
+        );
+        float hardRejectMeters = Math.max(
+                dynamicCapMeters * GPS_DISTANCE_HARD_REJECT_MULTIPLIER,
+                threshold * GPS_DISTANCE_HARD_REJECT_THRESHOLD_MULTIPLIER
+        );
+
+        if (acceptedDeltaMeters > hardRejectMeters) {
+            logDiagnosticEvent(
+                    "GPS_DISTANCE_REJECTED",
+                    String.format(
+                            Locale.US,
+                            "delta=%.2f cap=%.2f threshold=%.2f dt=%d acc=%.2f speed=%.2f",
+                            acceptedDeltaMeters,
+                            dynamicCapMeters,
+                            threshold,
+                            acceptedDeltaTimeMs,
+                            location.getAccuracy(),
+                            speedMs
+                    )
+            );
+            return 0f;
+        }
+
+        if (acceptedDeltaMeters > dynamicCapMeters) {
+            logDiagnosticEvent(
+                    "GPS_DISTANCE_CLIPPED",
+                    String.format(
+                            Locale.US,
+                            "delta=%.2f clipped=%.2f threshold=%.2f dt=%d acc=%.2f speed=%.2f",
+                            acceptedDeltaMeters,
+                            dynamicCapMeters,
+                            threshold,
+                            acceptedDeltaTimeMs,
+                            location.getAccuracy(),
+                            speedMs
+                    )
+            );
+            return dynamicCapMeters;
+        }
+
+        return acceptedDeltaMeters;
+    }
+
+    private float getPlausibleDistanceSpeedReferenceMs(float speedMs) {
+        float recentAverageMs = (float) getAverageRecentMovingSpeedMs();
+        float activityFloorMs = activityType == TrackingState.ActivityType.RUNNING_ACTIVITY
+                ? GPS_RUNNING_SPEED_THRESHOLD_MS
+                : MOVING_SPEED_THRESHOLD_MS;
+        float plausibleSpeedMs = Math.max(activityFloorMs, Math.max(speedMs, recentAverageMs));
+        return Math.min(plausibleSpeedMs, MAX_HUMAN_SPEED_MS);
     }
 
     private float resolveSpeedMs(@NonNull Location location, float derivedSpeedMs) {
@@ -1224,7 +1345,7 @@ public final class TrackingService extends Service implements SensorEventListene
                     );
                 }
             } else if (currentStatus == TrackingState.Status.AUTO_PAUSED) {
-                stoppedSeconds++;
+                autoPausedSeconds++;
             }
 
             persistSessionSnapshot();
@@ -1303,7 +1424,18 @@ public final class TrackingService extends Service implements SensorEventListene
      */
     @Nullable
     private String calculateAverageElapsedPace() {
-        return formatPaceFromTotals(elapsedSeconds, preciseDistanceMeters);
+        return formatPaceFromTotals(calculateEffectiveElapsedSeconds(), preciseDistanceMeters);
+    }
+
+    /**
+     * Tiempo efectivo de actividad usado para duración total y ritmo medio total.
+     *
+     * <p>Excluye pausas manuales y también el tiempo transcurrido mientras la sesión
+     * estuvo en auto-pausa. Así el histórico queda mucho más cerca del reloj, que no
+     * suele penalizar el ritmo total con minutos completos sin movimiento real.</p>
+     */
+    private long calculateEffectiveElapsedSeconds() {
+        return movingSeconds + stoppedSeconds;
     }
 
     @Nullable
@@ -1376,10 +1508,12 @@ public final class TrackingService extends Service implements SensorEventListene
                 .activityType(activityType)
                 .elapsedSeconds(elapsedSeconds)
                 .movingSeconds(movingSeconds)
-                .stoppedSeconds(stoppedSeconds)
+                                .stoppedSeconds(stoppedSeconds)
+                .autoPausedSeconds(autoPausedSeconds)
                 .manualPausedSeconds(manualPausedSeconds)
                 // El estado público mantiene metros enteros para no romper compatibilidad.
                 .distanceMeters(distanceMeters)
+                .preciseDistanceMeters(preciseDistanceMeters)
                 .calories(calories)
                 .pace(calculateInstantPace())
                 .averageMovingPace(calculateAverageMovingPace())
@@ -1463,6 +1597,7 @@ public final class TrackingService extends Service implements SensorEventListene
         snapshot.elapsedSeconds = elapsedSeconds;
         snapshot.movingSeconds = movingSeconds;
         snapshot.stoppedSeconds = stoppedSeconds;
+        snapshot.autoPausedSeconds = autoPausedSeconds;
         snapshot.manualPausedSeconds = manualPausedSeconds;
         snapshot.manualPausedAccumulatedMs = manualPausedAccumulatedMs;
         snapshot.distanceMeters = distanceMeters;
@@ -1479,6 +1614,7 @@ public final class TrackingService extends Service implements SensorEventListene
         snapshot.sessionFinishedRealtimeMs = sessionFinishedRealtimeMs;
         snapshot.manualPauseStartedRealtimeMs = manualPauseStartedRealtimeMs;
         snapshot.lastMovementRealtimeMs = lastMovementRealtimeMs;
+        snapshot.lastAcceptedRealtimeMs = lastAcceptedRealtimeMs;
         snapshot.lastMotionEvidenceRealtimeMs = lastMotionEvidenceRealtimeMs;
         snapshot.activityTypeDowngradeGraceDeadlineRealtimeMs = activityTypeDowngradeGraceDeadlineRealtimeMs;
         snapshot.sessionStartedAtEpochMs = sessionStartedAtEpochMs;
@@ -1521,6 +1657,7 @@ public final class TrackingService extends Service implements SensorEventListene
         elapsedSeconds = snapshot.elapsedSeconds;
         movingSeconds = snapshot.movingSeconds;
         stoppedSeconds = snapshot.stoppedSeconds;
+        autoPausedSeconds = snapshot.autoPausedSeconds;
         manualPausedSeconds = snapshot.manualPausedSeconds;
         manualPausedAccumulatedMs = snapshot.manualPausedAccumulatedMs;
         distanceMeters = snapshot.distanceMeters;
@@ -1537,6 +1674,7 @@ public final class TrackingService extends Service implements SensorEventListene
         sessionFinishedRealtimeMs = snapshot.sessionFinishedRealtimeMs;
         manualPauseStartedRealtimeMs = snapshot.manualPauseStartedRealtimeMs;
         lastMovementRealtimeMs = snapshot.lastMovementRealtimeMs;
+        lastAcceptedRealtimeMs = snapshot.lastAcceptedRealtimeMs;
         lastMotionEvidenceRealtimeMs = snapshot.lastMotionEvidenceRealtimeMs;
         activityTypeDowngradeGraceDeadlineRealtimeMs = snapshot.activityTypeDowngradeGraceDeadlineRealtimeMs;
         sessionStartedAtEpochMs = snapshot.sessionStartedAtEpochMs;
@@ -1554,6 +1692,9 @@ public final class TrackingService extends Service implements SensorEventListene
         if (snapshot.encodedPolyline != null && !snapshot.encodedPolyline.isEmpty()) {
             routePoints.clear();
             routePoints.addAll(PolyUtil.decode(snapshot.encodedPolyline));
+            if (!routePoints.isEmpty()) {
+                lastAcceptedLocation = latLngToLocation(routePoints.get(routePoints.size() - 1));
+            }
         }
 
         logDiagnosticEvent("SERVICE_RESTORED", null);
@@ -1576,10 +1717,21 @@ public final class TrackingService extends Service implements SensorEventListene
         stopAccelerometer();
     }
 
+    @NonNull
+    private Location latLngToLocation(@NonNull LatLng point) {
+        Location location = new Location("restored_route_point");
+        location.setLatitude(point.latitude);
+        location.setLongitude(point.longitude);
+        location.setAccuracy(MAX_VALID_ACCURACY_FOR_DISTANCE_ACCUMULATION_M);
+        location.setTime(System.currentTimeMillis());
+        return location;
+    }
+
     private void resetInternalState() {
         elapsedSeconds = 0L;
         movingSeconds = 0L;
         stoppedSeconds = 0L;
+        autoPausedSeconds = 0L;
         manualPausedSeconds = 0L;
         preciseDistanceMeters = 0.0;
         distanceMeters = 0;
@@ -1608,6 +1760,7 @@ public final class TrackingService extends Service implements SensorEventListene
         serviceRestartCount = 0;
         diagnosticEvents.clear();
         lastMovementRealtimeMs = 0L;
+        lastAcceptedRealtimeMs = 0L;
         lastMotionEvidenceRealtimeMs = 0L;
         activityTypeDowngradeGraceDeadlineRealtimeMs = 0L;
         lastAcceptedLocation = null;
@@ -2269,3 +2422,4 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
         return String.format(Locale.US, "%02d:%02d", minutes, secs);
     }
 }
+
