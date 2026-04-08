@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.home.tracking;
 
 import android.app.Application;
@@ -257,6 +258,7 @@ public final class TrackingViewModel extends AndroidViewModel {
 
         repository.guardarActividad(request, result -> {
             if (result.isSuccess()) {
+                trackingController.resetTracking();
                 saveState.postValue(UiState.success(result.data));
                 sendDiagnosticsIfEnabled(state, result.data);
             } else {

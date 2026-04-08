@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.home.tracking;
 
 import androidx.annotation.Keep;
@@ -70,6 +71,7 @@ public final class TrackingState {
     private final int manualPauseCount;
     private final int suspiciousSpeedEventCount;
     @NonNull private final List<LatLng> routePoints;
+    @Nullable private final LatLng currentLocation;
     @Nullable private final String encodedPolyline;
     private final long runningClassifiedSeconds;
     private final long walkingClassifiedSeconds;
@@ -102,6 +104,7 @@ public final class TrackingState {
             int manualPauseCount,
             int suspiciousSpeedEventCount,
             @NonNull List<LatLng> routePoints,
+            @Nullable LatLng currentLocation,
             @Nullable String encodedPolyline,
             long runningClassifiedSeconds,
             long walkingClassifiedSeconds,
@@ -132,6 +135,7 @@ public final class TrackingState {
         this.manualPauseCount = manualPauseCount;
         this.suspiciousSpeedEventCount = suspiciousSpeedEventCount;
         this.routePoints = Collections.unmodifiableList(routePoints);
+        this.currentLocation = currentLocation;
         this.encodedPolyline = encodedPolyline;
         this.runningClassifiedSeconds = runningClassifiedSeconds;
         this.walkingClassifiedSeconds = walkingClassifiedSeconds;
@@ -170,6 +174,7 @@ public final class TrackingState {
     public int getManualPauseCount() { return manualPauseCount; }
     public int getSuspiciousSpeedEventCount() { return suspiciousSpeedEventCount; }
     @NonNull public List<LatLng> getRoutePoints() { return routePoints; }
+    @Nullable public LatLng getCurrentLocation() { return currentLocation; }
     @Nullable public String getEncodedPolyline() { return encodedPolyline; }
     public long getRunningClassifiedSeconds() { return runningClassifiedSeconds; }
     public long getWalkingClassifiedSeconds() { return walkingClassifiedSeconds; }
@@ -221,6 +226,7 @@ public final class TrackingState {
         private int manualPauseCount = 0;
         private int suspiciousSpeedEventCount = 0;
         @NonNull private List<LatLng> routePoints = Collections.emptyList();
+        @Nullable private LatLng currentLocation = null;
         @Nullable private String encodedPolyline = null;
         private long runningClassifiedSeconds = 0L;
         private long walkingClassifiedSeconds = 0L;
@@ -256,6 +262,7 @@ public final class TrackingState {
             manualPauseCount = source.manualPauseCount;
             suspiciousSpeedEventCount = source.suspiciousSpeedEventCount;
             routePoints = source.routePoints;
+            currentLocation = source.currentLocation;
             encodedPolyline = source.encodedPolyline;
             runningClassifiedSeconds = source.runningClassifiedSeconds;
             walkingClassifiedSeconds = source.walkingClassifiedSeconds;
@@ -288,6 +295,7 @@ public final class TrackingState {
         public Builder manualPauseCount(int value) { this.manualPauseCount = value; return this; }
         public Builder suspiciousSpeedEventCount(int value) { this.suspiciousSpeedEventCount = value; return this; }
         public Builder routePoints(@NonNull List<LatLng> value) { this.routePoints = value; return this; }
+        public Builder currentLocation(@Nullable LatLng value) { this.currentLocation = value; return this; }
         public Builder encodedPolyline(@Nullable String value) { this.encodedPolyline = value; return this; }
         public Builder runningClassifiedSeconds(long value) { this.runningClassifiedSeconds = value; return this; }
         public Builder walkingClassifiedSeconds(long value) { this.walkingClassifiedSeconds = value; return this; }
@@ -322,6 +330,7 @@ public final class TrackingState {
                     manualPauseCount,
                     suspiciousSpeedEventCount,
                     routePoints,
+                    currentLocation,
                     encodedPolyline,
                     runningClassifiedSeconds,
                     walkingClassifiedSeconds,

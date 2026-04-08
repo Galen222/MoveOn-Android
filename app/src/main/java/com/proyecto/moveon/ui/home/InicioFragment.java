@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.home;
 
 import android.content.Intent;
@@ -397,6 +398,8 @@ public class InicioFragment extends Fragment
             if (!uiState.loading && uiState.data != null) {
                 TopSnackbar.success(binding.getRoot(), R.string.tracking_activity_saved_ok);
                 clearMapRoute();
+                updateMapCamera(null);
+
                 dismissTrackingSheetIfShowing();
                 resetStationarySheetSuppressionForCurrentActivity();
             }
@@ -439,7 +442,7 @@ public class InicioFragment extends Fragment
         updateControlButtons(state);
         updateStatusText(state);
         updateMetrics(state);
-        updateMapRoute(state.getRoutePoints());
+        updateMapRoute(state.getRoutePoints(), state.getCurrentLocation());
     }
 
     /**
@@ -650,10 +653,12 @@ public class InicioFragment extends Fragment
         );
     }
 
-    private void updateMapRoute(@NonNull List<LatLng> points) {
-        if (googleMap == null || points.isEmpty()) return;
+    private void updateMapRoute(@NonNull List<LatLng> points, @Nullable LatLng currentLocation) {
+        if (googleMap == null) return;
 
-        if (routePolyline == null) {
+        if (points.isEmpty()) {
+            clearMapRoute();
+        } else if (routePolyline == null) {
             PolylineOptions options = new PolylineOptions()
                     .color(ContextCompat.getColor(requireContext(), R.color.greenPrimary))
                     .width(getResources().getDimension(R.dimen.tracking_polyline_width))
@@ -664,8 +669,23 @@ public class InicioFragment extends Fragment
             routePolyline.setPoints(points);
         }
 
-        LatLng last = points.get(points.size() - 1);
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(last, 17f));
+        LatLng cameraTarget = currentLocation != null
+                ? currentLocation
+                : (points.isEmpty() ? null : points.get(points.size() - 1));
+        updateMapCamera(cameraTarget);
+    }
+
+    private void updateMapCamera(@Nullable LatLng target) {
+        if (googleMap == null) {
+            return;
+        }
+
+        if (target == null) {
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(DEFAULT_LOCATION, DEFAULT_ZOOM));
+            return;
+        }
+
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(target, USER_ZOOM));
     }
 
     private void clearMapRoute() {

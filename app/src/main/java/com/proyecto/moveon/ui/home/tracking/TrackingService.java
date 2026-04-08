@@ -1,3 +1,4 @@
+
 package com.proyecto.moveon.ui.home.tracking;
 
 import android.app.Notification;
@@ -1524,6 +1525,7 @@ public final class TrackingService extends Service implements SensorEventListene
                 .manualPauseCount(manualPauseCount)
                 .suspiciousSpeedEventCount(suspiciousSpeedEventCount)
                 .routePoints(new ArrayList<>(routePoints))
+                .currentLocation(locationToLatLng(lastObservedLocation != null ? lastObservedLocation : lastAcceptedLocation))
                 .encodedPolyline(encodedPolyline)
                 .runningClassifiedSeconds(runningClassifiedSeconds)
                 .walkingClassifiedSeconds(walkingClassifiedSeconds)
@@ -1718,6 +1720,14 @@ public final class TrackingService extends Service implements SensorEventListene
     }
 
     @NonNull
+    @Nullable
+    private LatLng locationToLatLng(@Nullable Location location) {
+        if (location == null) {
+            return null;
+        }
+        return new LatLng(location.getLatitude(), location.getLongitude());
+    }
+
     private Location latLngToLocation(@NonNull LatLng point) {
         Location location = new Location("restored_route_point");
         location.setLatitude(point.latitude);
