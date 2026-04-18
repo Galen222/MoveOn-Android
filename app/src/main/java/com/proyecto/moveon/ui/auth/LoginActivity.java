@@ -3,13 +3,17 @@ package com.proyecto.moveon.ui.auth;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.bumptech.glide.Glide;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
@@ -72,8 +76,16 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
         binding.btnGoogleLogin.setOnClickListener(v -> {
             clearErrors();
-            setLoading(true);
+            pendingGoogleAccount = null;
             pendingSilentGoogleLogin = false;
+            setLoading(true);
+            showGoogleLoading(
+                    true,
+                    false,
+                    null,
+                    R.string.social_google_loading_title,
+                    R.string.social_google_loading_message_signin
+            );
             socialAuthManager.signInWithGoogle();
         });
 
@@ -96,6 +108,7 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
             if (state.error != null) {
                 boolean silent = pendingSilentGoogleLogin;
                 pendingSilentGoogleLogin = false;
+                showGoogleLoading(false, silent, null, 0, 0);
                 setLoading(false);
 
                 if (handleSocialNotRegistered(state.error, silent)) {
@@ -112,6 +125,7 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
 
             if (state.data != null) {
                 pendingSilentGoogleLogin = false;
+                showGoogleLoading(false, false, null, 0, 0);
                 Toast.makeText(this,
                         getString(R.string.login_bienvenido, state.data.nombreUsuario),
                         Toast.LENGTH_SHORT).show();
@@ -126,19 +140,9 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         if (!"SOCIAL_ACCOUNT_NOT_REGISTERED".equals(error.getErrorCode())) {
             return false;
         }
-        if (silent) {
-            return true;
-        }
-        if (pendingGoogleAccount != null) {
-            Intent intent = new Intent(this, RegisterActivity.class)
-                    .putExtra(RegisterActivity.EXTRA_GOOGLE_ID_TOKEN, pendingGoogleAccount.idToken)
-                    .putExtra(RegisterActivity.EXTRA_GOOGLE_DISPLAY_NAME, pendingGoogleAccount.displayName)
-                    .putExtra(RegisterActivity.EXTRA_GOOGLE_AVATAR_URL, pendingGoogleAccount.avatarUrl)
-                    .putExtra(RegisterActivity.EXTRA_GOOGLE_EMAIL, pendingGoogleAccount.email)
-                    .putExtra(RegisterActivity.EXTRA_OPENED_FROM_LOGIN_SOCIAL, true);
-            startActivity(intent);
-            TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_not_registered));
-        } else {
+        pendingGoogleAccount = null;
+        showGoogleLoading(false, silent, null, 0, 0);
+        if (!silent) {
             TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_not_registered));
         }
         return true;
@@ -197,6 +201,46 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         binding.tilPassword.setError(null);
     }
 
+    private void showGoogleLoading(boolean visible,
+                                   boolean silent,
+                                   @Nullable SocialGoogleAccount account,
+                                   @StringRes int titleRes,
+                                   @StringRes int messageRes) {
+        if (visible) {
+            if (titleRes != 0) binding.tvGoogleLoadingTitle.setText(titleRes);
+            if (messageRes != 0) binding.tvGoogleLoadingMessage.setText(messageRes);
+            renderLoadingAvatar(binding.ivGoogleLoadingAvatar, account);
+            binding.overlayGoogleLoading.setVisibility(View.VISIBLE);
+            binding.overlayGoogleLoading.setAlpha(0f);
+            binding.cardGoogleLoading.setScaleX(0.96f);
+            binding.cardGoogleLoading.setScaleY(0.96f);
+            binding.overlayGoogleLoading.animate().alpha(1f).setDuration(silent ? 180 : 220).start();
+            binding.cardGoogleLoading.animate().scaleX(1f).scaleY(1f).setDuration(silent ? 180 : 220).start();
+            return;
+        }
+        if (binding.overlayGoogleLoading.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        binding.overlayGoogleLoading.animate().alpha(0f).setDuration(160).withEndAction(() -> {
+            binding.overlayGoogleLoading.setVisibility(View.GONE);
+            binding.overlayGoogleLoading.setAlpha(1f);
+        }).start();
+    }
+
+    private void renderLoadingAvatar(@NonNull ImageView imageView, @Nullable SocialGoogleAccount account) {
+        String avatarUrl = account != null ? account.avatarUrl : null;
+        if (StringUtils.hasText(avatarUrl)) {
+            Glide.with(this)
+                    .load(avatarUrl)
+                    .placeholder(R.drawable.ic_google)
+                    .error(R.drawable.ic_google)
+                    .circleCrop()
+                    .into(imageView);
+            return;
+        }
+        imageView.setImageResource(R.drawable.ic_google);
+    }
+
     private void goToMain() {
         NavigationUtils.goToActivityAndClearTask(this, MainActivity.class);
     }
@@ -207,12 +251,20 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         pendingSilentGoogleLogin = silent;
         if (!silent) {
             setLoading(true);
+            showGoogleLoading(
+                    true,
+                    false,
+                    account,
+                    R.string.social_google_loading_title,
+                    R.string.social_google_loading_message_signin
+            );
         }
         viewModel.loginWithSocial(com.proyecto.moveon.domain.auth.SocialAuthProvider.GOOGLE, account.idToken);
     }
 
     @Override
     public void onSocialFlowError(@NonNull String message, boolean silent) {
+        showGoogleLoading(false, silent, null, 0, 0);
         if (!silent) {
             setLoading(false);
             TopSnackbar.error(binding.getRoot(), message);
@@ -221,6 +273,7 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
 
     @Override
     public void onSocialFlowCanceled() {
+        showGoogleLoading(false, false, null, 0, 0);
         setLoading(false);
         TopSnackbar.warning(binding.getRoot(), getString(R.string.social_auth_canceled));
     }
@@ -231,4 +284,3 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         binding = null;
     }
 }
-

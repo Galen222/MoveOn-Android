@@ -44,9 +44,12 @@
 
             <TextView
                 android:id="@+id/tvSubtitle"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/auth_margin_horizontal"
                 android:layout_marginTop="@dimen/auth_subtitle_margin_top"
+                android:layout_marginEnd="@dimen/auth_margin_horizontal"
+                android:gravity="center"
                 android:text="@string/registro_subtitulo"
                 android:textColor="@color/textSecondary"
                 android:textSize="@dimen/auth_subtitle_size"
@@ -322,7 +325,7 @@
                 android:layout_marginTop="@dimen/auth_field_spacing"
                 android:layout_marginEnd="@dimen/auth_margin_horizontal"
                 android:fontFamily="sans-serif-medium"
-                android:text="@string/social_google_continue"
+                android:text="@string/social_google_sign_up"
                 android:textColor="@color/textPrimary"
                 android:textSize="@dimen/auth_button_text_size"
                 app:cornerRadius="@dimen/auth_button_radius"
@@ -458,4 +461,5 @@
         </com.google.android.material.card.MaterialCardView>
     </FrameLayout>
 </FrameLayout>
+
 

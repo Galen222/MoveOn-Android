@@ -36,6 +36,7 @@ public final class TopSnackbar {
      */
     private static final int BASE_TOP_MARGIN_PX = 24;
     private static final int BASE_HORIZONTAL_MARGIN_PX = 32;
+    private static final int EXTENDED_DURATION_MS = 4500;
 
     private TopSnackbar() {}
 
@@ -57,6 +58,14 @@ public final class TopSnackbar {
 
     public static void success(@NonNull View root, @StringRes int msgRes, int extraTopOffsetPx) {
         show(root, root.getContext().getString(msgRes), Type.SUCCESS, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
+    }
+
+    public static void successLong(@NonNull View root, @NonNull CharSequence msg) {
+        show(root, msg, Type.SUCCESS, EXTENDED_DURATION_MS, null, null, 0);
+    }
+
+    public static void successLong(@NonNull View root, @StringRes int msgRes) {
+        show(root, root.getContext().getString(msgRes), Type.SUCCESS, EXTENDED_DURATION_MS, null, null, 0);
     }
 
     public static void warning(@NonNull View root, @NonNull CharSequence msg) {

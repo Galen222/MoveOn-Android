@@ -135,7 +135,7 @@
     <string name="forgot_btn_enviando_codigo">Enviando…</string>
     <string name="forgot_btn_cambiar_password">Cambiar contraseña</string>
     <string name="forgot_btn_cambiando_password">Cambiando…</string>
-    <string name="forgot_btn_volver_login">Volver al inicio de sesión</string>
+    <string name="forgot_btn_volver_login">Iniciar sesión</string>
 
     <!-- Errores -->
     <string name="forgot_error_email_vacio">Introduce tu correo electrónico.</string>
@@ -626,6 +626,8 @@
 
 
     <string name="social_google_continue">Continuar con Google</string>
+    <string name="social_google_sign_in">Iniciar sesión con Google</string>
+    <string name="social_google_sign_up">Crear cuenta con Google</string>
     <string name="social_auth_canceled">Operación cancelada.</string>
     <string name="social_google_not_configured">Falta configurar GOOGLE_WEB_CLIENT_ID en local.properties.</string>
     <string name="social_google_generic_error">No se pudo completar la autenticación con Google.</string>
@@ -635,7 +637,7 @@
     <string name="vm_registro_social_completado">Registro con Google completado</string>
 
 
-    <string name="social_google_not_registered">No tienes cuenta todavía. Completa el registro con Google.</string>
+    <string name="social_google_not_registered">Esta cuenta de Google no está registrada en MoveOn. Usa Crear cuenta para darla de alta.</string>
     <string name="social_google_complete_profile">Completa tu fecha de nacimiento, acepta los términos y revisa el nombre sugerido para terminar el alta con Google.</string>
     <string name="social_google_username_prefilled">Hemos generado un nombre de usuario a partir de tu cuenta de Google.</string>
     <string name="social_google_silent_sign_in_failed">No se pudo restaurar automáticamente la sesión de Google.</string>

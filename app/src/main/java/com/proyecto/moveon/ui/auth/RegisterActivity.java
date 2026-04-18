@@ -407,7 +407,7 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                 : getString(R.string.registro_btn_crear));
         binding.btnGoogleRegister.setText(enabled
                 ? getString(R.string.social_google_change_account)
-                : getString(R.string.social_google_continue));
+                : getString(R.string.social_google_sign_up));
         binding.tvSubtitle.setText(enabled
                 ? getString(R.string.social_google_profile_ready)
                 : getString(R.string.registro_subtitulo));
@@ -432,7 +432,7 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         binding.tilUsuario.setError(null);
         binding.tilUsuario.setHelperText(getString(R.string.social_google_username_helper));
         if (announce) {
-            TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_username_prefilled));
+            TopSnackbar.successLong(binding.getRoot(), getString(R.string.social_google_username_prefilled));
         }
     }
 

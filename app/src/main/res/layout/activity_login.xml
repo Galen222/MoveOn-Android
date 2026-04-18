@@ -169,7 +169,7 @@
             android:layout_marginTop="@dimen/auth_field_spacing"
             android:layout_marginEnd="@dimen/auth_margin_horizontal"
             android:fontFamily="sans-serif-medium"
-            android:text="@string/social_google_continue"
+            android:text="@string/social_google_sign_in"
             android:textColor="@color/textPrimary"
             android:textSize="@dimen/auth_button_text_size"
             app:cornerRadius="@dimen/auth_button_radius"
@@ -306,6 +306,7 @@
         </com.google.android.material.card.MaterialCardView>
     </FrameLayout>
 </FrameLayout>
+
 
 
 
