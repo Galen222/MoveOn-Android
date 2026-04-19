@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.stats;
 
 import android.content.Context;
@@ -34,7 +33,9 @@ import com.proyecto.moveon.ui.profile.ShareRoutePreviewBottomSheet;
 import com.proyecto.moveon.ui.ranking.RankingFragment;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.format.TextStyle;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -238,9 +239,10 @@ public class StatsFragment extends Fragment {
         binding.llMonthChartBars.removeAllViews();
 
         StatsResumen.MonthBlock current = findCurrentMonthBlock(resumen.monthBlocks);
-        if (current == null || current.weeks.isEmpty()) return;
+        List<StatsResumen.WeekBlock> weeks = current != null && !current.weeks.isEmpty()
+                ? current.weeks
+                : buildEmptyCurrentMonthWeekBlocks();
 
-        List<StatsResumen.WeekBlock> weeks = current.weeks;
         long[] distances = new long[weeks.size()];
         String[] labels = new String[weeks.size()];
 
@@ -252,7 +254,7 @@ public class StatsFragment extends Fragment {
                     : week.startDay + "-" + week.endDay;
         }
 
-        renderBarChart(binding.llMonthChartBars, distances, labels, -1);
+        renderBarChart(binding.llMonthChartBars, distances, labels, null);
     }
 
     @Nullable
@@ -266,10 +268,37 @@ public class StatsFragment extends Fragment {
         return blocks.isEmpty() ? null : blocks.get(0);
     }
 
+    @NonNull
+    private List<StatsResumen.WeekBlock> buildEmptyCurrentMonthWeekBlocks() {
+        LocalDate firstDay = LocalDate.now().withDayOfMonth(1);
+        LocalDate lastDay = YearMonth.from(firstDay).atEndOfMonth();
+        LocalDate cursor = firstDay.minusDays(firstDay.getDayOfWeek().getValue() - 1L);
+
+        List<StatsResumen.WeekBlock> emptyWeeks = new ArrayList<>();
+        while (!cursor.isAfter(lastDay)) {
+            LocalDate monday = cursor;
+            LocalDate sunday = cursor.plusDays(6);
+
+            LocalDate startVisible = monday.isBefore(firstDay) ? firstDay : monday;
+            LocalDate endVisible = sunday.isAfter(lastDay) ? lastDay : sunday;
+
+            emptyWeeks.add(new StatsResumen.WeekBlock(
+                    startVisible.getDayOfMonth(),
+                    endVisible.getDayOfMonth(),
+                    0L,
+                    0L,
+                    0L
+            ));
+
+            cursor = cursor.plusDays(7);
+        }
+        return emptyWeeks;
+    }
+
     private void renderBarChart(@NonNull LinearLayout container,
                                 @NonNull long[] values,
                                 @NonNull String[] labels,
-                                int highlightedIndex) {
+                                @Nullable Integer highlightedIndex) {
         container.removeAllViews();
         if (values.length == 0 || labels.length != values.length) return;
 
@@ -309,7 +338,8 @@ public class StatsFragment extends Fragment {
                     0, 0,
                     0, 0
             });
-            shape.setColor(highlightedIndex < 0 || i == highlightedIndex ? colorActive : colorInactive);
+            boolean isHighlighted = highlightedIndex != null && highlightedIndex >= 0 && i == highlightedIndex;
+            shape.setColor(isHighlighted ? colorActive : colorInactive);
             bar.setBackground(shape);
 
             TextView label = new TextView(requireContext());
@@ -500,6 +530,9 @@ public class StatsFragment extends Fragment {
 
     @NonNull
     private String formatDistance(long meters) {
+        if (meters == 0L) {
+            return "0 km";
+        }
         return getString(R.string.stats_format_km, meters / 1000.0f);
     }
 
