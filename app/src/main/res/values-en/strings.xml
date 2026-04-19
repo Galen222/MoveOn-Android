@@ -445,7 +445,7 @@
 
     <string name="social_google_continue">Continue with Google</string>
     <string name="social_google_sign_in">Sign in with Google</string>
-    <string name="social_google_sign_up">Create account with Google</string>
+    <string name="social_google_sign_up">Sign up with Google</string>
     <string name="social_auth_canceled">Operation canceled.</string>
     <string name="social_google_not_configured">GOOGLE_WEB_CLIENT_ID is missing in local.properties.</string>
     <string name="social_google_generic_error">Google authentication could not be completed.</string>
