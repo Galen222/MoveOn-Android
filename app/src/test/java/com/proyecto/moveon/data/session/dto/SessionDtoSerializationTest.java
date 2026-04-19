@@ -49,11 +49,13 @@ public class SessionDtoSerializationTest {
 
     @Test
     public void recuperarPasswordRequest_serialization() {
-        RecuperarPasswordRequestDto dto = new RecuperarPasswordRequestDto("test@email.com");
+        RecuperarPasswordRequestDto dto =
+                new RecuperarPasswordRequestDto("test@email.com", "en");
 
         JsonObject json = gson.fromJson(gson.toJson(dto), JsonObject.class);
 
         assertEquals("test@email.com", json.get("email").getAsString());
+        assertEquals("en", json.get("locale").getAsString());
     }
 
     // ── ResetearPasswordRequestDto ──────────────────────────────────────────
