@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.auth;
 
 import android.content.Context;
@@ -143,6 +142,12 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                 setLoadingPaso1(false);
                 TopSnackbar.success(binding.getRoot(),
                         getString(R.string.forgot_toast_codigo_enviado));
+                binding.tilCodigo.setError(null);
+                binding.tilPasswordNueva.setError(null);
+                binding.tilPasswordConfirmar.setError(null);
+                binding.etCodigo.setText(null);
+                binding.etPasswordNueva.setText(null);
+                binding.etPasswordConfirmar.setText(null);
                 viewModel.resetForgotState();
                 mostrarPaso2();
             }
@@ -334,5 +339,3 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         binding = null;
     }
 }
-
-

@@ -123,16 +123,16 @@
 
     <!-- Textos UI -->
     <string name="forgot_title">Recuperar contraseña</string>
-    <string name="forgot_description_step1">Introduce tu correo y te enviaremos un código de verificación.</string>
-    <string name="forgot_description_step2">Introduce el código que recibiste y tu nueva contraseña.</string>
+    <string name="forgot_description_step1">Introduce tu correo y te enviaremos las instrucciones correspondientes.</string>
+    <string name="forgot_description_step2">Si has recibido un código, introdúcelo junto con tu nueva contraseña. Si no, sigue las instrucciones del correo.</string>
     <string name="forgot_hint_email">Correo electrónico</string>
     <string name="forgot_hint_codigo">Código de verificación</string>
     <string name="forgot_hint_password_nueva">Nueva contraseña</string>
     <string name="forgot_hint_password_confirmar">Confirmar nueva contraseña</string>
 
     <!-- Botones -->
-    <string name="forgot_btn_enviar_codigo">Enviar código</string>
-    <string name="forgot_btn_enviando_codigo">Enviando…</string>
+    <string name="forgot_btn_enviar_codigo">Enviar instrucciones</string>
+    <string name="forgot_btn_enviando_codigo">Procesando…</string>
     <string name="forgot_btn_cambiar_password">Cambiar contraseña</string>
     <string name="forgot_btn_cambiando_password">Cambiando…</string>
     <string name="forgot_btn_volver_login">Iniciar sesión</string>
@@ -146,14 +146,14 @@
     <string name="forgot_error_passwords_distintas">Las contraseñas no coinciden.</string>
 
     <!-- Toasts -->
-    <string name="forgot_toast_codigo_enviado">Código enviado. Revisa tu correo.</string>
+    <string name="forgot_toast_codigo_enviado">Si la cuenta admite recuperación, te hemos enviado instrucciones por correo.</string>
     <string name="forgot_toast_password_cambiada">Contraseña cambiada. Ya puedes iniciar sesión.</string>
 
     <!-- ContentDescriptions -->
     <string name="forgot_logo_desc">Logo MoveOn</string>
 
     <!-- Repositorio -->
-    <string name="repo_recuperacion_enviada">Código de recuperación enviado.</string>
+    <string name="repo_recuperacion_enviada">Solicitud de recuperación procesada correctamente.</string>
     <string name="repo_password_reseteada">Contraseña actualizada correctamente.</string>
 
 
@@ -640,9 +640,9 @@
     <string name="social_google_not_registered">Esta cuenta de Google no está registrada en MoveOn. Usa Crear cuenta para darla de alta.</string>
     <string name="social_google_complete_profile">Completa tu fecha de nacimiento, acepta los términos y revisa el nombre sugerido para terminar el alta con Google.</string>
     <string name="social_google_username_prefilled">Hemos generado un nombre de usuario a partir de tu cuenta de Google.</string>
+    <string name="social_google_silent_sign_in_failed">No se pudo restaurar automáticamente la sesión de Google.</string>
     <string name="registro_username_already_exists_choose_another">Ese nombre de usuario ya existe. Elige otro.</string>
     <string name="social_google_email_already_registered">Ese correo ya existe y no es posible continuar el registro.</string>
-    <string name="social_google_silent_sign_in_failed">No se pudo restaurar automáticamente la sesión de Google.</string>
     <string name="social_google_loading_title">Continuando con Google</string>
     <string name="social_google_loading_message_signin">Comprobando tu cuenta de Google para iniciar sesión.</string>
     <string name="social_google_loading_message_register">Conectando con Google para preparar tu registro.</string>

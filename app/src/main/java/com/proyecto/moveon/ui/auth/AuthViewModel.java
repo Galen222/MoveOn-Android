@@ -171,7 +171,11 @@ public class AuthViewModel extends AndroidViewModel {
     public void solicitarRecuperacion(String email) {
         forgotState.setValue(UiState.loading());
 
-        authRepository.solicitarRecuperacion(email, result -> {
+        String locale = AppLanguageManager.sanitizeSelectableMode(
+                AppLanguageManager.getResolvedLanguageTag(getApplication())
+        );
+
+        authRepository.solicitarRecuperacion(email, locale, result -> {
             if (result.isSuccess()) {
                 forgotState.postValue(UiState.success(result.data != null
                         ? result.data

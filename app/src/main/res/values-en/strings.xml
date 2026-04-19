@@ -74,14 +74,14 @@
     <string name="registro_eula_contenido_terminos" tools:ignore="Typos,TypographyOther">Version 1.0 — Effective from June 1, 2025\n\n1. ACCEPTANCE\nBy creating a MoveOn account you fully accept these Terms. If you do not agree, do not use the application.\n\n2. MINIMUM AGE\nMoveOn is intended exclusively for people over 18 years old. By registering you declare that you meet this requirement. We reserve the right to cancel accounts that do not comply with this condition.\n\n3. SERVICE DESCRIPTION\nMoveOn is an application for recording and tracking physical activity (routes, distances and personal statistics). The service is provided as is and may change or be interrupted at any time.\n\n4. USER ACCOUNT\nYou are responsible for keeping your credentials confidential and for all activity carried out from your account. Notify us immediately of any unauthorized use.\n\n5. ACCEPTABLE USE\nThe following is prohibited: (a) using the application for illegal purposes; (b) attempting to access other users\' data; (c) reverse engineering the software; (d) publishing offensive, false or third-party rights-infringing content.\n\n6. INTELLECTUAL PROPERTY\nAll rights related to MoveOn, including design, source code and trademark, belong to their respective owners. No license is granted beyond personal and non-commercial use of the application.\n\n7. LIMITATION OF LIABILITY\nMoveOn does not guarantee the accuracy of activity data or its suitability for medical or professional sports purposes. We are not liable for damages arising from the use of the application.\n\n8. MODIFICATIONS\nWe may update these Terms at any time. We will notify you of relevant changes through the application. Continued use implies acceptance of the new Terms.\n\n9. APPLICABLE LAW\nThese Terms are governed by Spanish law and any dispute shall be submitted to the competent courts of the user\'s place of residence.\n\n10. CONTACT\nFor any questions about these Terms write to us at: info.moveon.app@gmail.com</string>
     <string name="registro_eula_contenido_politica" tools:ignore="Typos,TypographyOther">Version 1.0 — Effective from June 1, 2025\n\nData controller: MoveOn App\nContact: info.moveon.app@gmail.com\n\n1. DATA WE COLLECT\n• Account data: username, email address, encrypted password and date of birth.\n• Activity data: GPS routes, distances, times and exercise statistics.\n• Legal acceptance data: date and version of acceptance of these terms, required for GDPR compliance.\n• Technical data: device model, operating system version and session identifiers.\n\n2. PURPOSE AND LEGAL BASIS\nWe process your data to: (a) provide the activity tracking service — performance of a contract under Article 6.1(b) GDPR; (b) improve the application using aggregated and anonymised statistics — legitimate interest under Article 6.1(f) GDPR; (c) comply with legal obligations under Article 6.1(c) GDPR.\n\n3. LOCATION DATA\nMoveOn accesses your GPS location only while you are recording an activity and with your explicit consent. Route data is stored on our servers to show your history. You can delete any route from the application itself.\n\n4. RETENTION\nWe keep your data while you maintain an active account. After account deletion, the data is removed within a maximum of 30 days, unless legal retention is required.\n\n5. RECIPIENTS\nWe do not sell your data to third parties. We may share it with infrastructure providers (hosting within the EU) under data processing agreements compliant with GDPR.\n\n6. YOUR RIGHTS\nYou have the right to access, rectify, erase, object and request portability of your data. You can exercise these rights by writing to info.moveon.app@gmail.com. You may also lodge a complaint with the Spanish Data Protection Agency at aepd.es.\n\n7. SECURITY\nWe apply TLS encryption to all communications and store passwords using secure hashing algorithms such as bcrypt. We adopt appropriate technical and organisational measures to protect your data against unauthorised access.\n\n8. MINORS\nMoveOn is not intended for persons under 18 years old and we do not knowingly collect data from minors. If we detect an account belonging to a minor, we will delete it immediately.\n\n9. CHANGES TO THIS POLICY\nWe will notify any relevant changes through the application at least 15 days in advance.\n\n10. CONTACT\nTo exercise your rights or resolve any questions: info.moveon.app@gmail.com</string>
     <string name="forgot_title">Recover password</string>
-    <string name="forgot_description_step1">Enter your email and we will send you a verification code.</string>
-    <string name="forgot_description_step2">Enter the code you received and your new password.</string>
+    <string name="forgot_description_step1">Enter your email and we will send you the appropriate instructions.</string>
+    <string name="forgot_description_step2">If you received a code, enter it together with your new password. Otherwise, follow the instructions in your email.</string>
     <string name="forgot_hint_email">Email</string>
     <string name="forgot_hint_codigo">Verification code</string>
     <string name="forgot_hint_password_nueva">New password</string>
     <string name="forgot_hint_password_confirmar">Confirm new password</string>
-    <string name="forgot_btn_enviar_codigo">Send code</string>
-    <string name="forgot_btn_enviando_codigo">Sending…</string>
+    <string name="forgot_btn_enviar_codigo">Send instructions</string>
+    <string name="forgot_btn_enviando_codigo">Processing…</string>
     <string name="forgot_btn_cambiar_password">Change password</string>
     <string name="forgot_btn_cambiando_password">Changing…</string>
     <string name="forgot_btn_volver_login">Sign in</string>
@@ -91,10 +91,10 @@
     <string name="forgot_error_password_vacia">Enter the new password.</string>
     <string name="forgot_error_password_corta">Password must be at least 8 characters.</string>
     <string name="forgot_error_passwords_distintas">Passwords do not match.</string>
-    <string name="forgot_toast_codigo_enviado">Code sent. Check your email.</string>
+    <string name="forgot_toast_codigo_enviado">If the account supports recovery, we have sent you instructions by email.</string>
     <string name="forgot_toast_password_cambiada">Password changed. You can now sign in.</string>
     <string name="forgot_logo_desc">MoveOn logo</string>
-    <string name="repo_recuperacion_enviada">Recovery code sent.</string>
+    <string name="repo_recuperacion_enviada">Recovery request processed successfully.</string>
     <string name="repo_password_reseteada">Password updated successfully.</string>
     <string name="tracking_notification_channel_name">Active tracking</string>
     <string name="tracking_notification_channel_desc">Shows tracking status while the app is in the background</string>
@@ -458,9 +458,9 @@
     <string name="social_google_not_registered">This Google account is not registered in MoveOn. Use Create account to sign up.</string>
     <string name="social_google_complete_profile">Complete your birth date, accept the terms, and review the suggested username to finish signing up with Google.</string>
     <string name="social_google_username_prefilled">We generated a username from your Google account.</string>
+    <string name="social_google_silent_sign_in_failed">Google session could not be restored automatically.</string>
     <string name="registro_username_already_exists_choose_another">That username already exists. Choose another one.</string>
     <string name="social_google_email_already_registered">That email already exists and the registration cannot continue.</string>
-    <string name="social_google_silent_sign_in_failed">Google session could not be restored automatically.</string>
     <string name="social_google_loading_title">Continuing with Google</string>
     <string name="social_google_loading_message_signin">Checking your Google account to sign you in.</string>
     <string name="social_google_loading_message_register">Connecting with Google to prepare your sign-up.</string>

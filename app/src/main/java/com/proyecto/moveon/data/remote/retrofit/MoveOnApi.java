@@ -36,11 +36,18 @@ public interface MoveOnApi {
     @POST("logout")
     Call<MessageResponseDto> logout(@Body LogoutRequestDto body);
 
-    /** Paso 1: solicita el envío del código de recuperación al email del usuario. */
+    /**
+     * Paso 1: inicia el flujo de recuperación de contraseña.
+     *
+     * <p>El backend debe responder de forma neutra para cuentas locales, cuentas
+     * vinculadas a Google y correos inexistentes. El campo {@code locale}
+     * del body permite seleccionar la plantilla del correo (es/en) sin revelar
+     * el tipo de cuenta en la respuesta pública.</p>
+     */
     @POST("password/solicitar")
     Call<MessageResponseDto> solicitarRecuperacion(@Body RecuperarPasswordRequestDto body);
 
-    /** Paso 2: valida el código y establece la nueva contraseña. */
+    /** Paso 2: valida el código y establece la nueva contraseña para cuentas locales. */
     @POST("password/confirmar")
     Call<MessageResponseDto> resetearPassword(@Body ResetearPasswordRequestDto body);
 }

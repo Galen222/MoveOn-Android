@@ -261,13 +261,13 @@ public class AuthRepository extends BaseRepository {
 
     // -------------------------------------------------------------------------
     // Recuperación de contraseña — Paso 1
-    // POST /password/solicitar → body: { email }
+    // POST /password/solicitar → body: { email, locale }
     // -------------------------------------------------------------------------
 
-    public void solicitarRecuperacion(String email, Callback<String> callback) {
+    public void solicitarRecuperacion(String email, String locale, Callback<String> callback) {
         Call<MessageResponseDto> call =
                 RetrofitProvider.authApi(appContext)
-                        .solicitarRecuperacion(new RecuperarPasswordRequestDto(email));
+                        .solicitarRecuperacion(new RecuperarPasswordRequestDto(email, locale));
 
         trackCall(call);
         call.enqueue(new retrofit2.Callback<>() {
@@ -336,5 +336,4 @@ public class AuthRepository extends BaseRepository {
         });
     }
 }
-
 
