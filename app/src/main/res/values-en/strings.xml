@@ -458,8 +458,9 @@
     <string name="social_google_not_registered">This Google account is not registered in MoveOn. Use Create account to sign up.</string>
     <string name="social_google_complete_profile">Complete your birth date, accept the terms, and review the suggested username to finish signing up with Google.</string>
     <string name="social_google_username_prefilled">We generated a username from your Google account.</string>
+    <string name="registro_username_already_exists_choose_another">That username already exists. Choose another one.</string>
+    <string name="social_google_email_already_registered">That email already exists and the registration cannot continue.</string>
     <string name="social_google_silent_sign_in_failed">Google session could not be restored automatically.</string>
-
     <string name="social_google_loading_title">Continuing with Google</string>
     <string name="social_google_loading_message_signin">Checking your Google account to sign you in.</string>
     <string name="social_google_loading_message_register">Connecting with Google to prepare your sign-up.</string>

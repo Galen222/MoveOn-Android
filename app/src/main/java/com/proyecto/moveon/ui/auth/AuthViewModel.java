@@ -13,6 +13,7 @@ import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.app.ServiceLocator;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiResult;
+import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.data.session.AuthRepository;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.domain.auth.LoginSession;
@@ -70,7 +71,9 @@ public class AuthViewModel extends AndroidViewModel {
      * que nunca se autenticaron con ese provider.</p>
      */
     public boolean shouldTrySilentGoogleSignIn() {
-        return SocialAuthProvider.GOOGLE.equals(sessionManager.getAuthProvider());
+        return !sessionManager.hasRecoverableSession()
+                && SocialAuthProvider.GOOGLE.equals(sessionManager.getAuthProvider())
+                && AppSettingsManager.isGoogleSilentSignInEnabled(getApplication());
     }
 
     public void saveRememberedIdentifier(String identifier, boolean remember) {

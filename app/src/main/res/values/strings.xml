@@ -640,8 +640,9 @@
     <string name="social_google_not_registered">Esta cuenta de Google no está registrada en MoveOn. Usa Crear cuenta para darla de alta.</string>
     <string name="social_google_complete_profile">Completa tu fecha de nacimiento, acepta los términos y revisa el nombre sugerido para terminar el alta con Google.</string>
     <string name="social_google_username_prefilled">Hemos generado un nombre de usuario a partir de tu cuenta de Google.</string>
+    <string name="registro_username_already_exists_choose_another">Ese nombre de usuario ya existe. Elige otro.</string>
+    <string name="social_google_email_already_registered">Ese correo ya existe y no es posible continuar el registro.</string>
     <string name="social_google_silent_sign_in_failed">No se pudo restaurar automáticamente la sesión de Google.</string>
-
     <string name="social_google_loading_title">Continuando con Google</string>
     <string name="social_google_loading_message_signin">Comprobando tu cuenta de Google para iniciar sesión.</string>
     <string name="social_google_loading_message_register">Conectando con Google para preparar tu registro.</string>

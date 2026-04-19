@@ -57,14 +57,12 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
     private static final String EULA_VERSION = "1.0";
     private static final int MIN_AGE_YEARS = 18;
     private static final LocalDate DEFAULT_BIRTH_DATE = LocalDate.of(2000, 1, 1);
-    private static final int MAX_SOCIAL_USERNAME_RETRIES = 12;
 
     private ActivityRegisterBinding binding;
     private AuthViewModel viewModel;
     private SocialAuthManager socialAuthManager;
 
     @Nullable private SocialGoogleAccount pendingGoogleAccount;
-    private int socialUsernameRetryCount;
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -167,7 +165,13 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         });
         binding.btnGoogleRegister.setOnClickListener(v -> attemptSocialRegister(SocialAuthProvider.GOOGLE));
 
-        binding.etUsuario.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) binding.tilUsuario.setError(null); });
+        binding.etUsuario.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) return;
+            binding.tilUsuario.setError(null);
+            if (pendingGoogleAccount != null) {
+                binding.tilUsuario.setHelperText(getString(R.string.social_google_username_helper));
+            }
+        });
         binding.etUsuarioCorreo.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) binding.tilUsuarioCorreo.setError(null); });
         binding.etFechaNacimiento.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) binding.tilFechaNacimiento.setError(null); });
         binding.etPassword.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) binding.tilPassword.setError(null); });
@@ -184,13 +188,14 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
             }
 
             if (state.error != null) {
-                if (shouldRetrySocialUsername(state.error)) {
-                    regenerateSocialUsernameAndRetry();
+                showGoogleLoading(false, false, null, 0, 0);
+                setLoading(false);
+
+                if (handleRegisterConflict(state.error)) {
+                    viewModel.resetRegisterState();
                     return;
                 }
 
-                showGoogleLoading(false, false, null, 0, 0);
-                setLoading(false);
                 applyBackendErrors(state.error);
 
                 if (!state.error.hasFieldErrors()) {
@@ -213,27 +218,7 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         });
     }
 
-    private boolean shouldRetrySocialUsername(@NonNull ApiError error) {
-        return pendingGoogleAccount != null
-                && "USERNAME_ALREADY_IN_USE".equals(error.getErrorCode())
-                && socialUsernameRetryCount < MAX_SOCIAL_USERNAME_RETRIES;
-    }
 
-    private void regenerateSocialUsernameAndRetry() {
-        socialUsernameRetryCount++;
-        suggestUsernameFromGoogle(pendingGoogleAccount, false);
-        SocialRegisterInput input = buildSocialRegisterInput(SocialAuthProvider.GOOGLE, pendingGoogleAccount.idToken);
-        if (input != null) {
-            showGoogleLoading(true, false, pendingGoogleAccount,
-                    R.string.social_google_loading_title,
-                    R.string.social_google_loading_message_finish);
-            viewModel.registerWithSocial(input);
-            return;
-        }
-        showGoogleLoading(false, false, null, 0, 0);
-        setLoading(false);
-        viewModel.resetRegisterState();
-    }
 
     private void showTerminosDialog() {
         showLegalDialog(getString(R.string.registro_eula_titulo_terminos), getString(R.string.registro_eula_contenido_terminos));
@@ -390,11 +375,79 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
 
     private void applyPendingGoogleAccount(@NonNull SocialGoogleAccount account, boolean announce) {
         pendingGoogleAccount = account;
-        socialUsernameRetryCount = 0;
         renderSocialMode(account, true);
         suggestUsernameFromGoogle(account, announce);
         showGoogleLoading(false, false, null, 0, 0);
         setLoading(false);
+    }
+
+    private boolean handleRegisterConflict(@NonNull ApiError error) {
+        boolean socialFlow = pendingGoogleAccount != null;
+
+        SocialRegisterConflictResolver.Resolution resolution =
+                SocialRegisterConflictResolver.resolve(error.getErrorCode(), socialFlow);
+
+        if (resolution == SocialRegisterConflictResolver.Resolution.SHOW_USERNAME_TAKEN
+                || isUsernameAlreadyInUse(error)) {
+            showUsernameAlreadyInUseFeedback();
+            return true;
+        }
+
+        if (resolution == SocialRegisterConflictResolver.Resolution.SHOW_EMAIL_ALREADY_REGISTERED
+                || isEmailAlreadyInUse(error)) {
+            showEmailAlreadyInUseFeedback(socialFlow);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void showUsernameAlreadyInUseFeedback() {
+        binding.tilUsuario.setHelperText(null);
+        binding.tilUsuario.setError(getString(R.string.backend_error_username_already_in_use));
+        binding.etUsuario.requestFocus();
+        TopSnackbar.error(binding.getRoot(), getString(R.string.registro_username_already_exists_choose_another));
+    }
+
+    private void showEmailAlreadyInUseFeedback(boolean socialFlow) {
+        if (!socialFlow) {
+            binding.tilUsuarioCorreo.setError(getString(R.string.backend_error_email_already_in_use));
+            binding.etUsuarioCorreo.requestFocus();
+        }
+        TopSnackbar.error(binding.getRoot(), getString(R.string.social_google_email_already_registered));
+    }
+
+    private boolean isUsernameAlreadyInUse(@NonNull ApiError error) {
+        if ("USERNAME_ALREADY_IN_USE".equals(error.getErrorCode())) {
+            return true;
+        }
+        String usernameFieldMessage = error.firstFieldMessage("nombre_usuario", "usuario", "nombreUsuario");
+        return matchesLocalizedConflict(usernameFieldMessage, R.string.backend_error_username_already_in_use)
+                || matchesLocalizedConflict(error.getMessage(), R.string.backend_error_username_already_in_use);
+    }
+
+    private boolean isEmailAlreadyInUse(@NonNull ApiError error) {
+        if ("EMAIL_ALREADY_IN_USE".equals(error.getErrorCode())) {
+            return true;
+        }
+        String emailFieldMessage = error.firstFieldMessage("email", "correo");
+        return matchesLocalizedConflict(emailFieldMessage, R.string.backend_error_email_already_in_use)
+                || matchesLocalizedConflict(error.getMessage(), R.string.backend_error_email_already_in_use);
+    }
+
+    private boolean matchesLocalizedConflict(@Nullable String actualMessage, @StringRes int expectedRes) {
+        return normalizeForComparison(actualMessage)
+                .equals(normalizeForComparison(getString(expectedRes)));
+    }
+
+    @NonNull
+    private String normalizeForComparison(@Nullable String value) {
+        if (!StringUtils.hasText(value)) return "";
+        return Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .replaceAll("[^A-Za-z0-9]", "")
+                .toLowerCase(Locale.ROOT)
+                .trim();
     }
 
     private void renderSocialMode(@Nullable SocialGoogleAccount account, boolean enabled) {
