@@ -254,7 +254,8 @@ public class StatsFragment extends Fragment {
                     : week.startDay + "-" + week.endDay;
         }
 
-        renderBarChart(binding.llMonthChartBars, distances, labels, null);
+        int currentWeekIndex = findCurrentMonthWeekIndex(weeks);
+        renderBarChart(binding.llMonthChartBars, distances, labels, currentWeekIndex);
     }
 
     @Nullable
@@ -265,7 +266,20 @@ public class StatsFragment extends Fragment {
                 return block;
             }
         }
-        return blocks.isEmpty() ? null : blocks.get(0);
+        return null;
+    }
+
+    private int findCurrentMonthWeekIndex(@NonNull List<StatsResumen.WeekBlock> weeks) {
+        LocalDate today = LocalDate.now();
+        int todayDayOfMonth = today.getDayOfMonth();
+
+        for (int i = 0; i < weeks.size(); i++) {
+            StatsResumen.WeekBlock week = weeks.get(i);
+            if (todayDayOfMonth >= week.startDay && todayDayOfMonth <= week.endDay) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @NonNull
