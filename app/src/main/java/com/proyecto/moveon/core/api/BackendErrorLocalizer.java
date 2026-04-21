@@ -13,6 +13,9 @@ import com.proyecto.moveon.utils.StringUtils;
 
 import java.util.Locale;
 
+/**
+ * Clase responsable de backend error localizer.
+ */
 public final class BackendErrorLocalizer {
 
     private BackendErrorLocalizer() {}

@@ -3,7 +3,9 @@ package com.proyecto.moveon.utils;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
-
+/**
+ * Pruebas para validar el comportamiento de string utils.
+ */
 public class StringUtilsTest {
 
     // ── textOf ──────────────────────────────────────────────────────────────

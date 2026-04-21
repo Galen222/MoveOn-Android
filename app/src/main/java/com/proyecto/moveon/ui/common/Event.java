@@ -1,7 +1,9 @@
 package com.proyecto.moveon.ui.common;
 
 import androidx.annotation.Nullable;
-
+/**
+ * Clase responsable de event.
+ */
 public final class Event<T> {
 
     private final T content;

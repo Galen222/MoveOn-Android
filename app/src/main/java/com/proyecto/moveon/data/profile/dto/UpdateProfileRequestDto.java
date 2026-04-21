@@ -4,7 +4,9 @@ import androidx.annotation.Keep;
 import androidx.annotation.Nullable;
 
 import com.google.gson.annotations.SerializedName;
-
+/**
+ * DTO utilizado para enviar la solicitud de update profile.
+ */
 @Keep
 public final class UpdateProfileRequestDto {
 

@@ -24,7 +24,9 @@ import com.proyecto.moveon.ui.common.TopSnackbar;
 import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
-
+/**
+ * Actividad que gestiona la interfaz y las interacciones de login.
+ */
 public class LoginActivity extends AppCompatActivity implements SocialAuthManager.Listener {
 
     private ActivityLoginBinding binding;

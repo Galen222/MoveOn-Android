@@ -10,6 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Clase responsable de api error.
+ */
 public final class ApiError {
 
     @NonNull private final ApiErrorType type;

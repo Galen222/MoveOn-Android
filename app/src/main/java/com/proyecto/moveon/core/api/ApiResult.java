@@ -3,6 +3,9 @@ package com.proyecto.moveon.core.api;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+/**
+ * Clase responsable de api result.
+ */
 public final class ApiResult<T> {
 
     @Nullable public final T data;

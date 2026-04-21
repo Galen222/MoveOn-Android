@@ -9,7 +9,9 @@ import com.proyecto.moveon.domain.auth.LoginSession;
 import com.proyecto.moveon.domain.auth.RegisterInput;
 
 import org.junit.Test;
-
+/**
+ * Pruebas para validar el comportamiento de auth.
+ */
 public class AuthMapperTest {
 
     // ── toLoginRequest ──────────────────────────────────────────────────────

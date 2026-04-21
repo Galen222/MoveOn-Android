@@ -6,6 +6,9 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
+/**
+ * DTO que agrupa una página de resultados de actividades page.
+ */
 @Keep
 public final class ActividadesPageDto {
 

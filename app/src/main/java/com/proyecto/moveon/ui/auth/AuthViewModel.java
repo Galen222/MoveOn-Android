@@ -21,7 +21,9 @@ import com.proyecto.moveon.domain.auth.RegisterInput;
 import com.proyecto.moveon.domain.auth.SocialRegisterInput;
 import com.proyecto.moveon.domain.auth.SocialAuthProvider;
 import com.proyecto.moveon.ui.common.UiState;
-
+/**
+ * ViewModel que expone el estado y las acciones de auth.
+ */
 public class AuthViewModel extends AndroidViewModel {
 
     private final AuthRepository authRepository;

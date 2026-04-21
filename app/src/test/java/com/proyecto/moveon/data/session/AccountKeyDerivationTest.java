@@ -4,7 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
-
+/**
+ * Pruebas para validar el comportamiento de account key derivation.
+ */
 public class AccountKeyDerivationTest {
 
     @Test

@@ -6,7 +6,9 @@ import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 
 import org.junit.Test;
-
+/**
+ * Pruebas para validar el comportamiento de ui.
+ */
 public class UiStateTest {
 
     @Test

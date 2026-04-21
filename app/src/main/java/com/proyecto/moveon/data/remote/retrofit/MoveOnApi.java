@@ -15,7 +15,9 @@ import com.proyecto.moveon.data.session.dto.SocialRegisterRequestDto;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.POST;
-
+/**
+ * Contrato que define las operaciones disponibles para move on api.
+ */
 public interface MoveOnApi {
 
     @POST("login")

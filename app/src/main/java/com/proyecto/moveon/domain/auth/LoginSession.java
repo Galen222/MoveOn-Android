@@ -1,5 +1,7 @@
 package com.proyecto.moveon.domain.auth;
-
+/**
+ * Clase responsable de login session.
+ */
 public final class LoginSession {
     public final String nombreUsuario;
     public final String tokenAcceso;

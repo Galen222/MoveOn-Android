@@ -8,7 +8,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
+/**
+ * Pruebas para validar el comportamiento de move on executors.
+ */
 public class MoveOnExecutorsTest {
 
     @Test

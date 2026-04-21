@@ -33,7 +33,9 @@ import org.json.JSONObject;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Locale;
-
+/**
+ * Gestor que coordina la lógica relacionada con social auth.
+ */
 public final class SocialAuthManager {
 
     private static final String TAG = "SocialAuthManager";

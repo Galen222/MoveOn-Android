@@ -2,7 +2,9 @@ package com.proyecto.moveon.data.profile.sync;
 
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
-
+/**
+ * Payload con la información necesaria para procesar profile patch.
+ */
 public final class ProfilePatchPayload {
 
     private final JsonObject json = new JsonObject();

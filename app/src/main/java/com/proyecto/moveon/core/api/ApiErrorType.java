@@ -1,5 +1,8 @@
 package com.proyecto.moveon.core.api;
 
+/**
+ * Enumeración con los valores posibles de api error type.
+ */
 public enum ApiErrorType {
     NETWORK,
     TIMEOUT,

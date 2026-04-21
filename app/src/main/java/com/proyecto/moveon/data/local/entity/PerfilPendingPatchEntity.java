@@ -4,7 +4,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
-
+/**
+ * Entidad persistente que representa perfil pending patch.
+ */
 @Entity(tableName = "perfil_pending_patch")
 public class PerfilPendingPatchEntity {
 

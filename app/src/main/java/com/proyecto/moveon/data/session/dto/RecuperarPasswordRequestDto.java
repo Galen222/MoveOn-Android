@@ -6,7 +6,9 @@ import androidx.annotation.NonNull;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Locale;
-
+/**
+ * DTO utilizado para enviar la solicitud de recuperar password.
+ */
 @Keep
 public final class RecuperarPasswordRequestDto {
 

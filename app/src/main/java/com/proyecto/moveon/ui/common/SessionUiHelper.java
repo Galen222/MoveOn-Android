@@ -11,7 +11,9 @@ import com.proyecto.moveon.ui.auth.LoginActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.OfflineSessionCleaner;
 import com.proyecto.moveon.utils.StringUtils;
-
+/**
+ * Utilidad de apoyo para las tareas de session ui.
+ */
 public final class SessionUiHelper {
 
     private SessionUiHelper() {}

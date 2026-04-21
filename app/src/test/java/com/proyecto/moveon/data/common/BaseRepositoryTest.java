@@ -12,7 +12,9 @@ import okio.Timeout;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-
+/**
+ * Pruebas para validar el comportamiento de base.
+ */
 public class BaseRepositoryTest {
 
     @Test

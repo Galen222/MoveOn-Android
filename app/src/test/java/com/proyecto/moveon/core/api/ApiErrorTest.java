@@ -8,7 +8,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+/**
+ * Pruebas para validar el comportamiento de api error.
+ */
 public class ApiErrorTest {
 
     // ── Factory methods ─────────────────────────────────────────────────────

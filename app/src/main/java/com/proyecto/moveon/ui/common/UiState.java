@@ -3,7 +3,9 @@ package com.proyecto.moveon.ui.common;
 import androidx.annotation.Nullable;
 
 import com.proyecto.moveon.core.api.ApiError;
-
+/**
+ * Estado que modela la información necesaria para ui.
+ */
 public class UiState<T> {
     public final boolean loading;
     @Nullable public final T data;

@@ -3,7 +3,9 @@ package com.proyecto.moveon.data.profile.dto;
 import androidx.annotation.Keep;
 
 import com.google.gson.annotations.SerializedName;
-
+/**
+ * DTO relacionado con profile info.
+ */
 @Keep
 public final class ProfileInfoDto {
 

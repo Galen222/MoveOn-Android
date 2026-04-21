@@ -12,7 +12,9 @@ import okhttp3.Request;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-
+/**
+ * Proveedor de datos o dependencias para retrofit.
+ */
 public final class RetrofitProvider {
 
     private static volatile MoveOnApi moveOnApi;

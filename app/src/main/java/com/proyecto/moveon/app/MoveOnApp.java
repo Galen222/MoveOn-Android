@@ -8,6 +8,9 @@ import com.proyecto.moveon.core.network.ConnectivityObserver;
 import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.data.local.db.AppDatabase;
 
+/**
+ * Clase Application principal encargada de inicializar la aplicación.
+ */
 public class MoveOnApp extends Application {
 
     @Override

@@ -9,7 +9,9 @@ import com.google.gson.JsonObject;
 import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.data.common.BaseRepository;
 import com.proyecto.moveon.data.remote.AuthenticatedApiClient;
-
+/**
+ * Repositorio encargado de centralizar las operaciones de rutas remote.
+ */
 public class RutasRemoteRepository extends BaseRepository {
 
     public interface Callback<T> {

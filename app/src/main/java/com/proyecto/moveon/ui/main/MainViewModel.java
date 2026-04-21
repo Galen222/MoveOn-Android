@@ -8,7 +8,9 @@ import androidx.lifecycle.AndroidViewModel;
 import com.proyecto.moveon.core.auth.GlobalAuthManager;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.data.session.SessionRefreshCoordinator;
-
+/**
+ * ViewModel que expone el estado y las acciones de main.
+ */
 public class MainViewModel extends AndroidViewModel {
 
     private final SecureSessionManager sessionManager;

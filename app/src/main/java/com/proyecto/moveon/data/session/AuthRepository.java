@@ -26,7 +26,9 @@ import com.proyecto.moveon.utils.StringUtils;
 
 import retrofit2.Call;
 import retrofit2.Response;
-
+/**
+ * Repositorio encargado de centralizar las operaciones de auth.
+ */
 public class AuthRepository extends BaseRepository {
 
     private final Context appContext;

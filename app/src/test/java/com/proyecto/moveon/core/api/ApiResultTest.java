@@ -3,7 +3,9 @@ package com.proyecto.moveon.core.api;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
-
+/**
+ * Pruebas para validar el comportamiento de api result.
+ */
 public class ApiResultTest {
 
     @Test

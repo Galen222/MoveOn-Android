@@ -22,6 +22,9 @@ import com.proyecto.moveon.data.remote.AuthenticatedApiClient;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fuente de datos remota para las operaciones de actividad remote data source.
+ */
 public class ActividadRemoteDataSource {
 
     public interface Callback<T> {

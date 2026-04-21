@@ -3,7 +3,9 @@ package com.proyecto.moveon.data.session.dto;
 import androidx.annotation.Keep;
 
 import com.google.gson.annotations.SerializedName;
-
+/**
+ * DTO utilizado para enviar la solicitud de social auth.
+ */
 @Keep
 public final class SocialAuthRequestDto {
 

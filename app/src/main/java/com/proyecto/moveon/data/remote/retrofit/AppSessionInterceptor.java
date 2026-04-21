@@ -7,7 +7,9 @@ import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
-
+/**
+ * Interceptor que adapta peticiones o respuestas relacionadas con app session interceptor.
+ */
 public final class AppSessionInterceptor implements Interceptor {
 
     // CACHÉ ESTÁTICA (Fail Fast: lanzará IllegalArgumentException si la BASE_URL es inválida)

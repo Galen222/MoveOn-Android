@@ -1,7 +1,9 @@
 package com.proyecto.moveon.domain.profile;
 
 import androidx.annotation.Nullable;
-
+/**
+ * Clase responsable de perfil usuario.
+ */
 public final class PerfilUsuario {
     public final String nombreUsuario;
     public final String email;

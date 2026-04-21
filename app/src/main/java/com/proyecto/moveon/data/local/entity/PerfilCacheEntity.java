@@ -4,7 +4,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
-
+/**
+ * Entidad persistente que representa perfil cache.
+ */
 @Entity(tableName = "perfil_cache")
 public class PerfilCacheEntity {
 

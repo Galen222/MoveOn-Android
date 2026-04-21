@@ -2,7 +2,9 @@ package com.proyecto.moveon.ui.auth;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
+/**
+ * Clase responsable de social google account.
+ */
 public final class SocialGoogleAccount {
     @NonNull public final String idToken;
     @Nullable public final String email;

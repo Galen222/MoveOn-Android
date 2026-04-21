@@ -36,7 +36,9 @@ import com.proyecto.moveon.ui.home.tracking.TrackingService;
 import com.proyecto.moveon.ui.profile.ProfileFragment;
 import com.proyecto.moveon.ui.stats.StatsFragment;
 import com.proyecto.moveon.utils.NavigationUtils;
-
+/**
+ * Actividad que gestiona la interfaz y las interacciones de main.
+ */
 public class MainActivity extends AppCompatActivity {
 
     private static final String KEY_SELECTED_ITEM = "selected_item";

@@ -20,7 +20,9 @@ import java.io.IOException;
 import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.Response;
-
+/**
+ * Clase responsable de authenticated api client.
+ */
 public final class AuthenticatedApiClient extends BaseRepository {
 
     public interface Mapper<I, O> {

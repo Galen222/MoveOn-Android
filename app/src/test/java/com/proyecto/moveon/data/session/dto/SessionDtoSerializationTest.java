@@ -6,7 +6,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import org.junit.Test;
-
+/**
+ * Pruebas para validar el comportamiento de session serialization.
+ */
 public class SessionDtoSerializationTest {
 
     private final Gson gson = new Gson();

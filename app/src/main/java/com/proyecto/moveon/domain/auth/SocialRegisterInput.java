@@ -1,5 +1,7 @@
 package com.proyecto.moveon.domain.auth;
-
+/**
+ * Clase responsable de social register input.
+ */
 public final class SocialRegisterInput {
 
     public final String provider;

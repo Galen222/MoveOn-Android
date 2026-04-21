@@ -25,7 +25,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-
+/**
+ * Clase responsable de profile photo storage.
+ */
 public final class ProfilePhotoStorage {
 
     private static final String ROOT_DIR             = "profile_photos";

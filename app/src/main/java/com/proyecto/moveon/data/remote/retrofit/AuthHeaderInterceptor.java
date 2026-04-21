@@ -14,7 +14,9 @@ import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
-
+/**
+ * Interceptor que adapta peticiones o respuestas relacionadas con auth header interceptor.
+ */
 public final class AuthHeaderInterceptor implements Interceptor {
 
     private static final HttpUrl TARGET_URL = HttpUrl.get(com.proyecto.moveon.BuildConfig.BASE_URL);

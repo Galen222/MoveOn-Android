@@ -9,7 +9,9 @@ import com.proyecto.moveon.domain.auth.LoginSession;
 import com.proyecto.moveon.domain.auth.RegisterInput;
 import com.proyecto.moveon.domain.auth.SocialRegisterInput;
 import com.proyecto.moveon.utils.StringUtils;
-
+/**
+ * Mapper que transforma modelos vinculados a auth.
+ */
 public final class AuthMapper {
 
     private AuthMapper() {}

@@ -1,5 +1,7 @@
 package com.proyecto.moveon.domain.auth;
-
+/**
+ * Clase responsable de register input.
+ */
 public final class RegisterInput {
 
     public final String  nombreUsuario;

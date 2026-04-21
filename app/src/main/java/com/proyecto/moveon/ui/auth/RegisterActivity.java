@@ -45,7 +45,9 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
-
+/**
+ * Actividad que gestiona la interfaz y las interacciones de register.
+ */
 public class RegisterActivity extends AppCompatActivity implements SocialAuthManager.Listener {
 
     public static final String EXTRA_GOOGLE_ID_TOKEN = "extra_google_id_token";

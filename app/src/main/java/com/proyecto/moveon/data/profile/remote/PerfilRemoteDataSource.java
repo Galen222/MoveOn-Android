@@ -14,7 +14,9 @@ import java.io.File;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
-
+/**
+ * Fuente de datos remota para las operaciones de perfil remote data source.
+ */
 public class PerfilRemoteDataSource {
 
     public interface Callback<T> {

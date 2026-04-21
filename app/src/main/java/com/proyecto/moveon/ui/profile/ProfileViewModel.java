@@ -23,7 +23,9 @@ import com.proyecto.moveon.utils.OfflineSessionCleaner;
 import com.proyecto.moveon.utils.StringUtils;
 
 import java.io.File;
-
+/**
+ * ViewModel que expone el estado y las acciones de profile.
+ */
 public class ProfileViewModel extends AndroidViewModel {
 
     private final AuthRepository authRepository;

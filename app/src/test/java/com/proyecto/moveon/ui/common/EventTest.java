@@ -3,7 +3,9 @@ package com.proyecto.moveon.ui.common;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
-
+/**
+ * Pruebas para validar el comportamiento de event.
+ */
 public class EventTest {
 
     @Test
