@@ -18,7 +18,10 @@ import java.time.format.FormatStyle;
 import java.util.Locale;
 
 /**
- * Utilidades de formato para compartir rutas.
+ * Utilidades de formato para construir el contenido textual del flujo de compartir rutas.
+ *
+ * <p>Centraliza el formato visible de métricas y fechas para que la tarjeta compartida y
+ * el texto adjunto mantengan el mismo criterio de localización que el resto de la app.</p>
  */
 public final class ShareRouteFormatter {
 

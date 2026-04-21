@@ -128,11 +128,12 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     /**
      * Evalúa si un patch pendiente debe seguir en cola de reintentos.
      *
-     * <p>Incrementa el contador de intentos y actualiza el mensaje de error.
-     * Si el error no es retryable o se ha alcanzado {@link #MAX_PATCH_ATTEMPTS},
-     * marca el patch como FAILED y devuelve {@code false}. En caso contrario
-     * lo mantiene como PENDING y devuelve {@code true}.</p>
+     * <p>Incrementa el contador de intentos y actualiza el mensaje de error. Si el error no es
+     * retryable o se ha alcanzado {@link #MAX_PATCH_ATTEMPTS}, marca el patch como FAILED y
+     * devuelve {@code false}. En caso contrario lo mantiene como PENDING y devuelve {@code true}.</p>
      *
+     * @param op patch pendiente cuyo estado de reintento debe actualizarse.
+     * @param error error que provocó el fallo del último intento.
      * @return {@code true} si el patch sigue pendiente y merece reintento.
      */
     private boolean shouldKeepRetrying(@NonNull PerfilPendingPatchEntity op,
@@ -162,9 +163,16 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     // ══════════════════════════════════════════════════════════════════════════
 
     /**
-     * Aplica un patch optimistamente en Room, intenta sincronizar con el backend,
-     * y gestiona el resultado (synced / queued / failed).
-     * <b>Blocking — llamar desde hilo IO.</b>
+     * Aplica un patch optimistamente en Room, intenta sincronizar con el backend y gestiona el resultado.
+     *
+     * <p>Puede terminar como {@link UpdateResult#synced()}, {@link UpdateResult#queued()} o
+     * {@link UpdateResult#failed(ApiError)} según la respuesta remota y la política de reintentos.</p>
+     *
+     * <p><b>Blocking:</b> llamar desde hilo IO.</p>
+     *
+     * @param accountKey clave lógica de la cuenta cuyo perfil debe actualizarse.
+     * @param patchJson patch parcial del perfil ya validado por la capa superior.
+     * @return resultado final del intento de actualización.
      */
     @NonNull
     public UpdateResult patchAndSync(@NonNull String accountKey,
@@ -232,8 +240,14 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     // ══════════════════════════════════════════════════════════════════════════
 
     /**
-     * Guarda la foto localmente, intenta subirla al backend, y gestiona el resultado.
-     * <b>Blocking — llamar desde hilo IO.</b>
+     * Guarda la foto localmente, intenta subirla al backend y gestiona el resultado.
+     *
+     * <p><b>Blocking:</b> llamar desde hilo IO.</p>
+     *
+     * @param accountKey clave lógica de la cuenta propietaria de la foto.
+     * @param sourceFile fichero local seleccionado por el usuario.
+     * @return resultado final del flujo de subida y sincronización.
+     * @throws IOException si la copia o lectura local de la foto falla antes de subirla.
      */
     @NonNull
     public UpdateResult uploadPhotoAndSync(@NonNull String accountKey,
@@ -246,9 +260,15 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     // ══════════════════════════════════════════════════════════════════════════
 
     /**
-     * Sincroniza todos los patches pendientes + foto + refresh.
-     * Llamado por {@code SyncPerfilWorker}.
-     * <b>Blocking — llamar desde hilo IO.</b>
+     * Sincroniza todos los patches pendientes, la foto y el refresh final del perfil.
+     *
+     * <p>Es el punto de entrada usado por {@code SyncPerfilWorker} para vaciar la cola offline y
+     * dejar la caché consolidada tras aplicar texto, foto y snapshot remoto final.</p>
+     *
+     * <p><b>Blocking:</b> llamar desde hilo IO.</p>
+     *
+     * @param accountKey clave lógica de la cuenta que debe sincronizarse.
+     * @return resultado agregado del ciclo completo de sincronización.
      */
     @NonNull
     public SyncResult syncAllPending(@NonNull String accountKey) {
@@ -482,9 +502,11 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     /**
      * Indica si el patch debe reflejarse de forma optimista en la caché local.
      *
-     * <p>Actualmente todos los patches se aplican de forma optimista para que la
-     * UI responda de inmediato y la sincronización posterior solo tenga que
-     * confirmar o revertir el resultado remoto.</p>
+     * <p>Actualmente todos los patches se aplican de forma optimista para que la UI responda
+     * de inmediato y la sincronización posterior solo tenga que confirmar o revertir el resultado remoto.</p>
+     *
+     * @param patch patch cuya política de aplicación local se evalúa.
+     * @return {@code true} cuando debe actualizarse la caché antes de confirmar con backend.
      */
     private boolean shouldApplyPatchOptimistically(@NonNull JsonObject patch) {
         return true;

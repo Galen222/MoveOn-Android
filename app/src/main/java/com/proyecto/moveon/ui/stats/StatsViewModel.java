@@ -28,11 +28,18 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * ViewModel del módulo de Estadísticas.
-  * Dos fuentes reactivas:
- * 1. {@link ActivityRepository#observeActividades} — se recalcula al cambiar cualquier actividad.
- * 2. {@link UserPrefsRepository#observe} — se recalcula al cambiar los objetivos semanal/mensual.
- * Los cálculos estadísticos se delegan a {@link StatsCalculator}.
+ * ViewModel del módulo de estadísticas.
+ *
+ * <p>Combina dos fuentes reactivas:</p>
+ * <ol>
+ *   <li>{@link ActivityRepository#observeActividades(String)} para recalcular cuando cambia
+ *   cualquier actividad.</li>
+ *   <li>{@link UserPrefsRepository#observe(String)} para recalcular cuando cambian los
+ *   objetivos semanal o mensual.</li>
+ * </ol>
+ *
+ * <p>Los cálculos puros se delegan en {@link StatsCalculator} y este ViewModel se limita a
+ * orquestar carga, borrado y exposición de {@link UiState} para la UI.</p>
  */
 public class StatsViewModel extends AndroidViewModel {
 
@@ -133,8 +140,10 @@ public class StatsViewModel extends AndroidViewModel {
     // ── Acciones ──────────────────────────────────────────────────────────────
 
     /**
-     * Carga inicial: muestra loading si no hay datos locales,
-     * encola sync de pendientes y refresca desde servidor.
+     * Lanza la carga inicial del módulo de estadísticas.
+     *
+     * <p>Si todavía no hay resumen local visible, emite {@link UiState#loading()}; después
+     * pide sincronizar pendientes y refresca desde servidor para consolidar la caché.</p>
      */
     public void load() {
         if (accountKey == null) {
@@ -178,8 +187,12 @@ public class StatsViewModel extends AndroidViewModel {
     }
 
     /**
-     * Elimina una actividad individual (solo permite SYNCED).
-     * El resultado se emite como {@link Event} para consumo único en el Fragment.
+     * Elimina una actividad individual y publica el resultado como evento de un solo consumo.
+     *
+     * <p>El borrado real se delega en {@link ActivityRepository(String, java.util.function.Consumer)}
+     * y el feedback se reemite en {@link #deleteEvent} para que el fragment lo consuma una sola vez.</p>
+     *
+     * @param localId identificador local estable de la actividad a eliminar.
      */
     public void borrarActividad(@NonNull String localId) {
         actividadRepository.borrarActividad(localId, result -> {
@@ -236,7 +249,12 @@ public class StatsViewModel extends AndroidViewModel {
         });
     }
 
-    /** Recalcula el resumen con el estado más reciente de ambas fuentes. */
+    /**
+     * Recalcula el resumen con el estado más reciente de actividades y objetivos.
+     *
+     * <p>Es el único punto que invoca a {@link StatsCalculator#calcular(List, long, long)}
+     * para asegurar que ambos flujos reactivos usan exactamente la misma lógica.</p>
+     */
     private void recalcular() {
         statsState.setValue(UiState.success(
                 StatsCalculator.calcular(lastItems, lastWeeklyGoal, lastMonthlyGoal)));

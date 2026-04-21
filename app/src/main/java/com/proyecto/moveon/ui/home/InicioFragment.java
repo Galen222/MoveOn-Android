@@ -43,10 +43,11 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Pantalla principal de tracking.
- * 
- * <p>Muestra métricas ampliadas y consume las alertas del servicio mediante
- * paneles inferiores reutilizables.</p>
+ * Pantalla principal de tracking en tiempo real.
+ *
+ * <p>Combina mapa, métricas, control de sesión y resolución de requisitos del dispositivo.
+ * También consume las alertas emitidas por el servicio mediante {@link TrackingAlertBottomSheet}
+ * y coordina el guardado o descarte final de la actividad.</p>
  */
 public class InicioFragment extends Fragment
         implements OnMapReadyCallback, TrackingAlertBottomSheet.Listener {
@@ -895,7 +896,10 @@ public class InicioFragment extends Fragment
 
     /**
      * Gestiona la acción principal elegida en el bottom sheet de tracking.
-     * 
+     *
+     * <p>Solo la alerta de velocidad sospechosa exige una confirmación explícita del usuario;
+     * la auto-pausa por parada se levanta automáticamente al detectar movimiento real.</p>
+     *
      * @param type tipo de alerta desde la que llega la acción.
      */
     @Override
@@ -909,7 +913,10 @@ public class InicioFragment extends Fragment
 
     /**
      * Gestiona la acción secundaria del bottom sheet de tracking.
-     * 
+     *
+     * <p>En auto-pausa por parada se reusa el mismo flujo de parada visible en pantalla; en
+     * velocidad sospechosa se interpreta como una orden directa de guardar la actividad.</p>
+     *
      * @param type tipo de alerta desde la que llega la acción.
      */
     @Override
@@ -929,7 +936,7 @@ public class InicioFragment extends Fragment
     /**
      * Gestiona la acción terciaria del bottom sheet, usada aquí para suprimir
      * la alerta de auto-pausa por parada durante la actividad actual.
-     * 
+     *
      * @param type tipo de alerta desde la que llega la acción.
      */
     @Override
@@ -942,6 +949,9 @@ public class InicioFragment extends Fragment
     /**
      * Revisa permisos, ajustes del dispositivo y requisitos bloqueantes antes
      * de arrancar o reanudar el tracking.
+     *
+     * <p>El orden importa: primero requisitos definitivamente bloqueados, después permisos
+     * solicitables y por último ajustes globales como la ubicación del dispositivo.</p>
      */
     private void ensureTrackingRequirementsAndStart() {
         List<TrackingRequirementsManager.Requirement> blockedRequirements =
@@ -1056,14 +1066,14 @@ public class InicioFragment extends Fragment
                 .show();
     }
 
-    @NonNull
     /**
      * Convierte la lista de requisitos pendientes a un texto con viñetas apto
      * para diálogos de explicación.
-     * 
+     *
      * @param requirements requisitos que deben representarse.
      * @return cadena multilínea lista para insertarse en el mensaje del diálogo.
      */
+    @NonNull
     private String buildRequirementsBulletList(
             @NonNull List<TrackingRequirementsManager.Requirement> requirements) {
         StringBuilder builder = new StringBuilder();
@@ -1074,13 +1084,13 @@ public class InicioFragment extends Fragment
         return builder.toString();
     }
 
-    @NonNull
     /**
      * Resuelve la etiqueta visible de un requisito de tracking.
-     * 
+     *
      * @param requirement requisito cuya etiqueta debe mostrarse.
      * @return texto localizado que describe ese requisito.
      */
+    @NonNull
     private String getRequirementLabel(@NonNull TrackingRequirementsManager.Requirement requirement) {
         switch (requirement) {
             case LOCATION:
@@ -1174,13 +1184,13 @@ public class InicioFragment extends Fragment
                 ContextCompat.getColor(requireContext(), R.color.textSecondary));
     }
 
-    @NonNull
     /**
      * Formatea una duración en segundos al patrón mm:ss o h:mm:ss según proceda.
-     * 
+     *
      * @param seconds duración a representar.
      * @return texto formateado para la UI de tracking.
      */
+    @NonNull
     private String formatElapsed(long seconds) {
         long h = TimeUnit.SECONDS.toHours(seconds);
         long m = TimeUnit.SECONDS.toMinutes(seconds) % 60L;
@@ -1191,13 +1201,13 @@ public class InicioFragment extends Fragment
         return String.format(Locale.US, "%02d:%02d", m, s);
     }
 
-    @NonNull
     /**
      * Representa la distancia en metros o kilómetros usando los recursos de texto de tracking.
-     * 
+     *
      * @param meters distancia total acumulada.
      * @return texto localizado con la unidad adecuada.
      */
+    @NonNull
     private String formatDistance(int meters) {
         if (meters >= 1000) {
             return getString(R.string.tracking_distance_km_format, meters / 1000.0f);

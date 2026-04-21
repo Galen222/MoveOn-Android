@@ -16,18 +16,21 @@ import com.proyecto.moveon.core.settings.AppSettingsManager;
 import java.util.Locale;
 
 /**
- * Gestiona el idioma de la app.
+ * Punto único de resolución y aplicación del idioma de la aplicación.
  *
- * Reglas:
- * - Si el usuario elige manualmente español o inglés, esa selección manda.
- * - Si no hay selección manual guardada:
- *   - sistema en español => app en español
- *   - sistema en inglés => app en inglés
- *   - cualquier otro idioma del sistema => app en inglés
+ * <p>Centraliza tanto la persistencia de la preferencia en {@link AppSettingsManager}
+ * como la aplicación efectiva del locale vía {@link AppCompatDelegate} o
+ * {@link #wrapContext(Context)}, según el momento del ciclo de vida.</p>
  *
- * No existe ya una opción visible de "idioma del sistema"; el idioma del
- * sistema solo se usa como valor por defecto inicial cuando no hay una
- * preferencia manual almacenada.
+ * <p>Reglas activas:</p>
+ * <ul>
+ *   <li>Si el usuario elige manualmente español o inglés, esa selección manda.</li>
+ *   <li>Si no hay selección manual guardada, solo se soportan dos fallbacks: sistema en
+ *   español => app en español; cualquier otro idioma => app en inglés.</li>
+ * </ul>
+ *
+ * <p>No existe ya una opción visible de "idioma del sistema"; el idioma del sistema
+ * solo se usa como valor por defecto inicial cuando no hay una preferencia manual almacenada.</p>
  */
 public final class AppLanguageManager {
 

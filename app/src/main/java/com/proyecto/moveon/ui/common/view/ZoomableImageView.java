@@ -14,7 +14,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 
 /**
- * ImageView con zoom por pellizco y arrastre, sin dependencias externas.
+ * {@link AppCompatImageView} con zoom por pellizco y arrastre sin dependencias externas.
+ *
+ * <p>La vista mantiene una matriz propia, reencuadra el drawable al cambiar de tamaño y limita
+ * tanto la escala como la traslación para que la imagen no abandone el área visible.</p>
  */
 public class ZoomableImageView extends AppCompatImageView {
 
@@ -30,14 +33,32 @@ public class ZoomableImageView extends AppCompatImageView {
     private boolean isDragging;
     private boolean isLaidOut;
 
+    /**
+     * Crea la vista a partir de código usando la configuración por defecto.
+     *
+     * @param context contexto Android propietario de la vista.
+     */
     public ZoomableImageView(@NonNull Context context) {
         this(context, null);
     }
 
+    /**
+     * Crea la vista a partir de XML conservando el conjunto de atributos declarado.
+     *
+     * @param context contexto Android propietario de la vista.
+     * @param attrs atributos XML asociados a la instancia.
+     */
     public ZoomableImageView(@NonNull Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
+    /**
+     * Crea la vista configurando la matriz base y el detector de escala que gobernará los gestos.
+     *
+     * @param context contexto Android propietario de la vista.
+     * @param attrs atributos XML asociados a la instancia.
+     * @param defStyleAttr estilo por defecto aplicado por Android.
+     */
     public ZoomableImageView(@NonNull Context context,
                              @Nullable AttributeSet attrs,
                              int defStyleAttr) {

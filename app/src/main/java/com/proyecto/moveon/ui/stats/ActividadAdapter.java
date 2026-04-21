@@ -26,17 +26,15 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Adapter del historial de actividades.
+ * Adapter del historial de actividades mostrado en estadísticas.
  *
- * <p>La cabecera de cada tarjeta muestra siempre la distancia y la duración total.
- * Al pulsar la cabecera se expande un bloque de detalle con métricas adicionales:
- * calorías, ritmo medio, ritmo máximo, tiempo en movimiento, tiempo parado y total,
- * además de las acciones disponibles sobre la actividad.</p>
+ * <p>La cabecera de cada tarjeta muestra siempre la distancia y la duración total. Al pulsar
+ * la cabecera se expande un bloque de detalle con métricas adicionales, acciones de borrado y
+ * compartir, y el badge de sincronización pendiente.</p>
  *
- * <p>Este archivo incluye una corrección explícita para el formato visual de los ritmos
- * en el detalle expandido del historial. En lugar de depender solo de un recurso de texto,
- * el valor mostrado se construye aquí de forma inequívoca como {@code mm'ss"/km}. Así se
- * evita que en esta pantalla concreta vuelva a verse el ritmo sin la unidad final.</p>
+ * <p>Además, el adapter fuerza aquí el formato visual de ritmos para que el detalle expandido
+ * siempre muestre un valor inequívoco del tipo {@code mm'ss"/km}, sin depender de composiciones
+ * posteriores en la vista.</p>
  */
 public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapter.ViewHolder> {
 

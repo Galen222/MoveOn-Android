@@ -26,16 +26,14 @@ import okhttp3.ResponseBody;
 import retrofit2.Response;
 
 /**
- * Parser para el contrato de errores actual del backend:
+ * Normaliza respuestas HTTP fallidas y excepciones de red al modelo {@link ApiError}.
  *
- * Prioridad para el mensaje visible:
- *   1. Primer error específico de "detail" (por su error_code)
- *   2. error_code top-level
- *   3. mensaje backend (solo como fallback de compatibilidad o diagnóstico)
- *   4. fallback HTTP genérico
+ * <p>El parser sigue el contrato actual del backend y prioriza, para el mensaje visible,
+ * el primer error útil de {@code detail}, después el {@code error_code} top-level, luego
+ * el mensaje backend saneado y por último un fallback HTTP genérico.</p>
  *
- * "detail" se sigue procesando porque aporta errores por campo y el primer error
- * específico útil para UX en formularios.
+ * <p>El nodo {@code detail} se sigue procesando aunque exista un mensaje general porque aporta
+ * errores por campo y el primer error específico más útil para la UX de formularios.</p>
  */
 public final class ApiErrorParser {
 
@@ -468,6 +466,10 @@ public final class ApiErrorParser {
 
     /**
      * Lee una propiedad string opcional del JSON y devuelve {@code null} cuando está ausente o vacía.
+     *
+     * @param obj objeto JSON en el que buscar.
+     * @param key nombre exacto de la propiedad candidata.
+     * @return cadena útil contenida en la propiedad o {@code null} si no existe contenido aprovechable.
      */
     @Nullable
     private static String getString(@NonNull JsonObject obj, @NonNull String key) {
@@ -478,6 +480,9 @@ public final class ApiErrorParser {
 
     /**
      * Devuelve la primera cadena no vacía de la lista recibida.
+     *
+     * @param values candidatos evaluados en orden de prioridad.
+     * @return primer valor con texto útil o {@code null} si ninguno sirve.
      */
     @Nullable
     private static String firstNonEmpty(@Nullable String... values) {
@@ -490,6 +495,10 @@ public final class ApiErrorParser {
 
     /**
      * Añade un mensaje de error al campo indicado creando su lista acumulada si todavía no existe.
+     *
+     * @param map mapa acumulado de errores por campo.
+     * @param field nombre lógico del campo que debe recibir el mensaje.
+     * @param msg texto de error ya localizado o saneado.
      */
     private static void addFieldError(@NonNull Map<String, List<String>> map,
                                       @NonNull String field,
@@ -519,6 +528,9 @@ public final class ApiErrorParser {
 
     /**
      * Extrae el último elemento de {@code loc} como nombre de campo cuando el backend usa la convención de FastAPI/Pydantic.
+     *
+     * @param loc array de localización del error enviado por el backend.
+     * @return nombre del campo afectado o {@code null} si no puede inferirse.
      */
     @Nullable
     private static String lastLocAsFieldName(@Nullable JsonArray loc) {
@@ -533,6 +545,9 @@ public final class ApiErrorParser {
 
     /**
      * Clasifica un código HTTP en una categoría de error de dominio para simplificar la reacción de la app.
+     *
+     * @param code código HTTP recibido por Retrofit.
+     * @return categoría de {@link ApiErrorType} que mejor representa el fallo.
      */
     private static ApiErrorType mapHttpToType(int code) {
         if (code == 401) return ApiErrorType.UNAUTHORIZED;

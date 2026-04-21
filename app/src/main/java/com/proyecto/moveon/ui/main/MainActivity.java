@@ -37,7 +37,12 @@ import com.proyecto.moveon.ui.profile.ProfileFragment;
 import com.proyecto.moveon.ui.stats.StatsFragment;
 import com.proyecto.moveon.utils.NavigationUtils;
 /**
- * Actividad que gestiona la interfaz y las interacciones de main.
+ * Shell principal de la aplicación una vez autenticado el usuario.
+ *
+ * <p>Coordina la navegación entre {@link InicioFragment}, {@link StatsFragment} y
+ * {@link ProfileFragment}, resuelve mensajes globales nacidos en notificadores de proceso
+ * y atiende intents externos como la acción de parada lanzada desde
+ * {@link TrackingService}.</p>
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -302,6 +307,9 @@ public class MainActivity extends AppCompatActivity {
      * <p>Se usa desde la acción "Detener" de la notificación para reutilizar exactamente
      * la misma lógica que ya existe en {@link InicioFragment}, evitando finalizar la sesión
      * por un camino distinto al de la UI principal.</p>
+     *
+     * @param intent intent recibido por la actividad, normalmente desde
+     *               {@link #createLaunchIntentToShowTrackingStopDialog(Context)}.
      */
     private void handleLaunchIntent(@Nullable Intent intent) {
         if (intent == null || !intent.getBooleanExtra(EXTRA_SHOW_TRACKING_STOP_DIALOG, false)) {
@@ -314,6 +322,9 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Lleva al usuario a la pestaña Inicio y delega allí la apertura del modal de stop.
+     *
+     * <p>La petición real se entrega a {@link InicioFragment#requestStopDialogFromExternalAction()}
+     * una vez que la transacción pendiente de fragmentos ha quedado aplicada.</p>
      */
     private void openInicioAndRequestStopDialog() {
         if (binding == null || fragmentManager == null) {

@@ -14,15 +14,15 @@ import com.proyecto.moveon.data.session.AuthRepository;
 /**
  * Localizador de servicios a nivel de proceso.
  *
- * <p>Centraliza la creación de repositorios para eliminar el acoplamiento con
- * {@code new} en cada ViewModel y facilitar el testing.</p>
+ * <p>Centraliza la creación de repositorios para eliminar el acoplamiento con {@code new}
+ * en cada ViewModel y facilitar el testing o la sustitución de dependencias.</p>
  *
  * <h3>Factory vs Singleton</h3>
  * <ul>
  *   <li>Repositorios con {@code cancelAll()} se crean por consumidor para que
  *   {@code onCleared()} no cancele peticiones ajenas.</li>
- *   <li>{@link UserPrefsRepository} se comparte como singleton porque no mantiene
- *   llamadas en vuelo asociadas a una pantalla concreta.</li>
+ *   <li>{@link UserPrefsRepository} se comparte como singleton porque no mantiene llamadas en
+ *   vuelo asociadas a una pantalla concreta.</li>
  * </ul>
  */
 public class ServiceLocator {

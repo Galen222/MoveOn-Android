@@ -46,7 +46,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 /**
- * Actividad que gestiona la interfaz y las interacciones de register.
+ * Pantalla de alta clásica y finalización del registro social.
+ *
+ * <p>Combina validación local de formulario, aceptación de textos legales y la continuación
+ * del flujo de Google cuando el backend todavía necesita completar datos obligatorios.</p>
  */
 public class RegisterActivity extends AppCompatActivity implements SocialAuthManager.Listener {
 
@@ -455,15 +458,15 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         return valid;
     }
 
-    @Nullable
     /**
      * Construye el payload final del registro social usando los datos locales y
      * el token del proveedor ya resuelto.
-     * 
+     *
      * @param provider proveedor social con el que se autenticó el usuario.
      * @param token token de identidad emitido por el proveedor.
      * @return input listo para backend, o {@code null} si aún fallan validaciones locales.
      */
+    @Nullable
     private SocialRegisterInput buildSocialRegisterInput(@NonNull String provider, @NonNull String token) {
         if (!validatePendingSocialFields()) return null;
         String fechaAceptacion = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC).format(Instant.now());
@@ -590,14 +593,14 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                 .equals(normalizeForComparison(getString(expectedRes)));
     }
 
-    @NonNull
     /**
      * Normaliza un texto para comparaciones laxas eliminando diacríticos,
      * símbolos y diferencias de mayúsculas.
-     * 
+     *
      * @param value texto original, puede ser {@code null}.
      * @return representación estable apta para comparaciones internas.
      */
+    @NonNull
     private String normalizeForComparison(@Nullable String value) {
         if (!StringUtils.hasText(value)) return "";
         return Normalizer.normalize(value, Normalizer.Form.NFD)
@@ -660,14 +663,17 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         }
     }
 
-    @NonNull
     /**
      * Construye una sugerencia de nombre de usuario combinando una base limpia
      * derivada del nombre visible con un sufijo aleatorio.
-     * 
+     *
+     * <p>El resultado se usa para precargar el campo de usuario tras integrar una cuenta de
+     * {@link SocialGoogleAccount}, minimizando la fricción del alta.</p>
+     *
      * @param displayName nombre mostrado por Google, o {@code null}.
      * @return sugerencia final lista para precargar el input de usuario.
      */
+    @NonNull
     private String buildSuggestedUsername(@Nullable String displayName) {
         String base = normalizeUsernameBase(displayName);
         if (base.length() > 46) {
@@ -677,14 +683,14 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         return base + digits;
     }
 
-    @NonNull
     /**
      * Reduce el nombre visible a una base compatible con las reglas del nombre
      * de usuario eliminando espacios, símbolos y acentos.
-     * 
+     *
      * @param displayName nombre original obtenido del proveedor.
      * @return base normalizada con una longitud mínima segura.
      */
+    @NonNull
     private String normalizeUsernameBase(@Nullable String displayName) {
         String raw = StringUtils.hasText(displayName) ? displayName : "moveon";
         String normalized = Normalizer.normalize(raw, Normalizer.Form.NFD)
@@ -755,6 +761,15 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         binding.tvEulaError.setVisibility(View.GONE);
     }
 
+    /**
+     * Muestra u oculta la overlay de progreso del flujo de Google.
+     *
+     * @param visible {@code true} para hacer visible la overlay.
+     * @param silent {@code true} cuando la animación debe ser más discreta por tratarse de un flujo silencioso.
+     * @param account cuenta seleccionada para renderizar avatar, si existe.
+     * @param titleRes recurso de texto para el título mostrado en la tarjeta.
+     * @param messageRes recurso de texto para el mensaje descriptivo.
+     */
     private void showGoogleLoading(boolean visible,
                                    boolean silent,
                                    @Nullable SocialGoogleAccount account,

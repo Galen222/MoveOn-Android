@@ -9,8 +9,10 @@ import com.proyecto.moveon.R;
 import com.proyecto.moveon.utils.StringUtils;
 
 /**
- * Separa los valores canónicos que viajan al backend de sus labels visibles
- * localizados en la UI.
+ * Convierte entre los valores canónicos del perfil y sus etiquetas visibles localizadas.
+ *
+ * <p>Esta capa evita acoplar la UI a los textos mostrados al usuario y mantiene estable
+ * el contrato con backend aunque cambien las traducciones o el copy de pantalla.</p>
  */
 public final class ProfileValueLocalizer {
 

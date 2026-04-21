@@ -25,7 +25,10 @@ import com.proyecto.moveon.ui.main.MainActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.StringUtils;
 /**
- * Actividad que gestiona la interfaz y las interacciones de login.
+ * Pantalla de acceso clásico y social de la aplicación.
+ *
+ * <p>Orquesta la validación básica del formulario, el intercambio con {@link AuthViewModel}
+ * y la integración de Google a través de {@link SocialAuthManager}.</p>
  */
 public class LoginActivity extends AppCompatActivity implements SocialAuthManager.Listener {
 
