@@ -36,12 +36,17 @@ public final class AppLanguageManager {
     public static final String MODE_SPANISH = "es";
     public static final String MODE_ENGLISH = "en";
 
+    /**
+     * Evita instancias de una clase utilitaria puramente estática.
+     */
     private AppLanguageManager() {}
 
     /**
      * Aplica el idioma guardado usando {@code setApplicationLocales}.
      * Usar SOLO en {@code Application.onCreate()} (arranque en frío, sin Activity visible).
      * NO usar durante cambios interactivos de idioma — causa pantalla negra en API 33+.
+     *
+     * @param context contexto desde el que se resuelve el idioma persistido.
      */
     public static void applySavedLanguage(@NonNull Context context) {
         cleanupLegacyStoredMode(context);
@@ -49,8 +54,10 @@ public final class AppLanguageManager {
     }
 
     /**
-     * Guarda el idioma Y llama a {@code setApplicationLocales}.
-     * Usar SOLO cuando NO hay Activity visible (ej: Application.onCreate).
+     * Guarda el idioma y aplica inmediatamente la locale de proceso.
+     *
+     * @param context contexto desde el que persistir la preferencia.
+     * @param mode modo solicitado por la UI.
      */
     public static void saveAndApply(@NonNull Context context, @NonNull String mode) {
         String safeMode = sanitizeSelectableMode(mode);
@@ -59,9 +66,10 @@ public final class AppLanguageManager {
     }
 
     /**
-     * Guarda el idioma SIN llamar a {@code setApplicationLocales}.
-     * Diseñado para cambios interactivos: guardar → recreate() → attachBaseContext
-     * aplica el nuevo idioma sin pasar por LocaleManager del sistema.
+     * Guarda el idioma sin tocar todavía la locale global del proceso.
+     *
+     * @param context contexto desde el que persistir la preferencia.
+     * @param mode modo solicitado por la UI.
      */
     public static void saveOnly(@NonNull Context context, @NonNull String mode) {
         String safeMode = sanitizeSelectableMode(mode);
@@ -70,8 +78,9 @@ public final class AppLanguageManager {
 
     /**
      * Envuelve un contexto base con el idioma resuelto.
-     * Llamar desde {@code Activity.attachBaseContext()} para aplicar el idioma
-     * sin usar setApplicationLocales (evita la recreación del sistema en API 33+).
+     *
+     * @param baseContext contexto base recibido por el componente Android.
+     * @return contexto localizado con la {@link Locale} efectiva de la app.
      */
     @NonNull
     public static Context wrapContext(@NonNull Context baseContext) {
@@ -97,6 +106,9 @@ public final class AppLanguageManager {
      *
      * <p>Internamente reutiliza {@link #wrapContext(Context)} para aplicar el
      * idioma guardado sobre el contexto recibido en ese momento.</p>
+     *
+     * @param context contexto que debe envolverse.
+     * @return contexto listo para resolver recursos localizados.
      */
     @NonNull
     public static Context localizedContext(@NonNull Context context) {
@@ -108,8 +120,9 @@ public final class AppLanguageManager {
 
     /**
      * Devuelve el modo que debe reflejar la UI del selector (siempre "es" o "en").
-     * Si el usuario no ha elegido nada aún, devuelve el idioma efectivo resuelto
-     * a partir del idioma del sistema.
+     *
+     * @param context contexto desde el que leer la preferencia persistida.
+     * @return modo visible en la UI del selector de idioma.
      */
     @NonNull
     public static String getSelectedMode(@NonNull Context context) {
@@ -121,6 +134,14 @@ public final class AppLanguageManager {
     }
 
 
+    /**
+     * Resuelve un recurso de texto usando el idioma activo de la app y opcionalmente aplica formato.
+     *
+     * @param context contexto desde el que resolver recursos.
+     * @param resId identificador del recurso de texto.
+     * @param args argumentos de formato opcionales.
+     * @return cadena ya localizada con el idioma activo de la app.
+     */
     @NonNull
     public static String getString(@NonNull Context context, @StringRes int resId, Object... args) {
         Context localized = localizedContext(context);
@@ -130,24 +151,52 @@ public final class AppLanguageManager {
         return localized.getString(resId, args);
     }
 
+    /**
+     * Indica si el usuario eligió manualmente un idioma distinto del fallback automático.
+     *
+     * @param context contexto desde el que leer la preferencia.
+     * @return {@code true} si existe una selección manual persistida.
+     */
     public static boolean hasManualSelection(@NonNull Context context) {
         return AppSettingsManager.hasAppLanguage(context);
     }
 
+    /**
+     * Devuelve la {@link Locale} efectiva con la que la app debe pintar recursos en este momento.
+     *
+     * @param context contexto desde el que resolver el idioma activo.
+     * @return locale efectiva usada por la aplicación.
+     */
     @NonNull
     public static Locale getActiveLocale(@NonNull Context context) {
         return Locale.forLanguageTag(getResolvedLanguageTag(context));
     }
 
+    /**
+     * Obtiene la etiqueta BCP-47 del idioma finalmente resuelto para la aplicación.
+     *
+     * @param context contexto desde el que resolver el idioma activo.
+     * @return etiqueta BCP-47 de la locale efectiva.
+     */
     @NonNull
     public static String getResolvedLanguageTag(@NonNull Context context) {
         return getSelectedMode(context);
     }
 
+    /**
+     * Aplica a nivel de proceso la etiqueta de idioma resultante para el contexto recibido.
+     *
+     * @param context contexto desde el que resolver el idioma activo.
+     */
     private static void applyResolvedLanguage(@NonNull Context context) {
         applyLanguageTag(getResolvedLanguageTag(context));
     }
 
+    /**
+     * Publica en AppCompat la lista de locales objetivo solo cuando difiere de la actual.
+     *
+     * @param languageTag etiqueta BCP-47 que debe publicarse como locale activa.
+     */
     private static void applyLanguageTag(@NonNull String languageTag) {
         LocaleListCompat targetLocales = LocaleListCompat.forLanguageTags(languageTag);
         LocaleListCompat currentLocales = AppCompatDelegate.getApplicationLocales();
@@ -157,12 +206,23 @@ public final class AppLanguageManager {
         AppCompatDelegate.setApplicationLocales(targetLocales);
     }
 
+    /**
+     * Normaliza el modo recibido a uno de los idiomas seleccionables por la UI.
+     *
+     * @param mode valor bruto recibido desde preferencias o desde la UI.
+     * @return uno de {@link #MODE_SPANISH} o {@link #MODE_ENGLISH}.
+     */
     @NonNull
     public static String sanitizeSelectableMode(@Nullable String mode) {
         if (MODE_SPANISH.equals(mode)) return MODE_SPANISH;
         return MODE_ENGLISH;
     }
 
+    /**
+     * Elimina el antiguo valor "system" para migrar al modelo actual sin opción visible de sistema.
+     *
+     * @param context contexto desde el que leer y limpiar la preferencia antigua.
+     */
     private static void cleanupLegacyStoredMode(@NonNull Context context) {
         String raw = AppSettingsManager.getRawAppLanguage(context);
         if (LEGACY_MODE_SYSTEM.equals(raw)) {
@@ -170,6 +230,12 @@ public final class AppLanguageManager {
         }
     }
 
+    /**
+     * Calcula el idioma por defecto a partir del idioma del sistema limitándolo a los soportados por la app.
+     *
+     * @param context contexto desde el que consultar la locale del sistema.
+     * @return modo de idioma soportado por la app.
+     */
     @NonNull
     private static String resolveSystemFallbackLanguage(@NonNull Context context) {
         Locale systemLocale = getSystemLocale(context);
@@ -177,6 +243,12 @@ public final class AppLanguageManager {
         return MODE_SPANISH.equalsIgnoreCase(language) ? MODE_SPANISH : MODE_ENGLISH;
     }
 
+    /**
+     * Recupera la locale principal del sistema con un fallback defensivo a {@link Locale#ENGLISH}.
+     *
+     * @param context contexto del componente solicitante.
+     * @return locale principal del sistema o un fallback seguro.
+     */
     @NonNull
     private static Locale getSystemLocale(@NonNull Context context) {
         Resources systemResources = Resources.getSystem();

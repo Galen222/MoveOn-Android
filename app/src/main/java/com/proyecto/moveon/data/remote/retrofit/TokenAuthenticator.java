@@ -33,6 +33,11 @@ public class TokenAuthenticator implements Authenticator {
 
     private final SessionRefreshCoordinator sessionRefreshCoordinator;
 
+    /**
+     * Crea el autenticador obteniendo el coordinador global de refresh asociado al proceso.
+     *
+     * @param context cualquier contexto Android desde el que obtener el {@code applicationContext}.
+     */
     public TokenAuthenticator(Context context) {
         this(SessionRefreshCoordinator.getInstance(context.getApplicationContext()));
     }
@@ -47,6 +52,14 @@ public class TokenAuthenticator implements Authenticator {
         this.sessionRefreshCoordinator = sessionRefreshCoordinator;
     }
 
+    /**
+     * Intenta reconstruir una petición protegida tras un 401 renovando antes el access token.
+     *
+     * @param route ruta de red propuesta por OkHttp, no utilizada directamente.
+     * @param response respuesta 401 original que disparó la autenticación.
+     * @return nueva {@link Request} con token renovado o {@code null} si la petición no debe reintentarse.
+     * @throws IOException cuando el refresh falla de forma transitoria y OkHttp debe propagar el error.
+     */
     @Nullable
     @Override
     public Request authenticate(@Nullable Route route, @NonNull Response response) throws IOException {
@@ -83,6 +96,12 @@ public class TokenAuthenticator implements Authenticator {
         );
     }
 
+    /**
+     * Cuenta cuántas respuestas encadenadas lleva la misma petición para evitar bucles infinitos de autenticación.
+     *
+     * @param response respuesta actual enlazada con sus {@code priorResponse}.
+     * @return número total de respuestas acumuladas para la petición.
+     */
     private int responseCount(Response response) {
         int result = 1;
         while ((response = response.priorResponse()) != null) result++;
@@ -98,6 +117,14 @@ public class TokenAuthenticator implements Authenticator {
         @Nullable private final String errorCode;
         @Nullable private final String backendMessage;
 
+        /**
+         * Crea la excepción checked que describe por qué el refresh no pudo completarse.
+         *
+         * @param code código HTTP devuelto por el backend.
+         * @param retryAfter valor opcional de cabecera para reintento.
+         * @param errorCode código interno opcional devuelto por el backend.
+         * @param backendMessage mensaje opcional devuelto por el backend.
+         */
         public RefreshFailedException(int code,
                                       @Nullable String retryAfter,
                                       @Nullable String errorCode,
@@ -109,9 +136,29 @@ public class TokenAuthenticator implements Authenticator {
             this.backendMessage = backendMessage;
         }
 
+        /**
+         * Devuelve el código HTTP asociado al fallo de refresh.
+         *
+         * @return código HTTP recibido del backend.
+         */
         public int getCode() { return code; }
+        /**
+         * Devuelve el valor de {@code Retry-After} cuando el backend lo proporcionó.
+         *
+         * @return cabecera de reintento o {@code null}.
+         */
         @Nullable public String getRetryAfter() { return retryAfter; }
+        /**
+         * Devuelve el código de error interno enviado por el backend, si existe.
+         *
+         * @return código interno o {@code null}.
+         */
         @Nullable public String getErrorCode() { return errorCode; }
+        /**
+         * Devuelve el mensaje textual devuelto por el backend, si existe.
+         *
+         * @return mensaje del backend o {@code null}.
+         */
         @Nullable public String getBackendMessage() { return backendMessage; }
     }
 }

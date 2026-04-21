@@ -52,7 +52,6 @@ public final class PaceDisplayUtils {
         return item.ritmoMedioTotalSegKm;
     }
 
-    @Nullable
     /**
      * Versión para pantallas en vivo (tracking activo): devuelve el texto
      * formateado del ritmo preferido, haciendo fallback al ritmo total si
@@ -62,6 +61,7 @@ public final class PaceDisplayUtils {
      * @param state estado de tracking del que se leen los ritmos ya formateados.
      * @return texto listo para mostrar, o {@code null} si no hay ningún ritmo disponible todavía.
      */
+    @Nullable
     public static String getPreferredAveragePaceText(
             @NonNull Context context,
             @NonNull TrackingState state

@@ -23,11 +23,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Fuente de datos remota para las operaciones de actividad remote data source.
+ * Fuente de datos remota de actividades construida sobre {@link AuthenticatedApiClient}.
  */
 public class ActividadRemoteDataSource {
 
+    /**
+     * Callback estándar para operaciones remotas de actividades.
+     */
     public interface Callback<T> {
+        /**
+         * Entrega el resultado final de la operación remota.
+         *
+         * @param result éxito o error de la petición.
+         */
         void onResult(ApiResult<T> result);
     }
 
@@ -41,17 +49,34 @@ public class ActividadRemoteDataSource {
     private final Context appContext;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
+    /**
+     * Crea la fuente remota usando siempre el contexto de aplicación.
+     *
+     * @param context cualquier contexto Android desde el que obtener el {@code applicationContext}.
+     */
     public ActividadRemoteDataSource(@NonNull Context context) {
         this.appContext = context.getApplicationContext();
         this.api = new AuthenticatedApiClient(appContext);
     }
 
+    /**
+     * Envía al backend una nueva actividad serializada en JSON.
+     *
+     * @param body cuerpo JSON de creación.
+     * @param callback callback que recibe la actividad creada o el error correspondiente.
+     */
     public void createActividad(@NonNull JsonObject body, @NonNull Callback<ActividadResponseDto> callback) {
         api.postJson(ENDPOINT_CREATE, body,
                 json -> gson.fromJson(json, ActividadResponseDto.class),
                 callback::onResult);
     }
 
+    /**
+     * Solicita al backend el borrado de una actividad ya sincronizada.
+     *
+     * @param remoteId identificador remoto de la actividad.
+     * @param callback callback que recibe la respuesta de borrado o el error correspondiente.
+     */
     public void deleteActividad(int remoteId, @NonNull Callback<BorrarActividadResponseDto> callback) {
         api.delete(ENDPOINT_DELETE + remoteId,
                 json -> gson.fromJson(json, BorrarActividadResponseDto.class),
@@ -74,12 +99,23 @@ public class ActividadRemoteDataSource {
         });
     }
 
+    /**
+     * Envía al backend una nueva actividad en modo bloqueante.
+     *
+     * @param body cuerpo JSON de creación.
+     * @return {@link ApiResult} con la actividad creada o el error correspondiente.
+     */
     @NonNull
     public ApiResult<ActividadResponseDto> createActividadBlocking(@NonNull JsonObject body) {
         return api.postJsonBlocking(ENDPOINT_CREATE, body,
                 json -> gson.fromJson(json, ActividadResponseDto.class));
     }
 
+    /**
+     * Descarga todas las actividades remotas paginando hasta agotar el backend.
+     *
+     * @return {@link ApiResult} con la lista agregada de actividades o el error encontrado durante la paginación.
+     */
     @NonNull
     public ApiResult<List<ActividadResponseDto>> fetchAllActividadesBlocking() {
         List<ActividadResponseDto> acc = new ArrayList<>();
@@ -113,6 +149,9 @@ public class ActividadRemoteDataSource {
         }
     }
 
+    /**
+     * Cancela todas las llamadas remotas actualmente en vuelo de esta fuente de datos.
+     */
     public void cancelAll() {
         api.cancelAll();
     }

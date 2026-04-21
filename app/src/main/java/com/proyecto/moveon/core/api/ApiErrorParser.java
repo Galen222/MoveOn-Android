@@ -41,6 +41,9 @@ public final class ApiErrorParser {
 
     private static final String TAG = "ApiErrorParser";
 
+    /**
+     * Evita instancias de un parser estático de errores HTTP y de red.
+     */
     private ApiErrorParser() {}
 
     /**
@@ -133,6 +136,9 @@ public final class ApiErrorParser {
         return new ApiError(type, code, visibleMessage, visibleErrorCode, fieldErrors, raw);
     }
 
+    /**
+     * Traduce excepciones de red, refresh o cancelación a un {@link ApiError} consumible por la UI.
+     */
     @NonNull
     public static ApiError fromThrowable(@NonNull Context context, @NonNull Throwable t, boolean canceled) {
         if (canceled) {
@@ -175,6 +181,9 @@ public final class ApiErrorParser {
         return ApiError.local(context.getString(R.string.api_error_inesperado));
     }
 
+    /**
+     * Procesa el nodo {@code detail} del backend y extrae el primer mensaje visible junto con errores por campo.
+     */
     @NonNull
     private static DetailParseResult parseDetail(@NonNull Context context,
                                                  @Nullable JsonElement detail,
@@ -240,6 +249,9 @@ public final class ApiErrorParser {
         return result;
     }
 
+    /**
+     * Añade al mapa de errores los mensajes incluidos en el objeto legacy {@code errores_campos}.
+     */
     private static void parseErroresCampos(@NonNull Context context,
                                            @Nullable JsonElement erroresCampos,
                                            @NonNull Map<String, List<String>> fieldErrors,
@@ -304,6 +316,9 @@ public final class ApiErrorParser {
         }
     }
 
+    /**
+     * Devuelve el mensaje genérico por HTTP cuando el backend no ofrece uno mejor para mostrar.
+     */
     @NonNull
     private static String defaultHttpMessage(@NonNull Context context,
                                              @NonNull ApiErrorType type,
@@ -319,6 +334,9 @@ public final class ApiErrorParser {
         return context.getString(R.string.api_error_http, httpCode);
     }
 
+    /**
+     * Resuelve el mensaje final combinando localización por código, mensaje backend útil y fallback HTTP.
+     */
     @Nullable
     private static String resolveDisplayMessage(@NonNull Context context,
                                                 @Nullable String errorCode,
@@ -339,6 +357,9 @@ public final class ApiErrorParser {
         return localizedHttpFallback(context, httpCode, retryAfter);
     }
 
+    /**
+     * Mapea ciertos códigos HTTP a cadenas localizadas específicas cuando el backend no aporta detalle usable.
+     */
     @Nullable
     private static String localizedHttpFallback(@NonNull Context context,
                                                 int httpCode,
@@ -366,6 +387,9 @@ public final class ApiErrorParser {
         }
     }
 
+    /**
+     * Limpia prefijos ruidosos del backend para dejar un texto más apto para mostrar al usuario.
+     */
     @NonNull
     private static String cleanBackendMsg(@NonNull String m) {
         String trimmed = m.trim();
@@ -375,6 +399,9 @@ public final class ApiErrorParser {
         return trimmed;
     }
 
+    /**
+     * Detecta mensajes genéricos del framework que no aportan contexto suficiente para mostrarlos tal cual.
+     */
     private static boolean isGenericFrameworkMessage(@Nullable String message) {
         if (!StringUtils.hasText(message)) return true;
 
@@ -394,6 +421,9 @@ public final class ApiErrorParser {
                 || normalized.equals("error en la solicitud");
     }
 
+    /**
+     * Lee una propiedad string opcional del JSON y devuelve {@code null} cuando está ausente o vacía.
+     */
     @Nullable
     private static String getString(@NonNull JsonObject obj, @NonNull String key) {
         if (!obj.has(key) || obj.get(key) == null || !obj.get(key).isJsonPrimitive()) return null;
@@ -401,6 +431,9 @@ public final class ApiErrorParser {
         return StringUtils.hasText(value) ? value : null;
     }
 
+    /**
+     * Devuelve la primera cadena no vacía de la lista recibida.
+     */
     @Nullable
     private static String firstNonEmpty(@Nullable String... values) {
         if (values == null) return null;
@@ -410,6 +443,9 @@ public final class ApiErrorParser {
         return null;
     }
 
+    /**
+     * Añade un mensaje de error al campo indicado creando su lista acumulada si todavía no existe.
+     */
     private static void addFieldError(@NonNull Map<String, List<String>> map,
                                       @NonNull String field,
                                       @NonNull String msg) {
@@ -420,6 +456,9 @@ public final class ApiErrorParser {
         map.put(field, list);
     }
 
+    /**
+     * Fusiona dos mapas de errores preservando todos los mensajes válidos del origen.
+     */
     private static void mergeFieldErrors(@NonNull Map<String, List<String>> target,
                                          @NonNull Map<String, List<String>> source) {
         for (Map.Entry<String, List<String>> entry : source.entrySet()) {
@@ -433,6 +472,9 @@ public final class ApiErrorParser {
         }
     }
 
+    /**
+     * Extrae el último elemento de {@code loc} como nombre de campo cuando el backend usa la convención de FastAPI/Pydantic.
+     */
     @Nullable
     private static String lastLocAsFieldName(@Nullable JsonArray loc) {
         if (loc == null || loc.isEmpty()) return null;
@@ -444,6 +486,9 @@ public final class ApiErrorParser {
         return null;
     }
 
+    /**
+     * Clasifica un código HTTP en una categoría de error de dominio para simplificar la reacción de la app.
+     */
     private static ApiErrorType mapHttpToType(int code) {
         if (code == 401) return ApiErrorType.UNAUTHORIZED;
         if (code == 403) return ApiErrorType.FORBIDDEN;

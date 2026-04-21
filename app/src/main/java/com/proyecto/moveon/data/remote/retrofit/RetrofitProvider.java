@@ -13,7 +13,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 /**
- * Proveedor de datos o dependencias para retrofit.
+ * Punto central de creación de los clientes Retrofit públicos y protegidos.
  */
 public final class RetrofitProvider {
 
@@ -139,7 +139,6 @@ public final class RetrofitProvider {
     }
 
 
-    @NonNull
     /**
      * Garantiza que la base URL termina en exactamente una {@code /}: quita
      * las barras sobrantes y añade una al final. Sin esto Retrofit falla
@@ -148,6 +147,7 @@ public final class RetrofitProvider {
      * @param raw base URL tal y como viene del BuildConfig.
      * @return URL normalizada con una única barra final.
      */
+    @NonNull
     private static String normalizeBaseUrl(@NonNull String raw) {
         String trimmed = raw.trim();
         int end = trimmed.length();

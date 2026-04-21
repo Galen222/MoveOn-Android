@@ -68,6 +68,9 @@ public final class SecureSessionManager {
     @SuppressWarnings("StaticFieldLeak")
     private static volatile SecureSessionManager instance;
 
+    /**
+     * Devuelve el singleton del gestor de sesión ligado al contexto de aplicación.
+     */
     @NonNull
     public static SecureSessionManager getInstance(@NonNull Context context) {
         if (instance == null) {
@@ -105,24 +108,50 @@ public final class SecureSessionManager {
             this.authProvider = authProvider;
         }
 
+        /**
+         * Devuelve el nombre visible asociado a la sesión leída.
+         */
         @Nullable public String getUsername() { return username; }
+        /**
+         * Devuelve el access token capturado en el snapshot.
+         */
         @Nullable public String getAccessToken() { return accessToken; }
+        /**
+         * Devuelve el refresh token capturado en el snapshot.
+         */
         @Nullable public String getRefreshToken() { return refreshToken; }
+        /**
+         * Devuelve el identificador de usuario derivado o persistido para la sesión.
+         */
         @Nullable public String getUserId() { return userId; }
+        /**
+         * Indica el proveedor de autenticación asociado al snapshot, si existe.
+         */
         @Nullable public String getAuthProvider() { return authProvider; }
 
+        /**
+         * Indica si el snapshot contiene tanto access token como refresh token y por tanto es plenamente reutilizable.
+         */
         public boolean hasCompleteSession() {
             return StringUtils.hasText(accessToken) && StringUtils.hasText(refreshToken);
         }
-
-        public boolean hasRecoverableSession() {
+    /**
+     * Indica si hay material mínimo para intentar una recuperación de sesión en segundo plano.
+     */
+    public boolean hasRecoverableSession() {
             return StringUtils.hasText(accessToken) || StringUtils.hasText(refreshToken);
         }
 
-        public boolean hasRefreshToken() {
+    /**
+     * Comprueba si la sesión almacenada conserva refresh token.
+     */
+    public boolean hasRefreshToken() {
             return StringUtils.hasText(refreshToken);
         }
 
+        /**
+         * Construye la clave estable de cuenta a partir del identificador de usuario del snapshot.
+         */
         @Nullable
         public String getAccountKey() {
             return buildAccountKeyFromUserId(userId);
@@ -133,6 +162,9 @@ public final class SecureSessionManager {
     private final SharedPreferences prefs;
     private final Object sessionLock = new Object();
 
+    /**
+     * Crea el gestor con contexto de aplicación para evitar fugas de Activity.
+     */
     private SecureSessionManager(Context context) {
         this.appContext = context.getApplicationContext();
         this.prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -220,24 +252,36 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Indica si existe una sesión completa con access y refresh token.
+     */
     public boolean isLoggedIn() {
         synchronized (sessionLock) {
             return readSessionSnapshotLocked().hasCompleteSession();
         }
     }
 
+    /**
+     * Indica si hay material mínimo para intentar una recuperación de sesión en segundo plano.
+     */
     public boolean hasRecoverableSession() {
         synchronized (sessionLock) {
             return readSessionSnapshotLocked().hasRecoverableSession();
         }
     }
 
+    /**
+     * Comprueba si la sesión almacenada conserva refresh token.
+     */
     public boolean hasRefreshToken() {
         synchronized (sessionLock) {
             return readSessionSnapshotLocked().hasRefreshToken();
         }
     }
 
+    /**
+     * Comprueba si el access token falta, es inválido o vencerá dentro de la ventana indicada.
+     */
     public boolean isAccessTokenExpiringWithinSeconds(long leewaySeconds) {
         synchronized (sessionLock) {
             String accessToken = readSessionSnapshotLocked().getAccessToken();
@@ -251,6 +295,9 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Recupera el access token descifrado de la sesión actual.
+     */
     @Nullable
     public String getAccessToken() {
         synchronized (sessionLock) {
@@ -258,6 +305,9 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Recupera el refresh token descifrado de la sesión actual.
+     */
     @Nullable
     public String getRefreshToken() {
         synchronized (sessionLock) {
@@ -265,6 +315,9 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Devuelve el identificador o nombre de usuario persistido junto a la sesión.
+     */
     @Nullable
     public String getUsername() {
         synchronized (sessionLock) {
@@ -272,6 +325,9 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Devuelve el identificador interno del usuario asociado al access token actual.
+     */
     @Nullable
     public String getUserId() {
         synchronized (sessionLock) {
@@ -279,6 +335,9 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Devuelve la clave estable de cuenta derivada del {@code userId} actual.
+     */
     @Nullable
     public String getAccountKey() {
         synchronized (sessionLock) {
@@ -301,6 +360,9 @@ public final class SecureSessionManager {
         return SocialAuthProvider.GOOGLE.equals(AppSettingsManager.getAuthProvider(appContext));
     }
 
+    /**
+     * Lee la sesión completa como un bloque coherente bajo el mismo lock interno.
+     */
     @NonNull
     public SessionSnapshot getSessionSnapshot() {
         synchronized (sessionLock) {
@@ -308,6 +370,9 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Construye una clave de cuenta estable para caches y almacenamiento local a partir del identificador de usuario.
+     */
     @Nullable
     public static String buildAccountKeyFromUserId(@Nullable String userId) {
         if (!StringUtils.hasText(userId)) return null;
@@ -338,6 +403,9 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Elimina únicamente el access token persistido manteniendo el resto de la sesión intacta.
+     */
     public void clearAccessTokenOnly() {
         synchronized (sessionLock) {
             // Igual que en logout: el caller espera que el access desaparezca en el acto.
@@ -347,6 +415,9 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Guarda o elimina el identificador recordado usado para rellenar accesos posteriores.
+     */
     public void saveRememberedIdentifier(@Nullable String identifier) {
         synchronized (sessionLock) {
             try {
@@ -366,6 +437,9 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Recupera el identificador recordado almacenado de forma cifrada.
+     */
     @Nullable
     public String getRememberedIdentifier() {
         synchronized (sessionLock) {
@@ -373,10 +447,16 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Devuelve la preferencia local que controla los avisos de auto-pausa para nuevas sesiones.
+     */
     public boolean shouldShowAutoPauseAlertsByDefault() {
         return AppSettingsManager.shouldShowAutoPauseAlertsByDefault(appContext);
     }
 
+    /**
+     * Actualiza la preferencia local de avisos de auto-pausa.
+     */
     public void setShowAutoPauseAlertsByDefault(boolean show) {
         AppSettingsManager.setShowAutoPauseAlertsByDefault(appContext, show);
     }
@@ -417,6 +497,9 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Lee usuario, tokens y metadatos derivados dentro del lock para producir un snapshot consistente.
+     */
     @NonNull
     private SessionSnapshot readSessionSnapshotLocked() {
         String username = getDecryptedValueLocked(KEY_USERNAME_CT, KEY_USERNAME_IV);
@@ -435,6 +518,9 @@ public final class SecureSessionManager {
         return new SessionSnapshot(username, accessToken, refreshToken, userId, authProvider);
     }
 
+    /**
+     * Cachea silenciosamente el {@code userId} derivado del token sin romper la lectura si la escritura falla.
+     */
     private void persistUserIdQuietlyLocked(@NonNull String userId) {
         try {
             SharedPreferences.Editor editor = prefs.edit();
@@ -445,6 +531,9 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Extrae el claim {@code sub} del access token para reutilizarlo como identificador local de usuario.
+     */
     @Nullable
     private String extractUserIdFromAccessToken(@Nullable String accessToken) {
         JSONObject payload = decodeJwtPayload(accessToken);
@@ -454,6 +543,9 @@ public final class SecureSessionManager {
         return StringUtils.hasText(sub) ? sub.trim() : null;
     }
 
+    /**
+     * Extrae el instante de expiración del access token en segundos epoch.
+     */
     @Nullable
     private Long extractExpFromAccessToken(@Nullable String accessToken) {
         JSONObject payload = decodeJwtPayload(accessToken);
@@ -463,6 +555,9 @@ public final class SecureSessionManager {
         return exp > 0L ? exp : null;
     }
 
+    /**
+     * Decodifica el payload del JWT y exige los claims mínimos necesarios para considerar la sesión utilizable.
+     */
     @Nullable
     private JSONObject decodeJwtPayload(@Nullable String token) {
         if (!StringUtils.hasText(token)) return null;
@@ -488,6 +583,9 @@ public final class SecureSessionManager {
     }
 
 
+    /**
+     * Cifra y guarda un valor o elimina sus claves persistidas cuando el texto plano llega vacío.
+     */
     private void putEncryptedOrRemove(@NonNull SharedPreferences.Editor editor,
                                       @NonNull String ctKey,
                                       @NonNull String ivKey,
@@ -499,6 +597,9 @@ public final class SecureSessionManager {
         editor.remove(ctKey).remove(ivKey);
     }
 
+    /**
+     * Cifra el texto indicado y escribe en el editor tanto el ciphertext como su IV asociado.
+     */
     private void putEncrypted(SharedPreferences.Editor editor,
                               String ctKey,
                               String ivKey,
@@ -528,6 +629,9 @@ public final class SecureSessionManager {
     }
 
 
+    /**
+     * Persiste el proveedor de autenticación en las preferencias globales con modo síncrono u asíncrono según el flujo.
+     */
     private void persistAuthProvider(@Nullable String authProvider, boolean persistSynchronously) {
         SharedPreferences.Editor editor = appContext
                 .getSharedPreferences(AppSettingsManager.PREFS, Context.MODE_PRIVATE)
@@ -556,6 +660,9 @@ public final class SecureSessionManager {
         }
     }
 
+    /**
+     * Ejecuta la persistencia del editor eligiendo entre {@code commit()} y {@code apply()} según la criticidad del flujo.
+     */
     private void persistEditor(@NonNull SharedPreferences.Editor editor,
                                boolean persistSynchronously,
                                @NonNull String failureMessage) {
@@ -569,6 +676,9 @@ public final class SecureSessionManager {
         editor.apply();
     }
 
+    /**
+     * Cifra un texto usando AES/GCM y devuelve tanto el ciphertext como el IV generado para esa operación.
+     */
     private EncryptedValue encrypt(String plainText) throws Exception {
         SecretKey secretKey = getOrCreateSecretKey();
         Cipher cipher = Cipher.getInstance(TRANSFORMATION);
@@ -581,6 +691,9 @@ public final class SecureSessionManager {
         );
     }
 
+    /**
+     * Descifra un valor almacenado previamente a partir de su ciphertext e IV en Base64.
+     */
     private String decrypt(String cipherTextBase64, String ivBase64) throws Exception {
         SecretKey secretKey = getOrCreateSecretKey();
         byte[] cipherBytes = Base64.decode(cipherTextBase64, Base64.NO_WRAP);
@@ -592,6 +705,9 @@ public final class SecureSessionManager {
         return new String(plainBytes, StandardCharsets.UTF_8);
     }
 
+    /**
+     * Recupera la clave simétrica del Android Keystore o la crea si todavía no existe para la versión actual del alias.
+     */
     private SecretKey getOrCreateSecretKey() throws Exception {
         KeyStore keyStore = KeyStore.getInstance(ANDROID_KEYSTORE);
         keyStore.load(null);
@@ -616,6 +732,9 @@ public final class SecureSessionManager {
         final String cipherTextBase64;
         final String ivBase64;
 
+        /**
+         * Agrupa el material cifrado generado en una operación de escritura.
+         */
         EncryptedValue(String cipherTextBase64, String ivBase64) {
             this.cipherTextBase64 = cipherTextBase64;
             this.ivBase64 = ivBase64;

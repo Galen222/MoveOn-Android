@@ -111,11 +111,26 @@ public final class SessionRefreshCoordinator {
             this.userId = userId;
         }
 
+        /**
+         * Devuelve el nombre de usuario devuelto por backend junto a los tokens, si vino informado.
+         */
         @Nullable public String getUsername() { return username; }
+        /**
+         * Devuelve el access token crudo retornado por backend.
+         */
         @Nullable public String getAccessToken() { return accessToken; }
+        /**
+         * Devuelve el refresh token crudo retornado por backend.
+         */
         @Nullable public String getRefreshToken() { return refreshToken; }
+        /**
+         * Devuelve el identificador interno del usuario asociado a la sesión.
+         */
         @Nullable public String getUserId() { return userId; }
 
+        /**
+         * Indica si el snapshot conserva un refresh token con el que intentar la renovación.
+         */
         public boolean hasRefreshToken() {
             return StringUtils.hasText(refreshToken);
         }
@@ -149,6 +164,9 @@ public final class SessionRefreshCoordinator {
             this.message = message;
         }
 
+        /**
+         * Crea un resultado exitoso con el nuevo par de tokens publicado.
+         */
         @NonNull
         public static RefreshOutcome success(@NonNull String accessToken,
                                              @NonNull String refreshToken) {
@@ -156,12 +174,18 @@ public final class SessionRefreshCoordinator {
                     200, null, null, null);
         }
 
+        /**
+         * Crea un resultado que representa que no fue necesario renovar la sesión.
+         */
         @NonNull
         public static RefreshOutcome skipped() {
             return new RefreshOutcome(Status.SKIPPED, null, null,
                     0, null, null, null);
         }
 
+        /**
+         * Crea un resultado terminal para respuestas que invalidan definitivamente la sesión actual.
+         */
         @NonNull
         public static RefreshOutcome unauthorized(int httpCode,
                                                   @Nullable String errorCode,
@@ -170,6 +194,9 @@ public final class SessionRefreshCoordinator {
                     httpCode, null, errorCode, message);
         }
 
+        /**
+         * Crea un resultado recuperable para errores temporales de red o servidor.
+         */
         @NonNull
         public static RefreshOutcome transientError(int httpCode,
                                                     @Nullable String retryAfter,
@@ -179,17 +206,44 @@ public final class SessionRefreshCoordinator {
                     httpCode, retryAfter, errorCode, message);
         }
 
+        /**
+         * Devuelve el estado resumido del intento de refresh.
+         */
         @NonNull public Status getStatus() { return status; }
         @Nullable public String getAccessToken() { return accessToken; }
         @Nullable public String getRefreshToken() { return refreshToken; }
+        /**
+         * Devuelve el código HTTP de la respuesta cruda de refresh.
+         */
         public int getHttpCode() { return httpCode; }
+        /**
+         * Devuelve el valor bruto de la cabecera de reintento para errores temporales.
+         */
         @Nullable public String getRetryAfter() { return retryAfter; }
+        /**
+         * Devuelve el código semántico de error del backend de refresh.
+         */
         @Nullable public String getErrorCode() { return errorCode; }
+        /**
+         * Devuelve el mensaje backend asociado al fallo de refresh, si existe.
+         */
         @Nullable public String getMessage() { return message; }
 
+        /**
+         * Indica si el refresh terminó publicando un nuevo par de tokens.
+         */
         public boolean isSuccess() { return status == Status.SUCCESS; }
+        /**
+         * Indica si el coordinador decidió no refrescar porque no era necesario.
+         */
         public boolean isSkipped() { return status == Status.SKIPPED; }
+        /**
+         * Indica si la sesión quedó inválida y debe tratarse como no autorizada.
+         */
         public boolean isUnauthorized() { return status == Status.UNAUTHORIZED; }
+        /**
+         * Indica si el fallo puede volver a intentarse más adelante.
+         */
         public boolean isTransientError() { return status == Status.TRANSIENT_ERROR; }
     }
 
@@ -224,6 +278,9 @@ public final class SessionRefreshCoordinator {
             this.backendMessage = backendMessage;
         }
 
+        /**
+         * Construye el resultado crudo de una llamada de refresh aceptada por backend.
+         */
         @NonNull
         public static BackendRefreshResult success(@NonNull String accessToken,
                                                    @NonNull String refreshToken,
@@ -232,6 +289,9 @@ public final class SessionRefreshCoordinator {
                     username, null, null, null);
         }
 
+        /**
+         * Construye el resultado crudo de una respuesta de refresh fallida.
+         */
         @NonNull
         public static BackendRefreshResult failure(int httpCode,
                                                    @Nullable String retryAfter,
@@ -241,6 +301,9 @@ public final class SessionRefreshCoordinator {
                     null, retryAfter, errorCode, backendMessage);
         }
 
+        /**
+         * Indica si la respuesta cruda de refresh fue aceptada por backend.
+         */
         public boolean isSuccessful() { return successful; }
         public int getHttpCode() { return httpCode; }
         @Nullable public String getAccessToken() { return accessToken; }
@@ -248,9 +311,15 @@ public final class SessionRefreshCoordinator {
         @Nullable public String getUsername() { return username; }
         @Nullable public String getRetryAfter() { return retryAfter; }
         @Nullable public String getErrorCode() { return errorCode; }
+        /**
+         * Devuelve el mensaje textual bruto asociado al fallo de refresh.
+         */
         @Nullable public String getBackendMessage() { return backendMessage; }
     }
 
+    /**
+     * Devuelve el coordinador singleton usado por toda la app para deduplicar refreshes concurrentes.
+     */
     @NonNull
     public static SessionRefreshCoordinator getInstance(@NonNull Context context) {
         if (instance == null) {
@@ -280,6 +349,9 @@ public final class SessionRefreshCoordinator {
         return new SessionRefreshCoordinator(sessionStore, refreshBackend);
     }
 
+    /**
+     * Crea un coordinador con el almacén de sesión y el backend de refresh que deben cooperar.
+     */
     private SessionRefreshCoordinator(@NonNull SessionStore sessionStore,
                                       @NonNull RefreshBackend refreshBackend) {
         this.sessionStore = sessionStore;
@@ -353,6 +425,9 @@ public final class SessionRefreshCoordinator {
         }
     }
 
+    /**
+     * Decide si el caller puede obtener una respuesta inmediata sin lanzar un refresh real.
+     */
     @Nullable
     private RefreshOutcome buildImmediateOutcomeLocked(@Nullable String failedAuthorizationHeader,
                                                        boolean forceRefresh) {
@@ -374,6 +449,9 @@ public final class SessionRefreshCoordinator {
         return null;
     }
 
+    /**
+     * Calcula el resultado que debe recibir un flujo que se quedó esperando a un refresh ya en curso.
+     */
     @NonNull
     private RefreshOutcome buildOutcomeAfterWaitLocked(@Nullable String failedAuthorizationHeader,
                                                        boolean forceRefresh) {
@@ -401,6 +479,9 @@ public final class SessionRefreshCoordinator {
         return lastOutcome;
     }
 
+    /**
+     * Ajusta el resultado final al contexto del caller, reutilizando sesión nueva si ya quedó almacenada.
+     */
     @NonNull
     private RefreshOutcome adaptOutcomeForCallerLocked(@Nullable String failedAuthorizationHeader,
                                                        boolean forceRefresh,
@@ -444,6 +525,9 @@ public final class SessionRefreshCoordinator {
         return null;
     }
 
+    /**
+     * Reconstruye un resultado exitoso a partir de la sesión ya persistida si ambos tokens están presentes.
+     */
     @Nullable
     private RefreshOutcome buildSuccessFromStoredSession() {
         StoredSession snapshot = sessionStore.getStoredSession();
@@ -455,6 +539,9 @@ public final class SessionRefreshCoordinator {
         return RefreshOutcome.success(currentAccess, currentRefresh);
     }
 
+    /**
+     * Espera a que termine el refresh en vuelo o fuerza la salida al alcanzar el timeout de coordinación.
+     */
     private void waitForCurrentRefreshLocked() {
         long deadlineMs = System.currentTimeMillis() + REFRESH_WAIT_TIMEOUT_MS;
         while (refreshInFlight) {
@@ -539,6 +626,9 @@ public final class SessionRefreshCoordinator {
     private static final class SecureSessionStore implements SessionStore {
         private final SecureSessionManager sessionManager;
 
+        /**
+         * Crea el adaptador sobre el almacenamiento seguro de sesión usado en producción.
+         */
         private SecureSessionStore(@NonNull SecureSessionManager sessionManager) {
             this.sessionManager = sessionManager;
         }
@@ -579,6 +669,9 @@ public final class SessionRefreshCoordinator {
     private static final class RetrofitRefreshBackend implements RefreshBackend {
         private final Context appContext;
 
+        /**
+         * Crea el backend real de refresh reutilizando el contexto de aplicación.
+         */
         private RetrofitRefreshBackend(@NonNull Context appContext) {
             this.appContext = appContext.getApplicationContext();
         }
@@ -604,6 +697,9 @@ public final class SessionRefreshCoordinator {
             );
         }
 
+        /**
+         * Extrae de la respuesta fallida los metadatos necesarios para clasificar el fallo de refresh.
+         */
         @NonNull
         private ParsedRefreshError parseError(@NonNull Response<?> response) {
             String retryAfter = response.headers().get("Retry-After");
@@ -646,6 +742,9 @@ public final class SessionRefreshCoordinator {
             }
         }
 
+        /**
+         * Lee una propiedad string opcional del JSON de error y devuelve {@code null} si no es usable.
+         */
         @Nullable
         private String getAsString(@NonNull JsonObject obj, @NonNull String key) {
             if (!obj.has(key) || obj.get(key) == null || !obj.get(key).isJsonPrimitive()) {
@@ -655,6 +754,9 @@ public final class SessionRefreshCoordinator {
             return StringUtils.hasText(value) ? value : null;
         }
 
+        /**
+         * Devuelve la primera cadena no vacía del listado recibido.
+         */
         @Nullable
         private String firstNonEmpty(@Nullable String... values) {
             if (values == null) return null;
@@ -672,6 +774,9 @@ public final class SessionRefreshCoordinator {
         @Nullable final String errorCode;
         @Nullable final String backendMessage;
 
+        /**
+         * Agrupa la información mínima extraída de un error de refresh.
+         */
         private ParsedRefreshError(@Nullable String retryAfter,
                                    @Nullable String errorCode,
                                    @Nullable String backendMessage) {

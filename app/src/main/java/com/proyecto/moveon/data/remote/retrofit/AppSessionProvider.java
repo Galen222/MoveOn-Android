@@ -12,7 +12,7 @@ import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 /**
- * Proveedor de datos o dependencias para app session.
+ * Gestiona el token de sesión de aplicación usado por el handshake con el backend.
  */
 public final class AppSessionProvider {
 
@@ -29,7 +29,7 @@ public final class AppSessionProvider {
     private static final Object LOCK = new Object();
 
     /**
-     * Constructor privado: clase de utilidades estática, no se instancia.
+     * Evita instancias de una clase utilitaria puramente estática.
      */
     private AppSessionProvider() {}
 
@@ -109,10 +109,10 @@ public final class AppSessionProvider {
     }
 
     /**
-     * Invalida el token cacheado para forzar un nuevo handshake en la
-     * siguiente petición. Se llama cuando el backend responde con un error
-     * relacionado con la sesión de app (no la de usuario). No resetea el
-     * cooldown de fallos: eso solo se limpia tras un fetch exitoso.
+     * Invalida la sesión de app cacheada para forzar un nuevo handshake en el siguiente acceso.
+     *
+     * <p>No resetea el cooldown de fallos, que solo se limpia tras un fetch exitoso o una
+     * reconexión explícita.</p>
      */
     public static void invalidate() {
         synchronized (LOCK) {
@@ -123,10 +123,10 @@ public final class AppSessionProvider {
     }
 
     /**
-     * Resetea el cooldown de fallo para que la próxima operación
-     * intente el handshake real en vez de fallar instantáneamente.
-     * Lo llama {@code ConnectivityObserver} cuando la red vuelve tras
-     * una desconexión y el fallo anterior deja de ser representativo.
+     * Limpia el cooldown tras un fallo reciente para permitir un nuevo intento de handshake.
+     *
+     * <p>Lo invoca {@code ConnectivityObserver} cuando la red vuelve y el fallo previo deja de
+     * ser representativo.</p>
      */
     public static void resetFailureCooldown() {
         lastFailureTime = 0;

@@ -31,6 +31,12 @@ public abstract class BaseRepository {
     private final List<Call<?>> inFlight =
             Collections.synchronizedList(new ArrayList<>());
 
+    /**
+     * Cancela y elimina todas las llamadas Retrofit que este repositorio sigue teniendo en vuelo.
+     *
+     * <p>La lista se vacía bajo bloqueo antes de cancelar cada {@link Call} para evitar carreras
+     * con hilos que estén añadiendo o retirando peticiones en paralelo.</p>
+     */
     public void cancelAll() {
         List<Call<?>> snapshot;
         synchronized (inFlight) {
@@ -45,12 +51,22 @@ public abstract class BaseRepository {
         }
     }
 
+    /**
+     * Registra una llamada como activa para poder cancelarla más adelante desde {@link #cancelAll()}.
+     *
+     * @param call llamada a seguir; se ignora si es {@code null}.
+     */
     protected void trackCall(@Nullable Call<?> call) {
         if (call != null) {
             inFlight.add(call);
         }
     }
 
+    /**
+     * Elimina una llamada del conjunto de peticiones activas cuando ya ha terminado o se ha descartado.
+     *
+     * @param call llamada a retirar; se ignora si es {@code null}.
+     */
     protected void untrackCall(@Nullable Call<?> call) {
         if (call != null) {
             inFlight.remove(call);
@@ -58,9 +74,11 @@ public abstract class BaseRepository {
     }
 
     /**
-     * Helper para nuevas llamadas Retrofit:
-     * registra la call antes de encolarla y la elimina automáticamente
-     * tanto en onResponse como en onFailure.
+     * Encola una llamada Retrofit delegando la respuesta pero ocupándose del ciclo de tracking.
+     *
+     * @param call llamada que debe seguirse y encolarse.
+     * @param delegate callback real que procesará la respuesta o el fallo.
+     * @param <T> tipo de cuerpo esperado por la llamada.
      */
     protected final <T> void enqueueTracked(@NonNull Call<T> call, @NonNull Callback<T> delegate) {
         trackCall(call);
@@ -79,6 +97,11 @@ public abstract class BaseRepository {
         });
     }
 
+    /**
+     * Expone el número de llamadas activas para pruebas que validan deduplicación o cancelación.
+     *
+     * @return tamaño actual del conjunto de llamadas en vuelo.
+     */
     protected final int getTrackedCallCountForTest() {
         synchronized (inFlight) {
             return inFlight.size();

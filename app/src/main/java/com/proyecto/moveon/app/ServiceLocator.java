@@ -15,16 +15,14 @@ import com.proyecto.moveon.data.session.AuthRepository;
  * Localizador de servicios a nivel de proceso.
  *
  * <p>Centraliza la creación de repositorios para eliminar el acoplamiento con
- * {@code new} en cada ViewModel y facilitar el testing (se puede sustituir
- * con {@link #swap(ServiceLocator)} en tests instrumentados).</p>
+ * {@code new} en cada ViewModel y facilitar el testing.</p>
  *
  * <h3>Factory vs Singleton</h3>
  * <ul>
- *   <li>Repositorios con {@code cancelAll()} → factory ({@code newXxx()}).
- *       Cada consumidor necesita su propia instancia para que
- *       {@code onCleared()} no cancele peticiones de otros ViewModels.</li>
- *   <li>{@link UserPrefsRepository} → singleton. No tiene cancelación,
- *       solo escribe en Room y lanza PATCHs fire-and-forget.</li>
+ *   <li>Repositorios con {@code cancelAll()} se crean por consumidor para que
+ *   {@code onCleared()} no cancele peticiones ajenas.</li>
+ *   <li>{@link UserPrefsRepository} se comparte como singleton porque no mantiene
+ *   llamadas en vuelo asociadas a una pantalla concreta.</li>
  * </ul>
  */
 public class ServiceLocator {
@@ -36,10 +34,21 @@ public class ServiceLocator {
     // Singleton: sin cancelAll, seguro compartir entre consumidores.
     private volatile UserPrefsRepository userPrefsRepository;
 
+    /**
+     * Crea un localizador ligado al contexto de aplicación.
+     *
+     * @param context cualquier contexto Android desde el que obtener el {@code applicationContext}.
+     */
     protected ServiceLocator(@NonNull Context context) {
         this.appContext = context.getApplicationContext();
     }
 
+    /**
+     * Devuelve la instancia global del localizador, creándola de forma perezosa si todavía no existe.
+     *
+     * @param context cualquier contexto Android desde el que obtener el {@code applicationContext}.
+     * @return instancia singleton de {@link ServiceLocator}.
+     */
     @NonNull
     public static ServiceLocator getInstance(@NonNull Context context) {
         if (instance == null) {
@@ -53,8 +62,9 @@ public class ServiceLocator {
     }
 
     /**
-     * Permite sustituir el ServiceLocator en tests instrumentados.
-     * Llamar antes de que ningún ViewModel acceda a la instancia.
+     * Permite sustituir el localizador global por una implementación de pruebas.
+     *
+     * @param testLocator instancia preparada para el escenario de test.
      */
     @VisibleForTesting
     public static void swap(@NonNull ServiceLocator testLocator) {
@@ -63,30 +73,51 @@ public class ServiceLocator {
         }
     }
 
-    // ── Factory methods (instancia nueva por consumidor) ─────────────────────
-
+    /**
+     * Crea un repositorio de autenticación independiente para el consumidor actual.
+     *
+     * @return {@link AuthRepository} nuevo para el consumidor actual.
+     */
     @NonNull
     public AuthRepository newAuthRepository() {
         return new AuthRepository(appContext);
     }
 
+    /**
+     * Crea un repositorio de actividades con ciclo de vida propio.
+     *
+     * @return {@link ActivityRepository} nuevo para el consumidor actual.
+     */
     @NonNull
     public ActivityRepository newActivityRepository() {
         return new ActivityRepository(appContext);
     }
 
+    /**
+     * Crea un repositorio de perfil que reutiliza el singleton de preferencias del usuario.
+     *
+     * @return {@link PerfilRepository} nuevo para el consumidor actual.
+     */
     @NonNull
     public PerfilRepository newPerfilRepository() {
         return new PerfilRepository(appContext, getUserPrefsRepository());
     }
 
+    /**
+     * Crea un repositorio de ranking desacoplado del resto de consumidores.
+     *
+     * @return {@link RankingRepository} nuevo para el consumidor actual.
+     */
     @NonNull
     public RankingRepository newRankingRepository() {
         return new RankingRepository(appContext);
     }
 
-    // ── Singleton ────────────────────────────────────────────────────────────
-
+    /**
+     * Devuelve el repositorio singleton de preferencias de usuario, creándolo la primera vez que se solicita.
+     *
+     * @return singleton de {@link UserPrefsRepository}.
+     */
     @NonNull
     public UserPrefsRepository getUserPrefsRepository() {
         if (userPrefsRepository == null) {

@@ -40,7 +40,9 @@ public final class GlobalStatsNotifier {
     }
 
     /**
-     * Devuelve la instancia global del notificador.
+     * Devuelve la instancia singleton usada para transportar mensajes globales de estadísticas.
+     *
+     * @return instancia única de {@link GlobalStatsNotifier}.
      */
     @NonNull
     public static synchronized GlobalStatsNotifier getInstance() {
@@ -52,6 +54,8 @@ public final class GlobalStatsNotifier {
 
     /**
      * Publica un mensaje de éxito sin acción secundaria.
+     *
+     * @param message texto que debe mostrarse al usuario.
      */
     public void notifySuccess(@NonNull CharSequence message) {
         notifyMessage(new GlobalSnackbarMessage(TopSnackbar.Type.SUCCESS, message));
@@ -59,6 +63,8 @@ public final class GlobalStatsNotifier {
 
     /**
      * Publica un mensaje de aviso sin acción secundaria.
+     *
+     * @param message texto que debe mostrarse al usuario.
      */
     public void notifyWarning(@NonNull CharSequence message) {
         notifyMessage(new GlobalSnackbarMessage(TopSnackbar.Type.WARNING, message));
@@ -66,6 +72,8 @@ public final class GlobalStatsNotifier {
 
     /**
      * Publica un mensaje de error sin acción secundaria.
+     *
+     * @param message texto que debe mostrarse al usuario.
      */
     public void notifyError(@NonNull CharSequence message) {
         notifyMessage(new GlobalSnackbarMessage(TopSnackbar.Type.ERROR, message));

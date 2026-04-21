@@ -21,30 +21,68 @@ import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.Response;
 /**
- * Clase responsable de authenticated api client.
+ * Cliente genérico para consumir endpoints protegidos reutilizando {@link RetrofitProvider}.
+ *
+ * <p>Centraliza validación de rutas relativas, mapeo de {@link JsonElement}, ejecución bloqueante
+ * y asíncrona y conversión homogénea a {@link ApiResult}.</p>
  */
 public final class AuthenticatedApiClient extends BaseRepository {
 
+    /**
+     * Contrato de transformación entre el JSON recibido y el tipo de salida esperado por el repositorio llamador.
+     */
     public interface Mapper<I, O> {
+        /**
+         * Convierte el valor de entrada en el modelo requerido por la capa superior.
+         *
+         * @param input valor bruto recibido del cliente HTTP.
+         * @return modelo transformado.
+         * @throws Exception cuando el contenido no puede interpretarse como el tipo esperado.
+         */
         O map(I input) throws Exception;
     }
 
+    /**
+     * Callback estándar para operaciones protegidas que devuelven un {@link ApiResult}.
+     */
     public interface Callback<T> {
+        /**
+         * Entrega el resultado final de la operación HTTP ya mapeado.
+         *
+         * @param result éxito o error de la llamada remota.
+         */
         void onResult(ApiResult<T> result);
     }
 
     private final Context appContext;
 
+    /**
+     * Crea el cliente protegido usando siempre el contexto de aplicación.
+     *
+     * @param context cualquier contexto Android desde el que obtener el {@code applicationContext}.
+     */
     public AuthenticatedApiClient(@NonNull Context context) {
         this.appContext = context.getApplicationContext();
     }
 
+    /**
+     * Comprueba si una ruta no es válida para este cliente porque está vacía o intenta colar una URL absoluta.
+     *
+     * @param url ruta recibida desde la capa llamadora.
+     * @return {@code true} cuando la ruta no es apta para anexarse a la base URL de Retrofit.
+     */
     private boolean isInvalidUrl(String url) {
         if (url == null || url.trim().isEmpty()) return true;
         String clean = url.trim().toLowerCase();
         return clean.matches("^[a-z][a-z0-9+.-]*://.*") || clean.startsWith("//");
     }
 
+    /**
+     * Normaliza una ruta relativa eliminando espacios y una barra inicial si existe.
+     *
+     * @param url ruta relativa de entrada.
+     * @return ruta apta para el interfaz Retrofit protegido.
+     */
     private String sanitizeUrl(String url) {
         if (url == null) return "";
         String clean = url.trim();
@@ -54,6 +92,14 @@ public final class AuthenticatedApiClient extends BaseRepository {
         return clean;
     }
 
+    /**
+     * Ejecuta un GET asíncrono sobre un endpoint protegido y entrega el resultado ya mapeado.
+     *
+     * @param url ruta relativa del endpoint.
+     * @param mapper transformador del JSON de respuesta.
+     * @param callback callback que recibe un {@link ApiResult} tipado.
+     * @param <T> tipo final esperado por la capa llamadora.
+     */
     public <T> void get(String url, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
             callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida))));
@@ -62,6 +108,14 @@ public final class AuthenticatedApiClient extends BaseRepository {
         enqueueCall(RetrofitProvider.protectedApi(appContext).get(sanitizeUrl(url)), mapper, callback);
     }
 
+    /**
+     * Ejecuta un GET bloqueante sobre un endpoint protegido.
+     *
+     * @param url ruta relativa del endpoint.
+     * @param mapper transformador del JSON de respuesta.
+     * @param <T> tipo final esperado por la capa llamadora.
+     * @return {@link ApiResult} con el modelo mapeado o el error correspondiente.
+     */
     public <T> ApiResult<T> getBlocking(String url, Mapper<JsonElement, T> mapper) {
         if (isInvalidUrl(url)) {
             return ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida)));
@@ -69,6 +123,15 @@ public final class AuthenticatedApiClient extends BaseRepository {
         return executeCall(RetrofitProvider.protectedApi(appContext).get(sanitizeUrl(url)), mapper);
     }
 
+    /**
+     * Ejecuta un POST JSON asíncrono contra un endpoint protegido.
+     *
+     * @param url ruta relativa del endpoint.
+     * @param body cuerpo JSON a enviar.
+     * @param mapper transformador del JSON de respuesta.
+     * @param callback callback que recibe el resultado final.
+     * @param <T> tipo final esperado por la capa llamadora.
+     */
     public <T> void postJson(String url, JsonElement body, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
             callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida))));
@@ -77,6 +140,15 @@ public final class AuthenticatedApiClient extends BaseRepository {
         enqueueCall(RetrofitProvider.protectedApi(appContext).post(sanitizeUrl(url), body), mapper, callback);
     }
 
+    /**
+     * Ejecuta un POST JSON bloqueante contra un endpoint protegido.
+     *
+     * @param url ruta relativa del endpoint.
+     * @param body cuerpo JSON a enviar.
+     * @param mapper transformador del JSON de respuesta.
+     * @param <T> tipo final esperado por la capa llamadora.
+     * @return {@link ApiResult} con el modelo mapeado o el error correspondiente.
+     */
     public <T> ApiResult<T> postJsonBlocking(String url, JsonElement body, Mapper<JsonElement, T> mapper) {
         if (isInvalidUrl(url)) {
             return ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida)));
@@ -84,6 +156,15 @@ public final class AuthenticatedApiClient extends BaseRepository {
         return executeCall(RetrofitProvider.protectedApi(appContext).post(sanitizeUrl(url), body), mapper);
     }
 
+    /**
+     * Ejecuta un PATCH JSON asíncrono sobre un endpoint protegido.
+     *
+     * @param url ruta relativa del endpoint.
+     * @param body cuerpo parcial con los cambios solicitados.
+     * @param mapper transformador del JSON de respuesta.
+     * @param callback callback que recibe el resultado final.
+     * @param <T> tipo final esperado por la capa llamadora.
+     */
     public <T> void patchJson(String url, JsonElement body, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
             callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida))));
@@ -92,6 +173,15 @@ public final class AuthenticatedApiClient extends BaseRepository {
         enqueueCall(RetrofitProvider.protectedApi(appContext).patch(sanitizeUrl(url), body), mapper, callback);
     }
 
+    /**
+     * Ejecuta un PATCH JSON bloqueante sobre un endpoint protegido.
+     *
+     * @param url ruta relativa del endpoint.
+     * @param body cuerpo parcial con los cambios solicitados.
+     * @param mapper transformador del JSON de respuesta.
+     * @param <T> tipo final esperado por la capa llamadora.
+     * @return {@link ApiResult} con el modelo mapeado o el error correspondiente.
+     */
     public <T> ApiResult<T> patchJsonBlocking(String url, JsonElement body, Mapper<JsonElement, T> mapper) {
         if (isInvalidUrl(url)) {
             return ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida)));
@@ -99,6 +189,14 @@ public final class AuthenticatedApiClient extends BaseRepository {
         return executeCall(RetrofitProvider.protectedApi(appContext).patch(sanitizeUrl(url), body), mapper);
     }
 
+    /**
+     * Ejecuta un DELETE asíncrono sobre un endpoint protegido.
+     *
+     * @param url ruta relativa del endpoint.
+     * @param mapper transformador del JSON de respuesta.
+     * @param callback callback que recibe el resultado final.
+     * @param <T> tipo final esperado por la capa llamadora.
+     */
     public <T> void delete(String url, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
             callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida))));
@@ -107,6 +205,14 @@ public final class AuthenticatedApiClient extends BaseRepository {
         enqueueCall(RetrofitProvider.protectedApi(appContext).delete(sanitizeUrl(url)), mapper, callback);
     }
 
+    /**
+     * Ejecuta un DELETE bloqueante sobre un endpoint protegido.
+     *
+     * @param url ruta relativa del endpoint.
+     * @param mapper transformador del JSON de respuesta.
+     * @param <T> tipo final esperado por la capa llamadora.
+     * @return {@link ApiResult} con el modelo mapeado o el error correspondiente.
+     */
     public <T> ApiResult<T> deleteBlocking(String url, Mapper<JsonElement, T> mapper) {
         if (isInvalidUrl(url)) {
             return ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida)));
@@ -114,6 +220,15 @@ public final class AuthenticatedApiClient extends BaseRepository {
         return executeCall(RetrofitProvider.protectedApi(appContext).delete(sanitizeUrl(url)), mapper);
     }
 
+    /**
+     * Ejecuta un POST multipart asíncrono para subir un archivo protegido por sesión.
+     *
+     * @param url ruta relativa del endpoint.
+     * @param file parte multipart ya construida.
+     * @param mapper transformador del JSON de respuesta.
+     * @param callback callback que recibe el resultado final.
+     * @param <T> tipo final esperado por la capa llamadora.
+     */
     public <T> void postMultipart(String url, MultipartBody.Part file, Mapper<JsonElement, T> mapper, Callback<T> callback) {
         if (isInvalidUrl(url)) {
             callback.onResult(ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida))));
@@ -122,6 +237,15 @@ public final class AuthenticatedApiClient extends BaseRepository {
         enqueueCall(RetrofitProvider.protectedApi(appContext).postMultipart(sanitizeUrl(url), file), mapper, callback);
     }
 
+    /**
+     * Ejecuta un POST multipart bloqueante para subir un archivo protegido por sesión.
+     *
+     * @param url ruta relativa del endpoint.
+     * @param file parte multipart ya construida.
+     * @param mapper transformador del JSON de respuesta.
+     * @param <T> tipo final esperado por la capa llamadora.
+     * @return {@link ApiResult} con el modelo mapeado o el error correspondiente.
+     */
     public <T> ApiResult<T> postMultipartBlocking(String url, MultipartBody.Part file, Mapper<JsonElement, T> mapper) {
         if (isInvalidUrl(url)) {
             return ApiResult.failure(ApiError.local(AppLanguageManager.getString(appContext, R.string.api_error_url_invalida)));
@@ -129,6 +253,14 @@ public final class AuthenticatedApiClient extends BaseRepository {
         return executeCall(RetrofitProvider.protectedApi(appContext).postMultipart(sanitizeUrl(url), file), mapper);
     }
 
+    /**
+     * Encola una llamada protegida y unifica el parsing de éxito y de error HTTP.
+     *
+     * @param call llamada Retrofit ya preparada.
+     * @param mapper transformador del JSON de respuesta.
+     * @param callback callback final hacia la capa superior.
+     * @param <T> tipo final esperado por la capa llamadora.
+     */
     private <T> void enqueueCall(Call<JsonElement> call,
                                  Mapper<JsonElement, T> mapper,
                                  Callback<T> callback) {
@@ -157,6 +289,14 @@ public final class AuthenticatedApiClient extends BaseRepository {
         });
     }
 
+    /**
+     * Ejecuta una llamada protegida en modo bloqueante aplicando el mismo parsing homogéneo que la versión asíncrona.
+     *
+     * @param call llamada Retrofit ya preparada.
+     * @param mapper transformador del JSON de respuesta.
+     * @param <T> tipo final esperado por la capa llamadora.
+     * @return {@link ApiResult} tipado con el dato mapeado o el error de red, HTTP o parsing.
+     */
     private <T> ApiResult<T> executeCall(@NonNull Call<JsonElement> call,
                                          @NonNull Mapper<JsonElement, T> mapper) {
         trackCall(call);

@@ -70,6 +70,8 @@ public final class RankingRepository {
     /**
      * Crea el repositorio usando siempre el contexto de aplicación para evitar
      * fugas de Activities o Fragments.
+     *
+     * @param context cualquier contexto Android desde el que obtener el {@code applicationContext}.
      */
     public RankingRepository(@NonNull Context context) {
         this.apiClient = new AuthenticatedApiClient(context.getApplicationContext());
@@ -132,6 +134,9 @@ public final class RankingRepository {
 
     /**
      * Construye la URL del ranking respetando el contrato actual del backend.
+     *
+     * @param provincia provincia opcional por la que filtrar.
+     * @return ruta relativa que debe invocarse en el backend.
      */
     @NonNull
     private String buildUrl(@Nullable String provincia) {
@@ -149,6 +154,9 @@ public final class RankingRepository {
 
     /**
      * Convierte el array JSON del backend en una lista de DTOs del ranking.
+     *
+     * @param json cuerpo recibido desde el endpoint de ranking.
+     * @return lista de {@link RankingItemDto} o {@code null} si el payload no es un array válido.
      */
     @Nullable
     private List<RankingItemDto> parseRanking(@Nullable JsonElement json) {
@@ -160,6 +168,9 @@ public final class RankingRepository {
 
     /**
      * Extrae el mensaje de una respuesta genérica del backend.
+     *
+     * @param json cuerpo recibido desde el backend.
+     * @return mensaje textual o {@code "OK"} como fallback defensivo.
      */
     @NonNull
     private String parseMensaje(@Nullable JsonElement json) {

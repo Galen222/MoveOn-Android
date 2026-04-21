@@ -33,11 +33,24 @@ public class AuthRepository extends BaseRepository {
 
     private final Context appContext;
 
+    /**
+     * Crea el repositorio de autenticación usando siempre el contexto de aplicación.
+     *
+     * @param context cualquier contexto Android desde el que obtener el {@code applicationContext}.
+     */
     public AuthRepository(Context context) {
         this.appContext = context.getApplicationContext();
     }
 
+    /**
+     * Callback estándar del repositorio para encapsular éxito o error en un {@link ApiResult}.
+     */
     public interface Callback<T> {
+        /**
+         * Entrega el resultado final de la operación de autenticación.
+         *
+         * @param result éxito o error de la operación solicitada.
+         */
         void onResult(ApiResult<T> result);
     }
 
@@ -45,6 +58,13 @@ public class AuthRepository extends BaseRepository {
     // Login
     // -------------------------------------------------------------------------
 
+    /**
+     * Intenta iniciar sesión con identificador clásico y contraseña.
+     *
+     * @param identificador email o nombre de usuario ya validado en cliente.
+     * @param password contraseña escrita por el usuario.
+     * @param callback callback que recibe un {@link LoginSession} o el error correspondiente.
+     */
     public void login(String identificador, String password, Callback<LoginSession> callback) {
         Call<LoginResponseDto> call =
                 RetrofitProvider.authApi(appContext).login(AuthMapper.toLoginRequest(identificador, password));
@@ -80,6 +100,13 @@ public class AuthRepository extends BaseRepository {
     }
 
 
+    /**
+     * Intenta iniciar sesión usando un token emitido por un proveedor social.
+     *
+     * @param provider identificador del proveedor social.
+     * @param token token emitido por el proveedor y validable por el backend.
+     * @param callback callback que recibe un {@link LoginSession} o el error correspondiente.
+     */
     public void loginSocial(String provider, String token, Callback<LoginSession> callback) {
         Call<LoginResponseDto> call =
                 RetrofitProvider.authApi(appContext)
@@ -119,6 +146,12 @@ public class AuthRepository extends BaseRepository {
     // Registro
     // -------------------------------------------------------------------------
 
+    /**
+     * Registra una nueva cuenta clásica y devuelve el mensaje final del backend.
+     *
+     * @param input datos de registro ya normalizados por la capa de dominio.
+     * @param callback callback que recibe el mensaje de éxito o el error correspondiente.
+     */
     public void register(RegisterInput input, Callback<String> callback) {
         Call<RegisterResponseDto> call =
                 RetrofitProvider.authApi(appContext).register(AuthMapper.toRegisterRequest(input));
@@ -152,6 +185,12 @@ public class AuthRepository extends BaseRepository {
     }
 
 
+    /**
+     * Completa un alta social y devuelve la sesión autenticada resultante.
+     *
+     * @param input datos adicionales requeridos para terminar el registro social.
+     * @param callback callback que recibe un {@link LoginSession} o el error correspondiente.
+     */
     public void registerSocial(SocialRegisterInput input, Callback<LoginSession> callback) {
         Call<LoginResponseDto> call =
                 RetrofitProvider.authApi(appContext)
@@ -191,6 +230,12 @@ public class AuthRepository extends BaseRepository {
     // Refresh de sesión
     // -------------------------------------------------------------------------
 
+    /**
+     * Solicita al backend un nuevo par de tokens a partir del refresh token actual.
+     *
+     * @param refreshToken token de refresco vigente.
+     * @param callback callback que recibe una nueva {@link LoginSession} o el error correspondiente.
+     */
     public void refreshSession(String refreshToken, Callback<LoginSession> callback) {
         Call<LoginResponseDto> call =
                 RetrofitProvider.authApi(appContext).refresh(new RefreshRequestDto(refreshToken));
@@ -229,6 +274,12 @@ public class AuthRepository extends BaseRepository {
     // Logout
     // -------------------------------------------------------------------------
 
+    /**
+     * Informa al backend del cierre de sesión para invalidar el refresh token actual.
+     *
+     * @param refreshToken token de refresco que debe revocarse en servidor.
+     * @param callback callback que recibe el mensaje final del backend.
+     */
     public void logout(String refreshToken, Callback<String> callback) {
         Call<MessageResponseDto> call =
                 RetrofitProvider.authApi(appContext).logout(new LogoutRequestDto(refreshToken));
@@ -266,6 +317,13 @@ public class AuthRepository extends BaseRepository {
     // POST /password/solicitar → body: { email, locale }
     // -------------------------------------------------------------------------
 
+    /**
+     * Solicita el envío del flujo de recuperación de contraseña para un email concreto.
+     *
+     * @param email dirección de correo asociada a la cuenta.
+     * @param locale locale que el backend puede usar para personalizar el mensaje.
+     * @param callback callback que recibe el mensaje final del backend.
+     */
     public void solicitarRecuperacion(String email, String locale, Callback<String> callback) {
         Call<MessageResponseDto> call =
                 RetrofitProvider.authApi(appContext)
@@ -304,6 +362,14 @@ public class AuthRepository extends BaseRepository {
     // POST /password/confirmar  →  body: { email, codigo, nueva_password }
     // -------------------------------------------------------------------------
 
+    /**
+     * Confirma el cambio de contraseña usando el código de recuperación emitido previamente.
+     *
+     * @param email dirección de correo asociada a la cuenta.
+     * @param codigo código temporal recibido por el usuario.
+     * @param nuevaPassword nueva contraseña elegida por el usuario.
+     * @param callback callback que recibe el mensaje final del backend.
+     */
     public void resetearPassword(String email, String codigo, String nuevaPassword,
                                  Callback<String> callback) {
         Call<MessageResponseDto> call =

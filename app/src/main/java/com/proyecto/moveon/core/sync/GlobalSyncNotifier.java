@@ -41,7 +41,9 @@ public final class GlobalSyncNotifier {
     }
 
     /**
-     * Devuelve la instancia global del notificador.
+     * Devuelve la instancia singleton que centraliza los avisos globales de sincronización.
+     *
+     * @return instancia única de {@link GlobalSyncNotifier}.
      */
     @NonNull
     public static synchronized GlobalSyncNotifier getInstance() {
@@ -69,6 +71,8 @@ public final class GlobalSyncNotifier {
      *
      * <p>Si otro worker acaba de publicar el mismo aviso hace muy poco, se ignora para no mostrar
      * dos snackbars casi idénticos cuando ambas colas terminan casi a la vez tras recuperar red.</p>
+     *
+     * @param message mensaje visual ya resuelto que debe transportarse a la UI.
      */
     public synchronized void notifyMessage(@NonNull GlobalSnackbarMessage message) {
         long now = System.currentTimeMillis();
@@ -85,7 +89,9 @@ public final class GlobalSyncNotifier {
     }
 
     /**
-     * Expone el canal observable para la UI.
+     * Expone el canal observable para que la actividad principal consuma los avisos pendientes.
+     *
+     * @return {@link LiveData} one-shot con mensajes de sincronización.
      */
     @NonNull
     public LiveData<Event<GlobalSnackbarMessage>> getMessageEvent() {
