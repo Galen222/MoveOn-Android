@@ -21,6 +21,32 @@ public final class PerfilUsuario {
     @Nullable public final String photoSyncState;
     public final boolean perfilVisible;
 
+    /**
+     * Construye la representación de dominio del perfil del usuario a partir
+     * de los datos recibidos del backend y del estado local de la foto.
+     *
+     * <p>Los campos relativos a la foto ({@code localPhotoPath},
+     * {@code pendingLocalPhotoPath} y {@code photoSyncState}) modelan el
+     * cambio offline-first: la UI ve primero la foto local y la
+     * sincronización la sustituye por la URL remota cuando el backend
+     * responde OK.</p>
+     *
+     * @param nombreUsuario nombre de usuario público.
+     * @param email email de la cuenta.
+     * @param fechaNacimiento fecha de nacimiento en formato {@code yyyy-MM-dd}.
+     * @param totalPuntos puntos totales del ranking.
+     * @param nombreReal nombre real opcional (distinto del nombre de usuario).
+     * @param genero género declarado, o {@code null} si no se ha fijado.
+     * @param altura altura en centímetros, o {@code null} si no se ha fijado.
+     * @param peso peso en kilogramos, o {@code null} si no se ha fijado.
+     * @param provincia provincia asociada, usada para el ranking provincial.
+     * @param fotoPerfil URL remota de la foto actual, o {@code null} si no hay.
+     * @param fotoVersion versión numérica usada para invalidar la caché de la foto.
+     * @param localPhotoPath ruta en disco a la foto ya sincronizada con el servidor.
+     * @param pendingLocalPhotoPath ruta en disco a una foto nueva que aún no ha subido.
+     * @param photoSyncState estado de sincronización de la foto (sincronizada, pendiente, con error).
+     * @param perfilVisible {@code true} si el perfil aparece en ranking y búsquedas.
+     */
     public PerfilUsuario(
             String nombreUsuario,
             String email,

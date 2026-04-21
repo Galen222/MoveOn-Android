@@ -7,6 +7,10 @@ import androidx.annotation.Nullable;
  */
 public final class StringUtils {
 
+    /**
+     * Constructor privado: clase de utilidades con sólo métodos estáticos,
+     * no está pensada para instanciarse.
+     */
     private StringUtils() {
         // Utility class
     }

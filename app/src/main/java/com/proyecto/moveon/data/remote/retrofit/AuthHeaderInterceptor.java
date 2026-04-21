@@ -25,12 +25,30 @@ public final class AuthHeaderInterceptor implements Interceptor {
 
     private final SecureSessionManager sessionManager;
 
+    /**
+     * Guarda la referencia al {@link SecureSessionManager} de aplicación
+     * para poder leer el access token en cada petición sin depender del
+     * contexto concreto que creó el interceptor.
+     *
+     * @param context cualquier contexto Android; internamente se usa el {@code applicationContext} para evitar fugas.
+     */
     public AuthHeaderInterceptor(Context context) {
         this.sessionManager = SecureSessionManager.getInstance(context.getApplicationContext());
     }
 
     @NonNull
     @Override
+    /**
+     * Inyecta la cabecera {@code Authorization: Bearer <access>} en todas
+     * las peticiones al backend, excepto las que van a endpoints públicos
+     * (login, registro, recuperación) y las que no apuntan al host+puerto
+     * del backend. Si no hay access token disponible, la petición se deja
+     * pasar sin cabecera y el backend responderá 401 si era necesaria.
+     *
+     * @param chain cadena de interceptores de OkHttp.
+     * @return respuesta del siguiente eslabón, tras modificar la petición si procede.
+     * @throws IOException si la petición subyacente falla.
+     */
     public Response intercept(Chain chain) throws IOException {
         Request original = chain.request();
 
@@ -53,6 +71,15 @@ public final class AuthHeaderInterceptor implements Interceptor {
         return chain.proceed(withAuth);
     }
 
+    /**
+     * Determina si la petición va a un endpoint que no requiere access
+     * token (login, registro, recuperación de contraseña, refresh,
+     * handshake). Se apoya en los segmentos finales de la URL porque el
+     * cliente usa {@code baseUrl} variable y path relativo.
+     *
+     * @param req petición a evaluar.
+     * @return {@code true} si el endpoint no requiere {@code Authorization}.
+     */
     private boolean isPublicEndpoint(Request req) {
         List<String> seg = req.url().pathSegments();
         if (seg.isEmpty()) return false;

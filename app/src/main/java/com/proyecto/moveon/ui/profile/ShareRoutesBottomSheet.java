@@ -48,12 +48,28 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
     private boolean isSharingInProgress;
 
     @NonNull
+    /**
+     * Factoría canónica para crear el sheet de rutas a compartir. Mantiene
+     * la instanciación en un único punto y facilita añadir argumentos sin
+     * cambiar a los llamadores.
+     *
+     * @return instancia nueva lista para mostrar.
+     */
     public static ShareRoutesBottomSheet newInstance() {
         return new ShareRoutesBottomSheet();
     }
 
     @Nullable
     @Override
+    /**
+     * Infla el layout del sheet y guarda el ViewBinding; la referencia se
+     * libera en {@link #onDestroyView()}.
+     *
+     * @param inflater inflator proporcionado por el sistema.
+     * @param container contenedor padre al que se adjuntará la vista.
+     * @param savedInstanceState estado guardado o {@code null}.
+     * @return la raíz de la vista inflada.
+     */
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
@@ -62,6 +78,14 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
     }
 
     @Override
+    /**
+     * Monta el RecyclerView con su adapter, crea el ViewModel específico
+     * del sheet y observa sus LiveData. Dispara la carga inicial en el
+     * mismo punto para que al abrirse el sheet ya tenga datos en vuelo.
+     *
+     * @param view vista raíz creada por {@link #onCreateView}.
+     * @param savedInstanceState estado guardado o {@code null}.
+     */
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
@@ -219,6 +243,11 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
     }
 
     @Override
+    /**
+     * Limpia el flag "compartiendo en curso" antes de soltar el binding
+     * para que, si el sheet se recrea, no herede un bloqueo visual de la
+     * vista anterior.
+     */
     public void onDestroyView() {
         // Al destruir la vista se limpia el estado para que una recreación del sheet
         // no herede un bloqueo de compartición pendiente de una vista anterior.

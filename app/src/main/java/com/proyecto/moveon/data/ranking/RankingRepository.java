@@ -33,6 +33,14 @@ public final class RankingRepository {
      * Callback para respuestas que devuelven el listado del ranking.
      */
     public interface Callback {
+        /**
+         * Callback invocado con el resultado de pedir un listado de ranking.
+         * Recibe la lista directamente del backend; {@link ApiResult} encapsula
+         * tanto el éxito como el error para que el llamador no tenga que
+         * gestionar excepciones por separado.
+         *
+         * @param result lista de ítems ordenados o el error que impidió obtenerlos.
+         */
         void onResult(@NonNull ApiResult<List<RankingItemDto>> result);
     }
 
@@ -41,6 +49,14 @@ public final class RankingRepository {
      * {@code {"estatus":"success","mensaje":"..."}}.
      */
     public interface MessageCallback {
+        /**
+         * Callback invocado con el resultado de una operación que devuelve un
+         * único texto (por ejemplo, la provincia a la que pertenece el usuario
+         * o un código de respuesta), envuelto en {@link ApiResult} para
+         * distinguir éxito de error.
+         *
+         * @param result texto devuelto por el backend o el error ocurrido.
+         */
         void onResult(@NonNull ApiResult<String> result);
     }
 

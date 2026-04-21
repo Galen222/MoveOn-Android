@@ -31,6 +31,10 @@ public final class GlobalStatsNotifier {
     /** Último instante en que se publicó un mensaje. */
     private long lastDispatchMs = 0L;
 
+    /**
+     * Constructor privado: esta clase se usa como singleton a nivel de
+     * proceso para notificar cambios de estadísticas entre componentes.
+     */
     private GlobalStatsNotifier() {
         // Singleton.
     }

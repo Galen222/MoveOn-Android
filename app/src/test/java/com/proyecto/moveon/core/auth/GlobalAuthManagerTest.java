@@ -17,12 +17,23 @@ public class GlobalAuthManagerTest {
     private GlobalAuthManager manager;
 
     @Before
+    /**
+     * Reinicia el estado del singleton antes de cada test llamando a
+     * {@code acknowledgeSessionExpired}, para que un test previo no
+     * contamine al siguiente a través del estado global compartido.
+     */
     public void setUp() {
         manager = GlobalAuthManager.getInstance();
         manager.acknowledgeSessionExpired(); // Reset state
     }
 
     @Test
+    /**
+     * Comprueba que dos llamadas a {@code getInstance()} devuelven la
+     * misma referencia: el patrón singleton del manager es crítico porque
+     * la notificación de sesión expirada debe ver UN ÚNICO estado en toda
+     * la app.
+     */
     public void getInstance_returnsSameInstance() {
         GlobalAuthManager a = GlobalAuthManager.getInstance();
         GlobalAuthManager b = GlobalAuthManager.getInstance();
@@ -30,6 +41,11 @@ public class GlobalAuthManagerTest {
     }
 
     @Test
+    /**
+     * Verifica que tras {@code acknowledgeSessionExpired()} el manager
+     * vuelve a aceptar nuevas notificaciones. Sin este reset la expiración
+     * solo se propagaría una vez por vida del proceso.
+     */
     public void acknowledgeSessionExpired_resetsDispatchFlag() {
         manager.notifySessionExpired();
         manager.acknowledgeSessionExpired();
@@ -38,6 +54,11 @@ public class GlobalAuthManagerTest {
     }
 
     @Test
+    /**
+     * Comprueba que el LiveData que expone los eventos de expiración no
+     * es {@code null} nada más pedir el manager: los observadores pueden
+     * suscribirse con seguridad sin chequeo previo.
+     */
     public void getSessionExpiredEvent_isNotNull() {
         assertNotNull(manager.getSessionExpiredEvent());
     }

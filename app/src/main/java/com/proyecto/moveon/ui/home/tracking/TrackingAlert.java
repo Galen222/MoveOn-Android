@@ -22,11 +22,24 @@ public final class TrackingAlert {
     @NonNull
     private final Type type;
 
+    /**
+     * Crea una alerta emitida por el módulo de tracking. El {@code type}
+     * indica qué mensaje mostrar en la UI (GPS débil, permisos revocados,
+     * auto-pausa por inactividad, etc.).
+     *
+     * @param type tipo de alerta que se acaba de disparar.
+     */
     public TrackingAlert(@NonNull Type type) {
         this.type = type;
     }
 
     @NonNull
+    /**
+     * Devuelve el tipo concreto de la alerta para que la UI decida el
+     * texto, el icono y la severidad a mostrar.
+     *
+     * @return tipo de alerta con el que se construyó esta instancia.
+     */
     public Type getType() {
         return type;
     }

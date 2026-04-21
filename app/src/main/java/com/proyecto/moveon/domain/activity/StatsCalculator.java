@@ -33,6 +33,10 @@ public final class StatsCalculator {
     public static final long DEFAULT_WEEKLY_GOAL_METERS  = 50_000L;
     public static final long DEFAULT_MONTHLY_GOAL_METERS = 150_000L;
 
+    /**
+     * Constructor privado: clase de utilidades con sólo métodos estáticos,
+     * no está pensada para instanciarse.
+     */
     private StatsCalculator() {
         // Clase utilitaria — no instanciar
     }
@@ -207,6 +211,15 @@ public final class StatsCalculator {
     // ── Privados ──────────────────────────────────────────────────────────────
 
     @NonNull
+    /**
+     * Construye la lista de bloques mensuales que pintará el histórico de
+     * estadísticas. Para cada mes agrega los totales y subdelega el
+     * desglose por semanas en {@link #buildWeekBlocks(int, int, Map)}.
+     *
+     * @param items actividades ya filtradas por el rango de tiempo de interés.
+     * @param porMes mapa precalculado {@code "yyyy-MM" -> [distancia, calorias, duracion]} con los totales por mes.
+     * @return lista de bloques mensuales ordenados del más reciente al más antiguo; lista vacía si no hay datos.
+     */
     private static List<StatsResumen.MonthBlock> buildMonthBlocks(
             @NonNull List<ActividadItem> items,
             @NonNull Map<String, long[]> porMes) {
@@ -245,6 +258,17 @@ public final class StatsCalculator {
     }
 
     @NonNull
+    /**
+     * Desglosa un mes concreto en sus semanas ISO (lunes a domingo) y
+     * calcula los totales de cada semana a partir del mapa por fecha.
+     * Extiende la primera y última semana más allá de los límites del mes
+     * cuando la semana calendario las cruza.
+     *
+     * @param year año del mes a desglosar.
+     * @param month mes (1-12) a desglosar.
+     * @param porFecha mapa {@code fecha -> [distancia, calorias, duracion]} precalculado.
+     * @return lista de semanas del mes con sus totales, en orden cronológico.
+     */
     private static List<StatsResumen.WeekBlock> buildWeekBlocks(
             int year, int month,
             @NonNull Map<LocalDate, long[]> porFecha) {
@@ -289,6 +313,15 @@ public final class StatsCalculator {
     }
 
     @Nullable
+    /**
+     * Intenta parsear una fecha ISO-8601 del backend a {@link LocalDate}
+     * en la zona horaria del dispositivo. Si el formato no es válido
+     * devuelve {@code null} en lugar de propagar la excepción, para que un
+     * solo registro malformado no tumbe el cálculo de estadísticas completo.
+     *
+     * @param fechaIso cadena con la fecha/hora en ISO-8601.
+     * @return fecha local correspondiente o {@code null} si no se pudo parsear.
+     */
     private static LocalDate parseFecha(@NonNull String fechaIso) {
         try {
             return OffsetDateTime.parse(fechaIso)

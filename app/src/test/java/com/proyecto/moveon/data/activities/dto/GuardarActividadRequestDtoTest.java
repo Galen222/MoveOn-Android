@@ -15,6 +15,12 @@ public class GuardarActividadRequestDtoTest {
     private final Gson gson = new Gson();
 
     @Test
+    /**
+     * Verifica que el constructor copia cada parámetro al campo
+     * correspondiente. Es un test regresivo: un refactor accidental que
+     * cambiase el orden de asignación rompería el DTO que el backend
+     * recibe y esta prueba lo captura.
+     */
     public void constructor_setsAllFields() {
         GuardarActividadRequestDto dto = new GuardarActividadRequestDto(
                 "Correr",
@@ -56,6 +62,11 @@ public class GuardarActividadRequestDtoTest {
     }
 
     @Test
+    /**
+     * Documenta que {@code rutaPolilinea == null} es un caso válido
+     * (actividades sin GPS o con permisos denegados). El DTO debe aceptarlo
+     * sin lanzar excepción y preservarlo en el campo.
+     */
     public void constructor_nullPolyline_isAllowed() {
         GuardarActividadRequestDto dto = new GuardarActividadRequestDto(
                 "Caminar",

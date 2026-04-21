@@ -24,12 +24,30 @@ import com.proyecto.moveon.data.session.SecureSessionManager;
  */
 public class SyncPerfilWorker extends Worker {
 
+    /**
+     * Constructor requerido por WorkManager. Simplemente delega en la
+     * implementación base; la lógica real vive en {@link #doWork()}.
+     *
+     * @param context contexto inyectado por WorkManager.
+     * @param params parámetros de la ejecución (reintentos, input data, tags…).
+     */
     public SyncPerfilWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
     }
 
     @NonNull
     @Override
+    /**
+     * Sincroniza los cambios locales del perfil con el backend. Si aún no
+     * hay sesión ({@code accountKey == null}) termina con
+     * {@link Result#success()} para no dejar el Worker reprogramado.
+     *
+     * <p>Con sesión activa, usa una instancia propia de
+     * {@link PerfilRepository} para enviar los PATCH pendientes (nombre,
+     * foto, preferencias) que hubieran quedado encolados offline.</p>
+     *
+     * @return {@link Result#success()} al terminar, o {@link Result#retry()} si la subida falla y merece un reintento.
+     */
     public Result doWork() {
         String accountKey = SecureSessionManager
                 .getInstance(getApplicationContext())

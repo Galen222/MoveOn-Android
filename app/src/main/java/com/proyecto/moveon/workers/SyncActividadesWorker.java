@@ -23,12 +23,30 @@ import com.proyecto.moveon.data.session.SecureSessionManager;
  */
 public class SyncActividadesWorker extends Worker {
 
+    /**
+     * Constructor requerido por WorkManager. Simplemente delega en la
+     * implementación base; la lógica real vive en {@link #doWork()}.
+     *
+     * @param context contexto inyectado por WorkManager.
+     * @param params parámetros de la ejecución (reintentos, input data, tags…).
+     */
     public SyncActividadesWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
     }
 
     @NonNull
     @Override
+    /**
+     * Sincroniza las actividades pendientes de subir. Si no hay sesión
+     * ({@code accountKey == null}) devuelve {@link Result#success()} para
+     * no mantener el Worker reprogramado indefinidamente antes del login.
+     *
+     * <p>Cuando hay sesión, obtiene una instancia propia de
+     * {@link ActivityRepository} (para poder cancelar sin afectar a la UI)
+     * y le pide que empuje las actividades locales en estado pendiente.</p>
+     *
+     * @return {@link Result#success()} al terminar, o {@link Result#retry()} si la sincronización falla por red y procede reintentar.
+     */
     public Result doWork() {
         String accountKey = SecureSessionManager
                 .getInstance(getApplicationContext())

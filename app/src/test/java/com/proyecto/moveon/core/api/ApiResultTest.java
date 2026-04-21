@@ -9,6 +9,11 @@ import org.junit.Test;
 public class ApiResultTest {
 
     @Test
+    /**
+     * Verifica que {@link ApiResult#success} produce un resultado con
+     * {@code isSuccess()=true}, el {@code data} poblado y {@code error}
+     * nulo. Es la forma canónica del caso feliz.
+     */
     public void success_isSuccessTrue_dataPresent() {
         ApiResult<String> result = ApiResult.success("hello");
 
@@ -18,6 +23,11 @@ public class ApiResultTest {
     }
 
     @Test
+    /**
+     * Verifica que {@link ApiResult#successVoid} produce éxito sin payload.
+     * Se usa para endpoints que no devuelven nada (DELETE, PATCH sin eco)
+     * y la UI solo necesita saber si triunfó.
+     */
     public void successVoid_isSuccessTrue_dataNull() {
         ApiResult<Void> result = ApiResult.successVoid();
 
@@ -27,6 +37,11 @@ public class ApiResultTest {
     }
 
     @Test
+    /**
+     * Verifica que {@link ApiResult#failure} deja {@code data} a nulo,
+     * marca {@code isSuccess()=false} y conserva el mensaje original del
+     * error para que la UI pueda mostrarlo.
+     */
     public void failure_isSuccessFalse_errorPresent() {
         ApiError error = ApiError.local("algo falló");
         ApiResult<String> result = ApiResult.failure(error);
@@ -38,6 +53,11 @@ public class ApiResultTest {
     }
 
     @Test
+    /**
+     * Verifica que el tipo del error ({@link ApiErrorType}) sobrevive al
+     * envolverlo en {@link ApiResult}. Es importante porque la UI decide
+     * qué hacer (reintento, banner offline, logout) mirando este tipo.
+     */
     public void failure_preservesErrorType() {
         ApiError error = ApiError.typed(ApiErrorType.NETWORK, "sin red");
         ApiResult<Integer> result = ApiResult.failure(error);

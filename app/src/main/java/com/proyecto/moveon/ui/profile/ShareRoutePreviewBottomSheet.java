@@ -72,6 +72,15 @@ public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogF
 
     @Nullable
     @Override
+    /**
+     * Infla el layout del bottom sheet de previsualización y guarda el
+     * ViewBinding para liberar referencias en {@link #onDestroyView()}.
+     *
+     * @param inflater inflator proporcionado por el sistema.
+     * @param container contenedor padre al que se adjuntará la vista.
+     * @param savedInstanceState estado guardado, puede ser {@code null}.
+     * @return la raíz de la vista inflada.
+     */
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
@@ -80,6 +89,13 @@ public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogF
     }
 
     @Override
+    /**
+     * Lee los argumentos del sheet (imagen a previsualizar, textos) y
+     * cablea botones de compartir/cancelar cuando la vista ya existe.
+     *
+     * @param view vista raíz creada por {@link #onCreateView}.
+     * @param savedInstanceState estado guardado, puede ser {@code null}.
+     */
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
@@ -173,6 +189,11 @@ public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogF
     }
 
     @Override
+    /**
+     * Libera el ViewBinding para evitar fugas: el fragment puede sobrevivir
+     * a la vista durante rotaciones, y mantener la referencia impediría
+     * que el sistema recicle la jerarquía antigua.
+     */
     public void onDestroyView() {
         binding = null;
         super.onDestroyView();

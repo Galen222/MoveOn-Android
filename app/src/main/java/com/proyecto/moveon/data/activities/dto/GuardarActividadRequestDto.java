@@ -71,6 +71,34 @@ public final class GuardarActividadRequestDto {
     @NonNull
     public final String fechaRuta;
 
+    /**
+     * Construye el DTO con todas las métricas ya calculadas por el módulo de
+     * tracking, listas para enviarse al endpoint {@code POST /actividad/guardar}
+     * o para quedarse en la cola offline hasta que haya red.
+     *
+     * <p>Las duraciones se envían desglosadas (total / movimiento / parado /
+     * pausa manual) para que el historial y el ranking sean consistentes con
+     * lo que el propio módulo de tracking calculó en el dispositivo, sin que
+     * el backend tenga que reconstruirlas.</p>
+     *
+     * @param tipo tipo de actividad (p. ej. {@code "carrera"}, {@code "caminata"}).
+     * @param distancia distancia total en metros.
+     * @param duracionTotal duración total en segundos, incluyendo paradas y pausas.
+     * @param duracionMovimiento segundos clasificados como movimiento real.
+     * @param duracionParado segundos con el usuario parado pero sin pausar manualmente.
+     * @param duracionPausaManual segundos que el usuario pausó manualmente.
+     * @param caloriasQuemadas calorías quemadas estimadas por el dispositivo.
+     * @param ritmoMedioMovimiento ritmo medio en movimiento en segundos por kilómetro.
+     * @param ritmoMedioTotal ritmo medio total (incluye paradas) en segundos por kilómetro.
+     * @param ritmoMaximo mejor ritmo sostenido válido en segundos por kilómetro.
+     * @param velocidadMediaKmhX100 velocidad media en km/h multiplicada por 100 para evitar decimales.
+     * @param velocidadMaxKmhX100 velocidad máxima en km/h multiplicada por 100.
+     * @param autoPausas número de auto-pausas disparadas por el detector de inactividad.
+     * @param pausasManuales número de pausas iniciadas a mano por el usuario.
+     * @param alertasVelocidad número de alertas por velocidad anómala.
+     * @param rutaPolilinea polilínea codificada de la ruta, o {@code null} si no se trackeó.
+     * @param fechaRuta fecha/hora de la actividad en formato ISO-8601.
+     */
     public GuardarActividadRequestDto(
             @NonNull String tipo,
             int distancia,

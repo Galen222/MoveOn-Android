@@ -17,6 +17,19 @@ public final class SocialRegisterRequestDto {
     @SerializedName("fecha_aceptacion_terminos") public String fechaAceptacionTerminos;
     @SerializedName("version_terminos") public String versionTerminos;
 
+    /**
+     * Construye el cuerpo del registro social: combina la identidad validada
+     * por el proveedor externo con los campos específicos de la app
+     * (nombre de usuario y aceptación de términos).
+     *
+     * @param provider identificador del proveedor OAuth (p. ej. {@code google}).
+     * @param token token del proveedor que el backend verificará para confirmar la identidad.
+     * @param nombreUsuario nombre de usuario único elegido dentro de la app.
+     * @param fechaNacimiento fecha de nacimiento en formato {@code yyyy-MM-dd}.
+     * @param aceptaTerminos {@code true} si el usuario marcó la casilla de aceptación.
+     * @param fechaAceptacionTerminos timestamp ISO-8601 del momento de aceptación de los términos.
+     * @param versionTerminos versión de los términos aceptada, guardada para auditoría.
+     */
     public SocialRegisterRequestDto(
             String provider,
             String token,

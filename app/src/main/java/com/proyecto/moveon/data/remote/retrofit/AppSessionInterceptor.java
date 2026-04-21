@@ -19,6 +19,16 @@ public final class AppSessionInterceptor implements Interceptor {
 
     @NonNull
     @Override
+    /**
+     * Inyecta el header {@code x-app-session} solo en las peticiones que
+     * van al host y puerto del backend, y nunca en el propio endpoint de
+     * handshake (para evitar un bucle al renovarlo). Si no hay sesión
+     * activa todavía, la petición se deja pasar tal cual.
+     *
+     * @param chain cadena de interceptores de OkHttp.
+     * @return la respuesta producida por el siguiente eslabón de la cadena.
+     * @throws IOException si la petición subyacente falla.
+     */
     public Response intercept(Chain chain) throws IOException {
         Request original = chain.request();
 

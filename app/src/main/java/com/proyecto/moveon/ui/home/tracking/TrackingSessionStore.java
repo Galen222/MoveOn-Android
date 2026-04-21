@@ -41,11 +41,24 @@ public final class TrackingSessionStore {
         prefs = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
 
+    /**
+     * Persiste el snapshot del tracking en {@link android.content.SharedPreferences}
+     * serializándolo a JSON. Se usa para que, si el sistema mata el proceso
+     * del servicio foreground, podamos recuperar la sesión al rearrancar.
+     *
+     * @param snapshot estado completo del tracking en este instante.
+     */
     public void save(@NonNull Snapshot snapshot) {
         prefs.edit().putString(KEY_SNAPSHOT_JSON, gson.toJson(snapshot)).apply();
     }
 
     @Nullable
+    /**
+     * Recupera el último snapshot guardado o {@code null} si no hay ninguno
+     * (primera ejecución, o el usuario cerró la actividad previamente).
+     *
+     * @return snapshot deserializado o {@code null} si no había estado persistido.
+     */
     public Snapshot restore() {
         String json = prefs.getString(KEY_SNAPSHOT_JSON, null);
         if (json == null || json.trim().isEmpty()) {
@@ -54,6 +67,11 @@ public final class TrackingSessionStore {
         return gson.fromJson(json, Snapshot.class);
     }
 
+    /**
+     * Borra el snapshot guardado. Se llama al cerrar o descartar la
+     * actividad para que un rearranque posterior empiece limpio en lugar
+     * de ofrecer "continuar sesión".
+     */
     public void clear() {
         prefs.edit().remove(KEY_SNAPSHOT_JSON).apply();
     }

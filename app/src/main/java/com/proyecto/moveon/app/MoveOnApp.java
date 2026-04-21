@@ -14,6 +14,16 @@ import com.proyecto.moveon.data.local.db.AppDatabase;
 public class MoveOnApp extends Application {
 
     @Override
+    /**
+     * Arranque a nivel de proceso. Aplica idioma y tema persistidos antes
+     * de que se cree la primera Activity (evita parpadeos) y hace un
+     * calentamiento de Room en IO para que la primera navegación no
+     * pague el coste de abrir la base de datos en el hilo principal.
+     *
+     * <p>También arranca el observador de conectividad e inscribe la
+     * acción de reconexión que dispara los Workers de sincronización
+     * cuando la red vuelve.</p>
+     */
     public void onCreate() {
         super.onCreate();
         AppLanguageManager.applySavedLanguage(this);

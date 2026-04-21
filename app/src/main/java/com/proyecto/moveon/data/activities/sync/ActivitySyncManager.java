@@ -33,6 +33,15 @@ public final class ActivitySyncManager {
     private final ActividadLocalDataSource local;
     private final ActividadRemoteDataSource remote;
 
+    /**
+     * Construye el gestor a partir del par local/remoto que se le inyecta.
+     * La separación permite testear con mocks sin tocar Room ni la red,
+     * y elimina la dependencia directa con singletons.
+     *
+     * @param context cualquier contexto; internamente se usa el applicationContext para no fugar.
+     * @param local data source de Room con las actividades y su estado de sincronización.
+     * @param remote data source HTTP que habla con el backend de actividades.
+     */
     public ActivitySyncManager(@NonNull Context context,
                                @NonNull ActividadLocalDataSource local,
                                @NonNull ActividadRemoteDataSource remote) {
@@ -42,6 +51,20 @@ public final class ActivitySyncManager {
     }
 
     @NonNull
+    /**
+     * Empuja al backend todas las actividades locales en estado pendiente
+     * del usuario indicado. Por cada actividad creada con éxito, actualiza
+     * la entidad local con el {@code remoteId} y el estado {@code SYNCED}
+     * devuelto por el servidor para que no se reintente en la siguiente
+     * pasada.
+     *
+     * <p>El bucle es secuencial a propósito, no paralelo: así el orden de
+     * llegada al backend respeta el orden cronológico local y evita saturar
+     * al servidor con muchas subidas simultáneas.</p>
+     *
+     * @param accountKey clave de la cuenta sobre la que se sincroniza.
+     * @return resultado agregado indicando si había pendientes y si todas subieron correctamente.
+     */
     public SyncResult syncPendingNow(@NonNull String accountKey) {
         List<ActividadEntity> creates = local.getPendingCreates(accountKey);
         boolean hadPendingCreates = creates != null && !creates.isEmpty();
@@ -92,6 +115,15 @@ public final class ActivitySyncManager {
         return hadPendingCreates ? SyncResult.successCompleted() : SyncResult.successNoop();
     }
 
+    /**
+     * Integra el listado remoto con el estado local: inserta o actualiza
+     * las filas que existen en el servidor (manteniendo el {@code remoteId}
+     * como clave) y deja intactas las locales en estado pendiente para no
+     * perder trabajo que aún no se ha subido.
+     *
+     * @param accountKey clave de la cuenta a la que pertenecen las actividades.
+     * @param remoteItems lista recibida del backend con el estado canónico de cada actividad.
+     */
     public void mergeRemoteSnapshot(@NonNull String accountKey,
                                     @NonNull List<ActividadResponseDto> remoteItems) {
         List<ActividadEntity> current = local.getAllNow(accountKey);
@@ -155,6 +187,15 @@ public final class ActivitySyncManager {
         entity.fechaRuta             = dto.fechaRuta != null ? dto.fechaRuta : entity.fechaRuta;
     }
 
+    /**
+     * Decide si un error devuelto al intentar sincronizar merece reintento:
+     * problemas de red, timeouts, rate limit, errores 5xx y cancelaciones
+     * son transitorios; el resto (400, 401, 409…) requieren intervención
+     * y no se reintentan.
+     *
+     * @param error error producido en la subida al backend.
+     * @return {@code true} si el Worker debe reencolar el intento más tarde.
+     */
     public boolean isRetryable(@NonNull ApiError error) {
         ApiErrorType type = error.getType();
         return type == ApiErrorType.NETWORK

@@ -22,6 +22,10 @@ import java.util.Locale;
  */
 public final class ShareRouteFormatter {
 
+    /**
+     * Constructor privado: clase de utilidades con sólo métodos estáticos,
+     * no está pensada para instanciarse.
+     */
     private ShareRouteFormatter() {
         // Utility class
     }

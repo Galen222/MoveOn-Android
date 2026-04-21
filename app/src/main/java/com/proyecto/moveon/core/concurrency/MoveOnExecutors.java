@@ -36,9 +36,20 @@ public final class MoveOnExecutors {
             3, new NamedThreadFactory("moveon-io")
     );
 
+    /**
+     * Constructor privado: clase de utilidades con sólo métodos estáticos,
+     * no está pensada para instanciarse.
+     */
     private MoveOnExecutors() {}
 
     @NonNull
+    /**
+     * Devuelve el executor compartido por toda la app para operaciones de
+     * I/O (Room, red, disco). Reutilizarlo evita crear hilos a mano en
+     * cada ViewModel y mantiene un pool con tamaño razonable.
+     *
+     * @return el {@link ExecutorService} global para tareas de I/O.
+     */
     public static ExecutorService io() {
         return IO;
     }
@@ -52,6 +63,15 @@ public final class MoveOnExecutors {
         }
 
         @Override
+        /**
+         * Crea un hilo con el prefijo configurado y un contador incremental
+         * en el nombre, para que los hilos sean identificables en logs y
+         * herramientas de profiling. Fija prioridad {@code NORM_PRIORITY} para
+         * no competir con el hilo principal.
+         *
+         * @param runnable tarea a ejecutar en el hilo.
+         * @return un {@link Thread} listo para arrancar.
+         */
         public Thread newThread(@NonNull Runnable runnable) {
             Thread thread = new Thread(runnable, prefix + "-" + counter.getAndIncrement());
             thread.setPriority(Thread.NORM_PRIORITY);

@@ -27,6 +27,14 @@ public abstract class BaseExpandedBottomSheetDialogFragment extends BottomSheetD
 
     @NonNull
     @Override
+    /**
+     * Construye el {@link BottomSheetDialog} y fuerza al comportamiento
+     * {@code STATE_EXPANDED} en cuanto el sheet es visible, para que las
+     * subclases no tengan que duplicar este arranque.
+     *
+     * @param savedInstanceState estado guardado por el sistema, puede ser {@code null}.
+     * @return el diálogo ya configurado para abrirse completamente expandido.
+     */
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
         dialog.setOnShowListener(d -> {

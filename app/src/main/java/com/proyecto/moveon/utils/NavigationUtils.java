@@ -11,6 +11,10 @@ import androidx.annotation.NonNull;
  */
 public final class NavigationUtils {
 
+    /**
+     * Constructor privado: clase de utilidades con sólo métodos estáticos,
+     * no está pensada para instanciarse.
+     */
     private NavigationUtils() {
         // Utility class
     }

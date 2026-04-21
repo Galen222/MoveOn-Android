@@ -28,8 +28,19 @@ public final class AppSessionProvider {
 
     private static final Object LOCK = new Object();
 
+    /**
+     * Constructor privado: clase de utilidades estática, no se instancia.
+     */
     private AppSessionProvider() {}
 
+    /**
+     * Devuelve la instancia de {@link HandshakeApi} construida con un
+     * OkHttpClient "limpio" (sin interceptores de sesión) y timeouts
+     * agresivos. Así el handshake no depende de sí mismo y, si el backend
+     * no responde rápido, la app cae al fallback offline sin bloquearse.
+     *
+     * @return cliente Retrofit para el endpoint de handshake.
+     */
     private static HandshakeApi getApi() {
         if (handshakeApi == null) {
             synchronized (AppSessionProvider.class) {
@@ -57,6 +68,14 @@ public final class AppSessionProvider {
         return handshakeApi;
     }
 
+    /**
+     * Devuelve el token de sesión de app cacheado si sigue dentro de TTL,
+     * y en caso contrario lo pide de nuevo al backend con doble-check
+     * locking para que varios hilos no dupliquen la llamada de red.
+     *
+     * @return token de sesión válido.
+     * @throws Exception si la petición al backend de handshake falla y tampoco hay valor cacheado utilizable.
+     */
     public static String getOrFetch() throws Exception {
         long now = SystemClock.elapsedRealtime();
 
@@ -89,6 +108,12 @@ public final class AppSessionProvider {
         }
     }
 
+    /**
+     * Invalida el token cacheado para forzar un nuevo handshake en la
+     * siguiente petición. Se llama cuando el backend responde con un error
+     * relacionado con la sesión de app (no la de usuario). No resetea el
+     * cooldown de fallos: eso solo se limpia tras un fetch exitoso.
+     */
     public static void invalidate() {
         synchronized (LOCK) {
             cachedSession = null;
@@ -107,6 +132,14 @@ public final class AppSessionProvider {
         lastFailureTime = 0;
     }
 
+    /**
+     * Ejecuta la llamada síncrona al endpoint de handshake y extrae el
+     * token. En debug deja traza del cuerpo de la respuesta cuando no es
+     * exitosa para facilitar diagnósticos; en release no.
+     *
+     * @return token fresco emitido por el backend.
+     * @throws Exception si la respuesta no es exitosa, viene vacía o falla la red.
+     */
     private static String fetchNewSession() throws Exception {
         retrofit2.Response<AppSessionResponseDto> response =
                 getApi().getHandshake(BuildConfig.APP_ID).execute();

@@ -80,6 +80,11 @@ public final class ConnectivityObserver {
     @Nullable
     private volatile ConnectivityManager.NetworkCallback networkCallback;
 
+    /**
+     * Constructor privado: esta clase se usa como singleton; obtener la
+     * instancia con {@link #getInstance()} garantiza un único observador
+     * registrado frente al sistema.
+     */
     private ConnectivityObserver() {
     }
 
@@ -123,6 +128,14 @@ public final class ConnectivityObserver {
 
         final ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
             @Override
+            /**
+             * Callback del sistema cuando hay una red disponible. Se deja vacío a
+             * propósito: {@code onAvailable} no garantiza todavía Internet usable,
+             * por lo que esperamos a {@link #onCapabilitiesChanged} para actualizar
+             * el estado y disparar la reconexión.
+             *
+             * @param network red recién disponible.
+             */
             public void onAvailable(@NonNull Network network) {
                 // OJO: onAvailable NO garantiza todavía Internet usable.
                 // Android puede notificar una red disponible antes de validarla,
@@ -130,6 +143,13 @@ public final class ConnectivityObserver {
             }
 
             @Override
+            /**
+             * Callback del sistema cuando se pierde la red por defecto. Marcamos
+             * offline inmediatamente para que el banner aparezca sin esperar a un
+             * snapshot asíncrono de {@code activeNetwork}.
+             *
+             * @param network red que se acaba de perder.
+             */
             public void onLost(@NonNull Network network) {
                 // En el callback de la red por defecto, perder esa red significa
                 // que la app se ha quedado sin red por defecto efectiva.
@@ -139,6 +159,15 @@ public final class ConnectivityObserver {
             }
 
             @Override
+            /**
+             * Callback fiable para saber si la red por defecto tiene Internet
+             * realmente usable: cuando las capabilities indican INTERNET y
+             * VALIDATED, pasamos a online y, si veníamos de offline, disparamos
+             * la lógica de reconexión (drenar colas, refrescar datos).
+             *
+             * @param network red cuyas capabilities han cambiado.
+             * @param caps capabilities actualizadas que permiten comprobar si hay Internet validado.
+             */
             public void onCapabilitiesChanged(@NonNull Network network,
                                               @NonNull NetworkCapabilities caps) {
                 // Este es el callback fiable para saber si la red por defecto ya

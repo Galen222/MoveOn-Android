@@ -9,6 +9,11 @@ import org.junit.Test;
 public class ApiErrorTypeTest {
 
     @Test
+    /**
+     * Verifica que {@link ApiErrorType} sigue teniendo las 12 variantes
+     * previstas por el contrato con el backend. Si alguien añade o quita
+     * una categoría de error sin actualizar la UI, este test cae.
+     */
     public void allExpectedTypesExist() {
         // Verifica que el enum contiene todos los tipos esperados
         ApiErrorType[] values = ApiErrorType.values();
@@ -30,11 +35,22 @@ public class ApiErrorTypeTest {
     }
 
     @Test
+    /**
+     * Verifica que {@code NETWORK} y {@code TIMEOUT} son valores distintos
+     * del enum. Se separan a propósito porque la UI los presenta con
+     * mensajes y comportamientos de reintento diferentes.
+     */
     public void networkErrors_areSeparateTypes() {
         assertNotEquals(ApiErrorType.NETWORK, ApiErrorType.TIMEOUT);
     }
 
     @Test
+    /**
+     * Verifica que los 4xx más importantes ({@code UNAUTHORIZED},
+     * {@code FORBIDDEN}, {@code NOT_FOUND}, {@code CONFLICT}) son
+     * categorías distintas, para poder reaccionar específicamente a cada
+     * una (refrescar sesión, mostrar permiso denegado, etc.).
+     */
     public void clientErrors_areSeparateTypes() {
         assertNotEquals(ApiErrorType.UNAUTHORIZED, ApiErrorType.FORBIDDEN);
         assertNotEquals(ApiErrorType.FORBIDDEN, ApiErrorType.NOT_FOUND);

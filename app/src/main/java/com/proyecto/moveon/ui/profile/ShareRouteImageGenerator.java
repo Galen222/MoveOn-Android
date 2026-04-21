@@ -34,6 +34,10 @@ import java.util.Locale;
  */
 public final class ShareRouteImageGenerator {
 
+    /**
+     * Constructor privado: clase de utilidades con sólo métodos estáticos,
+     * no está pensada para instanciarse.
+     */
     private ShareRouteImageGenerator() {
         // Utility class.
     }

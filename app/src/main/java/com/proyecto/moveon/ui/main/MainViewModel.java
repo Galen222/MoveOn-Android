@@ -16,6 +16,13 @@ public class MainViewModel extends AndroidViewModel {
     private final SecureSessionManager sessionManager;
     private final SessionRefreshCoordinator sessionRefreshCoordinator;
 
+    /**
+     * Inicializa el ViewModel de la actividad principal: toma el
+     * gestor seguro de sesión y el coordinador de refresco para poder
+     * mantener la sesión viva mientras el usuario navega.
+     *
+     * @param application application desde la que se obtienen los singletons de sesión.
+     */
     public MainViewModel(@NonNull Application application) {
         super(application);
         sessionManager = SecureSessionManager.getInstance(application);
@@ -31,6 +38,16 @@ public class MainViewModel extends AndroidViewModel {
         return !sessionManager.hasRecoverableSession();
     }
 
+    /**
+     * Comprueba de forma proactiva que el access token sigue vigente y,
+     * si está cerca de caducar, lanza un refresco en background. Si el
+     * backend responde 401 (refresh token revocado o expirado), notifica
+     * a {@link GlobalAuthManager} para cerrar sesión y volver a login.
+     *
+     * <p>No hace nada si no hay refresh token guardado ({@link SecureSessionManager#hasRefreshToken()}
+     * devuelve {@code false}) o si el coordinador considera que aún no es
+     * momento de refrescar.</p>
+     */
     public void ensureSessionFresh() {
         if (!sessionManager.hasRefreshToken()) return;
         if (!sessionRefreshCoordinator.shouldRefreshProactively()) return;

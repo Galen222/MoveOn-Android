@@ -32,6 +32,32 @@ public final class ActividadCreatePayload {
     @Nullable private final String rutaMapaUrl;
     private final String fechaRutaIso;
 
+    /**
+     * Empaqueta una actividad local lista para enviar al endpoint de
+     * creación. Incluye el {@code clientLocalId} para que el backend
+     * pueda deduplicar si el mismo payload llega dos veces (por reintentos
+     * del Worker o por sincronización manual concurrente).
+     *
+     * @param clientLocalId UUID local estable usado como clave idempotente.
+     * @param tipo tipo de actividad (p. ej. {@code "carrera"}).
+     * @param distancia distancia total en metros.
+     * @param duracionTotal duración total en segundos.
+     * @param duracionMovimiento segundos clasificados como movimiento real.
+     * @param duracionParado segundos parado sin pausar manualmente.
+     * @param duracionPausaManual segundos en pausa manual.
+     * @param caloriasQuemadas calorías quemadas estimadas.
+     * @param ritmoMedioMovimiento ritmo medio en movimiento en segundos por kilómetro.
+     * @param ritmoMedioTotal ritmo medio total en segundos por kilómetro.
+     * @param ritmoMaximo mejor ritmo sostenido en segundos por kilómetro.
+     * @param velocidadMediaKmhX100 velocidad media en km/h x100.
+     * @param velocidadMaxKmhX100 velocidad máxima en km/h x100.
+     * @param autoPausas número de auto-pausas disparadas.
+     * @param pausasManuales número de pausas manuales del usuario.
+     * @param alertasVelocidad número de alertas por velocidad anómala.
+     * @param rutaPolilinea polilínea codificada o {@code null} si no hay ruta.
+     * @param rutaMapaUrl URL de la imagen estática del mapa o {@code null} si aún no se generó.
+     * @param fechaRutaIso fecha/hora en ISO-8601.
+     */
     public ActividadCreatePayload(
             @NonNull String clientLocalId,
             @NonNull String tipo,
@@ -74,6 +100,13 @@ public final class ActividadCreatePayload {
     }
 
     @NonNull
+    /**
+     * Serializa el payload al JSON que espera el backend, con los nombres
+     * en {@code snake_case}. Se hace a mano en vez de con Gson para
+     * garantizar el orden y el control exacto de los campos opcionales.
+     *
+     * @return objeto JSON listo para adjuntar como cuerpo de la petición HTTP.
+     */
     public JsonObject toJson() {
         JsonObject json = new JsonObject();
         json.addProperty("client_local_id", clientLocalId);
@@ -104,6 +137,14 @@ public final class ActividadCreatePayload {
     }
 
     @NonNull
+    /**
+     * Convierte una fila de Room en un payload de creación remoto. Se usa
+     * al drenar la cola de actividades pendientes: el Worker lee cada
+     * entidad, la pasa por este método y la envía al backend.
+     *
+     * @param entity fila local de la base de datos con el estado actual de la actividad.
+     * @return payload equivalente listo para serializar y enviar al endpoint de creación.
+     */
     public static ActividadCreatePayload fromEntity(@NonNull ActividadEntity entity) {
         return new ActividadCreatePayload(
                 entity.localId,

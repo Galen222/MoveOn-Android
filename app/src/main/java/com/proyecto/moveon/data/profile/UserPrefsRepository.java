@@ -30,6 +30,13 @@ public class UserPrefsRepository {
     private final PerfilRemoteDataSource remote;
     private final ExecutorService io = MoveOnExecutors.io();
 
+    /**
+     * Inicializa el repositorio a partir del contexto de aplicación:
+     * obtiene la instancia singleton de Room y crea un data source remoto
+     * para los PATCH best-effort al backend.
+     *
+     * @param context contexto desde el que se deriva el {@code applicationContext} para evitar fugas.
+     */
     public UserPrefsRepository(@NonNull Context context) {
         Context appContext = context.getApplicationContext();
         this.db     = AppDatabase.getInstance(appContext);
@@ -102,6 +109,16 @@ public class UserPrefsRepository {
     }
 
     @NonNull
+    /**
+     * Devuelve la fila de preferencias de la cuenta si existe; si no,
+     * construye una nueva en memoria con los objetivos por defecto.
+     *
+     * <p>No persiste la entidad nueva: es responsabilidad del llamador
+     * modificar los campos necesarios y escribirla con {@code upsert}.</p>
+     *
+     * @param accountKey clave derivada de la cuenta cuyas preferencias se cargan.
+     * @return la entidad existente o una con los objetivos por defecto (sin guardar todavía).
+     */
     private UserPrefsEntity getOrCreate(@NonNull String accountKey) {
         UserPrefsEntity prefs = db.userPrefsDao().getNow(accountKey);
         if (prefs != null) return prefs;

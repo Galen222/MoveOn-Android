@@ -20,18 +20,44 @@ public final class RetrofitProvider {
     private static volatile MoveOnApi moveOnApi;
     private static volatile ProtectedApi protectedApi;
 
+    /**
+     * Constructor privado: clase de utilidades estática, no se instancia.
+     */
     private RetrofitProvider() {}
 
+    /**
+     * Devuelve el {@link MoveOnApi} para endpoints públicos y de auth
+     * (login, registro, recuperación, handshake). Inicializa perezosamente
+     * los clientes Retrofit la primera vez que se pide.
+     *
+     * @param context cualquier contexto; se usa sólo para inicializar los clientes.
+     * @return cliente Retrofit para endpoints de autenticación.
+     */
     public static MoveOnApi authApi(Context context) {
         ensureInit(context);
         return moveOnApi;
     }
 
+    /**
+     * Devuelve el cliente Retrofit para endpoints protegidos (los que
+     * exigen {@code Authorization: Bearer}). Reutiliza el mismo pool HTTP
+     * que {@link #authApi} añadiendo el interceptor de token.
+     *
+     * @param context cualquier contexto; se usa sólo para inicializar los clientes.
+     * @return cliente Retrofit para endpoints protegidos.
+     */
     public static ProtectedApi protectedApi(Context context) {
         ensureInit(context);
         return protectedApi;
     }
 
+    /**
+     * Inicializa (una única vez) los clientes Retrofit con su base URL,
+     * interceptores y logger. Hace doble-check locking para que varios
+     * hilos pidiendo a la vez no construyan más de un cliente.
+     *
+     * @param context contexto desde el que se resuelve el {@code applicationContext} para los interceptores.
+     */
     private static void ensureInit(Context context) {
         if (moveOnApi != null && protectedApi != null) return;
         synchronized (RetrofitProvider.class) {
@@ -114,6 +140,14 @@ public final class RetrofitProvider {
 
 
     @NonNull
+    /**
+     * Garantiza que la base URL termina en exactamente una {@code /}: quita
+     * las barras sobrantes y añade una al final. Sin esto Retrofit falla
+     * con {@code baseUrl must end in /}.
+     *
+     * @param raw base URL tal y como viene del BuildConfig.
+     * @return URL normalizada con una única barra final.
+     */
     private static String normalizeBaseUrl(@NonNull String raw) {
         String trimmed = raw.trim();
         int end = trimmed.length();

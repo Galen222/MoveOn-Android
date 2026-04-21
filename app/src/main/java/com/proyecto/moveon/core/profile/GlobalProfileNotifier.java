@@ -31,6 +31,10 @@ public final class GlobalProfileNotifier {
     /** Último instante en que se publicó un mensaje. */
     private long lastDispatchMs = 0L;
 
+    /**
+     * Constructor privado: esta clase se usa como singleton a nivel de
+     * proceso para notificar cambios del perfil entre componentes.
+     */
     private GlobalProfileNotifier() {
         // Singleton.
     }

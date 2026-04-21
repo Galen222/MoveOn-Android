@@ -22,8 +22,19 @@ import java.util.concurrent.Executors;
  */
 public final class OfflineSessionCleaner {
 
+    /**
+     * Constructor privado: clase de utilidades estática, no se instancia.
+     */
     private OfflineSessionCleaner() {}
 
+    /**
+     * Limpia credenciales y datos locales en background: cierra sesión,
+     * cancela workers de sincronización y borra Room y la foto de perfil
+     * en un executor desechable. Se usa desde la UI para no bloquear el
+     * hilo principal al cerrar sesión.
+     *
+     * @param context contexto desde el que se resuelve el {@code applicationContext}.
+     */
     public static void clearSessionAndLocalDataAsync(@NonNull Context context) {
         Context appContext = context.getApplicationContext();
         safeLogout(appContext);
@@ -46,6 +57,14 @@ public final class OfflineSessionCleaner {
         }
     }
 
+    /**
+     * Variante síncrona de {@link #clearSessionAndLocalDataAsync}. Sólo
+     * debe llamarse desde un hilo IO (p. ej. un Worker que ya está fuera
+     * del hilo principal) y cuando se necesita garantizar que todo esté
+     * limpio antes de continuar.
+     *
+     * @param context contexto desde el que se resuelve el {@code applicationContext}.
+     */
     public static void clearSessionAndLocalDataBlocking(@NonNull Context context) {
         Context appContext = context.getApplicationContext();
         safeLogout(appContext);
@@ -60,6 +79,14 @@ public final class OfflineSessionCleaner {
         }
     }
 
+    /**
+     * Intenta cerrar sesión de forma defensiva: si el {@link SecureSessionManager}
+     * lanza cualquier excepción (p. ej. Keystore no disponible) se ignora
+     * para que el borrado posterior continúe. Dejar credenciales colgando
+     * sería peor que un logout silencioso.
+     *
+     * @param context contexto desde el que se obtiene el {@link SecureSessionManager} singleton.
+     */
     private static void safeLogout(@NonNull Context context) {
         try {
             // Reutiliza el singleton para mantener un único gestor de sesión seguro.
@@ -68,6 +95,14 @@ public final class OfflineSessionCleaner {
         }
     }
 
+    /**
+     * Cancela los trabajos únicos de WorkManager asociados a perfil y
+     * actividades. Si WorkManager aún no está inicializado (p. ej. durante
+     * un flujo de limpieza muy temprano) ignora la excepción para no
+     * impedir el resto del cleanup.
+     *
+     * @param context contexto desde el que se obtiene el WorkManager.
+     */
     private static void safeCancelWork(@NonNull Context context) {
         try {
             WorkManager wm = WorkManager.getInstance(context);

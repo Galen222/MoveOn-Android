@@ -36,6 +36,14 @@ public class ShareRoutesViewModel extends AndroidViewModel {
     @Nullable private final String accountKey;
     @Nullable private LiveData<List<ActividadItem>> actividadesSource;
 
+    /**
+     * Inicializa el ViewModel pidiendo una instancia propia del repositorio
+     * de actividades al {@link ServiceLocator} (para poder cancelarla al
+     * destruirse sin afectar a otras pantallas) y la {@code accountKey}
+     * del usuario logueado para filtrar por dueño.
+     *
+     * @param application application usada para localizar los singletons y el repositorio.
+     */
     public ShareRoutesViewModel(@NonNull Application application) {
         super(application);
         ServiceLocator locator = ServiceLocator.getInstance(application);
@@ -99,6 +107,11 @@ public class ShareRoutesViewModel extends AndroidViewModel {
     }
 
     @Override
+    /**
+     * Cancela todas las peticiones en vuelo del repositorio de actividades
+     * cuando el ViewModel se destruye, para no entregar resultados a una UI
+     * que ya no existe.
+     */
     protected void onCleared() {
         super.onCleared();
         // Cada consumer usa su propia instancia del repositorio; por eso se cancela aquí.

@@ -78,6 +78,35 @@ public final class StatsResumen {
     // Constructor
     // -------------------------------------------------------------------------
 
+    /**
+     * Construye el resumen consolidado que consumirá la UI de estadísticas.
+     *
+     * <p>Los campos vienen pre-calculados por {@code StatsCalculator}: la clase
+     * no los recalcula ni valida, solo actúa como contenedor inmutable.</p>
+     *
+     * @param todayDistanceMeters metros recorridos hoy.
+     * @param todayDurationSeconds segundos en actividad hoy.
+     * @param todayCalories calorías quemadas hoy.
+     * @param weekDaysDistanceMeters array fijo de 7 posiciones con los metros de cada día de la semana (lunes-domingo).
+     * @param weeklyDistanceMeters metros acumulados esta semana.
+     * @param weeklyGoalMeters objetivo semanal configurado por el usuario.
+     * @param currentMonthDistanceMeters metros acumulados en el mes actual.
+     * @param monthlyGoalMeters objetivo mensual configurado por el usuario.
+     * @param yesterdayDistanceMeters metros de ayer, usados para comparativas cortas.
+     * @param twoDaysAgoDistanceMeters metros de hace dos días.
+     * @param previousMonthDistanceMeters metros del mes anterior cerrado (para mostrar variación).
+     * @param currentMonthCalories calorías del mes actual.
+     * @param previousMonthCalories calorías del mes anterior.
+     * @param weeklyCalories calorías acumuladas esta semana.
+     * @param previousWeekDistanceMeters metros de la semana anterior cerrada.
+     * @param previousWeekCalories calorías de la semana anterior.
+     * @param totalDistanceMeters metros totales históricos.
+     * @param totalDurationSeconds segundos totales históricos en actividad.
+     * @param totalCalories calorías totales históricas.
+     * @param streakDays racha de días consecutivos con actividad.
+     * @param totalActivities número de actividades cerradas hasta la fecha.
+     * @param monthBlocks bloques agregados por mes para pintar el histórico en la UI.
+     */
     public StatsResumen(
             long todayDistanceMeters,
             long todayDurationSeconds,
@@ -131,6 +160,16 @@ public final class StatsResumen {
     // -------------------------------------------------------------------------
 
     @NonNull
+    /**
+     * Devuelve un resumen vacío pero con los objetivos del usuario ya
+     * aplicados. Se usa como estado inicial antes de tener datos locales o
+     * como fallback si el cálculo falla, para que la UI no vea {@code null}
+     * ni tenga que inventarse objetivos.
+     *
+     * @param weeklyGoalMeters objetivo semanal del usuario en metros.
+     * @param monthlyGoalMeters objetivo mensual del usuario en metros.
+     * @return resumen con todos los totales a cero y los objetivos indicados.
+     */
     public static StatsResumen empty(long weeklyGoalMeters, long monthlyGoalMeters) {
         return new StatsResumen(
                 0L, 0L, 0L,

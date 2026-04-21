@@ -18,11 +18,27 @@ public final class SocialRegisterConflictResolver {
         NO_SPECIAL_HANDLING
     }
 
+    /**
+     * Constructor privado: clase de utilidades con sólo métodos estáticos,
+     * no está pensada para instanciarse.
+     */
     private SocialRegisterConflictResolver() {
         // Utility class
     }
 
     @NonNull
+    /**
+     * Traduce un código de error devuelto por el backend durante el flujo
+     * de completar registro por Google a una acción concreta de la UI.
+     *
+     * <p>Fuera del flujo de Google, o con {@code errorCode} nulo, siempre
+     * devuelve {@link Resolution#NO_SPECIAL_HANDLING} para que la pantalla
+     * muestre el error genérico.</p>
+     *
+     * @param errorCode código de error recibido del backend, o {@code null} si no hubo.
+     * @param isGoogleCompletionFlow {@code true} cuando estamos en el paso de completar registro tras Google.
+     * @return acción concreta a ejecutar: avisar de usuario en uso, de email ya registrado, o manejo genérico.
+     */
     public static Resolution resolve(@Nullable String errorCode, boolean isGoogleCompletionFlow) {
         if (!isGoogleCompletionFlow || errorCode == null) {
             return Resolution.NO_SPECIAL_HANDLING;

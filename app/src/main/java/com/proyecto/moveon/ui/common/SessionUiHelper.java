@@ -16,8 +16,21 @@ import com.proyecto.moveon.utils.StringUtils;
  */
 public final class SessionUiHelper {
 
+    /**
+     * Constructor privado: clase de utilidades con sólo métodos estáticos,
+     * no está pensada para instanciarse.
+     */
     private SessionUiHelper() {}
 
+    /**
+     * Cierra sesión cuando el backend indica que el refresh token ya no es
+     * válido: borra credenciales y datos locales, muestra un Toast y
+     * redirige a {@link LoginActivity} limpiando el back-stack para que el
+     * botón atrás no pueda volver a la pantalla protegida.
+     *
+     * @param activity actividad desde la que se dispara la transición.
+     * @param message mensaje a mostrar en el Toast; si es vacío se usa el genérico de "sesión expirada".
+     */
     public static void handleSessionExpired(@NonNull Activity activity, String message) {
         OfflineSessionCleaner.clearSessionAndLocalDataAsync(activity);
 
@@ -29,6 +42,14 @@ public final class SessionUiHelper {
         NavigationUtils.goToActivityAndClearTask(activity, LoginActivity.class);
     }
 
+    /**
+     * Variante por conveniencia para fragments: delega en la versión de
+     * {@link Activity} si el fragment sigue attached, y no hace nada si
+     * ya se separó para no lanzar NPE.
+     *
+     * @param fragment fragment desde el que se dispara la transición.
+     * @param message mensaje a mostrar en el Toast o vacío para usar el genérico.
+     */
     public static void handleSessionExpired(@NonNull Fragment fragment, String message) {
         if (fragment.getActivity() != null) {
             handleSessionExpired(fragment.getActivity(), message);

@@ -32,6 +32,10 @@ public final class GlobalSyncNotifier {
     /** Último instante en el que se publicó el evento. */
     private long lastDispatchMs = 0L;
 
+    /**
+     * Constructor privado: esta clase se usa como singleton a nivel de
+     * proceso para señalizar cuándo terminan las sincronizaciones en cola.
+     */
     private GlobalSyncNotifier() {
         // Singleton.
     }

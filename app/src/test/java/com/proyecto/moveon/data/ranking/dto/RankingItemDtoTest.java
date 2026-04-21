@@ -18,6 +18,14 @@ public class RankingItemDtoTest {
     private final Gson gson = new Gson();
 
     @Test
+    /**
+     * Verifica que Gson mapea correctamente los nombres {@code snake_case} del
+     * backend ({@code total_puntos}, {@code total_metros}, {@code foto_version},
+     * etc.) a los campos {@code camelCase} de {@link com.proyecto.moveon.data.ranking.dto.RankingItemDto}.
+     *
+     * <p>Este test existe para que cualquier cambio accidental en los
+     * {@code @SerializedName} rompa la build antes de llegar a producción.</p>
+     */
     public void deserialization_mapsPositionAndMetrics() {
         String json = "{"
                 + "\"posicion\":1,"

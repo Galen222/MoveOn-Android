@@ -124,6 +124,11 @@ public final class RankingViewModel extends AndroidViewModel {
     }
 
     @Override
+    /**
+     * Cancela todas las peticiones en curso del repositorio antes de que
+     * el ViewModel muera. Cada ViewModel recibe su propia instancia del
+     * repositorio, así que esta cancelación no afecta a otras pantallas.
+     */
     protected void onCleared() {
         repository.cancelAll();
         super.onCleared();

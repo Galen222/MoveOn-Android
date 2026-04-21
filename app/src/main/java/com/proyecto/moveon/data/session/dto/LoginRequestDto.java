@@ -11,6 +11,12 @@ public final class LoginRequestDto {
     @SerializedName("identificador") public String identificador;
     @SerializedName("password") public String password;
 
+    /**
+     * Construye el cuerpo de la petición de login.
+     *
+     * @param identificador email o nombre de usuario con el que el usuario se autentica.
+     * @param password contraseña en claro que el cliente envía al backend por HTTPS.
+     */
     public LoginRequestDto(String identificador, String password) {
         this.identificador = identificador;
         this.password = password;
