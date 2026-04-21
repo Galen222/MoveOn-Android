@@ -47,7 +47,6 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
     private ShareRoutesViewModel viewModel;
     private boolean isSharingInProgress;
 
-    @NonNull
     /**
      * Factoría canónica para crear el sheet de rutas a compartir. Mantiene
      * la instanciación en un único punto y facilita añadir argumentos sin
@@ -55,12 +54,11 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
      *
      * @return instancia nueva lista para mostrar.
      */
+    @NonNull
     public static ShareRoutesBottomSheet newInstance() {
         return new ShareRoutesBottomSheet();
     }
 
-    @Nullable
-    @Override
     /**
      * Infla el layout del sheet y guarda el ViewBinding; la referencia se
      * libera en {@link #onDestroyView()}.
@@ -70,6 +68,8 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
      * @param savedInstanceState estado guardado o {@code null}.
      * @return la raíz de la vista inflada.
      */
+    @Nullable
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
@@ -77,7 +77,6 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
         return binding.getRoot();
     }
 
-    @Override
     /**
      * Monta el RecyclerView con su adapter, crea el ViewModel específico
      * del sheet y observa sus LiveData. Dispara la carga inicial en el
@@ -86,6 +85,7 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
      * @param view vista raíz creada por {@link #onCreateView}.
      * @param savedInstanceState estado guardado o {@code null}.
      */
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
@@ -109,7 +109,9 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
     }
 
     /**
-     * Pinta lista, estado vacío o error de carga.
+     * Pinta la lista, el estado vacío o el error de carga según el snapshot recibido.
+     *
+     * @param state estado actual publicado por {@link ShareRoutesViewModel}.
      */
     private void renderState(@NonNull UiState<List<ActividadItem>> state) {
         boolean showLoading = state.loading && (state.data == null || state.data.isEmpty()) && !isSharingInProgress;
@@ -132,7 +134,9 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
     }
 
     /**
-     * Gestiona el clic sobre una actividad y abre el preview antes de compartir.
+     * Gestiona el clic sobre una actividad, valida la polilínea y abre el preview antes de compartir.
+     *
+     * @param item ruta seleccionada por el usuario en el listado.
      */
     private void onRouteSelected(@NonNull ActividadItem item) {
         if (binding == null || isSharingInProgress) {
@@ -211,6 +215,9 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
 
     /**
      * Abre el segundo bottom sheet con la vista previa de la tarjeta.
+     *
+     * @param uri uri temporal de la imagen recién generada.
+     * @param shareText texto que se adjuntará al intent final de compartir.
      */
     private void openPreview(@NonNull Uri uri, @NonNull String shareText) {
         if (!isAdded()) {
@@ -231,6 +238,8 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
 
     /**
      * Bloquea temporalmente la UI del sheet durante la generación de la imagen.
+     *
+     * @param sharing {@code true} para mostrar el estado de trabajo en curso y desactivar la lista.
      */
     private void setSharingInProgress(boolean sharing) {
         isSharingInProgress = sharing;
@@ -242,12 +251,12 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
         binding.rvShareRoutes.setAlpha(sharing ? 0.5f : 1f);
     }
 
-    @Override
     /**
      * Limpia el flag "compartiendo en curso" antes de soltar el binding
      * para que, si el sheet se recrea, no herede un bloqueo visual de la
      * vista anterior.
      */
+    @Override
     public void onDestroyView() {
         // Al destruir la vista se limpia el estado para que una recreación del sheet
         // no herede un bloqueo de compartición pendiente de una vista anterior.

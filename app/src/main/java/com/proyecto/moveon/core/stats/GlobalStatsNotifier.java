@@ -80,7 +80,11 @@ public final class GlobalStatsNotifier {
     }
 
     /**
-     * Publica un mensaje de error con acción secundaria.
+     * Publica un mensaje de error con una acción opcional asociada al snackbar.
+     *
+     * @param message texto principal del aviso.
+     * @param actionLabel texto del CTA opcional; puede ser {@code null} si no debe mostrarse botón.
+     * @param action callback opcional a ejecutar al pulsar la acción del {@link TopSnackbar}.
      */
     public void notifyError(@NonNull CharSequence message,
                             @Nullable String actionLabel,
@@ -98,6 +102,8 @@ public final class GlobalStatsNotifier {
      *
      * <p>Si otro aviso se emitió hace apenas unas décimas, se ignora para evitar dobles
      * renderizados provocados por callbacks encadenados o toques repetidos muy rápidos.</p>
+     *
+     * @param message mensaje visual ya resuelto que debe transportarse a la actividad principal.
      */
     public synchronized void notifyMessage(@NonNull GlobalSnackbarMessage message) {
         long now = System.currentTimeMillis();
@@ -112,7 +118,9 @@ public final class GlobalStatsNotifier {
     }
 
     /**
-     * Expone el canal observable para que MainActivity pinte el snackbar.
+     * Expone el canal observable para que {@code MainActivity} pinte el snackbar.
+     *
+     * @return flujo one-shot de {@link GlobalSnackbarMessage} envuelto en {@link Event}.
      */
     @NonNull
     public LiveData<Event<GlobalSnackbarMessage>> getMessageEvent() {

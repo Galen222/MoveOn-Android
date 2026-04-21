@@ -129,7 +129,6 @@ public final class ConnectivityObserver {
         connected.postValue(isCurrentlyConnected(cm));
 
         final ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
-            @Override
             /**
              * Callback del sistema cuando hay una red disponible. Se deja vacío a
              * propósito: {@code onAvailable} no garantiza todavía Internet usable,
@@ -138,13 +137,13 @@ public final class ConnectivityObserver {
              *
              * @param network red recién disponible.
              */
+            @Override
             public void onAvailable(@NonNull Network network) {
                 // OJO: onAvailable NO garantiza todavía Internet usable.
                 // Android puede notificar una red disponible antes de validarla,
                 // por eso aquí no marcamos online ni lanzamos reconexión.
             }
 
-            @Override
             /**
              * Callback del sistema cuando se pierde la red por defecto. Marcamos
              * offline inmediatamente para que el banner aparezca sin esperar a un
@@ -152,6 +151,7 @@ public final class ConnectivityObserver {
              *
              * @param network red que se acaba de perder.
              */
+            @Override
             public void onLost(@NonNull Network network) {
                 // En el callback de la red por defecto, perder esa red significa
                 // que la app se ha quedado sin red por defecto efectiva.
@@ -160,7 +160,6 @@ public final class ConnectivityObserver {
                 connected.postValue(false);
             }
 
-            @Override
             /**
              * Callback fiable para saber si la red por defecto tiene Internet
              * realmente usable: cuando las capabilities indican INTERNET y
@@ -170,6 +169,7 @@ public final class ConnectivityObserver {
              * @param network red cuyas capabilities han cambiado.
              * @param caps capabilities actualizadas que permiten comprobar si hay Internet validado.
              */
+            @Override
             public void onCapabilitiesChanged(@NonNull Network network,
                                               @NonNull NetworkCapabilities caps) {
                 // Este es el callback fiable para saber si la red por defecto ya
@@ -243,6 +243,9 @@ public final class ConnectivityObserver {
      * <p>Si la última ejecución ocurrió hace menos de
      * {@link #RECONNECT_THROTTLE_MS}, se ignora el evento para no disparar
      * sincronizaciones duplicadas por oscilaciones de red.</p>
+     *
+     * <p>Además reinicia el cooldown de fallos de sesión en {@link AppSessionProvider}
+     * para que la primera llamada tras reconectar parta de un estado limpio.</p>
      */
     private void onNetworkRestored() {
         // Reseteamos el cooldown de fallos de handshake para que la primera

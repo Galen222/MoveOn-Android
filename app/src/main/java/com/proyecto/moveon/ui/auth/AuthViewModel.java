@@ -118,6 +118,8 @@ public class AuthViewModel extends AndroidViewModel {
      *
      * <p>Esto evita lanzar comprobaciones silenciosas de Google en instalaciones o sesiones
      * que nunca se autenticaron con ese provider.</p>
+     *
+     * @return {@code true} cuando compensa intentar una recuperación silenciosa con Google.
      */
     public boolean shouldTrySilentGoogleSignIn() {
         return !sessionManager.hasRecoverableSession()
@@ -261,6 +263,8 @@ public class AuthViewModel extends AndroidViewModel {
     /**
      * Solicita al backend el envío de un código de recuperación al email indicado.
      * Resultado publicado en {@link #forgotState}.
+     *
+     * @param email correo al que debe enviarse el código de recuperación.
      */
     public void solicitarRecuperacion(String email) {
         forgotState.setValue(UiState.loading());
@@ -283,8 +287,12 @@ public class AuthViewModel extends AndroidViewModel {
     // ── Recuperación de contraseña — Paso 2 ─────────────────────────────────
 
     /**
-     * Se valida el código recibido por email y establece la nueva contraseña.
+     * Valida el código recibido por email y establece la nueva contraseña.
      * Resultado publicado en {@link #resetState}.
+     *
+     * @param email cuenta para la que se está reseteando la contraseña.
+     * @param codigo código de recuperación recibido por el usuario.
+     * @param nuevaPassword nueva contraseña en claro introducida en el formulario.
      */
     public void resetearPassword(String email, String codigo, String nuevaPassword) {
         resetState.setValue(UiState.loading());

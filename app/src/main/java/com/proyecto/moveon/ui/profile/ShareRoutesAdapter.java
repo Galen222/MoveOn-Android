@@ -25,9 +25,6 @@ import com.proyecto.moveon.domain.activity.ActividadItem;
 public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAdapter.RouteViewHolder> {
 
     /**
-     * Callback simple para propagar el clic de una ruta al fragmento.
-     */
-    /**
      * Callback simple para propagar al fragmento la ruta pulsada.
      */
     public interface OnRouteClickListener {
@@ -43,7 +40,6 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
 
     private static final DiffUtil.ItemCallback<ActividadItem> DIFF_CALLBACK =
             new DiffUtil.ItemCallback<ActividadItem>() {
-                @Override
                 /**
                  * Identifica una fila como "la misma" cuando comparten {@code localId}.
                  * Se usa el id local porque está disponible siempre (incluso antes de
@@ -53,12 +49,12 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
                  * @param newItem ítem entrante en la nueva lista.
                  * @return {@code true} si representan la misma ruta aunque el contenido haya cambiado.
                  */
+                @Override
                 public boolean areItemsTheSame(@NonNull ActividadItem oldItem,
                                                @NonNull ActividadItem newItem) {
                     return oldItem.localId.equals(newItem.localId);
                 }
 
-                @Override
                 /**
                  * Compara los campos que la UI del listado pinta: fecha, distancia,
                  * duración, ritmos, calorías y polilínea. Si todos coinciden no hay
@@ -68,6 +64,7 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
                  * @param newItem ítem nuevo.
                  * @return {@code true} si los campos visibles son idénticos.
                  */
+                @Override
                 public boolean areContentsTheSame(@NonNull ActividadItem oldItem,
                                                   @NonNull ActividadItem newItem) {
                     if (!oldItem.localId.equals(newItem.localId)) return false;
@@ -88,6 +85,8 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
     private final OnRouteClickListener listener;
 
     /**
+     * Crea el adapter del listado de rutas compartibles.
+     *
      * @param listener callback invocado al pulsar una fila del listado.
      */
     public ShareRoutesAdapter(@NonNull OnRouteClickListener listener) {
@@ -95,8 +94,6 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
         this.listener = listener;
     }
 
-    @NonNull
-    @Override
     /**
      * Infla la fila {@code R.layout.item_share_route} y la envuelve en un
      * {@link RouteViewHolder} reutilizable por el RecyclerView.
@@ -105,13 +102,14 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
      * @param viewType tipo de vista; el adapter sólo usa uno, se ignora.
      * @return nuevo ViewHolder listo para bindear.
      */
+    @NonNull
+    @Override
     public RouteViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_share_route, parent, false);
         return new RouteViewHolder(view);
     }
 
-    @Override
     /**
      * Delega el binding al propio ViewHolder para mantener la lógica de
      * pintado cerca de la vista a la que pertenece.
@@ -119,6 +117,7 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
      * @param holder ViewHolder sobre el que se pintarán los datos.
      * @param position posición dentro del dataset.
      */
+    @Override
     public void onBindViewHolder(@NonNull RouteViewHolder holder, int position) {
         holder.bind(getItem(position));
     }
@@ -139,6 +138,8 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
 
         /**
          * Vincula los datos de una actividad con la UI de la fila.
+         *
+         * @param item actividad que debe pintarse en la fila actual.
          */
         void bind(@NonNull ActividadItem item) {
             Context context = itemView.getContext();

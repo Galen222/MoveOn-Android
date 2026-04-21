@@ -76,6 +76,11 @@ public final class ShareRouteImageGenerator {
     /**
      * Crea la tarjeta visual con una jerarquía fuerte tipo app deportiva:
      * mapa grande arriba y métricas protagonistas abajo.
+     *
+     * @param context contexto desde el que resolver recursos y tamaños de diseño.
+     * @param item actividad cuyas métricas se volcarán en la tarjeta.
+     * @param points puntos ya decodificados de la polilínea para pintar la ruta.
+     * @return bitmap final listo para persistirse y compartirse.
      */
     @NonNull
     private static Bitmap createBitmap(@NonNull Context context,
@@ -241,6 +246,16 @@ public final class ShareRouteImageGenerator {
 
     /**
      * Dibuja una tarjeta de métrica secundaria del bloque resumen.
+     *
+     * @param canvas canvas de destino sobre el que se pinta la tarjeta.
+     * @param rect rectángulo que delimita la tarjeta.
+     * @param label etiqueta superior de la métrica.
+     * @param value valor principal a destacar.
+     * @param fillPaint paint de fondo de la tarjeta.
+     * @param borderPaint paint del borde exterior.
+     * @param labelPaint paint usado para la etiqueta.
+     * @param valuePaint paint base del valor, que luego puede adaptarse al ancho.
+     * @param context contexto usado para convertir medidas de diseño.
      */
     private static void drawMetricCard(@NonNull Canvas canvas,
                                        @NonNull RectF rect,
@@ -269,6 +284,15 @@ public final class ShareRouteImageGenerator {
 
     /**
      * Dibuja un chip relleno y devuelve el ancho usado para poder encadenar chips.
+     *
+     * @param canvas canvas de destino.
+     * @param left coordenada izquierda del chip.
+     * @param top coordenada superior del chip.
+     * @param text texto mostrado dentro del chip.
+     * @param fillPaint paint del fondo del chip.
+     * @param textPaint paint del texto del chip.
+     * @param context contexto usado para convertir medidas de diseño.
+     * @return ancho total ocupado por el chip dibujado.
      */
     private static float drawFilledChip(@NonNull Canvas canvas,
                                         float left,
@@ -288,6 +312,11 @@ public final class ShareRouteImageGenerator {
 
     /**
      * Dibuja una cuadrícula muy sutil para dar textura sin robar protagonismo a la ruta.
+     *
+     * @param canvas canvas de destino.
+     * @param area rectángulo del mapa sobre el que debe recortarse la cuadrícula.
+     * @param gridPaint paint usado para las líneas guía.
+     * @param context contexto usado para convertir medidas de diseño.
      */
     private static void drawMapGrid(@NonNull Canvas canvas,
                                     @NonNull RectF area,
@@ -308,6 +337,13 @@ public final class ShareRouteImageGenerator {
 
     /**
      * Dibuja una pequeña leyenda de inicio y fin sobre el mapa.
+     *
+     * @param canvas canvas de destino.
+     * @param area zona reservada para la leyenda dentro de la tarjeta del mapa.
+     * @param startPaint paint del marcador de inicio.
+     * @param endPaint paint del marcador de fin.
+     * @param textPaint paint usado para las etiquetas de texto.
+     * @param context contexto usado para recursos y medidas.
      */
     private static void drawLegend(@NonNull Canvas canvas,
                                    @NonNull RectF area,
@@ -332,6 +368,15 @@ public final class ShareRouteImageGenerator {
      *
      * <p>Se añade un margen de seguridad alrededor del bounding box original para evitar que la
      * ruta o sus marcadores queden pegados al borde o recortados.</p>
+     *
+     * @param canvas canvas de destino.
+     * @param area área disponible para el mapa.
+     * @param points puntos geográficos ya decodificados.
+     * @param routeShadowPaint paint de la sombra ancha de la ruta.
+     * @param routePaint paint principal de la ruta.
+     * @param startMarkerPaint paint del marcador de inicio.
+     * @param endMarkerPaint paint del marcador de fin.
+     * @param context contexto usado para convertir medidas de diseño.
      */
     private static void drawRoute(@NonNull Canvas canvas,
                                   @NonNull RectF area,
@@ -417,6 +462,16 @@ public final class ShareRouteImageGenerator {
 
     /**
      * Dibuja texto adaptándolo al ancho disponible para evitar que valores largos se corten.
+     *
+     * @param canvas canvas de destino.
+     * @param text texto a dibujar.
+     * @param x coordenada horizontal de inicio.
+     * @param baseline línea base del texto.
+     * @param basePaint paint base desde el que se clonará estilo y color.
+     * @param maxWidth ancho máximo permitido antes de reducir tipografía.
+     * @param startSp tamaño inicial probado.
+     * @param minSp tamaño mínimo aceptable.
+     * @param context contexto usado para convertir tamaños tipográficos.
      */
     private static void drawAdaptiveText(@NonNull Canvas canvas,
                                          @NonNull String text,
@@ -440,7 +495,13 @@ public final class ShareRouteImageGenerator {
     }
 
     /**
-     * Guarda el bitmap en cache para compartirlo como archivo temporal.
+     * Guarda el bitmap en caché para compartirlo como archivo temporal.
+     *
+     * @param context contexto desde el que resolver el directorio de caché.
+     * @param bitmap imagen ya renderizada.
+     * @param localId identificador local usado para nombrar el archivo.
+     * @return archivo PNG temporal listo para exponerse vía {@link FileProvider}.
+     * @throws IOException si no puede crearse el directorio o escribirse el PNG.
      */
     @NonNull
     private static File saveBitmap(@NonNull Context context,
@@ -464,6 +525,10 @@ public final class ShareRouteImageGenerator {
 
     /**
      * Decodifica una polyline codificada por Google a una lista de puntos.
+     *
+     * @param encoded polilínea codificada recibida desde la actividad.
+     * @return lista ordenada de puntos geográficos lista para dibujarse.
+     * @throws IllegalArgumentException si la cadena viene malformada o truncada.
      */
     @NonNull
     private static List<GeoPoint> decodePolyline(@NonNull String encoded) {
@@ -511,7 +576,13 @@ public final class ShareRouteImageGenerator {
     }
 
     /**
-     * Crea un Paint de texto reutilizable.
+     * Crea un {@link Paint} de texto reutilizable.
+     *
+     * @param context contexto usado para convertir el tamaño tipográfico.
+     * @param color color del texto.
+     * @param sp tamaño base en unidades de diseño.
+     * @param bold {@code true} para aplicar falso negrita.
+     * @return paint configurado para dibujar texto.
      */
     @NonNull
     private static Paint textPaint(@NonNull Context context, int color, float sp, boolean bold) {
@@ -523,7 +594,10 @@ public final class ShareRouteImageGenerator {
     }
 
     /**
-     * Crea un Paint relleno.
+     * Crea un {@link Paint} de relleno.
+     *
+     * @param color color sólido del relleno.
+     * @return paint configurado en modo {@link Paint.Style#FILL}.
      */
     @NonNull
     private static Paint fillPaint(int color) {
@@ -534,7 +608,12 @@ public final class ShareRouteImageGenerator {
     }
 
     /**
-     * Crea un Paint de trazo.
+     * Crea un {@link Paint} de trazo.
+     *
+     * @param context contexto usado para convertir el grosor de diseño.
+     * @param color color del trazo.
+     * @param dpWidth grosor base en unidades de diseño.
+     * @return paint configurado en modo {@link Paint.Style#STROKE}.
      */
     @NonNull
     private static Paint strokePaint(@NonNull Context context, int color, float dpWidth) {
@@ -550,6 +629,10 @@ public final class ShareRouteImageGenerator {
      *
      * <p>Esta imagen se dibuja sobre un canvas de tamaño fijo, así que aquí no usamos la densidad
      * real del dispositivo. De este modo evitamos que el contenido se salga del bitmap.</p>
+     *
+     * @param context contexto actual; se mantiene por simetría con otros helpers aunque no se use.
+     * @param value valor de diseño a trasladar al bitmap.
+     * @return valor redondeado en píxeles del canvas fijo.
      */
     private static int dp(@NonNull Context context, float value) {
         return Math.round(value);
@@ -557,6 +640,10 @@ public final class ShareRouteImageGenerator {
 
     /**
      * Convierte unidades tipográficas de diseño a píxeles del bitmap.
+     *
+     * @param context contexto actual; se mantiene por consistencia con el resto de helpers gráficos.
+     * @param value tamaño tipográfico de diseño.
+     * @return tamaño final en píxeles del bitmap.
      */
     private static float sp(@NonNull Context context, float value) {
         return value;

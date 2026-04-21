@@ -18,7 +18,6 @@ import java.util.List;
 
 /**
  * Centraliza los requisitos necesarios para iniciar el tracking.
- *
  * Requisitos contemplados:
  * - Permiso de ubicación (fine o coarse)
  * - Permiso de reconocimiento de actividad física (API 29+)
@@ -169,6 +168,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Determina si el permiso de ubicación quedó bloqueado tras un intento previo y ya no puede pedirse directamente.
+     *
+     * @param fragment fragmento desde el que se consultan la rationale y las marcas persistidas en ajustes.
+     * @return {@code true} cuando la app ya pidió ubicación, sigue sin tenerla y Android no muestra rationale.
      */
     public static boolean isLocationPermissionBlocked(@NonNull Fragment fragment) {
         Context context = fragment.requireContext();
@@ -182,6 +184,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Indica si el permiso de actividad quedó bloqueado después de haber sido solicitado al menos una vez.
+     *
+     * @param fragment fragmento desde el que se consultan la rationale y el histórico de petición.
+     * @return {@code true} cuando el permiso sigue faltando y el usuario ya lo dejó bloqueado.
      */
     public static boolean isActivityRecognitionPermissionBlocked(@NonNull Fragment fragment) {
         Context context = fragment.requireContext();
@@ -193,6 +198,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Determina si las notificaciones están efectivamente bloqueadas para el flujo de tracking.
+     *
+     * @param fragment fragmento desde el que se consulta el permiso runtime y el ajuste global del sistema.
+     * @return {@code true} cuando la app no puede notificar y tampoco puede pedirlo directamente otra vez.
      */
     public static boolean isNotificationsBlocked(@NonNull Fragment fragment) {
         Context context = fragment.requireContext();
@@ -218,6 +226,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Lista los requisitos runtime que faltan y además han quedado bloqueados para petición directa.
+     *
+     * @param fragment fragmento desde el que se evalúan permisos concedidos y rationales.
+     * @return lista de {@link Requirement} que sólo pueden resolverse yendo a ajustes.
      */
     @NonNull
     public static List<Requirement> getBlockedRuntimeRequirements(@NonNull Fragment fragment) {
@@ -237,6 +248,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Devuelve los requisitos aún pendientes que el fragmento puede solicitar en este momento.
+     *
+     * @param fragment fragmento que lanzará la petición de permisos al usuario.
+     * @return lista de requisitos faltantes que siguen siendo solicitables por runtime permission.
      */
     @NonNull
     public static List<Requirement> getRequestableMissingRequirements(@NonNull Fragment fragment) {
@@ -258,6 +272,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Construye el array de permisos Android a solicitar a partir de los requisitos pendientes y no bloqueados.
+     *
+     * @param fragment fragmento desde el que se va a lanzar {@code requestPermissions}.
+     * @return array de permisos Android listo para pasarse a la petición runtime.
      */
     @NonNull
     public static String[] buildRequestablePermissions(@NonNull Fragment fragment) {
@@ -289,6 +306,10 @@ public final class TrackingRequirementsManager {
 
     /**
      * Genera los permisos concretos necesarios para un requisito concreto si todavía puede pedirse.
+     *
+     * @param fragment fragmento que evaluará el estado actual del permiso.
+     * @param requirement requisito funcional cuyo permiso runtime se quiere materializar.
+     * @return array con los permisos Android asociados al requisito o vacío si ya no procede pedirlos.
      */
     @NonNull
     public static String[] buildRequestablePermissionsForRequirement(@NonNull Fragment fragment,
@@ -328,6 +349,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Marca en preferencias qué grupos de permisos ya fueron solicitados al usuario en el intento actual.
+     *
+     * @param context contexto usado para persistir las banderas en {@link AppSettingsManager}.
+     * @param permissions permisos concretos que acaban de pedirse al usuario.
      */
     public static void markPermissionsRequested(@NonNull Context context, @NonNull String[] permissions) {
         boolean location = false;

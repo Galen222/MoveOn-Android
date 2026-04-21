@@ -42,7 +42,6 @@ public final class MoveOnExecutors {
      */
     private MoveOnExecutors() {}
 
-    @NonNull
     /**
      * Devuelve el executor compartido por toda la app para operaciones de
      * I/O (Room, red, disco). Reutilizarlo evita crear hilos a mano en
@@ -50,6 +49,7 @@ public final class MoveOnExecutors {
      *
      * @return el {@link ExecutorService} global para tareas de I/O.
      */
+    @NonNull
     public static ExecutorService io() {
         return IO;
     }
@@ -62,7 +62,6 @@ public final class MoveOnExecutors {
             this.prefix = prefix;
         }
 
-        @Override
         /**
          * Crea un hilo con el prefijo configurado y un contador incremental
          * en el nombre, para que los hilos sean identificables en logs y
@@ -72,6 +71,7 @@ public final class MoveOnExecutors {
          * @param runnable tarea a ejecutar en el hilo.
          * @return un {@link Thread} listo para arrancar.
          */
+        @Override
         public Thread newThread(@NonNull Runnable runnable) {
             Thread thread = new Thread(runnable, prefix + "-" + counter.getAndIncrement());
             thread.setPriority(Thread.NORM_PRIORITY);

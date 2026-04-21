@@ -105,9 +105,14 @@ public final class PhotoSyncHelper {
     // ── Upload foto + sync ──────────────────────────────────────────────────
 
     /**
-     * Guarda la foto localmente, intenta subirla al backend, y gestiona el
-     * resultado (synced / queued / failed).
+     * Guarda la foto localmente, intenta subirla al backend y deja el estado final preparado
+     * como sincronizado, en cola o fallido según la respuesta remota.
      * <b>Blocking — llamar desde hilo IO.</b>
+     *
+     * @param accountKey cuenta dueña de la foto que se está actualizando.
+     * @param sourceFile archivo original seleccionado por el usuario.
+     * @return resultado de actualización alineado con {@link PerfilSyncManager} para que la UI decida cómo reaccionar.
+     * @throws IOException si falla el guardado local de la foto pendiente o su promoción a foto actual.
      */
     @NonNull
     public UpdateResult uploadAndSync(@NonNull String accountKey,
@@ -158,7 +163,8 @@ public final class PhotoSyncHelper {
      * Si hay una foto pendiente de subida, intenta subirla.
      * Llamado por {@link PerfilSyncManager#syncAllPending}.
      *
-     * @return {@code true} si se necesita reintentar.
+     * @param accountKey cuenta cuya cola fotográfica se va a drenar.
+     * @return {@code true} si el error es recuperable y conviene reintentar más tarde.
      */
     public boolean syncPendingIfNeeded(@NonNull String accountKey) {
         PerfilCacheEntity cache = local.getCacheNow(accountKey);
@@ -201,6 +207,11 @@ public final class PhotoSyncHelper {
      * Aplica la lógica de foto al hacer merge de un snapshot remoto.
      * Muta {@code entity} in-place. Llamado por
      * {@link PerfilSyncManager#mergeRemoteSnapshot}.
+     *
+     * @param entity entidad destino que se irá actualizando con el estado fotográfico resultante.
+     * @param previous snapshot local previo, usado para reutilizar archivos y conservar pendientes cuando conviene.
+     * @param dto snapshot remoto recién obtenido del backend.
+     * @param preferPendingPhoto {@code true} si una foto pendiente local debe prevalecer sobre la versión remota.
      */
     public void mergePhotoState(@NonNull PerfilCacheEntity entity,
                                 @Nullable PerfilCacheEntity previous,
@@ -280,6 +291,9 @@ public final class PhotoSyncHelper {
 
     /**
      * Indica si la entidad tiene una foto pendiente de subida.
+     *
+     * @param entity caché cuyo estado fotográfico se quiere inspeccionar.
+     * @return {@code true} cuando la foto sigue marcada como pendiente y existe una ruta local asociada.
      */
     public boolean hasPendingPhoto(@NonNull PerfilCacheEntity entity) {
         return STATE_PENDING.equals(entity.photoSyncState)
@@ -288,6 +302,8 @@ public final class PhotoSyncHelper {
 
     /**
      * Inicializa el estado de foto en una entidad de caché nueva.
+     *
+     * @param entity entidad recién creada a la que se asignará un estado fotográfico limpio.
      */
     public void initDefaultPhotoState(@NonNull PerfilCacheEntity entity) {
         entity.localPhotoPath        = null;
@@ -298,6 +314,9 @@ public final class PhotoSyncHelper {
 
     /**
      * Comprueba si un error de API es retryable (red, timeout, servidor, rate limit).
+     *
+     * @param error error producido durante la subida o descarga; puede ser {@code null} cuando faltan detalles.
+     * @return {@code true} si merece la pena mantener la foto en cola para un reintento posterior.
      */
     public static boolean isRetryableError(@Nullable ApiError error) {
         if (error == null) return true;

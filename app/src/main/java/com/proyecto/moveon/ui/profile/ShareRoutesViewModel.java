@@ -115,12 +115,12 @@ public class ShareRoutesViewModel extends AndroidViewModel {
         });
     }
 
-    @Override
     /**
      * Cancela todas las peticiones en vuelo del repositorio de actividades
      * cuando el ViewModel se destruye, para no entregar resultados a una UI
      * que ya no existe.
      */
+    @Override
     protected void onCleared() {
         super.onCleared();
         // Cada consumer usa su propia instancia del repositorio; por eso se cancela aquí.

@@ -70,8 +70,6 @@ public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogF
         return sheet;
     }
 
-    @Nullable
-    @Override
     /**
      * Infla el layout del bottom sheet de previsualización y guarda el
      * ViewBinding para liberar referencias en {@link #onDestroyView()}.
@@ -81,6 +79,8 @@ public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogF
      * @param savedInstanceState estado guardado, puede ser {@code null}.
      * @return la raíz de la vista inflada.
      */
+    @Nullable
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
@@ -88,7 +88,6 @@ public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogF
         return binding.getRoot();
     }
 
-    @Override
     /**
      * Lee los argumentos del sheet (imagen a previsualizar, textos) y
      * cablea botones de compartir/cancelar cuando la vista ya existe.
@@ -96,6 +95,7 @@ public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogF
      * @param view vista raíz creada por {@link #onCreateView}.
      * @param savedInstanceState estado guardado, puede ser {@code null}.
      */
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
@@ -126,6 +126,9 @@ public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogF
 
     /**
      * Abre la imagen de preview a pantalla completa sobre el mismo fondo base de la app.
+     *
+     * <p>Se cancela silenciosamente si el fragment ya no está añadido o si el estado del
+     * {@link FragmentManager} ya quedó guardado.</p>
      */
     private void openFullscreenPreview() {
         if (previewUri == null || !isAdded()) {
@@ -144,6 +147,9 @@ public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogF
 
     /**
      * Abre el chooser de Android con la imagen y el texto resumen adjuntos.
+     *
+     * <p>Antes de lanzar el chooser concede permisos explícitos de lectura a las apps destino
+     * para evitar fallos con URIs {@code content://} compartidas mediante {@code FileProvider}.</p>
      */
     private void shareRoute() {
         if (binding == null || previewUri == null) {
@@ -188,12 +194,12 @@ public class ShareRoutePreviewBottomSheet extends BaseExpandedBottomSheetDialogF
         }
     }
 
-    @Override
     /**
      * Libera el ViewBinding para evitar fugas: el fragment puede sobrevivir
      * a la vista durante rotaciones, y mantener la referencia impediría
      * que el sistema recicle la jerarquía antigua.
      */
+    @Override
     public void onDestroyView() {
         binding = null;
         super.onDestroyView();
