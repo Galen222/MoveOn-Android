@@ -173,6 +173,8 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
          * <p>Los campos de ritmo del detalle expandido se rellenan con un formateador
          * propio que añade siempre {@code /km} al final cuando hay un ritmo
          * válido, y también lo mantiene en el placeholder cuando el ritmo no existe.</p>
+         *
+         * @param item actividad cuyo contenido debe reflejarse en la fila actual.
          */
         void bind(@NonNull ActividadItem item) {
             final Context context = binding.getRoot().getContext();
@@ -252,7 +254,11 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
             binding.layoutHeader.setOnClickListener(v -> toggleExpand(item.localId));
         }
 
-        /** Alterna el estado expandido/colapsado de una tarjeta. */
+        /**
+         * Alterna el estado expandido/colapsado de una tarjeta.
+         *
+         * @param localId identificador local de la actividad pulsada.
+         */
         private void toggleExpand(@NonNull String localId) {
             if (expandedIds.contains(localId)) {
                 expandedIds.remove(localId);
@@ -291,6 +297,10 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
          *
          * <p>Esto mantiene alineada la fecha visual con la usada por los cálculos de estadísticas,
          * evitando que una misma actividad aparezca en distinto día según la pantalla.</p>
+         *
+         * @param fechaIso fecha de la actividad en formato ISO.
+         * @param context contexto usado para obtener los patrones localizados.
+         * @return fecha visible adaptada a la zona local del usuario.
          */
         @NonNull
         private String formatFecha(@NonNull String fechaIso, @NonNull Context context) {
@@ -308,7 +318,13 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
             }
         }
 
-        /** Formatea duraciones como minutos u horas y minutos, según corresponda. */
+        /**
+         * Formatea duraciones como minutos u horas y minutos, según corresponda.
+         *
+         * @param segundos duración total en segundos.
+         * @param context contexto usado para acceder a recursos pluralizables.
+         * @return texto de duración listo para la fila del histórico.
+         */
         @NonNull
         private String formatDuracion(int segundos, @NonNull Context context) {
             long horas = segundos / 3600L;
@@ -324,6 +340,9 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
          *
          * <p>Se separa de {@link #formatPaceWithUnit(int)} para dejar claro qué parte del valor
          * es el tiempo puro y qué parte es la unidad visual que exige esta pantalla.</p>
+         *
+         * @param secondsPerKm ritmo expresado en segundos por kilómetro.
+         * @return valor formateado del ritmo sin sufijo de unidad.
          */
         @NonNull
         private String formatPaceValue(int secondsPerKm) {
@@ -342,6 +361,9 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
          * <p>Se devuelve siempre con el sufijo {@code /km}, también para el placeholder,
          * para que visualmente el bloque de métricas sea homogéneo y no dependa de estilos,
          * resources o transformaciones externas.</p>
+         *
+         * @param secondsPerKm ritmo expresado en segundos por kilómetro.
+         * @return ritmo final listo para mostrarse en el detalle expandido.
          */
         @NonNull
         private String formatPaceWithUnit(int secondsPerKm) {
@@ -349,7 +371,13 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
         }
     }
 
-    /** Comparación null-safe para campos opcionales usados por el DiffUtil. */
+    /**
+     * Comparación null-safe para campos opcionales usados por el DiffUtil.
+     *
+     * @param a primer valor opcional.
+     * @param b segundo valor opcional.
+     * @return {@code true} cuando ambos valores son equivalentes o ambos nulos.
+     */
     private static boolean safeEquals(String a, String b) {
         if (a == null) {
             return b == null;

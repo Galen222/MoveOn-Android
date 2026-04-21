@@ -50,6 +50,9 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Coordinador delgado del dominio de actividades.
+ *
+ * <p>Encapsula lectura local, sincronización y acceso remoto para que la UI trate
+ * actividades guardadas, pendientes o sincronizadas mediante una única fachada.</p>
  */
 public final class ActivityRepository {
 
@@ -81,9 +84,9 @@ public final class ActivityRepository {
     private final ExecutorService io = MoveOnExecutors.io();
 
     /**
-     * Crea el repositorio de actividades resolviendo sesión, BD local y clientes remotos.
+     * Construye el repositorio de actividades resolviendo todas sus dependencias sobre el contexto de aplicación.
      *
-     * @param context contexto usado para obtener singletons de aplicación.
+     * @param context contexto desde el que inicializar base de datos, red y work manager.
      */
     public ActivityRepository(@NonNull Context context) {
         appContext = context.getApplicationContext();
@@ -184,6 +187,8 @@ public final class ActivityRepository {
      *
      * <p>Es un flujo best-effort para builds internas: nunca debe romper el guardado
      * normal de la actividad ni mostrar errores al usuario final.</p>
+     *
+     * @param request bloque técnico generado por el módulo de tracking para análisis interno.
      */
     public void guardarActividadDiagnostico(@NonNull ActivityDiagnosticsRequestDto request) {
         if (!BuildConfig.ACTIVITY_DIAGNOSTICS_ENABLED) {

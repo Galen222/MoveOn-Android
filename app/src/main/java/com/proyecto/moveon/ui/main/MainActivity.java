@@ -67,6 +67,9 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Construye un intent listo para abrir la app en primer plano y pedir el flujo
      * de confirmación de parada (Guardar / Cancelar / Descartar).
+     *
+     * @param context contexto desde el que construir el relanzamiento.
+     * @return intent preparado para reabrir {@link MainActivity} y delegar en {@link InicioFragment}.
      */
     @NonNull
     public static Intent createLaunchIntentToShowTrackingStopDialog(@NonNull Context context) {
@@ -248,6 +251,8 @@ public class MainActivity extends AppCompatActivity {
      *
      * <p>La Activity es el punto de render común de la app, así que el mensaje no depende
      * de que el fragment que lo originó siga visible en pantalla.</p>
+     *
+     * @param message payload visual con texto y severidad a representar.
      */
     private void showGlobalSnackbarMessage(@NonNull GlobalSnackbarMessage message) {
         if (binding == null) return;

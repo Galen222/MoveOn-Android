@@ -559,8 +559,11 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
     /**
      * Convierte la fecha ISO de la actividad a la fecha local visible por el usuario.
      *
-     * <p>Se alinea con {@code StatsCalculator.parseFecha(...)} para que el histórico no
-     * clasifique una actividad en un día distinto al usado por las estadísticas.</p>
+     * <p>Se alinea con {@link com.proyecto.moveon.domain.activity.StatsCalculator(String)}
+     * para que el histórico no clasifique una actividad en un día distinto al usado por las estadísticas.</p>
+     *
+     * @param fechaIso fecha/hora ISO persistida para la actividad.
+     * @return fecha local visible o {@code null} cuando el texto no puede parsearse.
      */
     @Nullable
     private LocalDate parseFecha(@NonNull String fechaIso) {
@@ -575,6 +578,10 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
 
     /**
      * Formatea la fecha de la tarjeta usando la misma zona local aplicada al filtrado.
+     *
+     * @param fechaIso fecha/hora ISO persistida para la actividad.
+     * @param context contexto usado para resolver el patrón localizado.
+     * @return fecha visible lista para la cabecera de la tarjeta.
      */
     @NonNull
     private String formatFechaActividad(@NonNull String fechaIso, @NonNull Context context) {
@@ -615,6 +622,10 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
      * vuelve a inflar y bindear {@link ItemActividadBinding} manualmente.
      * Por eso necesita su propio formateo y aquí devolvemos siempre el
      * valor final con la unidad {@code /km} ya incluida.</p>
+     *
+     * @param secondsPerKm ritmo expresado en segundos por kilómetro.
+     * @param context contexto usado para acceder a recursos localizados.
+     * @return ritmo listo para mostrarse en la sección expandida.
      */
     @NonNull
     private String formatPace(int secondsPerKm, @NonNull Context context) {

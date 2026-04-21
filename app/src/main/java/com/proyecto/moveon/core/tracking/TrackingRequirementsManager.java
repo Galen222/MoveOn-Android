@@ -47,6 +47,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Comprueba si la app dispone de al menos uno de los permisos de ubicación necesarios para trackear.
+     *
+     * @param context contexto usado para consultar permisos concedidos.
+     * @return {@code true} cuando existe permiso de ubicación fine o coarse.
      */
     public static boolean hasLocationPermission(@NonNull Context context) {
         return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -57,6 +60,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Indica si el permiso de reconocimiento de actividad está concedido o no aplica por versión de Android.
+     *
+     * @param context contexto usado para consultar el permiso runtime.
+     * @return {@code true} cuando el permiso está concedido o la versión del sistema no lo requiere.
      */
     public static boolean hasActivityRecognitionPermission(@NonNull Context context) {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
@@ -66,6 +72,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Verifica que las notificaciones puedan usarse tanto a nivel de sistema como de permiso runtime cuando corresponde.
+     *
+     * @param context contexto usado para consultar el permiso y el ajuste global de notificaciones.
+     * @return {@code true} cuando el flujo de tracking puede mostrar notificaciones sin restricciones.
      */
     public static boolean hasNotificationsRequirement(@NonNull Context context) {
         boolean enabledInSystem = NotificationManagerCompat.from(context).areNotificationsEnabled();
@@ -79,6 +88,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Comprueba si los servicios de localización del dispositivo están realmente activados.
+     *
+     * @param context contexto usado para consultar el {@link LocationManager}.
+     * @return {@code true} cuando GPS o localización del sistema están activos.
      */
     public static boolean isDeviceLocationEnabled(@NonNull Context context) {
         LocationManager locationManager =
@@ -99,6 +111,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Resume si todos los requisitos runtime previos al tracking están satisfechos.
+     *
+     * @param context contexto desde el que verificar permisos y notificaciones.
+     * @return {@code true} cuando la app ya puede iniciar tracking sin pedir más permisos runtime.
      */
     public static boolean areRuntimeRequirementsSatisfied(@NonNull Context context) {
         return hasLocationPermission(context)
@@ -108,6 +123,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Calcula el estado del requisito de ubicación distinguiendo entre concedido, solicitables o bloqueado.
+     *
+     * @param fragment fragmento desde el que se evalúa el estado y las rationales del permiso.
+     * @return estado actual del requisito de ubicación para la UI.
      */
     public static Status getLocationStatus(@NonNull Fragment fragment) {
         Context context = fragment.requireContext();
@@ -117,6 +135,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Calcula el estado del permiso de reconocimiento de actividad para el fragmento actual.
+     *
+     * @param fragment fragmento desde el que se consulta el permiso y su rationale.
+     * @return estado actual del requisito de reconocimiento de actividad.
      */
     public static Status getActivityRecognitionStatus(@NonNull Fragment fragment) {
         Context context = fragment.requireContext();
@@ -126,6 +147,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Devuelve el estado del requisito de notificaciones teniendo en cuenta permiso runtime y ajuste del sistema.
+     *
+     * @param fragment fragmento desde el que se consultan permisos y estado de notificaciones.
+     * @return estado actual del requisito de notificaciones para iniciar tracking.
      */
     public static Status getNotificationsStatus(@NonNull Fragment fragment) {
         Context context = fragment.requireContext();
@@ -135,6 +159,9 @@ public final class TrackingRequirementsManager {
 
     /**
      * Resume el estado de la localización del dispositivo como requisito previo no-runtime.
+     *
+     * @param context contexto usado para consultar el estado del sistema.
+     * @return {@link Status#ENABLED} cuando la localización está activa o {@link Status#NEEDS_ACTIVATION} en caso contrario.
      */
     public static Status getDeviceLocationStatus(@NonNull Context context) {
         return isDeviceLocationEnabled(context) ? Status.ENABLED : Status.NEEDS_ACTIVATION;

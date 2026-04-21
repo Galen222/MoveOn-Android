@@ -113,23 +113,33 @@ public final class SessionRefreshCoordinator {
 
         /**
          * Devuelve el nombre de usuario devuelto por backend junto a los tokens, si vino informado.
+         *
+         * @return nombre asociado a la sesión remota o {@code null} si backend no lo devolvió.
          */
         @Nullable public String getUsername() { return username; }
         /**
          * Devuelve el access token crudo retornado por backend.
+         *
+         * @return access token contenido en el snapshot o {@code null} si falta.
          */
         @Nullable public String getAccessToken() { return accessToken; }
         /**
          * Devuelve el refresh token crudo retornado por backend.
+         *
+         * @return refresh token contenido en el snapshot o {@code null} si no está disponible.
          */
         @Nullable public String getRefreshToken() { return refreshToken; }
         /**
          * Devuelve el identificador interno del usuario asociado a la sesión.
+         *
+         * @return identificador de usuario asociado al refresh o {@code null} si no pudo conservarse.
          */
         @Nullable public String getUserId() { return userId; }
 
         /**
          * Indica si el snapshot conserva un refresh token con el que intentar la renovación.
+         *
+         * @return {@code true} cuando el coordinador todavía dispone de un refresh token para reintentar.
          */
         public boolean hasRefreshToken() {
             return StringUtils.hasText(refreshToken);
@@ -166,6 +176,10 @@ public final class SessionRefreshCoordinator {
 
         /**
          * Crea un resultado exitoso con el nuevo par de tokens publicado.
+         *
+         * @param accessToken nuevo access token ya validado.
+         * @param refreshToken nuevo refresh token rotado por backend.
+         * @return resultado marcado como {@link Status#SUCCESS}.
          */
         @NonNull
         public static RefreshOutcome success(@NonNull String accessToken,
@@ -176,6 +190,8 @@ public final class SessionRefreshCoordinator {
 
         /**
          * Crea un resultado que representa que no fue necesario renovar la sesión.
+         *
+         * @return resultado marcado como {@link Status#SKIPPED}.
          */
         @NonNull
         public static RefreshOutcome skipped() {
@@ -185,6 +201,11 @@ public final class SessionRefreshCoordinator {
 
         /**
          * Crea un resultado terminal para respuestas que invalidan definitivamente la sesión actual.
+         *
+         * @param httpCode código HTTP asociado al fallo terminal.
+         * @param errorCode código funcional de backend, si existe.
+         * @param message mensaje diagnóstico asociado al rechazo.
+         * @return resultado marcado como {@link Status#UNAUTHORIZED}.
          */
         @NonNull
         public static RefreshOutcome unauthorized(int httpCode,
@@ -196,6 +217,12 @@ public final class SessionRefreshCoordinator {
 
         /**
          * Crea un resultado recuperable para errores temporales de red o servidor.
+         *
+         * @param httpCode código HTTP observado o {@code 0} si no hubo respuesta.
+         * @param retryAfter valor crudo de la cabecera {@code Retry-After}, si llegó.
+         * @param errorCode código funcional de backend asociado al fallo.
+         * @param message mensaje diagnóstico del error temporal.
+         * @return resultado marcado como {@link Status#TRANSIENT_ERROR}.
          */
         @NonNull
         public static RefreshOutcome transientError(int httpCode,
@@ -208,24 +235,44 @@ public final class SessionRefreshCoordinator {
 
         /**
          * Devuelve el estado resumido del intento de refresh.
+         *
+         * @return estado final del ciclo de refresh coordinado.
          */
         @NonNull public Status getStatus() { return status; }
+        /**
+         * Devuelve el access token publicado por un refresh exitoso.
+         *
+         * @return access token nuevo o {@code null} cuando no hubo publicación.
+         */
         @Nullable public String getAccessToken() { return accessToken; }
+        /**
+         * Devuelve el refresh token publicado por un refresh exitoso.
+         *
+         * @return refresh token nuevo o {@code null} cuando el refresh no terminó con éxito.
+         */
         @Nullable public String getRefreshToken() { return refreshToken; }
         /**
          * Devuelve el código HTTP de la respuesta cruda de refresh.
+         *
+         * @return código HTTP asociado al intento o {@code 0} si el fallo ocurrió antes de recibir respuesta.
          */
         public int getHttpCode() { return httpCode; }
         /**
          * Devuelve el valor bruto de la cabecera de reintento para errores temporales.
+         *
+         * @return contenido de {@code Retry-After} o {@code null} si no venía informado.
          */
         @Nullable public String getRetryAfter() { return retryAfter; }
         /**
          * Devuelve el código semántico de error del backend de refresh.
+         *
+         * @return código funcional de backend o {@code null} cuando no existe.
          */
         @Nullable public String getErrorCode() { return errorCode; }
         /**
          * Devuelve el mensaje backend asociado al fallo de refresh, si existe.
+         *
+         * @return mensaje diagnóstico del fallo o {@code null} cuando no se recibió.
          */
         @Nullable public String getMessage() { return message; }
 

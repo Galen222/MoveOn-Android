@@ -11,7 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Clase responsable de api error.
+ * Representa un error de aplicación ya normalizado para consumo de UI y repositorios.
+ *
+ * <p>Agrupa tipo, código HTTP, mensaje visible, código funcional y errores por campo
+ * dentro de un objeto inmutable fácil de propagar entre capas.</p>
  */
 public final class ApiError {
 
@@ -34,6 +37,7 @@ public final class ApiError {
      * @param errorCode código de negocio devuelto por backend, si existe.
      * @param fieldErrors mapa de errores por campo en el formato usado por validaciones de formulario.
      * @param raw carga útil original del error cuando conviene conservarla para diagnóstico.
+     * @see ApiErrorParser
      */
     public ApiError(@NonNull ApiErrorType type,
                     int httpCode,

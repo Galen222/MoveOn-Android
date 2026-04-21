@@ -51,6 +51,10 @@ public final class ApiErrorParser {
      * cuando falla la lectura.
      * El {@code IOException} cubre el caso habitual (conexión cortada, body ya
      * consumido); el {@code RuntimeException} cubre edge cases de OkHttp.
+     *
+     * @param context contexto usado para localizar mensajes vía {@link AppLanguageManager}.
+     * @param response respuesta HTTP fallida cuya carga de error debe interpretarse.
+     * @return error normalizado listo para ser consumido por la UI.
      */
     @NonNull
     public static ApiError fromHttp(@NonNull Context context, @NonNull Response<?> response) {
@@ -138,6 +142,11 @@ public final class ApiErrorParser {
 
     /**
      * Traduce excepciones de red, refresh o cancelación a un {@link ApiError} consumible por la UI.
+     *
+     * @param context contexto usado para resolver textos localizados.
+     * @param t throwable original observado por la capa de red.
+     * @param canceled indica si la operación se canceló deliberadamente por la app.
+     * @return error de dominio homogéneo para la UI y los repositorios.
      */
     @NonNull
     public static ApiError fromThrowable(@NonNull Context context, @NonNull Throwable t, boolean canceled) {
@@ -183,6 +192,12 @@ public final class ApiErrorParser {
 
     /**
      * Procesa el nodo {@code detail} del backend y extrae el primer mensaje visible junto con errores por campo.
+     *
+     * @param context contexto localizado para resolver mensajes visibles.
+     * @param detail nodo {@code detail} del contrato de error.
+     * @param retryAfter cabecera bruta de reintento cuando existe.
+     * @param httpCode código HTTP asociado a la respuesta original.
+     * @return resultado agregado con mensaje prioritario y errores por campo extraídos.
      */
     @NonNull
     private static DetailParseResult parseDetail(@NonNull Context context,
@@ -251,6 +266,12 @@ public final class ApiErrorParser {
 
     /**
      * Añade al mapa de errores los mensajes incluidos en el objeto legacy {@code errores_campos}.
+     *
+     * @param context contexto localizado para traducir mensajes genéricos.
+     * @param erroresCampos nodo legacy con errores por campo.
+     * @param fieldErrors mapa destino que se irá enriqueciendo.
+     * @param retryAfter cabecera bruta de reintento, si existe.
+     * @param httpCode código HTTP de la respuesta original.
      */
     private static void parseErroresCampos(@NonNull Context context,
                                            @Nullable JsonElement erroresCampos,
@@ -318,6 +339,12 @@ public final class ApiErrorParser {
 
     /**
      * Devuelve el mensaje genérico por HTTP cuando el backend no ofrece uno mejor para mostrar.
+     *
+     * @param context contexto localizado para obtener recursos traducidos.
+     * @param type tipo de error ya mapeado desde la respuesta HTTP.
+     * @param httpCode código HTTP recibido.
+     * @param retryAfter cabecera de reintento útil para rate limit, si existe.
+     * @return mensaje fallback listo para la UI.
      */
     @NonNull
     private static String defaultHttpMessage(@NonNull Context context,
@@ -336,6 +363,13 @@ public final class ApiErrorParser {
 
     /**
      * Resuelve el mensaje final combinando localización por código, mensaje backend útil y fallback HTTP.
+     *
+     * @param context contexto localizado para recursos y localizadores.
+     * @param errorCode código funcional recibido del backend.
+     * @param backendMessage mensaje bruto incluido en la carga de error.
+     * @param retryAfter cabecera de reintento usada por algunos errores temporales.
+     * @param httpCode código HTTP asociado al fallo.
+     * @return mensaje visible definitivo o {@code null} si no existe ninguno útil.
      */
     @Nullable
     private static String resolveDisplayMessage(@NonNull Context context,
@@ -359,6 +393,11 @@ public final class ApiErrorParser {
 
     /**
      * Mapea ciertos códigos HTTP a cadenas localizadas específicas cuando el backend no aporta detalle usable.
+     *
+     * @param context contexto localizado para obtener recursos.
+     * @param httpCode código HTTP observado.
+     * @param retryAfter cabecera de reintento útil para 429, si llegó.
+     * @return fallback localizado o {@code null} cuando el código no tiene uno específico.
      */
     @Nullable
     private static String localizedHttpFallback(@NonNull Context context,
@@ -389,6 +428,9 @@ public final class ApiErrorParser {
 
     /**
      * Limpia prefijos ruidosos del backend para dejar un texto más apto para mostrar al usuario.
+     *
+     * @param m mensaje bruto devuelto por backend.
+     * @return texto saneado y más legible para UI.
      */
     @NonNull
     private static String cleanBackendMsg(@NonNull String m) {
@@ -401,6 +443,9 @@ public final class ApiErrorParser {
 
     /**
      * Detecta mensajes genéricos del framework que no aportan contexto suficiente para mostrarlos tal cual.
+     *
+     * @param message mensaje candidato a mostrarse.
+     * @return {@code true} cuando conviene sustituirlo por un fallback más útil.
      */
     private static boolean isGenericFrameworkMessage(@Nullable String message) {
         if (!StringUtils.hasText(message)) return true;

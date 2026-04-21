@@ -70,6 +70,9 @@ public final class SecureSessionManager {
 
     /**
      * Devuelve el singleton del gestor de sesión ligado al contexto de aplicación.
+     *
+     * @param context contexto desde el que resolver el {@code applicationContext} seguro.
+     * @return instancia única reutilizable en toda la app.
      */
     @NonNull
     public static SecureSessionManager getInstance(@NonNull Context context) {
@@ -110,47 +113,66 @@ public final class SecureSessionManager {
 
         /**
          * Devuelve el nombre visible asociado a la sesión leída.
+         *
+         * @return nombre persistido o {@code null} si la sesión no lo contiene.
          */
         @Nullable public String getUsername() { return username; }
         /**
          * Devuelve el access token capturado en el snapshot.
+         *
+         * @return access token descifrado o {@code null} cuando falta.
          */
         @Nullable public String getAccessToken() { return accessToken; }
         /**
          * Devuelve el refresh token capturado en el snapshot.
+         *
+         * @return refresh token descifrado o {@code null} cuando no existe.
          */
         @Nullable public String getRefreshToken() { return refreshToken; }
         /**
          * Devuelve el identificador de usuario derivado o persistido para la sesión.
+         *
+         * @return identificador interno del usuario o {@code null} si no pudo resolverse.
          */
         @Nullable public String getUserId() { return userId; }
         /**
          * Indica el proveedor de autenticación asociado al snapshot, si existe.
+         *
+         * @return proveedor persistido, por ejemplo Google, o {@code null} para login clásico.
          */
         @Nullable public String getAuthProvider() { return authProvider; }
 
         /**
          * Indica si el snapshot contiene tanto access token como refresh token y por tanto es plenamente reutilizable.
+         *
+         * @return {@code true} cuando la sesión puede reutilizarse sin pedir credenciales de nuevo.
          */
         public boolean hasCompleteSession() {
             return StringUtils.hasText(accessToken) && StringUtils.hasText(refreshToken);
         }
-    /**
-     * Indica si hay material mínimo para intentar una recuperación de sesión en segundo plano.
-     */
-    public boolean hasRecoverableSession() {
+
+        /**
+         * Indica si hay material mínimo para intentar una recuperación de sesión en segundo plano.
+         *
+         * @return {@code true} cuando existe al menos uno de los tokens necesarios para intentar recuperar sesión.
+         */
+        public boolean hasRecoverableSession() {
             return StringUtils.hasText(accessToken) || StringUtils.hasText(refreshToken);
         }
 
-    /**
-     * Comprueba si la sesión almacenada conserva refresh token.
-     */
-    public boolean hasRefreshToken() {
+        /**
+         * Comprueba si la sesión almacenada conserva refresh token.
+         *
+         * @return {@code true} cuando el snapshot aún mantiene un refresh token utilizable.
+         */
+        public boolean hasRefreshToken() {
             return StringUtils.hasText(refreshToken);
         }
 
         /**
          * Construye la clave estable de cuenta a partir del identificador de usuario del snapshot.
+         *
+         * @return clave derivada del {@code userId} o {@code null} si el snapshot no identifica una cuenta.
          */
         @Nullable
         public String getAccountKey() {
@@ -297,6 +319,8 @@ public final class SecureSessionManager {
 
     /**
      * Recupera el access token descifrado de la sesión actual.
+     *
+     * @return access token actual o {@code null} si la sesión no lo conserva.
      */
     @Nullable
     public String getAccessToken() {
@@ -307,6 +331,8 @@ public final class SecureSessionManager {
 
     /**
      * Recupera el refresh token descifrado de la sesión actual.
+     *
+     * @return refresh token actual o {@code null} si se perdió o nunca existió.
      */
     @Nullable
     public String getRefreshToken() {
@@ -317,6 +343,8 @@ public final class SecureSessionManager {
 
     /**
      * Devuelve el identificador o nombre de usuario persistido junto a la sesión.
+     *
+     * @return nombre de usuario recordado o {@code null} si la sesión no lo trae asociado.
      */
     @Nullable
     public String getUsername() {
@@ -327,6 +355,8 @@ public final class SecureSessionManager {
 
     /**
      * Devuelve el identificador interno del usuario asociado al access token actual.
+     *
+     * @return identificador interno derivado del token o recuperado de persistencia; {@code null} si no existe.
      */
     @Nullable
     public String getUserId() {
@@ -337,6 +367,8 @@ public final class SecureSessionManager {
 
     /**
      * Devuelve la clave estable de cuenta derivada del {@code userId} actual.
+     *
+     * @return clave lógica de cuenta usada por almacenamiento local o {@code null} si no puede construirse.
      */
     @Nullable
     public String getAccountKey() {

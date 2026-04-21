@@ -307,6 +307,9 @@ public final class AppSettingsManager {
 
     /**
      * Indica si la app ya lanzó alguna vez la petición del permiso de ubicación para tracking.
+     *
+     * @param context contexto desde el que leer la preferencia global.
+     * @return {@code true} cuando el flujo de tracking ya intentó pedir ubicación al usuario.
      */
     public static boolean wasTrackingLocationPermissionRequested(@NonNull Context context) {
         return prefs(context).getBoolean(KEY_TRACKING_LOCATION_PERMISSION_REQUESTED, false);
@@ -314,6 +317,9 @@ public final class AppSettingsManager {
 
     /**
      * Persiste si el permiso de ubicación ya fue solicitado durante el flujo de tracking.
+     *
+     * @param context contexto desde el que guardar la preferencia.
+     * @param requested valor a persistir para el flag de ubicación.
      */
     public static void setTrackingLocationPermissionRequested(@NonNull Context context, boolean requested) {
         prefs(context).edit().putBoolean(KEY_TRACKING_LOCATION_PERMISSION_REQUESTED, requested).apply();
@@ -321,6 +327,9 @@ public final class AppSettingsManager {
 
     /**
      * Indica si la app ya pidió el permiso de reconocimiento de actividad.
+     *
+     * @param context contexto desde el que leer la preferencia global.
+     * @return {@code true} cuando ya se mostró o lanzó la petición de actividad física.
      */
     public static boolean wasTrackingActivityPermissionRequested(@NonNull Context context) {
         return prefs(context).getBoolean(KEY_TRACKING_ACTIVITY_PERMISSION_REQUESTED, false);
@@ -328,6 +337,9 @@ public final class AppSettingsManager {
 
     /**
      * Guarda si el permiso de reconocimiento de actividad ya se intentó solicitar.
+     *
+     * @param context contexto desde el que guardar la preferencia.
+     * @param requested valor a persistir para el flag de actividad física.
      */
     public static void setTrackingActivityPermissionRequested(@NonNull Context context, boolean requested) {
         prefs(context).edit().putBoolean(KEY_TRACKING_ACTIVITY_PERMISSION_REQUESTED, requested).apply();
@@ -335,6 +347,9 @@ public final class AppSettingsManager {
 
     /**
      * Indica si el permiso runtime de notificaciones ya fue pedido en el flujo de tracking.
+     *
+     * @param context contexto desde el que leer la preferencia global.
+     * @return {@code true} cuando la app ya intentó pedir notificaciones para el tracking.
      */
     public static boolean wasTrackingNotificationsPermissionRequested(@NonNull Context context) {
         return prefs(context).getBoolean(KEY_TRACKING_NOTIFICATIONS_PERMISSION_REQUESTED, false);
@@ -342,6 +357,9 @@ public final class AppSettingsManager {
 
     /**
      * Persiste si el permiso de notificaciones ya se solicitó al usuario.
+     *
+     * @param context contexto desde el que guardar la preferencia.
+     * @param requested valor a persistir para el flag de notificaciones.
      */
     public static void setTrackingNotificationsPermissionRequested(@NonNull Context context, boolean requested) {
         prefs(context).edit().putBoolean(KEY_TRACKING_NOTIFICATIONS_PERMISSION_REQUESTED, requested).apply();
@@ -349,6 +367,8 @@ public final class AppSettingsManager {
 
     /**
      * Reinicia las marcas internas usadas para saber qué permisos de tracking ya se habían pedido.
+     *
+     * @param context contexto desde el que limpiar las preferencias del flujo de permisos.
      */
     public static void clearTrackingPermissionRequestFlags(@NonNull Context context) {
         prefs(context).edit()

@@ -80,6 +80,8 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
      * <p>Se hace de forma síncrona con {@link #notifyDataSetChanged()} porque el tamaño del
      * ranking es muy pequeño y aquí prima la ausencia total de flicker sobre la animación
      * incremental.</p>
+     *
+     * @param newItems nuevo snapshot de ranking o {@code null} para vaciar la lista.
      */
     public void setItems(@Nullable List<RankingItemDto> newItems) {
         items.clear();
@@ -105,6 +107,8 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
 
     /**
      * Devuelve una snapshot inmutable por si la UI necesitara inspeccionar el contenido actual.
+     *
+     * @return copia defensiva del ranking actualmente renderizado por el adapter.
      */
     @NonNull
     public List<RankingItemDto> getItemsSnapshot() {

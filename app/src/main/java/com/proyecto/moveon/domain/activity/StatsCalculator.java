@@ -44,6 +44,11 @@ public final class StatsCalculator {
     /**
      * Calcula el resumen completo de estadísticas a partir de la lista de actividades
      * y los objetivos del usuario.
+     *
+     * @param items actividades ya cargadas para la cuenta actual.
+     * @param weeklyGoalMeters objetivo semanal expresado en metros.
+     * @param monthlyGoalMeters objetivo mensual expresado en metros.
+     * @return resumen agregado listo para tarjetas, gráficas y bloques de histórico.
      */
     @NonNull
     public static StatsResumen calcular(@NonNull List<ActividadItem> items,
@@ -194,6 +199,10 @@ public final class StatsCalculator {
     /**
      * Calcula la racha de días consecutivos con al menos una actividad,
      * contando hacia atrás desde hoy inclusive.
+     *
+     * @param diasConActividad conjunto de fechas que tienen al menos una actividad.
+     * @param hoy fecha de referencia desde la que se evalúa la racha.
+     * @return número de días consecutivos con actividad terminando en {@code hoy}.
      */
     public static int calcularStreak(@NonNull Set<LocalDate> diasConActividad,
                                      @NonNull LocalDate hoy) {

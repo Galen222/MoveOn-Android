@@ -514,6 +514,8 @@ public class InicioFragment extends Fragment
      * reactiva sola por movimiento real, el panel deja de tener sentido y debe
      * cerrarse automáticamente. La alerta por velocidad sospechosa, en cambio,
      * se mantiene hasta que el usuario toma una decisión explícita.</p>
+     *
+     * @param state snapshot actual publicado por el servicio de tracking.
      */
     private void syncTrackingAlertWithState(@NonNull TrackingState state) {
         if (isStopDialogShowing()) {
@@ -559,6 +561,9 @@ public class InicioFragment extends Fragment
 
     /**
      * Decide qué alerta sigue siendo válida después de cancelar el modal de stop.
+     *
+     * @param state último estado conocido del tracking o {@code null} si aún no hay snapshot.
+     * @return alerta que debe seguir visible o {@code null} cuando ninguna sigue teniendo sentido.
      */
     @Nullable
     private TrackingAlert resolveAlertToRestore(@Nullable TrackingState state) {
@@ -640,6 +645,10 @@ public class InicioFragment extends Fragment
 
     /**
      * Aplica icono, habilitación y opacidad al botón principal.
+     *
+     * @param iconRes recurso drawable que debe mostrarse.
+     * @param enabled indica si el botón debe aceptar pulsaciones.
+     * @param alpha opacidad visual usada para comunicar estados bloqueados.
      */
     private void applyPlayButtonState(int iconRes, boolean enabled, float alpha) {
         binding.btnPlay.setIconResource(iconRes);
@@ -688,6 +697,9 @@ public class InicioFragment extends Fragment
 
     /**
      * Aplica el estilo visual del chip de estado.
+     *
+     * @param backgroundRes drawable de fondo a usar en el chip.
+     * @param textColorRes color del texto del estado.
      */
     private void applyStatusPillStyle(int backgroundRes, int textColorRes) {
         binding.tvTrackingStatus.setBackgroundResource(backgroundRes);
@@ -874,6 +886,8 @@ public class InicioFragment extends Fragment
     /**
      * Devuelve si el diálogo de stop está actualmente visible.
      * Mientras esto sea true, el modal tiene prioridad sobre cualquier panel inferior.
+     *
+     * @return {@code true} cuando el diálogo de parada sigue abierto en pantalla.
      */
     private boolean isStopDialogShowing() {
         return stopDialog != null && stopDialog.isShowing();

@@ -624,6 +624,8 @@ public class ProfileFragment extends Fragment {
      * 
      * <p>Antes el mensaje se anclaba al root del fragment y podía quedar oculto si el usuario
      * cambiaba inmediatamente a otra pestaña.</p>
+     *
+     * @param message texto de éxito que debe propagarse al canal global.
      */
     private void showSuccessFeedback(@NonNull CharSequence message) {
         GlobalProfileNotifier.getInstance().notifySuccess(message);
@@ -631,6 +633,8 @@ public class ProfileFragment extends Fragment {
 
     /**
      * Reenvía un aviso del perfil al canal global de MainActivity.
+     *
+     * @param message texto de aviso que debe propagarse al canal global.
      */
     private void showWarningFeedback(@NonNull CharSequence message) {
         GlobalProfileNotifier.getInstance().notifyWarning(message);
@@ -638,6 +642,8 @@ public class ProfileFragment extends Fragment {
 
     /**
      * Reenvía un error simple del perfil al canal global de MainActivity.
+     *
+     * @param message texto de error que debe propagarse al canal global.
      */
     private void showErrorFeedback(@NonNull CharSequence message) {
         GlobalProfileNotifier.getInstance().notifyError(message);

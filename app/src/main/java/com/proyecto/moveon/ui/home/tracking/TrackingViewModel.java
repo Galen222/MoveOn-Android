@@ -36,6 +36,9 @@ import java.time.format.DateTimeFormatter;
  * <p>Orquesta servicio, persistencia y eventos UI. Toda la lógica de red
  * sigue viviendo en el repositorio; aquí se transforman las métricas del
  * tracking a un DTO listo para guardarse offline y sincronizarse.</p>
+ *
+ * <p>Se apoya en {@link TrackingServiceController} para coordinar el servicio en foreground
+ * y en {@link ActivityRepository} para persistir y sincronizar la actividad resultante.</p>
  */
 public final class TrackingViewModel extends AndroidViewModel {
 
@@ -165,6 +168,9 @@ public final class TrackingViewModel extends AndroidViewModel {
      *
      * <p>La UI del diálogo de stop debe consultar este mismo criterio para no ofrecer
      * una acción de guardado que en realidad terminaría descartando la sesión.</p>
+     *
+     * @param state snapshot de tracking que se quiere validar.
+     * @return {@code true} cuando existen métricas suficientes para persistir la actividad.
      */
     public boolean canSaveTracking(@Nullable TrackingState state) {
         return hasValidDistance(state) && hasValidMovingDuration(state);
@@ -175,6 +181,9 @@ public final class TrackingViewModel extends AndroidViewModel {
      *
      * <p>Cuando la sesión sí es válida devuelve {@code null} para que la UI no muestre
      * texto extra en el diálogo.</p>
+     *
+     * @param state snapshot de tracking que se está validando.
+     * @return texto localizado con el motivo del bloqueo o {@code null} si el guardado ya es válido.
      */
     @Nullable
     public String getCannotSaveReason(@Nullable TrackingState state) {
@@ -201,6 +210,8 @@ public final class TrackingViewModel extends AndroidViewModel {
 
     /**
      * Devuelve {@code true} si la UI debe tratar la sesión como abierta.
+     *
+     * @return {@code true} cuando el último snapshot describe una sesión aún activa.
      */
     public boolean isTrackingActive() {
         TrackingState state = trackingState.getValue();
@@ -248,6 +259,8 @@ public final class TrackingViewModel extends AndroidViewModel {
      * ({@code moving + stopped}), excluyendo el tiempo pasado en auto-pausa. Esto acerca
      * el histórico al comportamiento de un reloj deportivo y evita inflar artificialmente
      * el ritmo total cuando el GPS o la detección de movimiento fuerzan pausas largas.</p>
+     *
+     * @param state snapshot final del tracking que debe persistirse.
      */
     private void guardarActividad(@NonNull TrackingState state) {
         saveState.setValue(UiState.loading());
