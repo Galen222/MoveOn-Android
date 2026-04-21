@@ -27,6 +27,12 @@ public class RouteImageFullscreenDialogFragment extends DialogFragment {
 
     private DialogRouteImageFullscreenBinding binding;
 
+    /**
+     * Construye el diálogo a pantalla completa con la URI de la imagen que debe mostrarse.
+     *
+     * @param uri ubicación de la imagen generada para la ruta.
+     * @return fragment configurado con los argumentos necesarios para abrir la vista ampliada.
+     */
     @NonNull
     public static RouteImageFullscreenDialogFragment newInstance(@NonNull Uri uri) {
         RouteImageFullscreenDialogFragment fragment = new RouteImageFullscreenDialogFragment();
@@ -36,12 +42,25 @@ public class RouteImageFullscreenDialogFragment extends DialogFragment {
         return fragment;
     }
 
+    /**
+     * Aplica el estilo Material del diálogo antes de crear la vista.
+     *
+     * @param savedInstanceState estado restaurado por Android, puede ser {@code null}.
+     */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setStyle(STYLE_NORMAL, com.google.android.material.R.style.ThemeOverlay_Material3_Dialog);
     }
 
+    /**
+     * Infla la vista que contiene la imagen ampliada y el botón de cierre.
+     *
+     * @param inflater inflador de vistas del fragment.
+     * @param container contenedor padre proporcionado por el sistema, puede ser {@code null}.
+     * @param savedInstanceState estado restaurado por Android, puede ser {@code null}.
+     * @return raíz inflada del diálogo a pantalla completa.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -51,6 +70,14 @@ public class RouteImageFullscreenDialogFragment extends DialogFragment {
         return binding.getRoot();
     }
 
+    /**
+     * Recupera la URI enviada en los argumentos y la pinta en la vista ampliada.
+     *
+     * <p>Si el fragment se abre sin datos válidos, se cierra para evitar dejar un diálogo vacío.</p>
+     *
+     * @param view vista raíz ya creada.
+     * @param savedInstanceState estado previo restaurado por Android, puede ser {@code null}.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -73,6 +100,10 @@ public class RouteImageFullscreenDialogFragment extends DialogFragment {
         binding.btnCloseFullscreen.setOnClickListener(v -> dismissAllowingStateLoss());
     }
 
+    /**
+     * Ajusta el diálogo para ocupar toda la pantalla y reutiliza el color de fondo de la tarjeta
+     * que envuelve la imagen compartida.
+     */
     @Override
     public void onStart() {
         super.onStart();
@@ -89,6 +120,9 @@ public class RouteImageFullscreenDialogFragment extends DialogFragment {
         window.getDecorView().setPadding(0, 0, 0, 0);
     }
 
+    /**
+     * Libera el binding cuando la vista del diálogo deja de existir.
+     */
     @Override
     public void onDestroyView() {
         binding = null;

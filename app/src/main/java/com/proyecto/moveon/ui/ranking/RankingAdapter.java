@@ -50,6 +50,11 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
      * Callback opcional al pulsar una fila del ranking.
      */
     public interface OnUserClickListener {
+        /**
+         * Notifica que el usuario ha pulsado una fila concreta del ranking.
+         *
+         * @param item elemento asociado a la fila pulsada.
+         */
         void onUserClick(@NonNull RankingItemDto item);
     }
 
@@ -59,6 +64,11 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
     @Nullable
     private final OnUserClickListener onUserClickListener;
 
+    /**
+     * Crea el adapter con un callback opcional para pulsaciones sobre filas.
+     *
+     * @param onUserClickListener listener invocado al tocar un usuario, o {@code null} si no hay acción.
+     */
     public RankingAdapter(@Nullable OnUserClickListener onUserClickListener) {
         this.onUserClickListener = onUserClickListener;
         setHasStableIds(true);
@@ -101,12 +111,25 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
         return Collections.unmodifiableList(new ArrayList<>(items));
     }
 
+    /**
+     * Genera un identificador estable a partir del nombre de usuario para reducir recreaciones innecesarias.
+     *
+     * @param position posición adaptada dentro de {@link #items}.
+     * @return hash del nombre de usuario o {@link RecyclerView#NO_ID} si no existe.
+     */
     @Override
     public long getItemId(int position) {
         RankingItemDto item = items.get(position);
         return item.nombreUsuario != null ? item.nombreUsuario.hashCode() : RecyclerView.NO_ID;
     }
 
+    /**
+     * Infla la fila visual del ranking y crea su {@link ViewHolder} asociado.
+     *
+     * @param parent contenedor del RecyclerView.
+     * @param viewType tipo de vista solicitado por RecyclerView.
+     * @return holder listo para enlazar un {@link RankingItemDto}.
+     */
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -115,16 +138,34 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
         return new ViewHolder(view, onUserClickListener);
     }
 
+    /**
+     * Enlaza la fila visible con el elemento de ranking correspondiente.
+     *
+     * @param holder holder que se va a actualizar.
+     * @param position posición del elemento dentro de la lista interna.
+     */
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.bind(items.get(position));
     }
 
+    /**
+     * Indica cuántas filas debe mostrar actualmente el RecyclerView.
+     *
+     * @return tamaño actual de {@link #items}.
+     */
     @Override
     public int getItemCount() {
         return items.size();
     }
 
+    /**
+     * Resuelve el color del puesto cuando la posición no usa medalla dedicada.
+     *
+     * @param context contexto usado para resolver recursos de color.
+     * @param posicion puesto visible del usuario dentro del ranking.
+     * @return color final que debe aplicar la UI al texto de la posición.
+     */
     private static int resolvePositionColor(@NonNull Context context, int posicion) {
         if (posicion == 1) {
             return ContextCompat.getColor(context, R.color.ranking_position_gold);
@@ -138,6 +179,12 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
         return ContextCompat.getColor(context, R.color.ranking_position_default);
     }
 
+    /**
+     * Selecciona el fondo de medalla para los tres primeros puestos del ranking.
+     *
+     * @param posicion puesto visible del usuario.
+     * @return drawable de medalla o {@code 0} si la posición no tiene tratamiento especial.
+     */
     @DrawableRes
     private static int resolveMedalBackground(int posicion) {
         if (posicion == 1) {
@@ -152,6 +199,13 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
         return 0;
     }
 
+    /**
+     * Añade una query param de versión para invalidar la caché de la foto cuando cambia.
+     *
+     * @param photoUrl URL base de la foto de perfil.
+     * @param photoVersion versión devuelta por backend para esa imagen.
+     * @return URL final versionada o {@code null} si no hay foto utilizable.
+     */
     @Nullable
     private static String buildVersionedPhotoUrl(@Nullable String photoUrl, int photoVersion) {
         if (photoUrl == null || photoUrl.trim().isEmpty()) {
@@ -171,6 +225,12 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
         @Nullable
         private final OnUserClickListener onUserClickListener;
 
+        /**
+         * Crea un holder ligado a una fila individual del ranking.
+         *
+         * @param itemView vista raíz inflada para la fila.
+         * @param onUserClickListener callback opcional para pulsaciones sobre la fila.
+         */
         ViewHolder(@NonNull View itemView,
                    @Nullable OnUserClickListener onUserClickListener) {
             super(itemView);
@@ -182,6 +242,11 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
             tvPuntos = itemView.findViewById(R.id.tv_ranking_puntos);
         }
 
+        /**
+         * Vuelca en la fila todos los datos visibles del usuario, incluida la foto versionada.
+         *
+         * @param item elemento de ranking que debe representarse en pantalla.
+         */
         void bind(@NonNull RankingItemDto item) {
             Context context = itemView.getContext();
 

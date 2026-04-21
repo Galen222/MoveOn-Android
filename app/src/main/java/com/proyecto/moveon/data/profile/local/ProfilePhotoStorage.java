@@ -50,6 +50,13 @@ public final class ProfilePhotoStorage {
 
     private ProfilePhotoStorage() {}
 
+    /**
+     * Devuelve el directorio raíz donde la app guarda fotos de perfil locales.
+     *
+     * @param context contexto usado para resolver {@link Context#getFilesDir()}.
+     * @return directorio raíz garantizado en disco.
+     * @throws IOException si no se puede crear la jerarquía necesaria.
+     */
     @NonNull
     public static File getRootDir(@NonNull Context context) throws IOException {
         File root = new File(context.getFilesDir(), ROOT_DIR);
@@ -57,6 +64,14 @@ public final class ProfilePhotoStorage {
         return root;
     }
 
+    /**
+     * Devuelve el directorio aislado de una cuenta dentro del almacén local de fotos.
+     *
+     * @param context contexto usado para resolver el almacenamiento privado.
+     * @param accountKey clave lógica de la cuenta.
+     * @return directorio garantizado para esa cuenta.
+     * @throws IOException si no puede crearse el directorio.
+     */
     @NonNull
     public static File getAccountDir(@NonNull Context context, @NonNull String accountKey) throws IOException {
         File dir = new File(getRootDir(context), sanitize(accountKey));
@@ -64,6 +79,15 @@ public final class ProfilePhotoStorage {
         return dir;
     }
 
+    /**
+     * Copia una foto seleccionada por el usuario al slot temporal de la cuenta.
+     *
+     * @param context contexto usado para resolver el almacenamiento privado.
+     * @param accountKey clave lógica de la cuenta dueña de la foto.
+     * @param sourceFile fichero origen elegido por el usuario.
+     * @return ruta absoluta del archivo pendiente guardado localmente.
+     * @throws IOException si falla la copia al almacenamiento interno.
+     */
     @NonNull
     public static String savePendingPhoto(@NonNull Context context,
                                           @NonNull String accountKey,
@@ -74,6 +98,16 @@ public final class ProfilePhotoStorage {
         return dst.getAbsolutePath();
     }
 
+    /**
+     * Promueve la foto pendiente a foto actual versionada tras confirmar la subida o el merge remoto.
+     *
+     * @param context contexto usado para resolver el almacenamiento privado.
+     * @param accountKey clave lógica de la cuenta.
+     * @param pendingPath ruta absoluta de la foto pendiente.
+     * @param version versión remota de foto que se incorporará al nombre final.
+     * @return ruta absoluta del archivo promovido.
+     * @throws IOException si la foto pendiente no existe o no puede moverse/copiarse.
+     */
     @NonNull
     public static String promotePendingToCurrent(@NonNull Context context,
                                                  @NonNull String accountKey,
@@ -92,6 +126,16 @@ public final class ProfilePhotoStorage {
         return dst.getAbsolutePath();
     }
 
+    /**
+     * Descarga una foto remota validando host, esquema, tamaño y tipo MIME antes de persistirla.
+     *
+     * @param context contexto usado para resolver almacenamiento y, si procede, el bearer token.
+     * @param accountKey clave lógica de la cuenta propietaria.
+     * @param remoteUrl URL remota aprobada para la descarga.
+     * @param version versión remota usada para nombrar el archivo destino.
+     * @return ruta absoluta del archivo descargado.
+     * @throws IOException si la URL no es válida, el host no está permitido o la descarga falla.
+     */
     @NonNull
     public static String downloadRemotePhoto(@NonNull Context context,
                                              @NonNull String accountKey,
@@ -143,10 +187,21 @@ public final class ProfilePhotoStorage {
         }
     }
 
+    /**
+     * Comprueba si una ruta absoluta apunta a un archivo existente.
+     *
+     * @param path ruta a validar.
+     * @return {@code true} cuando la ruta no es nula y el archivo existe.
+     */
     public static boolean exists(@Nullable String path) {
         return path != null && new File(path).exists();
     }
 
+    /**
+     * Intenta borrar un archivo ignorando cualquier excepción de E/S.
+     *
+     * @param path ruta absoluta del archivo a borrar.
+     */
     public static void deleteFileSilently(@Nullable String path) {
         if (path == null) return;
         try {
@@ -155,6 +210,11 @@ public final class ProfilePhotoStorage {
         }
     }
 
+    /**
+     * Elimina por completo el almacén local de fotos de perfil.
+     *
+     * @param context contexto usado para localizar el directorio raíz.
+     */
     public static void deleteAll(@NonNull Context context) {
         try {
             deleteRecursively(getRootDir(context));
@@ -162,6 +222,11 @@ public final class ProfilePhotoStorage {
         }
     }
 
+    /**
+     * Borra recursivamente un archivo o directorio ignorando fallos individuales.
+     *
+     * @param file fichero o carpeta a eliminar.
+     */
     private static void deleteRecursively(@Nullable File file) {
         if (file == null || !file.exists()) return;
         if (file.isDirectory()) {
@@ -178,6 +243,12 @@ public final class ProfilePhotoStorage {
         }
     }
 
+    /**
+     * Elimina versiones antiguas de avatar manteniendo solo el archivo actual indicado.
+     *
+     * @param accountDir directorio de la cuenta.
+     * @param keepName nombre del archivo actual que debe conservarse.
+     */
     private static void deleteOtherCurrentFiles(@NonNull File accountDir, @NonNull String keepName) {
         File[] files = accountDir.listFiles();
         if (files == null) return;
@@ -192,6 +263,13 @@ public final class ProfilePhotoStorage {
         }
     }
 
+    /**
+     * Mueve un archivo intentando primero un rename y haciendo copia+borrado como fallback.
+     *
+     * @param src archivo origen.
+     * @param dst archivo destino.
+     * @throws IOException si el fallback de copia o borrado falla.
+     */
     private static void moveFile(@NonNull File src, @NonNull File dst) throws IOException {
         if (src.equals(dst)) return;
         if (!src.renameTo(dst)) {
@@ -200,6 +278,13 @@ public final class ProfilePhotoStorage {
         }
     }
 
+    /**
+     * Copia un archivo creando antes el directorio destino si es necesario.
+     *
+     * @param src archivo origen.
+     * @param dst archivo destino.
+     * @throws IOException si falla la creación del directorio o la copia.
+     */
     private static void copyFile(@NonNull File src, @NonNull File dst) throws IOException {
         File parent = dst.getParentFile();
         if (parent != null) {
@@ -211,6 +296,14 @@ public final class ProfilePhotoStorage {
         }
     }
 
+    /**
+     * Copia un stream limitando el total de bytes transferidos.
+     *
+     * @param in stream origen.
+     * @param out stream destino.
+     * @param maxBytes máximo permitido antes de abortar la operación.
+     * @throws IOException si se supera el límite o falla la copia.
+     */
     private static void copyWithLimit(@NonNull InputStream in,
                                       @NonNull OutputStream out,
                                       long maxBytes) throws IOException {
@@ -227,6 +320,14 @@ public final class ProfilePhotoStorage {
         out.flush();
     }
 
+    /**
+     * Valida que la URL remota use un esquema y un host permitidos para fotos de perfil.
+     *
+     * @param remoteUrl URL remota original.
+     * @param backendBase base del backend actual para permitir mismo origen autenticado.
+     * @return URL parseada y validada.
+     * @throws IOException si la URL no cumple las restricciones de seguridad.
+     */
     @NonNull
     private static HttpUrl validateRemoteUrl(@NonNull String remoteUrl,
                                              @Nullable HttpUrl backendBase) throws IOException {
@@ -260,6 +361,13 @@ public final class ProfilePhotoStorage {
         return url;
     }
 
+    /**
+     * Comprueba si el host remoto pertenece al backend actual o a la allowlist de Cloudinary.
+     *
+     * @param candidate URL candidata a descargar.
+     * @param backendBase base del backend actual.
+     * @return {@code true} cuando el host está explícitamente permitido.
+     */
     private static boolean isAllowedRemoteHost(@NonNull HttpUrl candidate,
                                                @Nullable HttpUrl backendBase) {
         if (backendBase != null && isSameOrigin(candidate, backendBase)) {
@@ -271,12 +379,26 @@ public final class ProfilePhotoStorage {
                 || host.endsWith("." + CLOUDINARY_ROOT_DOMAIN);
     }
 
+    /**
+     * Comprueba si dos URLs comparten esquema, host y puerto.
+     *
+     * @param a primera URL.
+     * @param b segunda URL.
+     * @return {@code true} cuando ambas pertenecen al mismo origen.
+     */
     private static boolean isSameOrigin(@NonNull HttpUrl a, @NonNull HttpUrl b) {
         return a.scheme().equalsIgnoreCase(b.scheme())
                 && a.host().equalsIgnoreCase(b.host())
                 && a.port() == b.port();
     }
 
+    /**
+     * Resuelve una extensión de archivo a partir del tipo MIME o, en último término, de la URL.
+     *
+     * @param contentType tipo MIME devuelto por el servidor.
+     * @param urlPath path de la URL remota como fallback.
+     * @return extensión segura con punto inicial.
+     */
     @NonNull
     private static String extensionFromContentType(@NonNull String contentType, @Nullable String urlPath) {
         String lower = contentType.toLowerCase(Locale.ROOT);
@@ -287,11 +409,23 @@ public final class ProfilePhotoStorage {
         return safeExtension(urlPath);
     }
 
+    /**
+     * Normaliza la clave de cuenta para usarla como nombre de directorio.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @return identificador seguro para sistema de archivos.
+     */
     @NonNull
     private static String sanitize(@NonNull String accountKey) {
         return accountKey.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9._-]", "_");
     }
 
+    /**
+     * Obtiene una extensión razonable a partir de un nombre o path, aplicando un fallback seguro.
+     *
+     * @param value nombre, path o URL que puede contener extensión.
+     * @return extensión corta permitida o {@code .jpg} como valor por defecto.
+     */
     @NonNull
     private static String safeExtension(@Nullable String value) {
         if (value == null) return ".jpg";

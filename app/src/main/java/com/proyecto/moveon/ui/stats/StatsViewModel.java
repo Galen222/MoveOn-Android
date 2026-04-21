@@ -72,6 +72,11 @@ public class StatsViewModel extends AndroidViewModel {
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
+    /**
+     * Crea el ViewModel y conecta las fuentes reactivas de actividades y preferencias.
+     *
+     * @param application aplicación usada para resolver repositorios y sesión activa.
+     */
     public StatsViewModel(@NonNull Application application) {
         super(application);
         ServiceLocator locator = ServiceLocator.getInstance(application);
@@ -85,21 +90,41 @@ public class StatsViewModel extends AndroidViewModel {
 
     // ── Exposición de LiveData ────────────────────────────────────────────────
 
+    /**
+     * Expone el resumen estadístico recalculado con las últimas actividades y objetivos.
+     *
+     * @return {@link LiveData} con el {@link UiState} del {@link StatsResumen} actual.
+     */
     @NonNull
     public LiveData<UiState<StatsResumen>> getStatsState() {
         return statsState;
     }
 
+    /**
+     * Expone la lista reducida usada como vista previa del historial reciente.
+     *
+     * @return {@link LiveData} con un máximo de {@value #PREVIEW_LIMIT} actividades visibles.
+     */
     @NonNull
     public LiveData<List<ActividadItem>> getActividades() {
         return actividades;
     }
 
+    /**
+     * Expone el historial completo para componentes como {@link TodasActividadesBottomSheet}.
+     *
+     * @return {@link LiveData} con la lista íntegra de actividades locales.
+     */
     @NonNull
     public LiveData<List<ActividadItem>> getAllActividades() {
         return allActividades;
     }
 
+    /**
+     * Expone el resultado puntual de una operación de borrado.
+     *
+     * @return flujo de {@link Event} para mostrar feedback de eliminación una sola vez.
+     */
     @NonNull
     public LiveData<Event<UiState<String>>> getDeleteEvent() {
         return deleteEvent;
@@ -219,6 +244,9 @@ public class StatsViewModel extends AndroidViewModel {
 
     // ── Ciclo de vida ─────────────────────────────────────────────────────────
 
+    /**
+     * Desconecta las fuentes del {@link MediatorLiveData} y cancela llamadas pendientes del repositorio.
+     */
     @Override
     protected void onCleared() {
         if (actividadesSource != null) statsState.removeSource(actividadesSource);

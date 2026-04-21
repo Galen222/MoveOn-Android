@@ -80,6 +80,11 @@ public final class ActivityRepository {
     private final ActivitySyncManager syncManager;
     private final ExecutorService io = MoveOnExecutors.io();
 
+    /**
+     * Crea el repositorio de actividades resolviendo sesión, BD local y clientes remotos.
+     *
+     * @param context contexto usado para obtener singletons de aplicación.
+     */
     public ActivityRepository(@NonNull Context context) {
         appContext = context.getApplicationContext();
         sessionManager = SecureSessionManager.getInstance(appContext);
@@ -90,6 +95,12 @@ public final class ActivityRepository {
         syncManager = new ActivitySyncManager(appContext, local, remote);
     }
 
+    /**
+     * Guarda una actividad primero en local y deja su sincronización remota en segundo plano.
+     *
+     * @param request payload con los datos recogidos por el tracking.
+     * @param callback receptor del resultado inmediato del guardado local.
+     */
     public void guardarActividad(
             @NonNull GuardarActividadRequestDto request,
             @NonNull Callback<GuardarActividadResponseDto> callback) {
@@ -189,6 +200,11 @@ public final class ActivityRepository {
         );
     }
 
+    /**
+     * Recupera el bloque remoto de información básica del perfil asociado a la sesión.
+     *
+     * @param callback receptor del resultado parseado a {@link ProfileInfoDto}.
+     */
     public void obtenerPerfil(@NonNull Callback<ProfileInfoDto> callback) {
         apiClient.get(
                 ENDPOINT_PERFIL_INFO,
@@ -200,6 +216,12 @@ public final class ActivityRepository {
         );
     }
 
+    /**
+     * Observa las actividades visibles de una cuenta convirtiendo entidades locales a dominio.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @return flujo observable de {@link ActividadItem} listo para la UI.
+     */
     public LiveData<List<ActividadItem>> observeActividades(@NonNull String accountKey) {
         MediatorLiveData<List<ActividadItem>> result = new MediatorLiveData<>();
         result.addSource(local.observeVisible(accountKey), list -> {
@@ -214,6 +236,12 @@ public final class ActivityRepository {
         return result;
     }
 
+    /**
+     * Fuerza una descarga remota de actividades y fusiona el snapshot en la base local.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @param callback callback opcional notificado al terminar con error o éxito.
+     */
     public void refreshFromServer(@NonNull String accountKey, @Nullable SyncCallback callback) {
         remote.fetchAllActividades(result -> {
             if (!result.isSuccess() || result.data == null) {
@@ -232,6 +260,12 @@ public final class ActivityRepository {
         });
     }
 
+    /**
+     * Elimina una actividad ya sincronizada tanto en backend como en almacenamiento local.
+     *
+     * @param localId identificador local de la actividad a borrar.
+     * @param callback receptor del resultado final de borrado.
+     */
     public void borrarActividad(
             @NonNull String localId,
             @NonNull Callback<BorrarActividadResponseDto> callback) {
@@ -276,11 +310,20 @@ public final class ActivityRepository {
         });
     }
 
+    /**
+     * Ejecuta inmediatamente la sincronización pendiente de actividades.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @return resumen del ciclo de sincronización offline.
+     */
     @NonNull
     public SyncResult syncPendingNow(@NonNull String accountKey) {
         return syncManager.syncPendingNow(accountKey);
     }
 
+    /**
+     * Programa un {@link SyncActividadesWorker} único para vaciar la cola local cuando haya red.
+     */
     public void enqueueSync() {
         Constraints constraints = new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -295,11 +338,20 @@ public final class ActivityRepository {
                 .enqueueUniqueWork(UNIQUE_SYNC_WORK_NAME, ExistingWorkPolicy.KEEP, request);
     }
 
+    /**
+     * Cancela las llamadas remotas pendientes del repositorio.
+     */
     public void cancelAll() {
         remote.cancelAll();
         apiClient.cancelAll();
     }
 
+    /**
+     * Convierte una entidad persistida al modelo de dominio usado por la UI.
+     *
+     * @param entity entidad almacenada en Room.
+     * @return instancia de {@link ActividadItem} con el mismo estado de sincronización.
+     */
     @NonNull
     private ActividadItem mapEntityToDomain(@NonNull ActividadEntity entity) {
         return new ActividadItem(
@@ -328,6 +380,12 @@ public final class ActivityRepository {
         );
     }
 
+    /**
+     * Valida reglas de negocio y coherencia temporal del payload antes de persistirlo localmente.
+     *
+     * @param request payload de guardado recibido desde tracking.
+     * @return error de validación o {@code null} cuando el request es consistente.
+     */
     @Nullable
     private ApiError validateRequest(@NonNull GuardarActividadRequestDto request) {
         if (!VALID_TIPOS.contains(request.tipo)) {
@@ -415,14 +473,29 @@ public final class ActivityRepository {
             this.completedPendingWork = completedPendingWork;
         }
 
+        /**
+         * Devuelve un resultado correcto cuando el ciclo no encontró trabajo pendiente.
+         *
+         * @return resultado sin reintento y sin trabajo completado.
+         */
         public static SyncResult successNoop() {
             return new SyncResult(false, false);
         }
 
+        /**
+         * Devuelve un resultado correcto cuando la cola pendiente quedó completada.
+         *
+         * @return resultado sin reintento y con trabajo completado.
+         */
         public static SyncResult successCompleted() {
             return new SyncResult(false, true);
         }
 
+        /**
+         * Devuelve un resultado que solicita reintentar la sincronización más tarde.
+         *
+         * @return resultado marcado para reintento.
+         */
         public static SyncResult retry() {
             return new SyncResult(true, false);
         }

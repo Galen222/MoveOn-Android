@@ -80,11 +80,21 @@ public class MainActivity extends AppCompatActivity {
         return intent;
     }
 
+    /**
+     * Envuelve el contexto base para aplicar el idioma elegido antes de inflar recursos.
+     *
+     * @param newBase contexto original.
+     */
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(AppLanguageManager.wrapContext(newBase));
     }
 
+    /**
+     * Inicializa la activity principal, sus fragmentos y los observadores globales de estado.
+     *
+     * @param savedInstanceState estado previo de la activity.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         pendingUiTransitionSplash = AppSettingsManager.isUiTransitionSplashRequested(this);
@@ -209,6 +219,9 @@ public class MainActivity extends AppCompatActivity {
         viewModel.ensureSessionFresh();
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            /**
+             * Devuelve al usuario a Inicio antes de delegar el comportamiento normal de retroceso.
+             */
             @Override
             public void handleOnBackPressed() {
                 if (selectedItemId != R.id.nav_inicio) {
@@ -256,6 +269,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Recibe intents nuevos cuando la activity ya estaba viva en la tarea actual.
+     *
+     * @param intent intent entrante.
+     */
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -263,6 +281,9 @@ public class MainActivity extends AppCompatActivity {
         handleLaunchIntent(intent);
     }
 
+    /**
+     * Muestra inmediatamente el overlay de transición visual usado en recreaciones de UI.
+     */
     public void showUiTransitionSplashNow() {
         if (binding == null) return;
         binding.transitionSplashOverlay.animate().cancel();
@@ -312,6 +333,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Resuelve la instancia actual del fragment de inicio, reutilizando la referencia o buscándola por tag.
+     *
+     * @return fragment de inicio activo o {@code null} si todavía no está disponible.
+     */
     @Nullable
     private InicioFragment resolveInicioFragment() {
         if (inicioFragment != null) {
@@ -324,6 +350,9 @@ public class MainActivity extends AppCompatActivity {
         return inicioFragment;
     }
 
+    /**
+     * Oculta con fade el overlay de transición una vez que la UI principal está lista.
+     */
     private void hideUiTransitionSplashWhenReady() {
         keepSystemSplashVisible = false;
         if (binding == null) return;
@@ -339,6 +368,11 @@ public class MainActivity extends AppCompatActivity {
                 .start();
     }
 
+    /**
+     * Cambia de pestaña reutilizando los fragmentos existentes y ajustando su lifecycle máximo.
+     *
+     * @param itemId id del ítem seleccionado en la bottom navigation.
+     */
     private void switchTo(int itemId) {
         Fragment target;
 
@@ -389,6 +423,13 @@ public class MainActivity extends AppCompatActivity {
         selectedItemId = itemId;
     }
 
+    /**
+     * Añade un fragmento a la transacción si todavía no estaba añadido al contenedor.
+     *
+     * @param tx transacción en curso.
+     * @param f fragmento a asegurar.
+     * @param tag tag estable asociado al fragmento.
+     */
     private void ensureAdded(@NonNull FragmentTransaction tx, Fragment f, String tag) {
         if (f == null) return;
         if (!f.isAdded()) {
@@ -397,6 +438,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Revalida el estado de sesión cada vez que la activity vuelve al primer plano.
+     */
     @Override
     protected void onResume() {
         super.onResume();
@@ -408,16 +452,27 @@ public class MainActivity extends AppCompatActivity {
         viewModel.ensureSessionFresh();
     }
 
+    /**
+     * Guarda la pestaña seleccionada para restaurarla tras recreaciones.
+     *
+     * @param outState bundle donde persistir el estado.
+     */
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(KEY_SELECTED_ITEM, selectedItemId);
     }
 
+    /**
+     * Navega a {@link LoginActivity} limpiando la pila actual de la tarea.
+     */
     private void goToLoginAndFinish() {
         NavigationUtils.goToActivityAndClearTask(this, LoginActivity.class);
     }
 
+    /**
+     * Libera recursos de la activity y detiene el servicio de tracking si la app se está cerrando.
+     */
     @Override
     protected void onDestroy() {
         if (isFinishing() && !isChangingConfigurations()) {

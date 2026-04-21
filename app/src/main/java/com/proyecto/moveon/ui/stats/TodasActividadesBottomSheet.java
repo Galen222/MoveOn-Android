@@ -27,6 +27,11 @@ public class TodasActividadesBottomSheet extends BottomSheetDialogFragment {
 
     public static final String TAG = "todas_actividades_sheet";
 
+    /**
+     * Crea una nueva instancia del bottom sheet del historial completo.
+     *
+     * @return fragment listo para mostrarse desde {@link StatsFragment}.
+     */
     @NonNull
     public static TodasActividadesBottomSheet newInstance() {
         return new TodasActividadesBottomSheet();
@@ -40,6 +45,12 @@ public class TodasActividadesBottomSheet extends BottomSheetDialogFragment {
         return inflater.inflate(R.layout.bottom_sheet_todas_actividades, container, false);
     }
 
+    /**
+     * Conecta el RecyclerView al {@link StatsViewModel} compartido con el fragment padre.
+     *
+     * @param view vista raíz ya inflada del bottom sheet.
+     * @param savedInstanceState estado previamente guardado, si existe.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -62,6 +73,9 @@ public class TodasActividadesBottomSheet extends BottomSheetDialogFragment {
         viewModel.getAllActividades().observe(getViewLifecycleOwner(), adapter::submitList);
     }
 
+    /**
+     * Fuerza la apertura expandida del bottom sheet en cuanto entra en pantalla.
+     */
     @Override
     public void onStart() {
         super.onStart();
@@ -77,6 +91,9 @@ public class TodasActividadesBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
+    /**
+     * Libera el adapter del RecyclerView para evitar fugas de vistas al destruir el sheet.
+     */
     @Override
     public void onDestroyView() {
         View view = getView();

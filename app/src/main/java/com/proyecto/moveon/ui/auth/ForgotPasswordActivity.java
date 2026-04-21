@@ -44,11 +44,23 @@ public class ForgotPasswordActivity extends AppCompatActivity {
      */
     private boolean isStepTwoVisible = false;
 
+    /**
+     * Aplica el idioma persistido antes de que Android cree la jerarquía visual.
+     *
+     * @param newBase contexto base entregado por el framework.
+     */
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(AppLanguageManager.wrapContext(newBase));
     }
 
+    /**
+     * Inicializa la pantalla, conecta el {@link AuthViewModel} y restaura el paso activo
+     * del flujo de recuperación si la activity se recrea.
+     *
+     * @param savedInstanceState estado previo restaurado por Android, o {@code null} si es
+     *                           la primera creación.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ThemeManager.applySavedTheme(this);
@@ -87,6 +99,10 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     // Listeners
     // -------------------------------------------------------------------------
 
+    /**
+     * Registra las interacciones de la UI para limpiar errores y disparar la acción adecuada
+     * según el paso visible del flujo.
+     */
     private void setupListeners() {
         binding.etEmail.setOnFocusChangeListener((v, f) -> {
             if (f) binding.tilEmail.setError(null);
@@ -118,6 +134,10 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     // Observadores del ViewModel
     // -------------------------------------------------------------------------
 
+    /**
+     * Observa los estados expuestos por {@link AuthViewModel} para reflejar carga, errores y
+     * transición entre el envío del código y el cambio efectivo de contraseña.
+     */
     private void observeViewModel() {
         // Paso 1: respuesta de solicitar código
         viewModel.getForgotState().observe(this, state -> {
@@ -185,6 +205,10 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     // Validación y envío — Paso 1
     // -------------------------------------------------------------------------
 
+    /**
+     * Valida el email introducido y, si es correcto, solicita al backend el código de
+     * recuperación que habilita el segundo paso del flujo.
+     */
     private void attemptSolicitarCodigo() {
         binding.tilEmail.setError(null);
 
@@ -205,6 +229,10 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     // Validación y envío — Paso 2
     // -------------------------------------------------------------------------
 
+    /**
+     * Valida código y contraseñas del segundo paso antes de delegar en el
+     * {@link AuthViewModel} el reseteo definitivo de la contraseña.
+     */
     private void attemptResetPassword() {
         binding.tilCodigo.setError(null);
         binding.tilPasswordNueva.setError(null);
@@ -248,11 +276,25 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     // Aplicar errores de campo desde el backend
     // -------------------------------------------------------------------------
 
+    /**
+     * Traslada a la UI los errores de campo devueltos por el backend durante la solicitud del
+     * código de recuperación.
+     *
+     * @param err error normalizado desde la capa remota.
+     */
     private void applyBackendErrorsPaso1(ApiError err) {
         String emailMsg = err.firstFieldMessage("email", "correo");
         if (StringUtils.hasText(emailMsg)) binding.tilEmail.setError(emailMsg);
     }
 
+    /**
+     * Pinta en la UI los errores de validación asociados al cambio de contraseña.
+     *
+     * <p>Los errores ligados al email se muestran como snackbar porque el campo ya no está
+     * visible en el segundo paso.</p>
+     *
+     * @param err error normalizado desde la capa remota.
+     */
     private void applyBackendErrorsPaso2(ApiError err) {
         String codigoMsg = err.firstFieldMessage("codigo");
         String passwordMsg = err.firstFieldMessage("password");
@@ -304,6 +346,11 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     // Control de estado de carga
     // -------------------------------------------------------------------------
 
+    /**
+     * Bloquea o reactiva los controles del primer paso mientras se tramita el envío del código.
+     *
+     * @param loading {@code true} para mostrar el estado de envío y deshabilitar la edición.
+     */
     private void setLoadingPaso1(boolean loading) {
         binding.btnAccion.setEnabled(!loading);
         binding.btnVolverLogin.setEnabled(!loading);
@@ -313,6 +360,11 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                 : getString(R.string.forgot_btn_enviar_codigo));
     }
 
+    /**
+     * Bloquea o reactiva los controles del segundo paso mientras se confirma el nuevo password.
+     *
+     * @param loading {@code true} para mostrar el estado de cambio y evitar dobles envíos.
+     */
     private void setLoadingPaso2(boolean loading) {
         binding.btnAccion.setEnabled(!loading);
         binding.btnVolverLogin.setEnabled(!loading);
@@ -326,6 +378,12 @@ public class ForgotPasswordActivity extends AppCompatActivity {
 
     // -------------------------------------------------------------------------
 
+    /**
+     * Conserva el email confirmado y el paso actualmente visible para que el flujo pueda
+     * reconstruirse tras recreaciones del sistema.
+     *
+     * @param outState bundle donde se persiste el estado transitorio de la pantalla.
+     */
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -333,6 +391,9 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         outState.putBoolean(STATE_IS_STEP_TWO, isStepTwoVisible);
     }
 
+    /**
+     * Libera la referencia al binding cuando la activity se destruye definitivamente.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();

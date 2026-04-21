@@ -38,6 +38,11 @@ public class AuthViewModel extends AndroidViewModel {
     /** Paso 2 de recuperación: validar código y establecer nueva contraseña. */
     private final MutableLiveData<UiState<String>> resetState  = new MutableLiveData<>();
 
+    /**
+     * Crea el ViewModel resolviendo sus dependencias de autenticación y sesión.
+     *
+     * @param app aplicación usada para obtener singletons y recursos localizados.
+     */
     public AuthViewModel(@NonNull Application app) {
         super(app);
         // La creación centralizada vía ServiceLocator mantiene las dependencias alineadas.
@@ -48,22 +53,64 @@ public class AuthViewModel extends AndroidViewModel {
 
     // ── Exposición de LiveData ────────────────────────────────────────────────
 
+    /**
+     * Expone el estado del login clásico o social.
+     *
+     * @return flujo observable con valores de {@link UiState} sobre {@link LoginSession}.
+     */
     public LiveData<UiState<LoginSession>> getLoginState()    { return loginState; }
+    /**
+     * Expone el estado del registro.
+     *
+     * @return flujo observable con mensajes del resultado de registro.
+     */
     public LiveData<UiState<String>>       getRegisterState() { return registerState; }
+    /**
+     * Expone el estado del paso de solicitud de recuperación.
+     *
+     * @return flujo observable asociado a {@link #solicitarRecuperacion(String)}.
+     */
     public LiveData<UiState<String>>       getForgotState()   { return forgotState; }
+    /**
+     * Expone el estado del reseteo final de contraseña.
+     *
+     * @return flujo observable asociado a {@link #resetearPassword(String, String, String)}.
+     */
     public LiveData<UiState<String>>       getResetState()    { return resetState; }
 
     // ── Reset de estados ─────────────────────────────────────────────────────
 
+    /**
+     * Limpia el último estado publicado de login.
+     */
     public void resetLoginState()    { loginState.setValue(null); }
+    /**
+     * Limpia el último estado publicado de registro.
+     */
     public void resetRegisterState() { registerState.setValue(null); }
+    /**
+     * Limpia el último estado publicado del envío de código de recuperación.
+     */
     public void resetForgotState()   { forgotState.setValue(null); }
+    /**
+     * Limpia el último estado publicado del cambio de contraseña.
+     */
     public void resetResetState()    { resetState.setValue(null); }
 
     // ── Sesión ───────────────────────────────────────────────────────────────
 
+    /**
+     * Indica si existe una sesión autenticada utilizable.
+     *
+     * @return {@code true} cuando {@link SecureSessionManager} conserva credenciales válidas.
+     */
     public boolean isLoggedIn() { return sessionManager.isLoggedIn(); }
 
+    /**
+     * Recupera el identificador recordado para precargar el formulario de acceso.
+     *
+     * @return email o username persistido, o {@code null} si no hay dato recordado.
+     */
     public String getRememberedIdentifier() { return sessionManager.getRememberedIdentifier(); }
 
     /**
@@ -78,6 +125,12 @@ public class AuthViewModel extends AndroidViewModel {
                 && AppSettingsManager.isGoogleSilentSignInEnabled(getApplication());
     }
 
+    /**
+     * Guarda o elimina el identificador recordado según la preferencia del usuario.
+     *
+     * @param identifier valor introducido en el formulario de acceso.
+     * @param remember {@code true} para persistirlo y {@code false} para limpiarlo.
+     */
     public void saveRememberedIdentifier(String identifier, boolean remember) {
         if (remember) sessionManager.saveRememberedIdentifier(identifier);
         else          sessionManager.saveRememberedIdentifier(null);
@@ -85,6 +138,12 @@ public class AuthViewModel extends AndroidViewModel {
 
     // ── Login ────────────────────────────────────────────────────────────────
 
+    /**
+     * Ejecuta el login clásico con identificador y contraseña.
+     *
+     * @param identificador email o nombre de usuario enviado al backend.
+     * @param password contraseña en claro introducida por el usuario.
+     */
     public void login(String identificador, String password) {
         loginState.setValue(UiState.loading());
 
@@ -97,6 +156,12 @@ public class AuthViewModel extends AndroidViewModel {
         });
     }
 
+    /**
+     * Ejecuta el login social intercambiando el token del proveedor por una sesión propia.
+     *
+     * @param provider identificador del proveedor social, por ejemplo {@link SocialAuthProvider#GOOGLE}.
+     * @param token token emitido por el proveedor externo.
+     */
     public void loginWithSocial(String provider, String token) {
         loginState.setValue(UiState.loading());
 
@@ -114,16 +179,32 @@ public class AuthViewModel extends AndroidViewModel {
     // El flujo se divide en métodos con nombre descriptivo para mantener
     // legible la secuencia register → login → persistencia de sesión.
 
+    /**
+     * Lanza el registro clásico y, si tiene éxito, encadena automáticamente el login.
+     *
+     * @param input datos de alta necesarios para el registro.
+     */
     public void registerAndAutoLogin(RegisterInput input) {
         registerState.setValue(UiState.loading());
         authRepository.register(input, regResult -> handleRegisterResult(input, regResult));
     }
 
+    /**
+     * Completa el registro social con los datos ya validados por el proveedor.
+     *
+     * @param input información necesaria para finalizar el alta social.
+     */
     public void registerWithSocial(SocialRegisterInput input) {
         registerState.setValue(UiState.loading());
         authRepository.registerSocial(input, result -> handleSocialRegisterResult(result));
     }
 
+    /**
+     * Procesa la respuesta del registro clásico y decide si debe lanzar el auto-login.
+     *
+     * @param input datos originales del registro, reutilizados para el login posterior.
+     * @param regResult resultado devuelto por {@link AuthRepository#register(RegisterInput, AuthRepository.Callback)}.
+     */
     private void handleRegisterResult(RegisterInput input, ApiResult<String> regResult) {
         if (!regResult.isSuccess()) {
             registerState.postValue(UiState.error(errorOrDefault(regResult)));
@@ -139,6 +220,12 @@ public class AuthViewModel extends AndroidViewModel {
                 loginResult -> handleAutoLoginResult(msg, loginResult));
     }
 
+    /**
+     * Completa el flujo registro → login persistiendo la sesión o publicando el error final.
+     *
+     * @param registerMsg mensaje de éxito del registro que se conserva para la UI.
+     * @param loginResult resultado del login lanzado tras registrar al usuario.
+     */
     private void handleAutoLoginResult(String registerMsg, ApiResult<LoginSession> loginResult) {
         if (loginResult.isSuccess() && loginResult.data != null) {
             LoginSession s = loginResult.data;
@@ -153,6 +240,11 @@ public class AuthViewModel extends AndroidViewModel {
         }
     }
 
+    /**
+     * Procesa el resultado final del registro social persistiendo la sesión cuando procede.
+     *
+     * @param result resultado devuelto por el backend con la sesión creada.
+     */
     private void handleSocialRegisterResult(@NonNull ApiResult<LoginSession> result) {
         if (result.isSuccess() && result.data != null) {
             LoginSession s = result.data;
@@ -212,6 +304,12 @@ public class AuthViewModel extends AndroidViewModel {
 
     // Centraliza la selección entre el error devuelto por la API y el fallback genérico.
 
+    /**
+     * Obtiene el error real del resultado o fabrica un fallback genérico localizado.
+     *
+     * @param result resultado cuyo error se quiere normalizar.
+     * @return error efectivo listo para publicarse en la UI.
+     */
     @NonNull
     private ApiError errorOrDefault(@NonNull ApiResult<?> result) {
         return result.error != null
@@ -219,6 +317,13 @@ public class AuthViewModel extends AndroidViewModel {
                 : ApiError.local(getString(R.string.vm_error_generico));
     }
 
+    /**
+     * Persiste la sesión recibida y publica el estado de éxito sobre el destino indicado.
+     *
+     * @param result resultado que contiene la sesión autenticada.
+     * @param target LiveData donde se publicará el éxito o el error de respuesta inválida.
+     * @param authProvider proveedor usado en el login, o {@code null} para login clásico.
+     */
     private void handleLoginSuccess(@NonNull ApiResult<LoginSession> result,
                                     @NonNull MutableLiveData<UiState<LoginSession>> target,
                                     @Nullable String authProvider) {
@@ -232,6 +337,13 @@ public class AuthViewModel extends AndroidViewModel {
         }
     }
 
+    /**
+     * Resuelve un recurso string usando el idioma efectivo de la aplicación.
+     *
+     * @param resId identificador del recurso.
+     * @param args argumentos opcionales de formateo.
+     * @return cadena localizada resuelta con {@link AppLanguageManager}.
+     */
     @NonNull
     private String getString(int resId, Object... args) {
         if (args.length == 0) return AppLanguageManager.getString(getApplication(), resId);
@@ -240,6 +352,9 @@ public class AuthViewModel extends AndroidViewModel {
 
     // ────────────────────────────────────────────────────────────────────────
 
+    /**
+     * Cancela peticiones en curso antes de liberar el ViewModel.
+     */
     @Override
     protected void onCleared() {
         authRepository.cancelAll();

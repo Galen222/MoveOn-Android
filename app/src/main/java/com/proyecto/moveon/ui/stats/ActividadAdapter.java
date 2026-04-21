@@ -42,11 +42,21 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
 
     /** Callback para propagar la acción de borrado al fragmento/pantalla contenedora. */
     public interface OnDeleteClickListener {
+        /**
+         * Propaga al contenedor la petición de borrar una actividad concreta.
+         *
+         * @param item actividad sobre la que el usuario pulsó borrar.
+         */
         void onDeleteClick(@NonNull ActividadItem item);
     }
 
     /** Callback para propagar la acción de compartir/ver ruta al contenedor. */
     public interface OnShareClickListener {
+        /**
+         * Propaga al contenedor la petición de compartir o previsualizar la ruta de una actividad.
+         *
+         * @param item actividad cuya ruta se quiere compartir.
+         */
         void onShareClick(@NonNull ActividadItem item);
     }
 
@@ -58,11 +68,25 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
      */
     private static final DiffUtil.ItemCallback<ActividadItem> DIFF_CALLBACK =
             new DiffUtil.ItemCallback<>() {
+                /**
+                 * Decide si dos filas representan la misma actividad usando el {@code localId} estable.
+                 *
+                 * @param a elemento antiguo del adapter.
+                 * @param b elemento nuevo del adapter.
+                 * @return {@code true} si ambos apuntan a la misma actividad lógica.
+                 */
                 @Override
                 public boolean areItemsTheSame(@NonNull ActividadItem a, @NonNull ActividadItem b) {
                     return a.localId.equals(b.localId);
                 }
 
+                /**
+                 * Comprueba si han cambiado los campos que alteran el render de la tarjeta o sus acciones.
+                 *
+                 * @param a elemento antiguo del adapter.
+                 * @param b elemento nuevo del adapter.
+                 * @return {@code true} si la fila puede reutilizarse sin rebinding visible.
+                 */
                 @Override
                 public boolean areContentsTheSame(@NonNull ActividadItem a, @NonNull ActividadItem b) {
                     return a.localId.equals(b.localId)
@@ -89,6 +113,12 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
     /** Conjunto de {@code localId} cuya tarjeta está actualmente expandida. */
     private final Set<String> expandedIds = new HashSet<>();
 
+    /**
+     * Crea el adapter del historial con los callbacks que ejecutará cada acción de la fila.
+     *
+     * @param deleteListener receptor de la acción de borrado.
+     * @param shareListener receptor de la acción de compartir ruta.
+     */
     public ActividadAdapter(@NonNull OnDeleteClickListener deleteListener,
                             @NonNull OnShareClickListener shareListener) {
         super(DIFF_CALLBACK);
@@ -96,6 +126,13 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
         this.shareListener = shareListener;
     }
 
+    /**
+     * Infla la tarjeta visual de una actividad del historial.
+     *
+     * @param parent RecyclerView que contendrá la fila.
+     * @param viewType tipo de vista solicitado por el adapter.
+     * @return {@link ViewHolder} listo para enlazar una actividad.
+     */
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -104,6 +141,12 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
         return new ViewHolder(binding);
     }
 
+    /**
+     * Enlaza la actividad situada en la posición indicada con la vista reciclada correspondiente.
+     *
+     * @param holder holder que recibirá los datos.
+     * @param position posición del elemento dentro de la lista actual.
+     */
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.bind(getItem(position));
@@ -114,6 +157,11 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
 
         private final ItemActividadBinding binding;
 
+        /**
+         * Crea el holder de una tarjeta del historial y conserva su binding para rebinding posterior.
+         *
+         * @param binding binding ya inflado de {@link ItemActividadBinding}.
+         */
         ViewHolder(@NonNull ItemActividadBinding binding) {
             super(binding.getRoot());
             this.binding = binding;

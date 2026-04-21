@@ -90,6 +90,12 @@ public class AuthRepository extends BaseRepository {
                 callback.onResult(ApiResult.success(AuthMapper.toDomain(body)));
             }
 
+            /**
+             * Convierte un fallo de transporte en {@link ApiError}, ignorando cancelaciones explícitas del repositorio.
+             *
+             * @param c llamada Retrofit que produjo el error.
+             * @param t causa del fallo de red o serialización.
+             */
             @Override
             public void onFailure(@NonNull Call<LoginResponseDto> c, @NonNull Throwable t) {
                 untrackCall(call);
@@ -133,6 +139,12 @@ public class AuthRepository extends BaseRepository {
                 callback.onResult(ApiResult.success(AuthMapper.toDomain(body)));
             }
 
+            /**
+             * Convierte un fallo de transporte en {@link ApiError}, ignorando cancelaciones explícitas del repositorio.
+             *
+             * @param c llamada Retrofit que produjo el error.
+             * @param t causa del fallo de red o serialización.
+             */
             @Override
             public void onFailure(@NonNull Call<LoginResponseDto> c, @NonNull Throwable t) {
                 untrackCall(call);
@@ -175,6 +187,12 @@ public class AuthRepository extends BaseRepository {
                 callback.onResult(ApiResult.success(msg));
             }
 
+            /**
+             * Convierte un fallo de transporte en {@link ApiError}, ignorando cancelaciones explícitas del repositorio.
+             *
+             * @param c llamada Retrofit que produjo el error.
+             * @param t causa del fallo de red o serialización.
+             */
             @Override
             public void onFailure(@NonNull Call<RegisterResponseDto> c, @NonNull Throwable t) {
                 untrackCall(call);
@@ -217,6 +235,12 @@ public class AuthRepository extends BaseRepository {
                 callback.onResult(ApiResult.success(AuthMapper.toDomain(body)));
             }
 
+            /**
+             * Convierte un fallo de transporte en {@link ApiError}, ignorando cancelaciones explícitas del repositorio.
+             *
+             * @param c llamada Retrofit que produjo el error.
+             * @param t causa del fallo de red o serialización.
+             */
             @Override
             public void onFailure(@NonNull Call<LoginResponseDto> c, @NonNull Throwable t) {
                 untrackCall(call);
@@ -261,6 +285,12 @@ public class AuthRepository extends BaseRepository {
                 callback.onResult(ApiResult.success(AuthMapper.toDomain(body)));
             }
 
+            /**
+             * Convierte un fallo de transporte en {@link ApiError}, ignorando cancelaciones explícitas del repositorio.
+             *
+             * @param c llamada Retrofit que produjo el error.
+             * @param t causa del fallo de red o serialización.
+             */
             @Override
             public void onFailure(@NonNull Call<LoginResponseDto> c, @NonNull Throwable t) {
                 untrackCall(call);
@@ -303,6 +333,12 @@ public class AuthRepository extends BaseRepository {
                 callback.onResult(ApiResult.success(msg));
             }
 
+            /**
+             * Convierte un fallo de transporte en {@link ApiError}, ignorando cancelaciones explícitas del repositorio.
+             *
+             * @param c llamada Retrofit que produjo el error.
+             * @param t causa del fallo de red o serialización.
+             */
             @Override
             public void onFailure(@NonNull Call<MessageResponseDto> c, @NonNull Throwable t) {
                 untrackCall(call);
@@ -348,6 +384,12 @@ public class AuthRepository extends BaseRepository {
                 callback.onResult(ApiResult.success(msg));
             }
 
+            /**
+             * Convierte un fallo de transporte en {@link ApiError}, ignorando cancelaciones explícitas del repositorio.
+             *
+             * @param c llamada Retrofit que produjo el error.
+             * @param t causa del fallo de red o serialización.
+             */
             @Override
             public void onFailure(@NonNull Call<MessageResponseDto> c, @NonNull Throwable t) {
                 untrackCall(call);
@@ -395,6 +437,12 @@ public class AuthRepository extends BaseRepository {
                 callback.onResult(ApiResult.success(msg));
             }
 
+            /**
+             * Convierte un fallo de transporte en {@link ApiError}, ignorando cancelaciones explícitas del repositorio.
+             *
+             * @param c llamada Retrofit que produjo el error.
+             * @param t causa del fallo de red o serialización.
+             */
             @Override
             public void onFailure(@NonNull Call<MessageResponseDto> c, @NonNull Throwable t) {
                 untrackCall(call);

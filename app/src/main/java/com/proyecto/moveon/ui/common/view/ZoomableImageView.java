@@ -46,18 +46,38 @@ public class ZoomableImageView extends AppCompatImageView {
         scaleDetector = new ScaleGestureDetector(context, new ScaleListener());
     }
 
+    /**
+     * Sustituye el drawable actual y reencuadra la imagen para que vuelva a ajustarse a la
+     * vista antes de aplicar nuevos gestos de zoom.
+     *
+     * @param drawable recurso visual a mostrar, o {@code null} para limpiar la imagen.
+     */
     @Override
     public void setImageDrawable(@Nullable Drawable drawable) {
         super.setImageDrawable(drawable);
         post(this::fitImageToView);
     }
 
+    /**
+     * Carga una imagen a partir de su {@link Uri} y recalcula la matriz base una vez que la
+     * vista ya conoce su tamaño.
+     *
+     * @param uri ubicación de la imagen a mostrar, o {@code null} para vaciar el contenido.
+     */
     @Override
     public void setImageURI(@Nullable Uri uri) {
         super.setImageURI(uri);
         post(this::fitImageToView);
     }
 
+    /**
+     * Detecta cambios de tamaño en la vista para volver a centrar la imagen con la escala base.
+     *
+     * @param w nuevo ancho disponible.
+     * @param h nuevo alto disponible.
+     * @param oldw ancho anterior.
+     * @param oldh alto anterior.
+     */
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
@@ -65,6 +85,13 @@ public class ZoomableImageView extends AppCompatImageView {
         fitImageToView();
     }
 
+    /**
+     * Procesa pellizcos y arrastres sobre la imagen, delegando el zoom en
+     * {@link ScaleGestureDetector} y limitando el paneo al área visible.
+     *
+     * @param event evento táctil recibido por la vista.
+     * @return {@code true} cuando la vista consume la interacción para seguir gestionando el zoom.
+     */
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (getDrawable() == null) return super.onTouchEvent(event);
@@ -109,11 +136,21 @@ public class ZoomableImageView extends AppCompatImageView {
         return true;
     }
 
+    /**
+     * Conserva el contrato de clic de {@link AppCompatImageView} aunque la vista consuma los
+     * gestos táctiles para el zoom.
+     *
+     * @return el resultado de {@link AppCompatImageView#performClick()}.
+     */
     @Override
     public boolean performClick() {
         return super.performClick();
     }
 
+    /**
+     * Calcula la escala base que encaja el drawable dentro del contenido útil de la vista y
+     * reinicia cualquier transformación previa de zoom o arrastre.
+     */
     private void fitImageToView() {
         if (!isLaidOut) return;
 
@@ -141,6 +178,10 @@ public class ZoomableImageView extends AppCompatImageView {
         setImageMatrix(matrix);
     }
 
+    /**
+     * Corrige la traslación acumulada para que la imagen ampliada no deje huecos vacíos ni se
+     * desplace fuera de los límites visibles.
+     */
     private void fixTranslation() {
         RectF rect = getMatrixRectF();
         if (rect == null) return;
@@ -171,6 +212,11 @@ public class ZoomableImageView extends AppCompatImageView {
         matrix.postTranslate(deltaX, deltaY);
     }
 
+    /**
+     * Obtiene el rectángulo actual del drawable después de aplicar la matriz de transformación.
+     *
+     * @return límites transformados de la imagen, o {@code null} si no hay drawable cargado.
+     */
     @Nullable
     private RectF getMatrixRectF() {
         Drawable drawable = getDrawable();
@@ -182,6 +228,13 @@ public class ZoomableImageView extends AppCompatImageView {
     }
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+        /**
+         * Ajusta la escala actual alrededor del punto de foco del gesto sin sobrepasar los
+         * límites definidos por {@link #MIN_SCALE} y {@link #MAX_SCALE}.
+         *
+         * @param detector detector que aporta factor y punto focal del gesto de pinch.
+         * @return {@code true} para indicar que el gesto de escala ha sido procesado.
+         */
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
             float scaleFactor = detector.getScaleFactor();

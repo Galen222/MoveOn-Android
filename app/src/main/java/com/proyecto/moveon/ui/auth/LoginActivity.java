@@ -36,11 +36,21 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
     @Nullable private SocialGoogleAccount pendingGoogleAccount;
     private boolean pendingSilentGoogleLogin;
 
+    /**
+     * Envuelve el contexto base para aplicar el idioma seleccionado antes de inflar recursos.
+     *
+     * @param newBase contexto original de la actividad.
+     */
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(AppLanguageManager.wrapContext(newBase));
     }
 
+    /**
+     * Inicializa la pantalla de login, restaura la cuenta recordada y arranca el flujo social silencioso.
+     *
+     * @param savedInstanceState estado previo de la actividad, si existe.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ThemeManager.applySavedTheme(this);
@@ -63,6 +73,9 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         socialAuthManager.trySilentSignInWithGoogle(viewModel.shouldTrySilentGoogleSignIn());
     }
 
+    /**
+     * Recupera el identificador recordado para precargar el formulario y el estado del checkbox.
+     */
     private void loadRememberedAccount() {
         String saved = viewModel.getRememberedIdentifier();
         boolean hasSaved = StringUtils.hasText(saved);
@@ -73,6 +86,9 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         }
     }
 
+    /**
+     * Conecta todas las acciones de la pantalla con su flujo correspondiente.
+     */
     private void setupListeners() {
         binding.btnRegistrar.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
@@ -99,6 +115,9 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         );
     }
 
+    /**
+     * Observa el estado del login para pintar carga, errores y navegación al home.
+     */
     private void observeViewModel() {
         viewModel.getLoginState().observe(this, state -> {
             if (state == null) return;
@@ -138,6 +157,13 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         });
     }
 
+    /**
+     * Intercepta el caso en que Google devuelve una cuenta válida pero aún no registrada en backend.
+     *
+     * @param error error recibido del flujo social.
+     * @param silent indica si el intento venía del login silencioso.
+     * @return {@code true} si el error quedó consumido por esta pantalla.
+     */
     private boolean handleSocialNotRegistered(@NonNull ApiError error, boolean silent) {
         if (!"SOCIAL_ACCOUNT_NOT_REGISTERED".equals(error.getErrorCode())) {
             return false;
@@ -150,6 +176,11 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         return true;
     }
 
+    /**
+     * Reparte los errores de backend entre los campos visibles del formulario.
+     *
+     * @param err error de API con posibles field errors.
+     */
     private void applyBackendErrors(ApiError err) {
         String idMsg = err.firstFieldMessage("identificador", "email", "nombre_usuario", "usuario");
         String pwMsg = err.firstFieldMessage("password");
@@ -158,6 +189,9 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         if (StringUtils.hasText(pwMsg)) binding.tilPassword.setError(pwMsg);
     }
 
+    /**
+     * Valida el formulario y dispara el login clásico con usuario o correo y contraseña.
+     */
     private void attemptLogin() {
         clearErrors();
 
@@ -187,6 +221,11 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         viewModel.login(identificador, password);
     }
 
+    /**
+     * Habilita o bloquea los controles mientras hay una petición de autenticación en curso.
+     *
+     * @param loading {@code true} para mostrar estado ocupado.
+     */
     private void setLoading(boolean loading) {
         binding.btnLogin.setEnabled(!loading);
         binding.btnRegistrar.setEnabled(!loading);
@@ -198,11 +237,23 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         binding.btnLogin.setText(loading ? getString(R.string.login_btn_entrando) : getString(R.string.login_btn_entrar));
     }
 
+    /**
+     * Limpia los errores visibles del formulario antes de una nueva validación.
+     */
     private void clearErrors() {
         binding.tilUsuarioCorreo.setError(null);
         binding.tilPassword.setError(null);
     }
 
+    /**
+     * Muestra u oculta el overlay de progreso del flujo de Google.
+     *
+     * @param visible indica si el overlay debe quedar visible.
+     * @param silent señala si el intento es silencioso para ajustar la animación.
+     * @param account cuenta resuelta para renderizar avatar, si existe.
+     * @param titleRes recurso del título a mostrar.
+     * @param messageRes recurso del mensaje descriptivo.
+     */
     private void showGoogleLoading(boolean visible,
                                    boolean silent,
                                    @Nullable SocialGoogleAccount account,
@@ -229,6 +280,12 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         }).start();
     }
 
+    /**
+     * Renderiza el avatar de la cuenta de Google o un icono por defecto en el overlay.
+     *
+     * @param imageView vista destino.
+     * @param account cuenta seleccionada, opcional.
+     */
     private void renderLoadingAvatar(@NonNull ImageView imageView, @Nullable SocialGoogleAccount account) {
         String avatarUrl = account != null ? account.avatarUrl : null;
         if (StringUtils.hasText(avatarUrl)) {
@@ -243,10 +300,19 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         imageView.setImageResource(R.drawable.ic_google);
     }
 
+    /**
+     * Navega a {@link MainActivity} limpiando la pila de navegación del login.
+     */
     private void goToMain() {
         NavigationUtils.goToActivityAndClearTask(this, MainActivity.class);
     }
 
+    /**
+     * Recibe la cuenta resuelta por Google y delega el intercambio de token al {@link AuthViewModel}.
+     *
+     * @param account cuenta autenticada por Google.
+     * @param silent indica si el flujo venía de un intento silencioso.
+     */
     @Override
     public void onGoogleAccountReady(@NonNull SocialGoogleAccount account, boolean silent) {
         pendingGoogleAccount = account;
@@ -264,6 +330,12 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         viewModel.loginWithSocial(com.proyecto.moveon.domain.auth.SocialAuthProvider.GOOGLE, account.idToken);
     }
 
+    /**
+     * Muestra el error del proveedor social y restablece la pantalla si el fallo era visible para el usuario.
+     *
+     * @param message mensaje de error a mostrar.
+     * @param silent indica si el fallo procede de un intento silencioso.
+     */
     @Override
     public void onSocialFlowError(@NonNull String message, boolean silent) {
         showGoogleLoading(false, silent, null, 0, 0);
@@ -273,6 +345,9 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         }
     }
 
+    /**
+     * Restaura la pantalla cuando el usuario cancela el flujo social manualmente.
+     */
     @Override
     public void onSocialFlowCanceled() {
         showGoogleLoading(false, false, null, 0, 0);
@@ -280,6 +355,9 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         TopSnackbar.warning(binding.getRoot(), getString(R.string.social_auth_canceled));
     }
 
+    /**
+     * Libera el binding al destruir la actividad.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();

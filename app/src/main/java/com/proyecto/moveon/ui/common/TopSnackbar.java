@@ -42,65 +42,159 @@ public final class TopSnackbar {
 
     // ── Métodos principales ──────────────────────────────────────────────────
 
+    /**
+     * Muestra un snackbar superior de éxito con la duración estándar.
+     *
+     * @param root vista raíz usada como ancla para {@link Snackbar#make(View, CharSequence, int)}.
+     * @param msg texto a mostrar.
+     */
     public static void success(@NonNull View root, @NonNull CharSequence msg) {
         show(root, msg, Type.SUCCESS, Snackbar.LENGTH_LONG, null, null, 0);
     }
 
+    /**
+     * Muestra un snackbar de éxito desplazado hacia abajo desde el margen superior base.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msg texto a mostrar.
+     * @param extraTopOffsetPx desplazamiento extra en píxeles para ajustar la posición vertical.
+     */
     public static void success(@NonNull View root,
                                @NonNull CharSequence msg,
                                int extraTopOffsetPx) {
         show(root, msg, Type.SUCCESS, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
     }
 
+    /**
+     * Muestra un snackbar superior de éxito usando un recurso de texto.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msgRes recurso string a resolver desde el contexto de {@code root}.
+     */
     public static void success(@NonNull View root, @StringRes int msgRes) {
         show(root, root.getContext().getString(msgRes), Type.SUCCESS, Snackbar.LENGTH_LONG, null, null, 0);
     }
 
+    /**
+     * Muestra un snackbar superior de éxito usando un recurso de texto y un offset adicional.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msgRes recurso string a resolver.
+     * @param extraTopOffsetPx desplazamiento extra en píxeles.
+     */
     public static void success(@NonNull View root, @StringRes int msgRes, int extraTopOffsetPx) {
         show(root, root.getContext().getString(msgRes), Type.SUCCESS, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
     }
 
+    /**
+     * Muestra un snackbar superior de éxito con duración extendida.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msg texto a mostrar.
+     */
     public static void successLong(@NonNull View root, @NonNull CharSequence msg) {
         show(root, msg, Type.SUCCESS, EXTENDED_DURATION_MS, null, null, 0);
     }
 
+    /**
+     * Muestra un snackbar superior de éxito con duración extendida usando un recurso string.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msgRes recurso string a resolver.
+     */
     public static void successLong(@NonNull View root, @StringRes int msgRes) {
         show(root, root.getContext().getString(msgRes), Type.SUCCESS, EXTENDED_DURATION_MS, null, null, 0);
     }
 
+    /**
+     * Muestra un snackbar superior de advertencia con duración estándar.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msg texto a mostrar.
+     */
     public static void warning(@NonNull View root, @NonNull CharSequence msg) {
         show(root, msg, Type.WARNING, Snackbar.LENGTH_LONG, null, null, 0);
     }
 
+    /**
+     * Muestra un snackbar superior de advertencia con offset adicional.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msg texto a mostrar.
+     * @param extraTopOffsetPx desplazamiento extra en píxeles.
+     */
     public static void warning(@NonNull View root,
                                @NonNull CharSequence msg,
                                int extraTopOffsetPx) {
         show(root, msg, Type.WARNING, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
     }
 
+    /**
+     * Muestra un snackbar superior de advertencia usando un recurso string.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msgRes recurso string a resolver.
+     */
     public static void warning(@NonNull View root, @StringRes int msgRes) {
         show(root, root.getContext().getString(msgRes), Type.WARNING, Snackbar.LENGTH_LONG, null, null, 0);
     }
 
+    /**
+     * Muestra un snackbar superior de advertencia usando un recurso string y un offset adicional.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msgRes recurso string a resolver.
+     * @param extraTopOffsetPx desplazamiento extra en píxeles.
+     */
     public static void warning(@NonNull View root, @StringRes int msgRes, int extraTopOffsetPx) {
         show(root, root.getContext().getString(msgRes), Type.WARNING, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
     }
 
+    /**
+     * Muestra un snackbar superior de error sin acción adicional.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msg texto a mostrar.
+     */
     public static void error(@NonNull View root, @NonNull CharSequence msg) {
         show(root, msg, Type.ERROR, Snackbar.LENGTH_LONG, null, null, 0);
     }
 
+    /**
+     * Muestra un snackbar superior de error con offset adicional.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msg texto a mostrar.
+     * @param extraTopOffsetPx desplazamiento extra en píxeles.
+     */
     public static void error(@NonNull View root,
                              @NonNull CharSequence msg,
                              int extraTopOffsetPx) {
         show(root, msg, Type.ERROR, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
     }
 
+    /**
+     * Muestra un snackbar superior de error con acción opcional.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msg texto a mostrar.
+     * @param actionLabel etiqueta del botón de acción o {@code null} para omitirlo.
+     * @param action acción a ejecutar cuando el usuario pulsa el botón.
+     */
     public static void error(@NonNull View root, @NonNull CharSequence msg,
                              @Nullable String actionLabel, @Nullable Runnable action) {
         show(root, msg, Type.ERROR, Snackbar.LENGTH_LONG, actionLabel, action, 0);
     }
 
+    /**
+     * Muestra un snackbar superior de error con acción opcional y offset adicional.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msg texto a mostrar.
+     * @param actionLabel etiqueta del botón de acción o {@code null}.
+     * @param action acción a ejecutar cuando el usuario pulsa el botón.
+     * @param extraTopOffsetPx desplazamiento extra en píxeles.
+     */
     public static void error(@NonNull View root,
                              @NonNull CharSequence msg,
                              @Nullable String actionLabel,
@@ -111,6 +205,17 @@ public final class TopSnackbar {
 
     // ── Lógica interna ───────────────────────────────────────────────────────
 
+    /**
+     * Configura y muestra el {@link Snackbar} con el estilo superior propio de la app.
+     *
+     * @param root vista raíz usada como ancla.
+     * @param msg texto a mostrar.
+     * @param type tipo visual que determina colores e iconografía.
+     * @param duration duración del snackbar en milisegundos o una constante de {@link Snackbar}.
+     * @param actionLabel etiqueta del botón de acción o {@code null}.
+     * @param action acción opcional asociada al botón.
+     * @param extraTopOffsetPx desplazamiento extra sobre el margen superior base.
+     */
     private static void show(@NonNull View root,
                              @NonNull CharSequence msg,
                              @NonNull Type type,

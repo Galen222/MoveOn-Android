@@ -21,6 +21,9 @@ public final class NavigationUtils {
 
     /**
      * Navega a una actividad sin modificar el back stack.
+     *
+     * @param context contexto desde el que se lanza el {@link Intent}.
+     * @param target actividad de destino.
      */
     public static void goToActivity(@NonNull Context context, @NonNull Class<?> target) {
         context.startActivity(new Intent(context, target));
@@ -28,6 +31,9 @@ public final class NavigationUtils {
 
     /**
      * Navega a una actividad y finaliza la activity actual.
+     *
+     * @param activity actividad actual que debe cerrarse tras navegar.
+     * @param target actividad de destino.
      */
     public static void goToActivityAndFinish(@NonNull Activity activity, @NonNull Class<?> target) {
         goToActivity(activity, target);
@@ -36,6 +42,9 @@ public final class NavigationUtils {
 
     /**
      * Navega a una actividad limpiando todo el stack de pantallas (útil para Login/Logout).
+     *
+     * @param context contexto desde el que se lanza el {@link Intent} con flags de limpieza.
+     * @param target actividad de destino que debe convertirse en raíz de la tarea.
      */
     public static void goToActivityAndClearTask(@NonNull Context context, @NonNull Class<?> target) {
         Intent i = new Intent(context, target);

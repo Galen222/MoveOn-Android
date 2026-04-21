@@ -60,6 +60,14 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     private final PhotoSyncHelper photoHelper;
     private final Gson gson = new Gson();
 
+    /**
+     * Crea el coordinador de sincronización de perfil con sus dependencias locales y remotas.
+     *
+     * @param context contexto de aplicación.
+     * @param local datasource local de caché y cola pendiente.
+     * @param remote datasource remoto del perfil.
+     * @param userPrefsRepository repositorio usado para reflejar objetivos sincronizados en preferencias.
+     */
     public PerfilSyncManager(@NonNull Context context,
                              @NonNull PerfilLocalDataSource local,
                              @NonNull PerfilRemoteDataSource remote,
@@ -75,6 +83,12 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     // SyncManagerBridge — usado por PhotoSyncHelper
     // ══════════════════════════════════════════════════════════════════════════
 
+    /**
+     * Recupera la caché de perfil existente o crea una vacía con valores por defecto.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @return entidad de caché disponible para operar.
+     */
     @Override
     @NonNull
     public PerfilCacheEntity getOrCreateCache(@NonNull String accountKey) {
@@ -82,6 +96,13 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
         return current != null ? current : createEmptyCache(accountKey);
     }
 
+    /**
+     * Integra un snapshot remoto del perfil preservando, si procede, el estado local pendiente de foto.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @param dto snapshot remoto del backend.
+     * @param preferPendingPhoto {@code true} para priorizar una foto local pendiente sobre la remota.
+     */
     @Override
     public void mergeRemoteSnapshot(@NonNull String accountKey,
                                     @NonNull ProfileInfoDto dto,
@@ -89,6 +110,12 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
         mergeRemoteSnapshotInternal(accountKey, dto, preferPendingPhoto);
     }
 
+    /**
+     * Indica si quedan patches de texto pendientes de sincronizar para la cuenta.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @return {@code true} cuando la cola local de patches no está vacía.
+     */
     @Override
     public boolean hasPendingTextChanges(@NonNull String accountKey) {
         return local.countPending(accountKey) > 0;
@@ -286,6 +313,13 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     // Merge remoto
     // ══════════════════════════════════════════════════════════════════════════
 
+    /**
+     * Reconstruye la caché local a partir del snapshot remoto reaplicando patches pendientes y estado de foto.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @param dto snapshot remoto recibido.
+     * @param preferPendingPhoto {@code true} para mantener visible la foto local pendiente cuando corresponda.
+     */
     private void mergeRemoteSnapshotInternal(@NonNull String accountKey,
                                              @NonNull ProfileInfoDto dto,
                                              boolean preferPendingPhoto) {
@@ -343,6 +377,12 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     // Cache helpers
     // ══════════════════════════════════════════════════════════════════════════
 
+    /**
+     * Crea una caché base con los valores iniciales que espera la UI del perfil.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @return entidad nueva inicializada con defaults y estado fotográfico por defecto.
+     */
     @NonNull
     private PerfilCacheEntity createEmptyCache(@NonNull String accountKey) {
         PerfilCacheEntity e = new PerfilCacheEntity();
@@ -369,6 +409,12 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
         return e;
     }
 
+    /**
+     * Realiza una copia superficial campo a campo de la caché del perfil.
+     *
+     * @param source entidad origen.
+     * @return copia desacoplada apta para mutaciones locales.
+     */
     @NonNull
     private PerfilCacheEntity copyOf(@NonNull PerfilCacheEntity source) {
         PerfilCacheEntity e = new PerfilCacheEntity();
@@ -402,6 +448,12 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     // Mapping
     // ══════════════════════════════════════════════════════════════════════════
 
+    /**
+     * Convierte la caché persistida al modelo de dominio consumido por la UI.
+     *
+     * @param entity entidad local ya resuelta.
+     * @return instancia de {@link PerfilUsuario} lista para exponer.
+     */
     @NonNull
     public PerfilUsuario mapEntityToDomain(@NonNull PerfilCacheEntity entity) {
         return new PerfilUsuario(
@@ -438,6 +490,12 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
         return true;
     }
 
+    /**
+     * Aplica sobre la caché local solo los campos presentes en un patch JSON.
+     *
+     * @param cache entidad de caché a mutar.
+     * @param patch payload parcial con los cambios del perfil.
+     */
     private void applyPatchToCache(@NonNull PerfilCacheEntity cache, @NonNull JsonObject patch) {
         if (patch.has("nombre_real")) {
             cache.nombreReal = readNullableString(patch.get("nombre_real"));
@@ -471,11 +529,23 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
         }
     }
 
+    /**
+     * Lee una cadena opcional desde un elemento JSON respetando los valores nulos.
+     *
+     * @param element elemento JSON a interpretar.
+     * @return cadena contenida o {@code null} cuando el elemento es {@code JsonNull}.
+     */
     @Nullable
     private String readNullableString(@NonNull JsonElement element) {
         return element.isJsonNull() ? null : element.getAsString();
     }
 
+    /**
+     * Expone la heurística compartida para decidir si un error merece reintento.
+     *
+     * @param error error a evaluar.
+     * @return {@code true} cuando {@link PhotoSyncHelper} considera el error recuperable.
+     */
     public boolean isRetryable(@Nullable ApiError error) {
         return PhotoSyncHelper.isRetryableError(error);
     }

@@ -52,7 +52,7 @@ import java.util.Locale;
 
 /**
  * Pantalla de perfil del usuario.
- *
+ * 
  * <p>Este archivo sustituye el placeholder anterior de “Compartir rutas” por el
  * flujo real que abre un bottom sheet con todas las rutas del usuario.</p>
  */
@@ -79,10 +79,20 @@ public class ProfileFragment extends Fragment {
     private ActivityResultLauncher<PickVisualMediaRequest> pickImageLauncher;
     private ActivityResultLauncher<String[]> trackingRequirementPermissionLauncher;
 
+    /**
+     * Constructor vacío requerido por FragmentManager para recrear el
+     * fragment tras cambios de configuración o restauración de proceso.
+     */
     public ProfileFragment() {}
 
     // ── Ciclo de vida ─────────────────────────────────────────────────────────
 
+    /**
+     * Registra los launchers del picker de imagen y de permisos de tracking en
+     * la fase del ciclo de vida adecuada del fragment.
+     * 
+     * @param savedInstanceState estado restaurado por Android, o {@code null}.
+     */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -131,18 +141,30 @@ public class ProfileFragment extends Fragment {
         return binding.getRoot();
     }
 
+    /**
+     * Registra el receptor que vigila cambios del GPS del dispositivo mientras
+     * la pantalla está visible.
+     */
     @Override
     public void onStart() {
         super.onStart();
         trackingHelper.registerDeviceLocationReceiver();
     }
 
+    /**
+     * Desregistra el receptor de ubicación del dispositivo para evitar fugas y
+     * actualizaciones cuando el fragment deja de estar visible.
+     */
     @Override
     public void onStop() {
         trackingHelper.unregisterDeviceLocationReceiver();
         super.onStop();
     }
 
+    /**
+     * Resincroniza la UI con los ajustes persistidos y con el estado actual de
+     * los requisitos de tracking al volver al primer plano.
+     */
     @Override
     public void onResume() {
         super.onResume();
@@ -154,6 +176,10 @@ public class ProfileFragment extends Fragment {
         trackingHelper.updateTrackingRequirementsUi();
     }
 
+    /**
+     * Libera el binding y las ayudas acopladas a la vista para que una futura
+     * recreación del fragment no conserve referencias obsoletas.
+     */
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -166,6 +192,10 @@ public class ProfileFragment extends Fragment {
 
     // ── Datos locales (sin esperar red) ───────────────────────────────────────
 
+    /**
+     * Pinta un estado inicial rápido con datos disponibles localmente mientras
+     * la carga remota del perfil todavía está en curso.
+     */
     private void bindLocalData() {
         String username = viewModel.getUsername();
         if (!StringUtils.hasText(username)) {
@@ -179,6 +209,10 @@ public class ProfileFragment extends Fragment {
         trackingHelper.updateTrackingRequirementsUi();
     }
 
+    /**
+     * Ajusta el switch de avisos de auto-pausa al valor persistido sin disparar
+     * listeners espurios durante la sincronización de UI.
+     */
     private void syncAutoPauseAlertsToggle() {
         if (binding == null) return;
 
@@ -192,6 +226,12 @@ public class ProfileFragment extends Fragment {
         });
     }
 
+    /**
+     * Vuelca en pantalla todos los datos del perfil y resuelve la mejor fuente
+     * de foto posible entre preview temporal, caché local y URL remota versionada.
+     * 
+     * @param perfil modelo de perfil ya localizado desde repositorio.
+     */
     private void bindPerfilData(@NonNull PerfilUsuario perfil) {
         if (binding == null) return;
         perfilActual = perfil;
@@ -258,6 +298,12 @@ public class ProfileFragment extends Fragment {
         loadProfilePhoto(photoSource);
     }
 
+    /**
+     * Carga la foto de perfil con {@link Glide} adaptando la estrategia de caché
+     * según la procedencia de la imagen.
+     * 
+     * @param photoSource archivo local, URL remota o recurso drawable a renderizar.
+     */
     private void loadProfilePhoto(@NonNull Object photoSource) {
         if (binding == null) return;
 
@@ -281,6 +327,12 @@ public class ProfileFragment extends Fragment {
         request.into(binding.ivProfilePicture);
     }
 
+    /**
+     * Muestra inmediatamente una previsualización local de la foto elegida antes
+     * de que termine su subida o sincronización.
+     * 
+     * @param file archivo temporal seleccionado por el usuario.
+     */
     private void showTransientPhotoPreview(@NonNull File file) {
         transientPhotoPreviewPath = file.getAbsolutePath();
         loadProfilePhoto(file);
@@ -288,6 +340,10 @@ public class ProfileFragment extends Fragment {
 
     // ── Listeners ─────────────────────────────────────────────────────────────
 
+    /**
+     * Enlaza todas las acciones editables del perfil: tema, requisitos de
+     * tracking, foto, logout, borrado de cuenta y edición de campos.
+     */
     private void setupListeners() {
         binding.toggleThemeMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
@@ -401,6 +457,10 @@ public class ProfileFragment extends Fragment {
 
     // ── Observadores ──────────────────────────────────────────────────────────
 
+    /**
+     * Observa los distintos estados del {@link ProfileViewModel} para reflejar
+     * carga, éxito, errores y navegación derivada de logout o borrado de cuenta.
+     */
     private void observeViewModel() {
         viewModel.getPerfilState().observe(getViewLifecycleOwner(), state -> {
             if (state == null || binding == null) return;
@@ -486,6 +546,10 @@ public class ProfileFragment extends Fragment {
         });
     }
 
+    /**
+     * Finaliza el flujo de borrado de cuenta desactivando el silent sign-in de
+     * Google antes de devolver al usuario a la pantalla de login.
+     */
     private void handleAccountDeleted() {
         SocialAuthManager.disableSilentGoogleSignIn(requireContext());
         goToLogin();
@@ -493,6 +557,10 @@ public class ProfileFragment extends Fragment {
 
     // ── Eliminar cuenta ───────────────────────────────────────────────────────
 
+    /**
+     * Abre el bottom sheet de confirmación del borrado y conecta su callback con
+     * la operación real expuesta por el ViewModel.
+     */
     private void showDeleteAccountBottomSheet() {
         deleteAccountSheet = DeleteAccountBottomSheet.newInstance();
         deleteAccountSheet.setOnDeleteConfirmedListener(() -> viewModel.deleteAccount());
@@ -501,6 +569,10 @@ public class ProfileFragment extends Fragment {
 
     // ── Sincronización de UI con ajustes guardados ────────────────────────────
 
+    /**
+     * Selecciona en el toggle de tema el modo persistido actualmente sin forzar
+     * recreaciones adicionales de la actividad.
+     */
     private void syncThemeToggleWithSavedMode() {
         if (binding == null) return;
         final String mode = ThemeManager.getSavedMode(requireContext());
@@ -531,6 +603,10 @@ public class ProfileFragment extends Fragment {
     }
     */
 
+    /**
+     * Actualiza la etiqueta visible del idioma usando el índice calculado por
+     * {@link ProfileDialogHelper} para el modo guardado en ajustes.
+     */
     private void syncLanguageSelectionText() {
         if (binding == null || dialogHelper == null) return;
         final String mode = viewModel.getAppLanguageMode();
@@ -545,7 +621,7 @@ public class ProfileFragment extends Fragment {
 
     /**
      * Reenvía un éxito del perfil al canal global de MainActivity.
-     *
+     * 
      * <p>Antes el mensaje se anclaba al root del fragment y podía quedar oculto si el usuario
      * cambiaba inmediatamente a otra pestaña.</p>
      */
@@ -568,10 +644,11 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Reenvía un error de API al canal global del perfil.
-     *
-     * <p>Cuando el error es recuperable se conserva también la acción de reintento para que el
-     * snackbar global siga ofreciendo el mismo comportamiento que tenía el snackbar local.</p>
+     * Publica un error de API en el canal global y, si el fallo es recuperable,
+     * conserva una acción de reintento asociada.
+     * 
+     * @param error error producido por backend o conectividad.
+     * @param retryAction acción opcional para reintentar la operación fallida.
      */
     private void showApiError(@NonNull ApiError error, @Nullable Runnable retryAction) {
         if (retryAction != null && isRetryable(error)) {
@@ -585,6 +662,13 @@ public class ProfileFragment extends Fragment {
         }
     }
 
+    /**
+     * Determina si un error pertenece a una familia en la que merece la pena
+     * ofrecer un CTA de reintento en la UI.
+     * 
+     * @param error error a clasificar.
+     * @return {@code true} si puede proponerse reintento al usuario.
+     */
     private boolean isRetryable(@Nullable ApiError error) {
         if (error == null) return false;
         ApiErrorType type = error.getType();
@@ -595,11 +679,20 @@ public class ProfileFragment extends Fragment {
                 || type == ApiErrorType.CANCELED;
     }
 
+    /**
+     * Muestra u oculta la overlay de carga general del perfil.
+     * 
+     * @param show {@code true} para bloquear la vista mientras hay trabajo en curso.
+     */
     private void showOverlay(boolean show) {
         if (binding == null) return;
         binding.loadingOverlay.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
+    /**
+     * Navega al login limpiando la task actual para impedir volver atrás a una
+     * sesión ya cerrada o a una cuenta eliminada.
+     */
     private void goToLogin() {
         if (!isAdded()) return;
         NavigationUtils.goToActivityAndClearTask(requireActivity(), LoginActivity.class);
@@ -608,6 +701,12 @@ public class ProfileFragment extends Fragment {
     // ── Utilidades ────────────────────────────────────────────────────────────
 
     @NonNull
+    /**
+     * Convierte una fecha ISO del perfil al formato medio del idioma activo.
+     * 
+     * @param fecha fecha original en formato ISO.
+     * @return fecha localizada, o el valor original si no puede parsearse.
+     */
     private String formatFecha(@NonNull String fecha) {
         try {
             Locale locale = AppLanguageManager.getActiveLocale(requireContext());
@@ -620,18 +719,40 @@ public class ProfileFragment extends Fragment {
     }
 
     @NonNull
+    /**
+     * Añade un parámetro de versión a la URL remota de la foto para invalidar
+     * caché tras una actualización de imagen.
+     * 
+     * @param baseUrl URL base recibida del backend.
+     * @param version versión de foto asociada al perfil.
+     * @return URL final con query param de versión.
+     */
     private String appendPhotoVersion(@NonNull String baseUrl, int version) {
         String separator = baseUrl.contains("?") ? "&" : "?";
         return baseUrl + separator + "v=" + version;
     }
 
     @NonNull
+    /**
+     * Extrae un mensaje usable desde un resultado de validación devolviendo un
+     * fallback genérico cuando el validador no aporta texto.
+     * 
+     * @param result resultado de validación emitido por {@link AppInputValidator}.
+     * @return mensaje apto para feedback al usuario.
+     */
     private String validationError(@NonNull AppInputValidator.ValidationResult<?> result) {
         String msg = result.getErrorMessage();
         return msg != null ? msg : getString(R.string.vm_error_generico);
     }
 
     @Nullable
+    /**
+     * Copia a caché local el contenido seleccionado desde el picker para poder
+     * tratarlo como archivo subible por el repositorio.
+     * 
+     * @param uri uri elegida por el usuario en el picker del sistema.
+     * @return archivo temporal listo para subida, o {@code null} si falla la lectura.
+     */
     private File uriToFile(@NonNull Uri uri) {
         try {
             InputStream inputStream =

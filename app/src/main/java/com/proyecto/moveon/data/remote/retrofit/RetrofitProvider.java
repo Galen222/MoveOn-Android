@@ -13,7 +13,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 /**
- * Punto central de creación de los clientes Retrofit públicos y protegidos.
+ * Punto central de creación perezosa de los clientes Retrofit públicos y protegidos.
  */
 public final class RetrofitProvider {
 

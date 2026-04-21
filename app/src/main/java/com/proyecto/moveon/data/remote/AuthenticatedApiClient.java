@@ -265,6 +265,12 @@ public final class AuthenticatedApiClient extends BaseRepository {
                                  Mapper<JsonElement, T> mapper,
                                  Callback<T> callback) {
         enqueueTracked(call, new retrofit2.Callback<JsonElement>() {
+            /**
+             * Procesa la respuesta HTTP exitosa o fallida y la convierte al contrato homogéneo de {@link ApiResult}.
+             *
+             * @param c llamada Retrofit que acaba de completarse.
+             * @param response respuesta recibida del backend protegido.
+             */
             @Override
             public void onResponse(@NonNull Call<JsonElement> c, @NonNull Response<JsonElement> response) {
                 if (!response.isSuccessful()) {
@@ -281,6 +287,12 @@ public final class AuthenticatedApiClient extends BaseRepository {
                 }
             }
 
+            /**
+             * Propaga un fallo de transporte salvo cuando la llamada fue cancelada explícitamente por la app.
+             *
+             * @param c llamada Retrofit asociada al error.
+             * @param t excepción que describe el fallo de red o conversión.
+             */
             @Override
             public void onFailure(@NonNull Call<JsonElement> c, @NonNull Throwable t) {
                 if (c.isCanceled()) return;

@@ -41,6 +41,8 @@ public final class GlobalProfileNotifier {
 
     /**
      * Devuelve la instancia global del notificador.
+     *
+     * @return instancia única de {@link GlobalProfileNotifier} compartida por la app.
      */
     @NonNull
     public static synchronized GlobalProfileNotifier getInstance() {
@@ -52,6 +54,8 @@ public final class GlobalProfileNotifier {
 
     /**
      * Publica un mensaje de éxito sin acción secundaria.
+     *
+     * @param message texto final que verá el usuario en {@link TopSnackbar}.
      */
     public void notifySuccess(@NonNull CharSequence message) {
         notifyMessage(new GlobalSnackbarMessage(TopSnackbar.Type.SUCCESS, message));
@@ -59,6 +63,8 @@ public final class GlobalProfileNotifier {
 
     /**
      * Publica un mensaje de aviso sin acción secundaria.
+     *
+     * @param message texto final que verá el usuario en {@link TopSnackbar}.
      */
     public void notifyWarning(@NonNull CharSequence message) {
         notifyMessage(new GlobalSnackbarMessage(TopSnackbar.Type.WARNING, message));
@@ -66,6 +72,8 @@ public final class GlobalProfileNotifier {
 
     /**
      * Publica un mensaje de error sin acción secundaria.
+     *
+     * @param message texto final que verá el usuario en {@link TopSnackbar}.
      */
     public void notifyError(@NonNull CharSequence message) {
         notifyMessage(new GlobalSnackbarMessage(TopSnackbar.Type.ERROR, message));
@@ -73,6 +81,10 @@ public final class GlobalProfileNotifier {
 
     /**
      * Publica un mensaje de error con acción secundaria.
+     *
+     * @param message texto principal del aviso.
+     * @param actionLabel texto del CTA opcional; puede ser {@code null} si no se debe mostrar botón.
+     * @param action callback opcional a ejecutar al pulsar la acción del {@link TopSnackbar}.
      */
     public void notifyError(@NonNull CharSequence message,
                             @Nullable String actionLabel,
@@ -105,6 +117,8 @@ public final class GlobalProfileNotifier {
 
     /**
      * Expone el canal observable para que MainActivity pinte el snackbar.
+     *
+     * @return flujo one-shot de {@link GlobalSnackbarMessage} envuelto en {@link Event}.
      */
     @NonNull
     public LiveData<Event<GlobalSnackbarMessage>> getMessageEvent() {

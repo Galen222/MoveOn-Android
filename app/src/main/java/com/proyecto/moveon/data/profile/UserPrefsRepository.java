@@ -43,7 +43,12 @@ public class UserPrefsRepository {
         this.remote = new PerfilRemoteDataSource(appContext);
     }
 
-    /** LiveData reactivo: el ViewModel lo observa para recalcular cuando cambian los objetivos. */
+    /**
+     * Expone en tiempo real la fila de preferencias de la cuenta indicada.
+     *
+     * @param accountKey clave lógica de la cuenta cuyas metas se quieren observar.
+     * @return {@link LiveData} que emite la fila de {@link UserPrefsEntity} al cambiar en Room.
+     */
     @NonNull
     public LiveData<UserPrefsEntity> observe(@NonNull String accountKey) {
         return db.userPrefsDao().observe(accountKey);
@@ -54,9 +59,12 @@ public class UserPrefsRepository {
      * 1. Guarda en Room de inmediato (UI reactiva instantánea).
      * 2. Envía PATCH al servidor de forma asíncrona (no bloquea el hilo IO).
      *
-     * Usa {@code patchPerfil(...)} de forma asíncrona para no bloquear el hilo IO.
+     * <p>Usa {@code patchPerfil(...)} de forma asíncrona para no bloquear el hilo IO.
      * El resultado se sigue tratando como fire-and-forget, pero ya no impide que
-     * otras operaciones de IO se ejecuten mientras el backend responde.
+     * otras operaciones de IO se ejecuten mientras el backend responde.</p>
+     *
+     * @param accountKey clave lógica de la cuenta cuyo objetivo semanal se modifica.
+     * @param meters nueva meta semanal en metros.
      */
     public void setWeeklyGoal(@NonNull String accountKey, long meters) {
         io.execute(() -> {
@@ -76,8 +84,11 @@ public class UserPrefsRepository {
      * 1. Guarda en Room de inmediato (UI reactiva instantánea).
      * 2. Envía PATCH al servidor de forma asíncrona (no bloquea el hilo IO).
      *
-     * Igual que {@link #setWeeklyGoal(String, long)}, usa un envío asíncrono
-     * para no bloquear el hilo IO.
+     * <p>Igual que {@link #setWeeklyGoal(String, long)}, usa un envío asíncrono
+     * para no bloquear el hilo IO.</p>
+     *
+     * @param accountKey clave lógica de la cuenta cuyo objetivo mensual se modifica.
+     * @param meters nueva meta mensual en metros.
      */
     public void setMonthlyGoal(@NonNull String accountKey, long meters) {
         io.execute(() -> {
@@ -95,6 +106,10 @@ public class UserPrefsRepository {
     /**
      * Sincroniza los objetivos recibidos del servidor (llamado al refrescar el perfil).
      * Solo escribe en Room — no hace llamada de red.
+     *
+     * @param accountKey clave lógica de la cuenta actual.
+     * @param weeklyGoalMeters meta semanal resuelta desde backend.
+     * @param monthlyGoalMeters meta mensual resuelta desde backend.
      */
     public void syncFromServer(@NonNull String accountKey,
                                long weeklyGoalMeters,

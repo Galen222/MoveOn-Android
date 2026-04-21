@@ -97,6 +97,11 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
         return sheet;
     }
 
+    /**
+     * Inicializa las dependencias necesarias para el reporte y resuelve el username autenticado.
+     *
+     * @param context contexto huésped del fragment.
+     */
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
@@ -104,6 +109,14 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
         currentUsername = SecureSessionManager.getInstance(context).getUsername();
     }
 
+    /**
+     * Infla el layout principal del sheet de acciones de usuario.
+     *
+     * @param inflater inflater del fragment.
+     * @param container contenedor padre.
+     * @param savedInstanceState estado previo del fragment.
+     * @return raíz de la vista del sheet.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -113,6 +126,12 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
         return binding.getRoot();
     }
 
+    /**
+     * Vincula los datos del usuario seleccionado y conecta las acciones del sheet.
+     *
+     * @param view vista ya inflada.
+     * @param savedInstanceState estado previo del fragment.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -609,6 +628,9 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
         return photoUrl + (photoUrl.contains("?") ? "&" : "?") + "v=" + photoVersion;
     }
 
+    /**
+     * Cancela llamadas pendientes y libera referencias largas al destruir el fragment.
+     */
     @Override
     public void onDestroy() {
         RankingRepository repo = repository;
@@ -620,6 +642,9 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
         super.onDestroy();
     }
 
+    /**
+     * Libera el binding de la vista al destruirse la jerarquía visual.
+     */
     @Override
     public void onDestroyView() {
         binding = null;

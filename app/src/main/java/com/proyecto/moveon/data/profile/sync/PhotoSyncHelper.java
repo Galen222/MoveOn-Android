@@ -49,10 +49,31 @@ public final class PhotoSyncHelper {
      * pueda acceder a la caché y al merge sin dependencia circular.
      */
     public interface SyncManagerBridge {
+        /**
+         * Devuelve la entidad de caché actual o crea una vacía si todavía no existe.
+         *
+         * @param accountKey cuenta cuyos datos locales se necesitan.
+         * @return caché de perfil utilizable para la sincronización.
+         */
         @NonNull PerfilCacheEntity getOrCreateCache(@NonNull String accountKey);
+
+        /**
+         * Fusiona un snapshot remoto dentro de la caché local preservando, si procede, una foto pendiente.
+         *
+         * @param accountKey cuenta propietaria del perfil.
+         * @param dto snapshot remoto recién obtenido del backend.
+         * @param preferPendingPhoto indica si la foto local pendiente debe prevalecer sobre el snapshot.
+         */
         void mergeRemoteSnapshot(@NonNull String accountKey,
                                  @NonNull ProfileInfoDto dto,
                                  boolean preferPendingPhoto);
+
+        /**
+         * Indica si siguen existiendo cambios de texto pendientes además del estado fotográfico.
+         *
+         * @param accountKey cuenta cuyo estado sucio se consulta.
+         * @return {@code true} si aún quedan parches textuales sin sincronizar.
+         */
         boolean hasPendingTextChanges(@NonNull String accountKey);
     }
 
@@ -63,6 +84,14 @@ public final class PhotoSyncHelper {
     private final PerfilRemoteDataSource remote;
     private final SyncManagerBridge bridge;
 
+    /**
+     * Crea el helper responsable del ciclo de vida local y remoto de la foto de perfil.
+     *
+     * @param context contexto usado para operaciones de almacenamiento y cadenas localizadas.
+     * @param local acceso al almacenamiento local del perfil.
+     * @param remote acceso remoto al backend de perfil.
+     * @param bridge puente hacia {@link PerfilSyncManager} para reusar caché y merge global.
+     */
     public PhotoSyncHelper(@NonNull Context context,
                            @NonNull PerfilLocalDataSource local,
                            @NonNull PerfilRemoteDataSource remote,
@@ -282,6 +311,11 @@ public final class PhotoSyncHelper {
 
     // ── Helpers privados ────────────────────────────────────────────────────
 
+    /**
+     * Promociona la foto pendiente a foto actual cuando la subida fue bien pero no se pudo refrescar el snapshot remoto.
+     *
+     * @param accountKey cuenta cuya foto local debe consolidarse como sincronizada.
+     */
     private void promotePendingWithoutRemote(@NonNull String accountKey) {
         PerfilCacheEntity current = local.getCacheNow(accountKey);
         if (current == null || !StringUtils.hasText(current.pendingLocalPhotoPath)) return;
@@ -304,6 +338,12 @@ public final class PhotoSyncHelper {
         }
     }
 
+    /**
+     * Descarta la foto pendiente y deja el estado local marcado como fallo no recuperable.
+     *
+     * @param accountKey cuenta cuya foto pendiente debe revertirse.
+     * @param errorMessage mensaje de error visible que se conservará en la caché.
+     */
     private void revertPendingPhoto(@NonNull String accountKey,
                                     @Nullable String errorMessage) {
         PerfilCacheEntity current = local.getCacheNow(accountKey);

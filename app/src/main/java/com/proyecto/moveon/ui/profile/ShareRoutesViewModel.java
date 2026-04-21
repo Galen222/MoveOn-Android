@@ -54,6 +54,8 @@ public class ShareRoutesViewModel extends AndroidViewModel {
 
     /**
      * Estado observable que consume la UI del bottom sheet.
+     *
+     * @return {@link LiveData} con loading, lista lista para compartir o error.
      */
     @NonNull
     public LiveData<UiState<List<ActividadItem>>> getState() {
@@ -65,6 +67,9 @@ public class ShareRoutesViewModel extends AndroidViewModel {
      *
      * <p>Primero deja que Room pinte el contenido local y además solicita una
      * actualización remota para que la lista se refresque si hay conexión.</p>
+     *
+     * <p>Si no existe sesión activa, publica un {@link UiState#error(ApiError)} con el texto
+     * localizado correspondiente.</p>
      */
     public void load() {
         if (accountKey == null) {
@@ -93,6 +98,10 @@ public class ShareRoutesViewModel extends AndroidViewModel {
 
     /**
      * Conecta la fuente de Room con el estado del ViewModel.
+     *
+     * <p>La lista observable sale de {@link ActivityRepository#observeActividades(String)} y se
+     * transforma en un {@link UiState#success(Object)} con lista vacía cuando Room todavía no ha
+     * emitido elementos.</p>
      */
     private void attachSource() {
         if (accountKey == null) {

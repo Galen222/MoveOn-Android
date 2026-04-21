@@ -118,6 +118,9 @@ public final class RankingViewModel extends AndroidViewModel {
 
     /**
      * Repite la última carga usando el filtro actualmente activo.
+     *
+     * <p>Delega en {@link #cargarRanking(String)} reutilizando la provincia seleccionada en la
+     * carga más reciente para que la UI pueda ofrecer un simple botón de reintento.</p>
      */
     public void recargar() {
         cargarRanking(provinciaActual);

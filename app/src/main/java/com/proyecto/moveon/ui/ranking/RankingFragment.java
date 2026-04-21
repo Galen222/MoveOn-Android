@@ -52,6 +52,12 @@ public final class RankingFragment extends BottomSheetDialogFragment {
     private RankingAdapter adapter;
     @Nullable private String provinciaSeleccionada = null;
 
+    /**
+     * Crea una instancia del ranking con la provincia inicial del usuario, si existe.
+     *
+     * @param provinciaUsuario provincia del usuario autenticado para precargar el filtro.
+     * @return fragment listo para mostrarse como bottom sheet.
+     */
     @NonNull
     public static RankingFragment newInstance(@Nullable String provinciaUsuario) {
         RankingFragment fragment = new RankingFragment();
@@ -61,6 +67,11 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         return fragment;
     }
 
+    /**
+     * Configura el estilo Material del bottom sheet.
+     *
+     * @param savedInstanceState estado previo del fragment, si existe.
+     */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +81,14 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         );
     }
 
+    /**
+     * Infla el layout principal del ranking.
+     *
+     * @param inflater inflater del fragment.
+     * @param container contenedor padre.
+     * @param savedInstanceState estado previo del fragment.
+     * @return raíz del bottom sheet.
+     */
     @Override
     @NonNull
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -79,6 +98,12 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         return binding.getRoot();
     }
 
+    /**
+     * Inicializa la UI del ranking, los filtros y la observación del estado.
+     *
+     * @param view vista ya inflada.
+     * @param savedInstanceState estado previo del fragment.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -91,12 +116,18 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         observeViewModel();
     }
 
+    /**
+     * Libera el binding cuando se destruye la vista del fragment.
+     */
     @Override
     public void onDestroyView() {
         binding = null;
         super.onDestroyView();
     }
 
+    /**
+     * Fuerza que el bottom sheet se abra expandido y sin estado colapsado intermedio.
+     */
     private void setupBottomSheetExpanded() {
         if (!(getDialog() instanceof BottomSheetDialog)) {
             return;
@@ -117,6 +148,9 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         });
     }
 
+    /**
+     * Configura el recycler del ranking con un adapter estable y sin animaciones de diff visibles.
+     */
     private void setupRecyclerView() {
         FragmentRankingBinding b = binding;
         if (b == null) {
@@ -130,6 +164,9 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         b.rvRanking.setItemAnimator(null);
     }
 
+    /**
+     * Configura los filtros de España y provincia y dispara las cargas correspondientes.
+     */
     private void setupFiltros() {
         FragmentRankingBinding b = binding;
         if (b == null) {
@@ -158,6 +195,9 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         });
     }
 
+    /**
+     * Conecta el botón de reintento con la recarga del ranking actual.
+     */
     private void setupRetryButton() {
         FragmentRankingBinding b = binding;
         if (b == null) {
@@ -174,6 +214,9 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         });
     }
 
+    /**
+     * Cierra el bottom sheet principal del ranking.
+     */
     private void setupCloseButton() {
         FragmentRankingBinding b = binding;
         if (b == null) {
@@ -183,6 +226,11 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         b.btnRankingClose.setOnClickListener(v -> dismiss());
     }
 
+    /**
+     * Muestra el selector modal de provincias y aplica el filtro elegido.
+     *
+     * @param b binding activo del fragment.
+     */
     private void mostrarSelectorProvincias(@NonNull FragmentRankingBinding b) {
         int indiceActual = -1;
         if (provinciaSeleccionada != null) {
@@ -214,6 +262,9 @@ public final class RankingFragment extends BottomSheetDialogFragment {
                 .show();
     }
 
+    /**
+     * Observa el estado expuesto por el {@link RankingViewModel} y actualiza la UI.
+     */
     private void observeViewModel() {
         viewModel.getRankingState().observe(getViewLifecycleOwner(), state -> {
             FragmentRankingBinding b = binding;
@@ -239,12 +290,23 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         });
     }
 
+    /**
+     * Muestra el estado de carga ocultando lista y estado vacío.
+     *
+     * @param b binding activo del fragment.
+     */
     private void renderLoading(@NonNull FragmentRankingBinding b) {
         b.rankingProgress.setVisibility(View.VISIBLE);
         b.rvRanking.setVisibility(View.GONE);
         b.rankingEmptyState.setVisibility(View.GONE);
     }
 
+    /**
+     * Pinta la lista del ranking o el estado vacío si no hay resultados.
+     *
+     * @param b binding activo del fragment.
+     * @param lista datos recibidos desde el ViewModel.
+     */
     private void renderLista(@NonNull FragmentRankingBinding b,
                              @Nullable List<RankingItemDto> lista) {
         b.rankingProgress.setVisibility(View.GONE);
@@ -264,6 +326,11 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         }
     }
 
+    /**
+     * Muestra el estado de error con opción de reintento.
+     *
+     * @param b binding activo del fragment.
+     */
     private void renderError(@NonNull FragmentRankingBinding b) {
         b.rankingProgress.setVisibility(View.GONE);
         b.rvRanking.setVisibility(View.GONE);
@@ -289,11 +356,21 @@ public final class RankingFragment extends BottomSheetDialogFragment {
         b.rankingEmptyState.setVisibility(View.GONE);
     }
 
+    /**
+     * Indica si el ranking está actualmente en proceso de carga.
+     *
+     * @return {@code true} si el estado actual está marcado como loading.
+     */
     private boolean isLoading() {
         return viewModel.getRankingState().getValue() != null
                 && viewModel.getRankingState().getValue().loading;
     }
 
+    /**
+     * Abre el sheet secundario con acciones sobre un usuario del ranking.
+     *
+     * @param item fila pulsada por el usuario.
+     */
     private void mostrarAccionesUsuario(@NonNull RankingItemDto item) {
         if (!isAdded() || getParentFragmentManager().isStateSaved()) {
             return;

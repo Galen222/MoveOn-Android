@@ -25,11 +25,24 @@ public class AboutAppBottomSheet extends BaseExpandedBottomSheetDialogFragment {
 
     @Nullable private BottomSheetAboutAppBinding binding;
 
+    /**
+     * Crea una nueva instancia del sheet sin argumentos adicionales.
+     *
+     * @return fragment listo para mostrarse desde el perfil.
+     */
     @NonNull
     public static AboutAppBottomSheet newInstance() {
         return new AboutAppBottomSheet();
     }
 
+    /**
+     * Infla el layout del sheet y conserva el binding mientras la vista exista.
+     *
+     * @param inflater inflador de vistas asociado al diálogo.
+     * @param container contenedor padre proporcionado por el sistema, puede ser {@code null}.
+     * @param savedInstanceState estado restaurado por Android, puede ser {@code null}.
+     * @return raíz inflada del sheet.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -39,6 +52,12 @@ public class AboutAppBottomSheet extends BaseExpandedBottomSheetDialogFragment {
         return binding.getRoot();
     }
 
+    /**
+     * Vincula los accesos a términos, privacidad, licencias y contacto una vez creada la vista.
+     *
+     * @param view vista raíz recién creada.
+     * @param savedInstanceState estado previo restaurado por Android, puede ser {@code null}.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -73,11 +92,23 @@ public class AboutAppBottomSheet extends BaseExpandedBottomSheetDialogFragment {
         b.btnCloseAbout.setOnClickListener(v -> dismissAllowingStateLoss());
     }
 
+    /**
+     * Abre un {@link LegalTextBottomSheet} con el texto legal seleccionado desde el listado.
+     *
+     * @param title título a mostrar en el modal legal.
+     * @param content contenido textual asociado a la sección seleccionada.
+     */
     private void openLegalSheet(@NonNull String title, @NonNull String content) {
         LegalTextBottomSheet.newInstance(title, content)
                 .show(getParentFragmentManager(), LegalTextBottomSheet.TAG);
     }
 
+    /**
+     * Intenta abrir una app de correo con la dirección y el asunto de soporte ya rellenados.
+     *
+     * <p>Si no existe ninguna app compatible, reutiliza el snackbar del bottom sheet para que
+     * el error no quede oculto detrás del diálogo.</p>
+     */
     private void openEmailApp() {
         Intent intent = new Intent(Intent.ACTION_SENDTO);
         intent.setData(Uri.parse("mailto:info.moveon.app@gmail.com"));
@@ -95,6 +126,9 @@ public class AboutAppBottomSheet extends BaseExpandedBottomSheetDialogFragment {
         }
     }
 
+    /**
+     * Limpia el binding cuando la vista del sheet deja de existir.
+     */
     @Override
     public void onDestroyView() {
         binding = null;

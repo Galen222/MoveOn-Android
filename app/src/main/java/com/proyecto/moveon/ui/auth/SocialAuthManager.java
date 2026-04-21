@@ -50,12 +50,21 @@ public final class SocialAuthManager {
     @NonNull private final Listener listener;
     @NonNull private final CredentialManager credentialManager;
 
+    /**
+     * Crea el coordinador del flujo de autenticación social para una Activity concreta.
+     *
+     * @param activity activity anfitriona desde la que se abrirá {@link CredentialManager}.
+     * @param listener receptor de resultados, errores y cancelaciones del flujo.
+     */
     public SocialAuthManager(@NonNull AppCompatActivity activity, @NonNull Listener listener) {
         this.activity = activity;
         this.listener = listener;
         this.credentialManager = CredentialManager.create(activity);
     }
 
+    /**
+     * Inicia el login interactivo con Google usando {@link GetSignInWithGoogleOption}.
+     */
     public void signInWithGoogle() {
         if (isGoogleMissingConfiguration()) {
             listener.onSocialFlowError(activity.getString(R.string.social_google_not_configured), false);
@@ -103,23 +112,50 @@ public final class SocialAuthManager {
         requestCredential(request, true);
     }
 
+    /**
+     * Comprueba si falta la configuración mínima del cliente web de Google.
+     *
+     * @return {@code true} cuando {@link BuildConfig#GOOGLE_WEB_CLIENT_ID} está vacío.
+     */
     private boolean isGoogleMissingConfiguration() {
         return !StringUtils.hasText(BuildConfig.GOOGLE_WEB_CLIENT_ID);
     }
 
+    /**
+     * Habilita el intento de restauración silenciosa con Google para futuros arranques.
+     *
+     * @param context contexto usado para persistir la preferencia en {@link AppSettingsManager}.
+     */
     public static void enableSilentGoogleSignIn(@NonNull Context context) {
         AppSettingsManager.setGoogleSilentSignInEnabled(context, true);
     }
 
+    /**
+     * Deshabilita la restauración silenciosa con Google.
+     *
+     * @param context contexto usado para persistir la preferencia.
+     */
     public static void disableSilentGoogleSignIn(@NonNull Context context) {
         AppSettingsManager.setGoogleSilentSignInEnabled(context, false);
     }
 
+    /**
+     * Indica si la app tiene permitido intentar un acceso silencioso con Google.
+     *
+     * @param context contexto usado para leer la preferencia.
+     * @return {@code true} cuando la preferencia se ha habilitado tras un acceso real.
+     */
     public static boolean isSilentGoogleSignInEnabled(@NonNull Context context) {
         // Arrancamos desactivado por defecto: solo se habilita tras un acceso real con Google.
         return AppSettingsManager.isGoogleSilentSignInEnabled(context);
     }
 
+    /**
+     * Envía la petición a {@link CredentialManager} y enruta la respuesta al handler adecuado.
+     *
+     * @param request solicitud ya configurada para login interactivo o silencioso.
+     * @param silent {@code true} cuando el flujo no debe interrumpir la UX con errores cancelables.
+     */
     private void requestCredential(@NonNull GetCredentialRequest request, boolean silent) {
         credentialManager.getCredentialAsync(
                 activity,
@@ -127,11 +163,21 @@ public final class SocialAuthManager {
                 new CancellationSignal(),
                 ContextCompat.getMainExecutor(activity),
                 new CredentialManagerCallback<>() {
+                    /**
+                     * Entrega la credencial resuelta al manejador específico de Google para continuar el login.
+                     *
+                     * @param result respuesta devuelta por {@link CredentialManager}.
+                     */
                     @Override
                     public void onResult(GetCredentialResponse result) {
                         handleGoogleCredential(result, silent);
                     }
 
+                    /**
+                     * Redirige el error del proveedor de credenciales al tratamiento común de fallos del flujo social.
+                     *
+                     * @param e excepción devuelta por {@link CredentialManager}.
+                     */
                     @Override
                     public void onError(@NonNull GetCredentialException e) {
                         handleCredentialError(e, silent);
@@ -140,6 +186,12 @@ public final class SocialAuthManager {
         );
     }
 
+    /**
+     * Traduce un error de Credential Manager al contrato de callbacks de la pantalla.
+     *
+     * @param e excepción devuelta por la librería de credenciales.
+     * @param silent {@code true} cuando el flujo era silencioso y ciertos errores deben ignorarse.
+     */
     private void handleCredentialError(@NonNull GetCredentialException e, boolean silent) {
         logCredentialError(e, silent);
 
@@ -168,6 +220,12 @@ public final class SocialAuthManager {
         listener.onSocialFlowError(resolveGoogleErrorMessage(e, silent), silent);
     }
 
+    /**
+     * Extrae y valida la credencial de Google recibida antes de notificar la cuenta lista.
+     *
+     * @param result respuesta de credenciales devuelta por Google.
+     * @param silent {@code true} cuando el flujo se inició en modo silencioso.
+     */
     private void handleGoogleCredential(@NonNull GetCredentialResponse result, boolean silent) {
         Credential credential = result.getCredential();
         if (!(credential instanceof CustomCredential)) {
@@ -210,6 +268,13 @@ public final class SocialAuthManager {
         listener.onGoogleAccountReady(account, silent);
     }
 
+    /**
+     * Convierte una excepción de credenciales en un mensaje localizado para la UI.
+     *
+     * @param e excepción original.
+     * @param silent {@code true} cuando el mensaje debe ajustarse a un intento silencioso.
+     * @return texto localizado que describe el fallo de la autenticación social.
+     */
     @NonNull
     private String resolveGoogleErrorMessage(@NonNull GetCredentialException e, boolean silent) {
         if (isReauthFailure(e) || looksLikeProviderConfigurationIssue(e)) {
@@ -229,6 +294,12 @@ public final class SocialAuthManager {
         return activity.getString(R.string.social_google_generic_error);
     }
 
+    /**
+     * Registra un error de credenciales incluyendo datos mínimos de diagnóstico no sensibles.
+     *
+     * @param e excepción original.
+     * @param silent {@code true} si el error ocurrió durante un intento silencioso.
+     */
     private void logCredentialError(@NonNull GetCredentialException e, boolean silent) {
         Log.e(
                 TAG,
@@ -242,12 +313,24 @@ public final class SocialAuthManager {
         );
     }
 
+    /**
+     * Detecta si el mensaje apunta a un fallo de reautenticación del proveedor.
+     *
+     * @param e excepción a inspeccionar.
+     * @return {@code true} cuando el mensaje normalizado contiene patrones de reauth.
+     */
     private boolean isReauthFailure(@NonNull GetCredentialException e) {
         String normalized = normalizedMessage(e);
         return normalized.contains("reauth failed")
                 || normalized.contains("account reauth failed");
     }
 
+    /**
+     * Detecta errores que suelen indicar una mala configuración del proveedor Google/OAuth.
+     *
+     * @param e excepción a inspeccionar.
+     * @return {@code true} cuando el texto sugiere un problema de consola, SHA, audiencia o autorización.
+     */
     private boolean looksLikeProviderConfigurationIssue(@NonNull GetCredentialException e) {
         String normalized = normalizedMessage(e);
         return normalized.contains("developer console is not set up correctly")
@@ -259,12 +342,24 @@ public final class SocialAuthManager {
                 || normalized.contains("configuration");
     }
 
+    /**
+     * Normaliza el mensaje de la excepción para facilitar búsquedas por patrones.
+     *
+     * @param e excepción a convertir.
+     * @return mensaje saneado en minúsculas y sin nulos.
+     */
     @NonNull
     private String normalizedMessage(@NonNull GetCredentialException e) {
         String raw = e.getMessage();
         return raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * Reduce y sanea un texto antes de incluirlo en logs.
+     *
+     * @param value texto original potencialmente nulo.
+     * @return texto recortado y seguro para registro.
+     */
     @NonNull
     private String sanitizeForLog(@Nullable String value) {
         if (!StringUtils.hasText(value)) {
@@ -274,6 +369,11 @@ public final class SocialAuthManager {
         return trimmed.length() > 240 ? trimmed.substring(0, 240) + "…" : trimmed;
     }
 
+    /**
+     * Devuelve un sufijo corto del client id para distinguir configuraciones en logs.
+     *
+     * @return últimos caracteres del client id o un marcador neutro si falta configuración.
+     */
     @NonNull
     private String clientIdSuffix() {
         String clientId = BuildConfig.GOOGLE_WEB_CLIENT_ID;
@@ -284,6 +384,14 @@ public final class SocialAuthManager {
         return len <= 12 ? clientId : clientId.substring(len - 12);
     }
 
+    /**
+     * Intenta extraer el email del payload del ID token sin validar su firma.
+     *
+     * <p>Se usa solo para precargar datos del flujo social; la verificación real ocurre en backend.</p>
+     *
+     * @param idToken token JWT emitido por Google.
+     * @return email contenido en el payload o {@code null} si no pudo extraerse.
+     */
     @Nullable
     private String extractEmailFromIdToken(@Nullable String idToken) {
         if (!StringUtils.hasText(idToken)) return null;
@@ -305,6 +413,11 @@ public final class SocialAuthManager {
         }
     }
 
+    /**
+     * Genera un nonce aleatorio para asociar la petición de credenciales con la respuesta.
+     *
+     * @return cadena Base64 URL-safe sin saltos de línea.
+     */
     @NonNull
     private String generateNonce() {
         byte[] bytes = new byte[16];

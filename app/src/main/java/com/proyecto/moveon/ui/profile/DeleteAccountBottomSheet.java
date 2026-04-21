@@ -29,27 +29,57 @@ public class DeleteAccountBottomSheet extends BaseExpandedBottomSheetDialogFragm
     /** Gestor de sesión usado para decidir si la cuenta actual está vinculada con Google. */
     @Nullable private SecureSessionManager sessionManager;
 
+    /**
+     * Callback invocado cuando el usuario confirma que quiere eliminar su cuenta.
+     */
     public interface OnDeleteConfirmedListener {
+        /**
+         * Notifica a la pantalla anfitriona que ya puede iniciar la operación remota de borrado.
+         */
         void onDeleteAccountConfirmed();
     }
 
     private BottomSheetDeleteAccountBinding binding;
     @Nullable private OnDeleteConfirmedListener listener;
 
+    /**
+     * Crea una nueva instancia del sheet de confirmación.
+     *
+     * @return fragment listo para mostrarse desde {@link ProfileFragment}.
+     */
     public static DeleteAccountBottomSheet newInstance() {
         return new DeleteAccountBottomSheet();
     }
 
+    /**
+     * Obtiene el {@link SecureSessionManager} para decidir si debe mostrarse el aviso de cuenta
+     * vinculada con Google.
+     *
+     * @param context contexto anfitrión asociado al fragment.
+     */
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         sessionManager = SecureSessionManager.getInstance(context);
     }
 
+    /**
+     * Registra el listener que recibirá la confirmación final del usuario.
+     *
+     * @param listener receptor de la acción de borrado, o {@code null} para desregistrarlo.
+     */
     public void setOnDeleteConfirmedListener(@Nullable OnDeleteConfirmedListener listener) {
         this.listener = listener;
     }
 
+    /**
+     * Infla el contenido del sheet y conserva el binding mientras la vista siga activa.
+     *
+     * @param inflater inflador de vistas del fragment.
+     * @param container contenedor padre proporcionado por el sistema, puede ser {@code null}.
+     * @param savedInstanceState estado restaurado por Android, puede ser {@code null}.
+     * @return vista raíz del bottom sheet.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -59,6 +89,12 @@ public class DeleteAccountBottomSheet extends BaseExpandedBottomSheetDialogFragm
         return binding.getRoot();
     }
 
+    /**
+     * Configura la palabra de confirmación y enlaza las acciones principales del bottom sheet.
+     *
+     * @param view vista raíz recién creada.
+     * @param savedInstanceState estado previo restaurado por Android, puede ser {@code null}.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -69,6 +105,11 @@ public class DeleteAccountBottomSheet extends BaseExpandedBottomSheetDialogFragm
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
 
+            /**
+             * Habilita o deshabilita la confirmación según si el texto escrito coincide con la palabra exigida.
+             *
+             * @param s contenido editable actual del campo de confirmación.
+             */
             @Override
             public void afterTextChanged(Editable s) {
                 boolean matches = confirmWord.equals(s.toString().trim());
@@ -85,6 +126,9 @@ public class DeleteAccountBottomSheet extends BaseExpandedBottomSheetDialogFragm
         binding.btnCancel.setOnClickListener(v -> dismiss());
     }
 
+    /**
+     * Libera referencias al desmontarse el fragment de su contexto anfitrión.
+     */
     @Override
     public void onDetach() {
         sessionManager = null;
@@ -92,6 +136,9 @@ public class DeleteAccountBottomSheet extends BaseExpandedBottomSheetDialogFragm
         super.onDetach();
     }
 
+    /**
+     * Limpia el binding al destruir la jerarquía visual del sheet.
+     */
     @Override
     public void onDestroyView() {
         binding = null;

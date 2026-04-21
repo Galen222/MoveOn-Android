@@ -25,8 +25,6 @@ import com.proyecto.moveon.R;
  */
 public abstract class BaseExpandedBottomSheetDialogFragment extends BottomSheetDialogFragment {
 
-    @NonNull
-    @Override
     /**
      * Construye el {@link BottomSheetDialog} y fuerza al comportamiento
      * {@code STATE_EXPANDED} en cuanto el sheet es visible, para que las
@@ -35,6 +33,8 @@ public abstract class BaseExpandedBottomSheetDialogFragment extends BottomSheetD
      * @param savedInstanceState estado guardado por el sistema, puede ser {@code null}.
      * @return el diálogo ya configurado para abrirse completamente expandido.
      */
+    @NonNull
+    @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
         dialog.setOnShowListener(d -> {
@@ -144,6 +144,9 @@ public abstract class BaseExpandedBottomSheetDialogFragment extends BottomSheetD
 
     /**
      * Busca la mejor vista candidata para pintar snackbars en la ventana del diálogo.
+     *
+     * @return la vista más estable disponible dentro de la ventana del sheet, o {@code null}
+     * si todavía no existe ninguna jerarquía visible.
      */
     @Nullable
     private View findBottomSheetSnackbarAnchor() {
@@ -164,6 +167,9 @@ public abstract class BaseExpandedBottomSheetDialogFragment extends BottomSheetD
 
     /**
      * Busca una vista de referencia en la Activity para reutilizar su alineación vertical.
+     *
+     * @return contenedor anfitrión cuya posición vertical sirve como referencia, o {@code null}
+     * si el fragment no está asociado a ninguna {@link FragmentActivity}.
      */
     @Nullable
     private View findHostSnackbarReferenceView() {

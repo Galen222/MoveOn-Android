@@ -73,6 +73,12 @@ import java.util.concurrent.TimeUnit;
  */
 public final class TrackingService extends Service implements SensorEventListener {
 
+    /**
+     * Solicita la detención explícita del servicio foreground usando siempre el contexto de aplicación.
+     *
+     * @param context contexto desde el que se quiere parar el servicio; se normaliza a
+     *                {@link Context#getApplicationContext()} para evitar fugas.
+     */
     public static void stopService(@NonNull Context context) {
         Context appContext = context.getApplicationContext();
         Intent intent = new Intent(appContext, TrackingService.class);
@@ -244,6 +250,11 @@ public final class TrackingService extends Service implements SensorEventListene
      */
     public final class LocalBinder extends Binder {
         @NonNull
+        /**
+         * Devuelve la instancia viva del servicio enlazado para que el controlador pueda invocar su API pública.
+         *
+         * @return servicio de tracking actualmente expuesto por este binder local.
+         */
         public TrackingService getService() {
             return TrackingService.this;
         }
@@ -252,11 +263,21 @@ public final class TrackingService extends Service implements SensorEventListene
     private final IBinder binder = new LocalBinder();
 
     @NonNull
+    /**
+     * Expone el flujo observable con el snapshot completo del tracking.
+     *
+     * @return {@link LiveData} que publica estados construidos por {@link #publishState()}.
+     */
     public LiveData<TrackingState> getStateLiveData() {
         return stateLiveData;
     }
 
     @NonNull
+    /**
+     * Expone los avisos transitorios asociados a auto-pausas y detección de velocidad sospechosa.
+     *
+     * @return {@link LiveData} con alertas consumibles por la UI de tracking.
+     */
     public LiveData<TrackingAlert> getTrackingAlertLiveData() {
         return trackingAlertLiveData;
     }
@@ -359,6 +380,11 @@ public final class TrackingService extends Service implements SensorEventListene
 
     private final LocationCallback locationCallback = new LocationCallback() {
         @Override
+        /**
+         * Recibe el último lote de localizaciones del proveedor fused y filtra rápidamente lecturas nulas o demasiado imprecisas.
+         *
+         * @param result paquete de localizaciones entregado por Google Play Services.
+         */
         public void onLocationResult(@NonNull LocationResult result) {
             Location location = result.getLastLocation();
             if (location == null) return;
@@ -368,6 +394,9 @@ public final class TrackingService extends Service implements SensorEventListene
     };
 
     @Override
+    /**
+     * Inicializa dependencias del servicio, canal de notificación y posible restauración de sesión persistida.
+     */
     public void onCreate() {
         super.onCreate();
         sessionStore = new TrackingSessionStore(getApplicationContext());
@@ -383,6 +412,14 @@ public final class TrackingService extends Service implements SensorEventListene
     }
 
     @Override
+    /**
+     * Atiende acciones disparadas desde la notificación y asegura que el servicio siga en foreground.
+     *
+     * @param intent intención recibida al arrancar o reentregar el servicio.
+     * @param flags flags de reinicio proporcionados por Android.
+     * @param startId identificador de esta petición de arranque.
+     * @return {@link #START_STICKY} para permitir recreación del servicio si el proceso muere.
+     */
     public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
         String action = intent != null ? intent.getAction() : null;
 
@@ -416,11 +453,20 @@ public final class TrackingService extends Service implements SensorEventListene
 
     @NonNull
     @Override
+    /**
+     * Devuelve el binder local que permite a la capa UI interactuar con el servicio ya creado.
+     *
+     * @param intent intent de enlace recibido por Android.
+     * @return binder local con acceso a {@link TrackingService}.
+     */
     public IBinder onBind(@NonNull Intent intent) {
         return binder;
     }
 
     @Override
+    /**
+     * Persiste el último snapshot, detiene sensores y libera el scheduler antes de destruir el servicio.
+     */
     public void onDestroy() {
         serviceDestroyedAtEpochMs = System.currentTimeMillis();
         logDiagnosticEvent("SERVICE_DESTROYED", null);
@@ -588,6 +634,11 @@ public final class TrackingService extends Service implements SensorEventListene
     }
 
     @SuppressWarnings("MissingPermission")
+    /**
+     * Activa las actualizaciones de localización con la configuración de frecuencia y distancia mínima del tracking.
+     *
+     * <p>Se anota con {@code MissingPermission} porque la comprobación de permisos ocurre fuera, en la capa que controla el servicio.</p>
+     */
     private void startLocationUpdates() {
         LocationRequest request = new LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY,
@@ -599,6 +650,9 @@ public final class TrackingService extends Service implements SensorEventListene
         fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper());
     }
 
+    /**
+     * Cancela la suscripción actual a localizaciones para que el servicio no siga consumiendo GPS en pausa o fin de sesión.
+     */
     private void stopLocationUpdates() {
         fusedLocationClient.removeLocationUpdates(locationCallback);
     }
@@ -768,6 +822,11 @@ public final class TrackingService extends Service implements SensorEventListene
         updateNotification();
     }
 
+    /**
+     * Añade el punto aceptado a la ruta si realmente cambia respecto al último vértice guardado.
+     *
+     * @param location localización que acaba de validarse como parte útil de la ruta.
+     */
     private void acceptRoutePoint(@NonNull Location location) {
         LatLng point = new LatLng(location.getLatitude(), location.getLongitude());
         if (routePoints.isEmpty()) {
@@ -781,6 +840,14 @@ public final class TrackingService extends Service implements SensorEventListene
         }
     }
 
+    /**
+     * Calcula el intervalo temporal entre dos muestras observadas priorizando los timestamps del proveedor GPS.
+     *
+     * @param previous localización observada inmediatamente anterior.
+     * @param current localización recién recibida.
+     * @param nowRealtime reloj monotónico actual como fallback defensivo.
+     * @return milisegundos transcurridos entre ambas muestras, nunca menores que 1.
+     */
     private long computeDeltaTimeMs(@NonNull Location previous, @NonNull Location current, long nowRealtime) {
         long locationDelta = current.getTime() - previous.getTime();
         if (locationDelta > 0L) {
@@ -792,6 +859,12 @@ public final class TrackingService extends Service implements SensorEventListene
         return LOCATION_INTERVAL_MS;
     }
 
+    /**
+     * Calcula el intervalo desde el último punto aceptado para usarlo al limitar saltos GPS grandes.
+     *
+     * @param nowRealtime instante monotónico actual.
+     * @return milisegundos transcurridos desde el último punto aceptado u observado.
+     */
     private long computeAcceptedDeltaTimeMs(long nowRealtime) {
         if (lastAcceptedRealtimeMs > 0L) {
             return Math.max(1L, nowRealtime - lastAcceptedRealtimeMs);
@@ -869,6 +942,12 @@ public final class TrackingService extends Service implements SensorEventListene
         return acceptedDeltaMeters;
     }
 
+    /**
+     * Obtiene una referencia de velocidad plausible combinando velocidad actual, media reciente y el tipo de actividad.
+     *
+     * @param speedMs velocidad resuelta de la muestra actual.
+     * @return velocidad de referencia limitada por {@link #MAX_HUMAN_SPEED_MS}.
+     */
     private float getPlausibleDistanceSpeedReferenceMs(float speedMs) {
         float recentAverageMs = (float) getAverageRecentMovingSpeedMs();
         float activityFloorMs = activityType == TrackingState.ActivityType.RUNNING_ACTIVITY
@@ -878,6 +957,13 @@ public final class TrackingService extends Service implements SensorEventListene
         return Math.min(plausibleSpeedMs, MAX_HUMAN_SPEED_MS);
     }
 
+    /**
+     * Resuelve la velocidad final de una muestra mezclando la velocidad GPS nativa con la derivada por distancia/tiempo.
+     *
+     * @param location localización que puede incluir velocidad calculada por el proveedor.
+     * @param derivedSpeedMs velocidad derivada a partir del salto observado.
+     * @return velocidad final en metros por segundo nunca negativa.
+     */
     private float resolveSpeedMs(@NonNull Location location, float derivedSpeedMs) {
         float gpsSpeedMs = location.hasSpeed() ? location.getSpeed() : -1f;
         if (gpsSpeedMs > 0f && derivedSpeedMs > 0f) {
@@ -889,6 +975,13 @@ public final class TrackingService extends Service implements SensorEventListene
         return Math.max(0f, derivedSpeedMs);
     }
 
+    /**
+     * Marca una muestra como sospechosa de corresponder a vehículo cuando supera el límite humano con precisión fiable.
+     *
+     * @param location localización evaluada.
+     * @param speedMs velocidad resuelta de la muestra.
+     * @return {@code true} si la lectura debe contar para el detector de velocidad sospechosa.
+     */
     private boolean isSuspiciousVehicleSpeed(@NonNull Location location, float speedMs) {
         return speedMs > MAX_HUMAN_SPEED_MS
                 && location.getAccuracy() <= MAX_VALID_ACCURACY_FOR_SPEED_ALERT_M;
@@ -981,6 +1074,12 @@ public final class TrackingService extends Service implements SensorEventListene
         return (nowRealtime - lastEvidenceRealtimeMs) <= RECENT_MOTION_EVIDENCE_MS;
     }
 
+    /**
+     * Alimenta la ventana suavizada de velocidades recientes solo con muestras útiles para ritmo y velocidad máxima.
+     *
+     * @param location localización que aporta la velocidad actual.
+     * @param speedMs velocidad resuelta de la muestra.
+     */
     private void trackSpeedWindow(@NonNull Location location, float speedMs) {
         if (speedMs <= 0f) {
             return;
@@ -995,6 +1094,11 @@ public final class TrackingService extends Service implements SensorEventListene
         }
     }
 
+    /**
+     * Actualiza la velocidad máxima registrada durante la sesión en centésimas de km/h.
+     *
+     * @param speedMs velocidad candidata en metros por segundo.
+     */
     private void updateMaxSpeed(float speedMs) {
         if (speedMs <= 0f) {
             return;
@@ -1136,12 +1240,18 @@ public final class TrackingService extends Service implements SensorEventListene
         trackingAlertLiveData.postValue(new TrackingAlert(alertType));
     }
 
+    /**
+     * Registra el listener del acelerómetro cuando el dispositivo dispone del sensor y el servicio está operativo.
+     */
     private void startAccelerometer() {
         if (sensorManager != null && accelerometer != null) {
             sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         }
     }
 
+    /**
+     * Desregistra el listener del acelerómetro para evitar lecturas en pausa o tras finalizar la sesión.
+     */
     private void stopAccelerometer() {
         if (sensorManager != null) {
             sensorManager.unregisterListener(this);
@@ -1149,6 +1259,11 @@ public final class TrackingService extends Service implements SensorEventListene
     }
 
     @Override
+    /**
+     * Procesa muestras del acelerómetro, extrae evidencia reciente de movimiento y alimenta el clasificador andar/correr.
+     *
+     * @param event evento del sensor recibido por Android.
+     */
     public void onSensorChanged(@NonNull SensorEvent event) {
         if (event.sensor.getType() != Sensor.TYPE_ACCELEROMETER) return;
         if (currentStatus != TrackingState.Status.RUNNING
@@ -1287,6 +1402,12 @@ public final class TrackingService extends Service implements SensorEventListene
     }
 
     @Override
+    /**
+     * Callback obligatorio de {@link SensorEventListener} que aquí se ignora porque la clasificación no depende del nivel de precisión reportado.
+     *
+     * @param sensor sensor cuyo nivel de precisión ha cambiado.
+     * @param accuracy nuevo nivel de precisión comunicado por el sistema.
+     */
     public void onAccuracyChanged(@NonNull Sensor sensor, int accuracy) {
         // Sin uso.
     }
@@ -1354,6 +1475,9 @@ public final class TrackingService extends Service implements SensorEventListene
         }), 1L, 1L, TimeUnit.SECONDS);
     }
 
+    /**
+     * Cancela el timer periódico de sesión cuando existe una tarea programada todavía activa.
+     */
     private void stopTimer() {
         if (timerFuture != null && !timerFuture.isCancelled()) {
             timerFuture.cancel(false);
@@ -1378,6 +1502,11 @@ public final class TrackingService extends Service implements SensorEventListene
         return Math.max(0L, nowRealtime - lastEvidenceRealtimeMs);
     }
 
+    /**
+     * Calcula las calorías por segundo según el peso configurado y el tipo de actividad actualmente clasificado.
+     *
+     * @return consumo energético instantáneo estimado por segundo.
+     */
     private double calculateCaloriesPerSecond() {
         if (userWeightKg <= 0.0) {
             return 0.0;
@@ -1398,6 +1527,11 @@ public final class TrackingService extends Service implements SensorEventListene
         distanceMeters = (int) Math.round(preciseDistanceMeters);
     }
 
+    /**
+     * Calcula el ritmo instantáneo a partir de la velocidad media reciente suavizada.
+     *
+     * @return ritmo instantáneo formateado o {@code null} si no hay datos suficientes.
+     */
     @Nullable
     private String calculateInstantPace() {
         if (currentStatus != TrackingState.Status.RUNNING || recentMovingSpeeds.isEmpty()) {
@@ -1438,6 +1572,11 @@ public final class TrackingService extends Service implements SensorEventListene
         return movingSeconds + stoppedSeconds;
     }
 
+    /**
+     * Devuelve el ritmo medio que debe mostrarse según la preferencia actual de la app.
+     *
+     * @return ritmo medio en movimiento o total, según {@link AppSettingsManager#isPaceDisplayMoving(Context)}.
+     */
     @Nullable
     private String calculatePreferredAveragePace() {
         if (AppSettingsManager.isPaceDisplayMoving(this)) {
@@ -1475,6 +1614,12 @@ public final class TrackingService extends Service implements SensorEventListene
         return formatPaceFromSeconds(paceSecondsPerKm);
     }
 
+    /**
+     * Convierte una velocidad expresada en m/s al formato de ritmo por kilómetro usado en la UI.
+     *
+     * @param speedMs velocidad lineal en metros por segundo.
+     * @return cadena con el ritmo formateado o {@code null} si la velocidad no es válida.
+     */
     @Nullable
     private String formatPaceFromSpeed(double speedMs) {
         if (speedMs <= 0.0) {
@@ -1484,6 +1629,12 @@ public final class TrackingService extends Service implements SensorEventListene
         return formatPaceFromSeconds(paceSecondsPerKm);
     }
 
+    /**
+     * Formatea un ritmo expresado en segundos por kilómetro validando que caiga dentro de márgenes razonables.
+     *
+     * @param paceSecondsPerKm ritmo en segundos por kilómetro.
+     * @return texto tipo {@code 5'12"} o {@code null} si el ritmo es implausible.
+     */
     @Nullable
     private String formatPaceFromSeconds(double paceSecondsPerKm) {
         if (paceSecondsPerKm < 60.0 || paceSecondsPerKm > 1800.0) {
@@ -1496,6 +1647,11 @@ public final class TrackingService extends Service implements SensorEventListene
         return String.format(Locale.US, "%d'%02d\"", minutes, seconds);
     }
 
+    /**
+     * Reconstruye el snapshot público del tracking y lo publica hacia la UI.
+     *
+     * <p>Cuando la sesión termina también serializa la ruta con {@link PolyUtil#encode(List)} para dejarla lista para persistencia o envío.</p>
+     */
     private void publishState() {
         String encodedPolyline = null;
         if (currentStatus == TrackingState.Status.FINISHED && !routePoints.isEmpty()) {
@@ -1712,6 +1868,9 @@ public final class TrackingService extends Service implements SensorEventListene
         publishState();
     }
 
+    /**
+     * Detiene todos los productores de datos de la sesión sin modificar por sí mismo el estado lógico del tracking.
+     */
     private void stopTrackingInternal() {
         stopTimer();
         stopLocationUpdates();
@@ -1720,6 +1879,12 @@ public final class TrackingService extends Service implements SensorEventListene
 
     @NonNull
     @Nullable
+    /**
+     * Convierte una {@link Location} opcional al tipo ligero {@link LatLng} usado por el estado público.
+     *
+     * @param location localización Android que se quiere exponer.
+     * @return coordenada equivalente o {@code null} si no hay posición disponible.
+     */
     private LatLng locationToLatLng(@Nullable Location location) {
         if (location == null) {
             return null;
@@ -1727,6 +1892,12 @@ public final class TrackingService extends Service implements SensorEventListene
         return new LatLng(location.getLatitude(), location.getLongitude());
     }
 
+    /**
+     * Reconstruye una {@link Location} sintética a partir de un punto de ruta persistido.
+     *
+     * @param point coordenada recuperada desde la polilínea serializada.
+     * @return localización artificial utilizable como último punto aceptado restaurado.
+     */
     private Location latLngToLocation(@NonNull LatLng point) {
         Location location = new Location("restored_route_point");
         location.setLatitude(point.latitude);
@@ -1736,6 +1907,9 @@ public final class TrackingService extends Service implements SensorEventListene
         return location;
     }
 
+    /**
+     * Reinicia contadores, sensores, timestamps y ruta para arrancar una sesión totalmente limpia.
+     */
     private void resetInternalState() {
         elapsedSeconds = 0L;
         movingSeconds = 0L;
@@ -1788,6 +1962,9 @@ public final class TrackingService extends Service implements SensorEventListene
         activityType = TrackingState.ActivityType.WALKING;
     }
 
+    /**
+     * Consolida en los acumulados el tiempo transcurrido desde que empezó la pausa manual actual.
+     */
     private void accumulateManualPauseTime() {
         if (manualPauseStartedRealtimeMs <= 0L) {
             return;
@@ -1800,6 +1977,9 @@ public final class TrackingService extends Service implements SensorEventListene
         manualPauseStartedRealtimeMs = 0L;
     }
 
+    /**
+     * Crea el canal estable de notificaciones del tracking foreground con prioridad baja y sin badge.
+     */
     private void createNotificationChannel() {
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
@@ -1978,7 +2158,16 @@ public final class TrackingService extends Service implements SensorEventListene
     return views;
 }
 
-private void bindMetricCard(
+    /**
+     * Vincula el valor y la etiqueta de una tarjeta métrica dentro de las {@link RemoteViews} de la notificación.
+     *
+     * @param views vistas remotas que se están componiendo.
+     * @param valueViewId identificador del texto que muestra el valor.
+     * @param labelViewId identificador del texto que muestra la etiqueta.
+     * @param value valor ya formateado para mostrar.
+     * @param label etiqueta descriptiva de la métrica.
+     */
+    private void bindMetricCard(
         @NonNull RemoteViews views,
         int valueViewId,
         int labelViewId,
@@ -1989,13 +2178,24 @@ private void bindMetricCard(
     views.setTextViewText(labelViewId, label);
 }
 
-private void bindStatusPill(@NonNull RemoteViews views, int pillViewId) {
+    /**
+     * Actualiza la píldora de estado de la notificación con el texto y fondo apropiados para la situación actual.
+     *
+     * @param views vistas remotas a modificar.
+     * @param pillViewId identificador del chip de estado dentro del layout remoto.
+     */
+    private void bindStatusPill(@NonNull RemoteViews views, int pillViewId) {
     views.setTextViewText(pillViewId, buildStatusPillText());
     views.setInt(pillViewId, "setBackgroundResource", resolveStatusPillBackground());
 }
 
-@NonNull
-private String buildStatusPillText() {
+    /**
+     * Resuelve el texto corto que resume el estado actual del tracking dentro de la notificación.
+     *
+     * @return cadena localizada para la píldora de estado.
+     */
+    @NonNull
+    private String buildStatusPillText() {
     switch (currentStatus) {
         case RUNNING:
             return tr(R.string.mo_tracking_notification_status_live_badge);
@@ -2016,7 +2216,12 @@ private String buildStatusPillText() {
     }
 }
 
-private int resolveStatusPillBackground() {
+    /**
+     * Selecciona el fondo visual de la píldora de estado según si la sesión está activa, pausada o en revisión.
+     *
+     * @return drawable de fondo a aplicar sobre la píldora remota.
+     */
+    private int resolveStatusPillBackground() {
     switch (currentStatus) {
         case RUNNING:
             return R.drawable.bg_tracking_notification_status_live;
@@ -2034,8 +2239,13 @@ private int resolveStatusPillBackground() {
     }
 }
 
-@NonNull
-private String buildCompactRightMetricValue() {
+    /**
+     * Genera el valor de la tercera métrica de la vista compacta, priorizando ritmo medio y usando texto de estado como fallback.
+     *
+     * @return texto compacto que ocupa la métrica derecha de la notificación.
+     */
+    @NonNull
+    private String buildCompactRightMetricValue() {
     String averagePace = calculatePreferredAveragePace();
     if (averagePace != null) {
         return averagePace + "/km";
@@ -2052,7 +2262,18 @@ private String buildCompactRightMetricValue() {
     return tr(R.string.tracking_default_pace) + "/km";
 }
 
-private void bindNotificationButtons(
+    /**
+     * Configura las dos acciones visibles de la notificación en función del estado actual del tracking.
+     *
+     * @param views vistas remotas que alojan los botones.
+     * @param primaryContainerId contenedor del botón principal.
+     * @param primaryIconId icono del botón principal.
+     * @param primaryTextId texto del botón principal.
+     * @param secondaryContainerId contenedor del botón secundario.
+     * @param secondaryIconId icono del botón secundario.
+     * @param secondaryTextId texto del botón secundario.
+     */
+    private void bindNotificationButtons(
         @NonNull RemoteViews views,
         int primaryContainerId,
         int primaryIconId,
@@ -2163,7 +2384,18 @@ private void bindNotificationButtons(
     }
 }
 
-private void bindNotificationButton(
+    /**
+     * Aplica icono, etiqueta y {@link PendingIntent} a un botón concreto dentro de una {@link RemoteViews}.
+     *
+     * @param views vistas remotas que contienen el botón.
+     * @param containerId contenedor clicable del botón.
+     * @param iconId vista del icono del botón.
+     * @param textId vista del texto del botón.
+     * @param iconResId recurso drawable del icono.
+     * @param label texto localizado de la acción.
+     * @param pendingIntent intent que debe ejecutarse al pulsar cualquiera de sus zonas.
+     */
+    private void bindNotificationButton(
         @NonNull RemoteViews views,
         int containerId,
         int iconId,
@@ -2181,8 +2413,14 @@ private void bindNotificationButton(
     views.setOnClickPendingIntent(textId, pendingIntent);
 }
 
-@NonNull
-private PendingIntent buildNotificationContentIntent(int requestCode) {
+    /**
+     * Construye el {@link PendingIntent} que reabre la actividad principal al tocar la notificación.
+     *
+     * @param requestCode código único para distinguir instancias de intents dentro de la notificación.
+     * @return pending intent preparado para lanzar {@link MainActivity}.
+     */
+    @NonNull
+    private PendingIntent buildNotificationContentIntent(int requestCode) {
     Intent tapIntent = new Intent(this, MainActivity.class);
     tapIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
     return PendingIntent.getActivity(
@@ -2193,12 +2431,15 @@ private PendingIntent buildNotificationContentIntent(int requestCode) {
     );
 }
 
-/**
- * Construye la acción "Detener" de la notificación para abrir la app y mostrar
- * el mismo diálogo Guardar / Cancelar / Descartar que existe en Inicio.
- */
-@NonNull
-private PendingIntent buildStopConfirmationPendingIntent(int requestCode) {
+    /**
+     * Construye la acción "Detener" de la notificación para abrir la app y mostrar
+     * el mismo diálogo Guardar / Cancelar / Descartar que existe en Inicio.
+     *
+     * @param requestCode código único del pending intent usado por esta acción.
+     * @return pending intent que lanza {@link MainActivity} en modo confirmación de parada.
+     */
+    @NonNull
+    private PendingIntent buildStopConfirmationPendingIntent(int requestCode) {
     Intent intent = MainActivity.createLaunchIntentToShowTrackingStopDialog(this);
     return PendingIntent.getActivity(
             this,
@@ -2217,8 +2458,15 @@ private void openAppForStopConfirmation() {
     startActivity(intent);
 }
 
-@NonNull
-private PendingIntent buildServiceActionPendingIntent(@NonNull String action, int requestCode) {
+    /**
+     * Construye un {@link PendingIntent} dirigido de nuevo al propio servicio para procesar acciones internas de la notificación.
+     *
+     * @param action acción concreta que el servicio debe interpretar en {@link #onStartCommand(Intent, int, int)}.
+     * @param requestCode código único del pending intent.
+     * @return pending intent de servicio listo para enviar la acción solicitada.
+     */
+    @NonNull
+    private PendingIntent buildServiceActionPendingIntent(@NonNull String action, int requestCode) {
     Intent intent = new Intent(this, TrackingService.class);
     intent.setAction(action);
     return PendingIntent.getService(
@@ -2230,6 +2478,11 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
 }
 
     @NonNull
+    /**
+     * Construye el título principal de la notificación según el estado y el tipo de actividad detectado.
+     *
+     * @return título localizado mostrado en la cabecera de la notificación.
+     */
     private String buildNotificationTitle() {
         switch (currentStatus) {
             case RUNNING:
@@ -2257,6 +2510,11 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
     }
 
     @NonNull
+    /**
+     * Genera la línea compacta secundaria de la notificación combinando distancia, ritmo o texto de estado.
+     *
+     * @return resumen breve apto para la vista compacta.
+     */
     private String buildNotificationCompactText() {
         String distanceText = formatNotificationDistance();
         String instantPace = calculateInstantPace();
@@ -2287,6 +2545,11 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
     }
 
     @NonNull
+    /**
+     * Construye un resumen multilínea con tiempo, distancia, movimiento, ritmo y calorías para la vista expandida clásica.
+     *
+     * @return texto expandido listo para mostrarse en notificaciones que usen contenido textual.
+     */
     private String buildNotificationExpandedText() {
         String elapsedLine = tr(
                 R.string.mo_tracking_notification_line_elapsed,
@@ -2335,6 +2598,11 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
     }
 
     @NonNull
+    /**
+     * Resume en una sola frase el estado relevante de la sesión para el subtítulo de la notificación expandida.
+     *
+     * @return texto corto localizado acorde al estado actual.
+     */
     private String buildNotificationSummaryText() {
         switch (currentStatus) {
             case RUNNING:
@@ -2361,6 +2629,11 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
     }
 
     @NonNull
+    /**
+     * Devuelve la etiqueta de actividad usada por la UI cuando necesita distinguir entre caminar y correr.
+     *
+     * @return texto localizado de la actividad actual.
+     */
     private String buildNotificationActivityLabel() {
         if (activityType == TrackingState.ActivityType.RUNNING_ACTIVITY) {
             return tr(R.string.inicio_running);
@@ -2369,6 +2642,11 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
     }
 
     @NonNull
+    /**
+     * Devuelve la variante textual específica para el título de la notificación según el tipo de actividad.
+     *
+     * @return texto corto localizado para interpolar en el título.
+     */
     private String buildNotificationActivityTitleLabel() {
         if (activityType == TrackingState.ActivityType.RUNNING_ACTIVITY) {
             return tr(R.string.mo_tracking_notification_activity_run);
@@ -2377,6 +2655,11 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
     }
 
     @NonNull
+    /**
+     * Formatea la distancia acumulada usando metros o kilómetros según la magnitud actual.
+     *
+     * @return distancia localizada lista para la notificación.
+     */
     private String formatNotificationDistance() {
         if (distanceMeters >= 1000) {
             return tr(R.string.tracking_distance_km_format, distanceMeters / 1000.0f);
@@ -2384,6 +2667,9 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
         return tr(R.string.tracking_distance_m_format, distanceMeters);
     }
 
+    /**
+     * Reemite la notificación foreground con el último contenido calculado si el sistema todavía expone un {@link NotificationManager}.
+     */
     private void updateNotification() {
         NotificationManager manager = getSystemService(NotificationManager.class);
         if (manager != null) {
@@ -2422,6 +2708,12 @@ private PendingIntent buildServiceActionPendingIntent(@NonNull String action, in
     }
 
     @NonNull
+    /**
+     * Convierte una duración en segundos al formato legible usado por la UI y la notificación.
+     *
+     * @param seconds duración total a formatear.
+     * @return cadena en formato {@code mm:ss} o {@code h:mm:ss}.
+     */
     private String formatElapsed(long seconds) {
         long hours = seconds / 3600L;
         long minutes = (seconds % 3600L) / 60L;

@@ -90,6 +90,8 @@ public final class ConnectivityObserver {
 
     /**
      * Devuelve la instancia singleton del observador.
+     *
+     * @return instancia única de {@link ConnectivityObserver} para todo el proceso.
      */
     @NonNull
     public static ConnectivityObserver getInstance() {
@@ -216,7 +218,9 @@ public final class ConnectivityObserver {
      * Registra una acción a ejecutar cuando la conectividad vuelve de verdad.
      *
      * <p>Típicamente se usa para encolar sincronizaciones pendientes de los
-     * repositorios offline-first.</p>
+     * repositorios offline-first. Los listeners se ejecutan en el executor de
+     * {@link MoveOnExecutors#io()} cuando {@link #onNetworkRestored()} confirma
+     * una reconexión válida.</p>
      *
      * @param listener listener a ejecutar al recuperar conectividad usable.
      */

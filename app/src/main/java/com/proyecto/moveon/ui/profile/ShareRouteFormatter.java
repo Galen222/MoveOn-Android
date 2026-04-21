@@ -32,6 +32,11 @@ public final class ShareRouteFormatter {
 
     /**
      * Construye el texto resumen que acompaña a la imagen compartida.
+     *
+     * @param context contexto usado para resolver recursos localizados.
+     * @param item actividad compartida; se mantiene por coherencia con el resto de formateadores
+     *             aunque el copy actual sea fijo.
+     * @return texto corto que acompaña la imagen en el flujo de compartir.
      */
     @NonNull
     public static String buildShareText(@NonNull Context context, @NonNull ActividadItem item) {
@@ -42,6 +47,10 @@ public final class ShareRouteFormatter {
 
     /**
      * Traduce el tipo canónico de actividad a su label visible en la UI.
+     *
+     * @param context contexto desde el que resolver traducciones y recursos.
+     * @param item actividad cuyo tipo canónico debe mostrarse al usuario.
+     * @return etiqueta localizada del tipo de actividad.
      */
     @NonNull
     public static String displayType(@NonNull Context context, @NonNull ActividadItem item) {
@@ -52,6 +61,10 @@ public final class ShareRouteFormatter {
     /**
      * Devuelve solo el valor numérico de la distancia en kilómetros, sin unidad,
      * para poder maquetarlo por separado en composiciones visuales tipo Strava.
+     *
+     * @param context contexto desde el que se obtiene el {@link Locale} activo.
+     * @param meters distancia original expresada en metros.
+     * @return distancia en kilómetros con dos decimales y sin sufijo de unidad.
      */
     @NonNull
     public static String formatDistanceNumber(@NonNull Context context, int meters) {
@@ -61,6 +74,10 @@ public final class ShareRouteFormatter {
 
     /**
      * Formatea la distancia en kilómetros con dos decimales.
+     *
+     * @param context contexto desde el que se obtiene el {@link Locale} activo.
+     * @param meters distancia original expresada en metros.
+     * @return texto localizado con la distancia en kilómetros.
      */
     @NonNull
     public static String formatDistance(@NonNull Context context, int meters) {
@@ -70,6 +87,10 @@ public final class ShareRouteFormatter {
 
     /**
      * Formatea la duración total en formato breve y legible.
+     *
+     * @param context contexto desde el que se obtiene el {@link Locale} activo.
+     * @param seconds duración total de la actividad en segundos.
+     * @return duración resumida adaptada a horas, minutos o segundos.
      */
     @NonNull
     public static String formatDuration(@NonNull Context context, int seconds) {
@@ -90,6 +111,10 @@ public final class ShareRouteFormatter {
 
     /**
      * Formatea el ritmo como min/km.
+     *
+     * @param context contexto usado para resolver el placeholder cuando no hay ritmo válido.
+     * @param secondsPerKm ritmo expresado en segundos por kilómetro.
+     * @return ritmo en formato {@code m'ss"} o el texto vacío configurado en recursos.
      */
     @NonNull
     public static String formatPace(@NonNull Context context, int secondsPerKm) {
@@ -107,6 +132,10 @@ public final class ShareRouteFormatter {
      * Variante explícita para valores opcionales de ritmo.
      *
      * <p>Cuando el ritmo no existe todavía, reutiliza el placeholder estándar de la tarjeta.</p>
+     *
+     * @param context contexto usado para resolver el placeholder del ritmo.
+     * @param secondsPerKm ritmo expresado en segundos por kilómetro.
+     * @return mismo resultado que {@link #formatPace(Context, int)} para mantener una API más explícita.
      */
     @NonNull
     public static String formatOptionalPace(@NonNull Context context, int secondsPerKm) {
@@ -115,6 +144,10 @@ public final class ShareRouteFormatter {
 
     /**
      * Formatea el ritmo como min/km incluyendo explícitamente la unidad final.
+     *
+     * @param context contexto usado para resolver el placeholder cuando no hay ritmo disponible.
+     * @param secondsPerKm ritmo expresado en segundos por kilómetro.
+     * @return ritmo con el sufijo {@code /km}, salvo cuando se devuelve el placeholder vacío.
      */
     @NonNull
     public static String formatPaceWithUnit(@NonNull Context context, int secondsPerKm) {
@@ -131,6 +164,10 @@ public final class ShareRouteFormatter {
      * <p>Cuando la entrada trae offset, primero se normaliza a la zona horaria local del
      * dispositivo. Así la fecha mostrada en la tarjeta compartida coincide con la usada por las
      * estadísticas y por el historial.</p>
+     *
+     * @param context contexto desde el que se obtiene el {@link Locale} activo.
+     * @param isoDate fecha original en formato ISO, con o sin offset.
+     * @return fecha formateada para la UI o, como último recurso, una versión truncada del valor original.
      */
     @NonNull
     public static String formatDate(@NonNull Context context, @NonNull String isoDate) {

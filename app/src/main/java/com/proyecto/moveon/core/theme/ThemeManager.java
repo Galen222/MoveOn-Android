@@ -58,6 +58,9 @@ public final class ThemeManager {
     /**
      * Traduce el modo lógico de la app al valor equivalente de {@link AppCompatDelegate}.
      *
+     * <p>El valor recibido se normaliza previamente con {@link #sanitizeMode(String)} para que
+     * cualquier preferencia corrupta o desactualizada vuelva a uno de los tres modos soportados.</p>
+     *
      * @param mode modo lógico solicitado.
      */
     public static void applyMode(@NonNull String mode) {

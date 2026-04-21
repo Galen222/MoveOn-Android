@@ -56,6 +56,13 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
     @NonNull private final Set<String> expandedIds = new HashSet<>();
     private int visibleMonthCount = 0;
 
+    /**
+     * Crea una instancia del histórico con los bloques mensuales y las actividades ya calculadas.
+     *
+     * @param blocks bloques mensuales resumidos.
+     * @param activities actividades completas usadas para el detalle expandido.
+     * @return bottom sheet listo para mostrarse.
+     */
     @NonNull
     public static HistorialBottomSheet newInstance(@NonNull List<StatsResumen.MonthBlock> blocks,
                                                    @NonNull List<ActividadItem> activities) {
@@ -65,6 +72,14 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return sheet;
     }
 
+    /**
+     * Infla el bottom sheet del historial y restaura el número de meses visibles.
+     *
+     * @param inflater inflater del fragment.
+     * @param container contenedor padre.
+     * @param savedInstanceState estado previo del fragment.
+     * @return vista raíz del histórico.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -97,12 +112,22 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return root;
     }
 
+    /**
+     * Guarda el número de meses visibles para conservar la paginación al recrear la vista.
+     *
+     * @param outState bundle donde persistir el estado.
+     */
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(STATE_VISIBLE_MONTH_COUNT, visibleMonthCount);
     }
 
+    /**
+     * Reconstruye por completo el contenido visible del histórico a partir del estado actual.
+     *
+     * @param root raíz del bottom sheet.
+     */
     private void buildContent(@NonNull View root) {
         LinearLayout container = root.findViewById(R.id.ll_historial_container);
         MaterialButton showMoreButton = root.findViewById(R.id.btnHistorialShowMore);
@@ -137,14 +162,30 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         }
     }
 
+    /**
+     * Devuelve el número total de bloques mensuales disponibles.
+     *
+     * @return cantidad de meses renderizables.
+     */
     private int getTotalMonthCount() {
         return monthBlocks != null ? monthBlocks.size() : 0;
     }
 
+    /**
+     * Calcula cuántos meses adicionales deben mostrarse en la siguiente tanda.
+     *
+     * @return tamaño del próximo lote de meses.
+     */
     private int nextMonthBatchSize() {
         return computeMonthBatchSize(visibleMonthCount);
     }
 
+    /**
+     * Calcula un lote de meses intentando no superar el tamaño lógico de página por actividades.
+     *
+     * @param startIndex índice del primer mes aún no visible.
+     * @return número de meses a revelar en la siguiente expansión.
+     */
     private int computeMonthBatchSize(int startIndex) {
         List<StatsResumen.MonthBlock> blocks = monthBlocks;
         if (blocks == null || startIndex >= blocks.size()) return 0;
@@ -161,6 +202,12 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return addedMonths;
     }
 
+    /**
+     * Cuenta cuántas actividades pertenecen al mes indicado.
+     *
+     * @param monthBlock bloque mensual resumido.
+     * @return número de actividades asociadas a ese mes.
+     */
     private int countActivitiesForMonth(@NonNull StatsResumen.MonthBlock monthBlock) {
         int count = 0;
         for (ActividadItem item : activities) {
@@ -173,6 +220,12 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return count;
     }
 
+    /**
+     * Construye la sección visual completa de un mes con cabecera, totales y semanas.
+     *
+     * @param block bloque mensual a renderizar.
+     * @return vista del mes lista para añadirse al contenedor.
+     */
     @NonNull
     private View buildMonthSection(@NonNull StatsResumen.MonthBlock block) {
         Context context = requireContext();
@@ -237,6 +290,14 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return section;
     }
 
+    /**
+     * Construye la sección de una semana concreta incluyendo su resumen y sus actividades.
+     *
+     * @param week bloque semanal resumido.
+     * @param monthShort nombre corto del mes para el rango visual.
+     * @param weekActivities actividades pertenecientes a esa semana.
+     * @return vista de la semana.
+     */
     @NonNull
     private View buildWeekSection(@NonNull StatsResumen.WeekBlock week,
                                   @NonNull String monthShort,
@@ -262,6 +323,13 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return section;
     }
 
+    /**
+     * Genera la fila resumen de una semana con rango, distancia, tiempo y calorías.
+     *
+     * @param week bloque semanal.
+     * @param monthShort nombre corto del mes mostrado en el rango.
+     * @return fila de cabecera semanal.
+     */
     @NonNull
     private View buildWeekSummaryRow(@NonNull StatsResumen.WeekBlock week,
                                      @NonNull String monthShort) {
@@ -313,6 +381,13 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return row;
     }
 
+    /**
+     * Infla una tarjeta individual de actividad para insertarla dentro del histórico expandido.
+     *
+     * @param parent contenedor padre.
+     * @param item actividad a mostrar.
+     * @return raíz de la tarjeta inflada.
+     */
     @NonNull
     private View buildActivityView(@NonNull ViewGroup parent, @NonNull ActividadItem item) {
         ItemActividadBinding binding = ItemActividadBinding.inflate(
@@ -324,6 +399,12 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return binding.getRoot();
     }
 
+    /**
+     * Vincula una actividad a la tarjeta interna usada por el histórico expandido.
+     *
+     * @param binding binding de la tarjeta.
+     * @param item actividad a pintar.
+     */
     private void bindActivityCard(@NonNull ItemActividadBinding binding,
                                   @NonNull ActividadItem item) {
         final Context context = binding.getRoot().getContext();
@@ -400,6 +481,12 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         binding.layoutHeader.setOnClickListener(v -> toggleExpand(binding, item.localId));
     }
 
+    /**
+     * Alterna el estado expandido de una tarjeta del histórico.
+     *
+     * @param binding binding de la tarjeta pulsada.
+     * @param localId identificador local estable de la actividad.
+     */
     private void toggleExpand(@NonNull ItemActividadBinding binding, @NonNull String localId) {
         if (expandedIds.contains(localId)) {
             expandedIds.remove(localId);
@@ -409,6 +496,13 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         applyExpandState(binding, localId, true);
     }
 
+    /**
+     * Aplica visualmente el estado expandido o colapsado de una tarjeta del histórico.
+     *
+     * @param binding binding de la tarjeta.
+     * @param localId identificador local de la actividad.
+     * @param animate indica si debe animarse la rotación del chevron.
+     */
     private void applyExpandState(@NonNull ItemActividadBinding binding,
                                   @NonNull String localId,
                                   boolean animate) {
@@ -429,6 +523,13 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         }
     }
 
+    /**
+     * Filtra y ordena las actividades que pertenecen a una semana concreta del mes.
+     *
+     * @param monthBlock bloque mensual contenedor.
+     * @param week semana objetivo.
+     * @return lista de actividades de esa semana ordenadas de más reciente a más antigua.
+     */
     @NonNull
     private List<ActividadItem> getActivitiesForWeek(@NonNull StatsResumen.MonthBlock monthBlock,
                                                      @NonNull StatsResumen.WeekBlock week) {
@@ -491,6 +592,13 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         }
     }
 
+    /**
+     * Formatea una duración expresada en segundos para la tarjeta detallada de actividad.
+     *
+     * @param segundos duración total.
+     * @param context contexto para resolver recursos plurales/formateados.
+     * @return duración en minutos o en horas y minutos.
+     */
     @NonNull
     private String formatDuracion(int segundos, @NonNull Context context) {
         long horas = segundos / 3600L;
@@ -525,11 +633,23 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return context.getString(R.string.stats_item_pace_format, basePace);
     }
 
+    /**
+     * Formatea una distancia en metros usando el formato de kilómetros de la app.
+     *
+     * @param meters distancia original.
+     * @return distancia visible en kilómetros.
+     */
     @NonNull
     private String formatDistance(long meters) {
         return getString(R.string.stats_format_km, meters / 1000.0f);
     }
 
+    /**
+     * Formatea una duración resumida de bloque semanal o mensual.
+     *
+     * @param seconds duración agregada en segundos.
+     * @return texto resumido en minutos u horas y minutos.
+     */
     @NonNull
     private String formatDuration(long seconds) {
         long hours = seconds / 3600L;
@@ -540,6 +660,12 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
     }
 
 
+    /**
+     * Formatea calorías agregadas adaptando la unidad cuando el valor es muy grande.
+     *
+     * @param kcal calorías totales.
+     * @return texto abreviado o completo según magnitud.
+     */
     @NonNull
     private String formatKcal(long kcal) {
         if (kcal >= 1_000_000L) {
@@ -551,6 +677,12 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return getString(R.string.stats_format_kcal, (int) kcal);
     }
 
+    /**
+     * Convierte dp a píxeles enteros para construir vistas programáticamente.
+     *
+     * @param value valor en dp.
+     * @return valor equivalente en píxeles.
+     */
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }

@@ -83,12 +83,24 @@ public abstract class BaseRepository {
     protected final <T> void enqueueTracked(@NonNull Call<T> call, @NonNull Callback<T> delegate) {
         trackCall(call);
         call.enqueue(new Callback<T>() {
+            /**
+             * Retira la llamada del registro activo antes de delegar el procesamiento de la respuesta real.
+             *
+             * @param c llamada que acaba de completarse.
+             * @param response respuesta entregada por Retrofit.
+             */
             @Override
             public void onResponse(@NonNull Call<T> c, @NonNull Response<T> response) {
                 untrackCall(call);
                 delegate.onResponse(c, response);
             }
 
+            /**
+             * Retira la llamada del registro activo y reenvía el fallo al callback original.
+             *
+             * @param c llamada que falló.
+             * @param t causa del error o cancelación.
+             */
             @Override
             public void onFailure(@NonNull Call<T> c, @NonNull Throwable t) {
                 untrackCall(call);

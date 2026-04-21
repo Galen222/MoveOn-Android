@@ -43,6 +43,11 @@ public class ProfileViewModel extends AndroidViewModel {
     @Nullable private JsonObject lastFailedPatchJson;
     @Nullable private String lastFailedPhotoPath;
 
+    /**
+     * Inicializa el ViewModel de perfil y engancha la fuente reactiva del perfil cacheado.
+     *
+     * @param application aplicación usada para resolver dependencias y recursos.
+     */
     public ProfileViewModel(@NonNull Application application) {
         super(application);
         // La creación centralizada vía ServiceLocator mantiene las dependencias alineadas.
@@ -69,34 +74,82 @@ public class ProfileViewModel extends AndroidViewModel {
         attachPerfilSource();
     }
 
+    /**
+     * Expone el estado observable del perfil cargado.
+     *
+     * @return {@link LiveData} con el perfil actual, su carga o sus errores.
+     */
     public LiveData<UiState<PerfilUsuario>> getPerfilState()        { return perfilState; }
+    /**
+     * Expone el estado de las actualizaciones textuales del perfil.
+     *
+     * @return {@link LiveData} del último update lanzado.
+     */
     public LiveData<UiState<String>>        getUpdateState()        { return updateState; }
+    /**
+     * Expone el estado de subida y sincronización de la foto de perfil.
+     *
+     * @return {@link LiveData} asociado a la foto.
+     */
     public LiveData<UiState<String>>        getPhotoState()         { return photoState; }
+    /**
+     * Expone el resultado del logout actual.
+     *
+     * @return {@link LiveData} del flujo de cierre de sesión.
+     */
     public LiveData<UiState<String>>        getLogoutState()        { return logoutState; }
+    /**
+     * Expone el estado del borrado de cuenta.
+     *
+     * @return {@link LiveData} del flujo de eliminación.
+     */
     public LiveData<UiState<String>>        getDeleteAccountState() { return deleteAccountState; }
 
+    /**
+     * Devuelve el username actual de la sesión si sigue disponible.
+     *
+     * @return nombre de usuario o {@code null} si no hay sesión utilizable.
+     */
     public String getUsername() {
         String u = sessionManager.getUsername();
         return StringUtils.hasText(u) ? u : null;
     }
 
+    /**
+     * Devuelve el modo de idioma actualmente seleccionado en la app.
+     *
+     * @return modo de idioma persistido.
+     */
     @NonNull
     public String getAppLanguageMode() {
         return AppLanguageManager.getSelectedMode(getApplication());
     }
 
     // API pública: selector de idioma en perfil (pendiente de UI)
+    /**
+     * Indica si el usuario seleccionó manualmente el idioma de la app.
+     *
+     * @return {@code true} si existe una selección explícita guardada.
+     */
     @SuppressWarnings("unused")
     public boolean hasManualAppLanguageSelection() {
         return AppLanguageManager.hasManualSelection(getApplication());
     }
 
     // API pública: selector de idioma en perfil (pendiente de UI)
+    /**
+     * Guarda y aplica un nuevo modo de idioma de aplicación.
+     *
+     * @param mode modo seleccionado por el usuario.
+     */
     @SuppressWarnings("unused")
     public void setAppLanguageMode(@NonNull String mode) {
         AppLanguageManager.saveAndApply(getApplication(), mode);
     }
 
+    /**
+     * Fuerza una recarga del perfil desde red manteniendo el caché visible si ya existe.
+     */
     public void loadPerfil() {
         if (accountKey == null) {
             perfilState.setValue(UiState.error(ApiError.local(AppLanguageManager.getString(getApplication(), R.string.error_no_sesion_activa))));
@@ -116,6 +169,11 @@ public class ProfileViewModel extends AndroidViewModel {
         });
     }
 
+    /**
+     * Aplica un patch optimista sobre el perfil y lo encola para sincronización.
+     *
+     * @param patchJson cambios a enviar al backend.
+     */
     public void updatePerfil(@NonNull JsonObject patchJson) {
         if (accountKey == null) {
             updateState.setValue(UiState.error(ApiError.local(AppLanguageManager.getString(getApplication(), R.string.error_no_sesion_activa))));
@@ -145,6 +203,11 @@ public class ProfileViewModel extends AndroidViewModel {
         });
     }
 
+    /**
+     * Sube una nueva foto de perfil priorizando la previsualización local inmediata.
+     *
+     * @param file fichero de imagen seleccionado.
+     */
     public void uploadPhoto(@NonNull File file) {
         if (accountKey == null) {
             photoState.setValue(UiState.error(ApiError.local(AppLanguageManager.getString(getApplication(), R.string.error_no_sesion_activa))));
@@ -167,12 +230,18 @@ public class ProfileViewModel extends AndroidViewModel {
         });
     }
 
+    /**
+     * Reintenta el último patch fallido del perfil si todavía existe una copia almacenada.
+     */
     public void retryLastUpdate() {
         if (lastFailedPatchJson != null) {
             updatePerfil(lastFailedPatchJson.deepCopy());
         }
     }
 
+    /**
+     * Reintenta la última subida de foto fallida si el archivo local sigue existiendo.
+     */
     public void retryLastPhotoUpload() {
         if (lastFailedPhotoPath == null) return;
         File file = new File(lastFailedPhotoPath);
@@ -181,9 +250,18 @@ public class ProfileViewModel extends AndroidViewModel {
         }
     }
 
+    /**
+     * Limpia el estado observable del último update de perfil.
+     */
     public void resetUpdateState() { updateState.setValue(null); }
+    /**
+     * Limpia el estado observable de la última subida de foto.
+     */
     public void resetPhotoState()  { photoState.setValue(null); }
 
+    /**
+     * Inicia el cierre de sesión remoto y local, o limpia solo local si falta refresh token.
+     */
     public void logout() {
         String refreshToken = sessionManager.getRefreshToken();
         if (!StringUtils.hasText(refreshToken)) {
@@ -204,6 +282,9 @@ public class ProfileViewModel extends AndroidViewModel {
         });
     }
 
+    /**
+     * Solicita la eliminación definitiva de la cuenta y limpia la sesión solo cuando backend la confirma.
+     */
     public void deleteAccount() {
         deleteAccountState.setValue(UiState.loading());
         perfilRepository.eliminarCuenta(result -> {
@@ -222,6 +303,9 @@ public class ProfileViewModel extends AndroidViewModel {
         });
     }
 
+    /**
+     * Enlaza el perfil cacheado de Room con el estado expuesto por el ViewModel.
+     */
     private void attachPerfilSource() {
         if (accountKey == null) return;
         perfilSource = perfilRepository.observePerfil(accountKey);
@@ -230,6 +314,9 @@ public class ProfileViewModel extends AndroidViewModel {
         });
     }
 
+    /**
+     * Cancela operaciones en curso y desengancha fuentes observadas al destruirse el ViewModel.
+     */
     @Override
     protected void onCleared() {
         authRepository.cancelAll();

@@ -10,6 +10,10 @@ import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.data.session.SessionRefreshCoordinator;
 /**
  * ViewModel que expone el estado y las acciones de main.
+ *
+ * <p>Actúa como puente entre {@link SecureSessionManager} y {@link SessionRefreshCoordinator}
+ * para que {@code MainActivity} pueda comprobar si la sesión es recuperable y refrescarla de
+ * forma proactiva sin conocer detalles del almacenamiento seguro.</p>
  */
 public class MainViewModel extends AndroidViewModel {
 
@@ -33,6 +37,8 @@ public class MainViewModel extends AndroidViewModel {
      * Devuelve {@code true} si NO queda ninguna forma recuperable de sesión.
      * Para una app offline-first, la presencia de refresh token sigue contando
      * como sesión recuperable aunque el access se renueve silenciosamente después.
+     *
+     * @return {@code true} cuando el usuario ya no puede restaurar la sesión actual.
      */
     public boolean isNotLoggedIn() {
         return !sessionManager.hasRecoverableSession();

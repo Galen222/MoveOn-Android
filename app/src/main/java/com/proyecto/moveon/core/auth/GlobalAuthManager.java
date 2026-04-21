@@ -44,6 +44,7 @@ public class GlobalAuthManager {
      * logout remoto, cuenta deshabilitada). Usa un flag atómico para que
      * si varios componentes reciben el 401 a la vez, sólo el primero
      * publique el evento y no se acumulen múltiples redirecciones a login.
+     * El evento emitido puede observarse desde {@link #getSessionExpiredEvent()}.
      */
     public void notifySessionExpired() {
         if (dispatchInProgress.compareAndSet(false, true)) {

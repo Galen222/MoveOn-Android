@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Pantalla principal de tracking.
- *
+ * 
  * <p>Muestra métricas ampliadas y consume las alertas del servicio mediante
  * paneles inferiores reutilizables.</p>
  */
@@ -65,7 +65,7 @@ public class InicioFragment extends Fragment
     @Nullable private AlertDialog stopDialog;
     /**
      * Última alerta de tracking retenida mientras el modal de stop tiene prioridad.
-     *
+     * 
      * <p>Se usa para reabrir el panel inferior solo si, al cancelar el modal,
      * el estado actual de la sesión sigue justificándolo.</p>
      */
@@ -73,7 +73,7 @@ public class InicioFragment extends Fragment
     private boolean suppressStationarySheetForCurrentActivity = false;
     /**
      * Espejo local del estado del permiso de ubicación conocido por este fragment.
-     *
+     * 
      * <p>Se usa para detectar la transición concreta "antes no había permiso y ahora sí"
      * cuando el usuario concede el permiso fuera de esta pantalla (por ejemplo, desde Perfil).
      * En ese caso, al volver a Inicio, el mapa debe recentrarse una vez sobre la posición actual.</p>
@@ -82,7 +82,7 @@ public class InicioFragment extends Fragment
 
     /**
      * Launcher propio del flujo de permisos iniciado desde Inicio.
-     *
+     * 
      * <p>Cuando el permiso se concede desde aquí, este callback sí vuelve a habilitar la capa
      * {@code MyLocation}, recentra el mapa y reevalúa el resto de requisitos antes de arrancar
      * el tracking.</p>
@@ -92,6 +92,14 @@ public class InicioFragment extends Fragment
                     new ActivityResultContracts.RequestMultiplePermissions(),
                     permissions -> onPermissionsRequestCompleted());
 
+    /**
+     * Infla la vista principal del tracking y devuelve la raíz asociada al binding.
+     * 
+     * @param inflater inflator proporcionado por Android.
+     * @param container contenedor padre del fragment, o {@code null}.
+     * @param savedInstanceState estado restaurado, o {@code null}.
+     * @return raíz del layout de inicio.
+     */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
@@ -100,6 +108,13 @@ public class InicioFragment extends Fragment
         return binding.getRoot();
     }
 
+    /**
+     * Crea el {@link TrackingViewModel}, toma la fotografía inicial del estado
+     * de permisos y conecta mapa, botones y observadores del tracking.
+     * 
+     * @param view vista ya inflada del fragment.
+     * @param savedInstanceState estado restaurado, o {@code null}.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -117,7 +132,7 @@ public class InicioFragment extends Fragment
 
     /**
      * Re-sincroniza el estado del mapa cada vez que Inicio vuelve al primer plano.
-     *
+     * 
      * <p>Este punto corrige el caso en el que el permiso de ubicación se concede desde Perfil:
      * el callback de Perfil actualiza su propia UI, pero el mapa de Inicio no recibe ese evento.
      * Al volver a este fragment, comprobamos si el permiso pasó de denegado a concedido y,
@@ -129,6 +144,10 @@ public class InicioFragment extends Fragment
         syncMapLocationState();
     }
 
+    /**
+     * Cierra diálogos y suelta referencias ligadas a la vista para evitar que
+     * queden overlays o estados retenidos tras una recreación del fragment.
+     */
     @Override
     public void onDestroyView() {
         // Si la vista se destruye, liberamos también cualquier diálogo de stop
@@ -145,6 +164,9 @@ public class InicioFragment extends Fragment
         super.onDestroyView();
     }
 
+    /**
+     * Localiza el {@link SupportMapFragment} hijo y solicita el callback de mapa listo.
+     */
     private void setupMap() {
         SupportMapFragment mapFragment = (SupportMapFragment)
                 getChildFragmentManager().findFragmentById(R.id.map_fragment);
@@ -153,6 +175,12 @@ public class InicioFragment extends Fragment
         }
     }
 
+    /**
+     * Configura el mapa cuando Google Play Services termina de inicializarlo y
+     * decide si debe centrarse en el usuario o en la ubicación por defecto.
+     * 
+     * @param map instancia ya inicializada del mapa.
+     */
     @Override
     public void onMapReady(@NonNull GoogleMap map) {
         googleMap = map;
@@ -169,6 +197,10 @@ public class InicioFragment extends Fragment
     }
 
     @SuppressWarnings("MissingPermission")
+    /**
+     * Activa la capa de ubicación del mapa únicamente cuando el permiso sigue
+     * concedido en tiempo de ejecución.
+     */
     private void enableMapMyLocation() {
         if (googleMap != null && TrackingRequirementsManager.hasLocationPermission(requireContext())) {
             googleMap.setMyLocationEnabled(true);
@@ -176,6 +208,10 @@ public class InicioFragment extends Fragment
     }
 
     @SuppressWarnings("MissingPermission")
+    /**
+     * Intenta recentrar la cámara sobre la última ubicación conocida del usuario
+     * y usa una posición por defecto cuando todavía no hay fix disponible.
+     */
     private void moveCameraToCurrentLocation() {
         if (googleMap == null
                 || !TrackingRequirementsManager.hasLocationPermission(requireContext())) {
@@ -199,7 +235,7 @@ public class InicioFragment extends Fragment
 
     /**
      * Mantiene la capa de ubicación del mapa alineada con el estado real de permisos.
-     *
+     * 
      * <p>Este método cubre tanto el alta del permiso (habilita la capa y recentra una sola vez)
      * como su posible revocación posterior (deshabilita la capa para evitar inconsistencias).</p>
      */
@@ -232,7 +268,7 @@ public class InicioFragment extends Fragment
 
     /**
      * Deshabilita la capa {@code MyLocation} de forma segura.
-     *
+     * 
      * <p>Algunos analizadores estáticos exigen tratar esta llamada como protegida por
      * permiso incluso cuando se usa para desactivar la capa. Además, en ciertos cambios
      * de estado del fragment la API de Maps puede lanzar {@link SecurityException} si el
@@ -251,12 +287,20 @@ public class InicioFragment extends Fragment
         }
     }
 
+    /**
+     * Enlaza los controles principales del tracking con sus acciones de play,
+     * stop y reset.
+     */
     private void setupClickListeners() {
         binding.btnPlay.setOnClickListener(v -> onPlayClicked());
         binding.btnStop.setOnClickListener(v -> onStopClicked());
         binding.btnReset.setOnClickListener(v -> onResetClicked());
     }
 
+    /**
+     * Resuelve la acción del botón principal según el estado actual: iniciar,
+     * reanudar o pausar la sesión de tracking.
+     */
     private void onPlayClicked() {
         TrackingState state = viewModel.getTrackingState().getValue();
         if (state == null) return;
@@ -279,6 +323,10 @@ public class InicioFragment extends Fragment
         }
     }
 
+    /**
+     * Abre el diálogo de parada y concentra en él las opciones de guardar,
+     * cancelar o descartar la actividad actual.
+     */
     private void onStopClicked() {
         TrackingState state = viewModel.getTrackingState().getValue();
         if (state == null || !state.isActive()) return;
@@ -337,7 +385,7 @@ public class InicioFragment extends Fragment
     /**
      * Punto de entrada usado por acciones externas (por ejemplo, la notificación)
      * para abrir el mismo diálogo de detener que se muestra al pulsar el botón en pantalla.
-     *
+     * 
      * <p>No duplica ninguna lógica de guardado o descarte: simplemente reenruta hacia
      * {@link #onStopClicked()} cuando el fragment y su vista están listos.</p>
      */
@@ -354,6 +402,10 @@ public class InicioFragment extends Fragment
         });
     }
 
+    /**
+     * Reinicia la actividad actual o prepara una nueva sesión según si el
+     * tracking sigue activo o ya estaba detenido.
+     */
     private void onResetClicked() {
         TrackingState state = viewModel.getTrackingState().getValue();
         if (state == null || state.isIdle()) return;
@@ -387,6 +439,10 @@ public class InicioFragment extends Fragment
                 .show();
     }
 
+    /**
+     * Observa el estado del tracking, el guardado y los eventos puntuales para
+     * mantener sincronizadas métricas, mapa y feedback visual.
+     */
     private void observeViewModel() {
         viewModel.getTrackingState().observe(getViewLifecycleOwner(), this::renderTrackingState);
 
@@ -436,6 +492,12 @@ public class InicioFragment extends Fragment
         });
     }
 
+    /**
+     * Aplica a la UI una instantánea completa del tracking actualizando alertas,
+     * indicadores, botones, métricas y polilínea.
+     * 
+     * @param state estado consolidado emitido por el servicio de tracking.
+     */
     private void renderTrackingState(@NonNull TrackingState state) {
         syncTrackingAlertWithState(state);
         updateActivityIndicator(state.getActivityType());
@@ -447,7 +509,7 @@ public class InicioFragment extends Fragment
 
     /**
      * Sincroniza el panel inferior activo con el estado persistente del tracking.
-     *
+     * 
      * <p>La alerta de auto-pausa por parada es contextual: cuando la sesión se
      * reactiva sola por movimiento real, el panel deja de tener sentido y debe
      * cerrarse automáticamente. La alerta por velocidad sospechosa, en cambio,
@@ -474,7 +536,7 @@ public class InicioFragment extends Fragment
 
     /**
      * Reevalúa si el panel inferior debe reaparecer tras cancelar el modal de stop.
-     *
+     * 
      * <p>No se remuestra de forma ciega. Solo vuelve si el estado actual sigue en
      * auto-pausa por parado o en pausa por velocidad sospechosa.</p>
      */
@@ -519,6 +581,11 @@ public class InicioFragment extends Fragment
         return pendingTrackingAlertAfterStopDialog;
     }
 
+    /**
+     * Marca visualmente si la sesión está clasificada como caminata o carrera.
+     * 
+     * @param type tipo de actividad actualmente dominante.
+     */
     private void updateActivityIndicator(@NonNull TrackingState.ActivityType type) {
         if (type == TrackingState.ActivityType.RUNNING_ACTIVITY) {
             showRunningStatus();
@@ -527,6 +594,12 @@ public class InicioFragment extends Fragment
         }
     }
 
+    /**
+     * Ajusta iconos, habilitación y visibilidad de los botones de control según
+     * el estado exacto de la sesión.
+     * 
+     * @param state estado actual del tracking.
+     */
     private void updateControlButtons(@NonNull TrackingState state) {
         switch (state.getStatus()) {
             case IDLE:
@@ -574,6 +647,12 @@ public class InicioFragment extends Fragment
         binding.btnPlay.setAlpha(alpha);
     }
 
+    /**
+     * Actualiza el texto descriptivo y el pill de estado principal a partir del
+     * estado y motivo de pausa del tracking.
+     * 
+     * @param state estado actual del tracking.
+     */
     private void updateStatusText(@NonNull TrackingState state) {
         int messageRes;
         switch (state.getStatus()) {
@@ -617,6 +696,12 @@ public class InicioFragment extends Fragment
         );
     }
 
+    /**
+     * Vuelca en la cabecera todas las métricas derivadas del tracking usando el
+     * modo de ritmo configurado por el usuario.
+     * 
+     * @param state estado actual del tracking con métricas agregadas.
+     */
     private void updateMetrics(@NonNull TrackingState state) {
         binding.tvElapsedTime.setText(formatElapsed(state.getElapsedSeconds()));
         binding.tvMovingTime.setText(formatElapsed(state.getMovingSeconds()));
@@ -653,6 +738,12 @@ public class InicioFragment extends Fragment
         );
     }
 
+    /**
+     * Redibuja la polilínea del recorrido y actualiza el punto final mostrado en el mapa.
+     * 
+     * @param points lista de puntos aceptados de la ruta.
+     * @param currentLocation ubicación instantánea actual, o {@code null}.
+     */
     private void updateMapRoute(@NonNull List<LatLng> points, @Nullable LatLng currentLocation) {
         if (googleMap == null) return;
 
@@ -675,6 +766,12 @@ public class InicioFragment extends Fragment
         updateMapCamera(cameraTarget);
     }
 
+    /**
+     * Mueve la cámara del mapa al objetivo solicitado o a la posición por defecto
+     * cuando no existe un punto válido.
+     * 
+     * @param target destino de la cámara, o {@code null} para usar el fallback.
+     */
     private void updateMapCamera(@Nullable LatLng target) {
         if (googleMap == null) {
             return;
@@ -688,6 +785,9 @@ public class InicioFragment extends Fragment
         googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(target, USER_ZOOM));
     }
 
+    /**
+     * Elimina del mapa la polilínea dibujada y limpia la referencia retenida.
+     */
     private void clearMapRoute() {
         if (routePolyline != null) {
             routePolyline.remove();
@@ -695,6 +795,12 @@ public class InicioFragment extends Fragment
         }
     }
 
+    /**
+     * Abre o actualiza el bottom sheet contextual correspondiente a la alerta
+     * puntual emitida por el servicio.
+     * 
+     * @param alert alerta concreta que debe representarse en pantalla.
+     */
     private void showTrackingAlert(@NonNull TrackingAlert alert) {
         if (isStopDialogShowing()) {
             return;
@@ -731,6 +837,12 @@ public class InicioFragment extends Fragment
         sheet.show(getChildFragmentManager(), TrackingAlertBottomSheet.TAG);
     }
 
+    /**
+     * Decide si la alerta de auto-pausa por inactividad debe mostrarse otra vez
+     * para la actividad actual.
+     * 
+     * @return {@code true} si el usuario no la ha suprimido todavía en esta sesión.
+     */
     private boolean shouldShowStationaryAutoPauseSheet() {
         if (suppressStationarySheetForCurrentActivity) {
             return false;
@@ -739,10 +851,18 @@ public class InicioFragment extends Fragment
                 .shouldShowAutoPauseAlertsByDefault();
     }
 
+    /**
+     * Restablece el flag que evita remostrar la auto-pausa por parada al iniciar
+     * una actividad nueva o al descartar la anterior.
+     */
     private void resetStationarySheetSuppressionForCurrentActivity() {
         suppressStationarySheetForCurrentActivity = false;
     }
 
+    /**
+     * Cierra el bottom sheet contextual de tracking si sigue visible y limpia
+     * las referencias locales asociadas.
+     */
     private void dismissTrackingSheetIfShowing() {
         if (trackingAlertBottomSheet != null) {
             trackingAlertBottomSheet.dismissAllowingStateLoss();
@@ -759,6 +879,11 @@ public class InicioFragment extends Fragment
         return stopDialog != null && stopDialog.isShowing();
     }
 
+    /**
+     * Gestiona la acción principal elegida en el bottom sheet de tracking.
+     * 
+     * @param type tipo de alerta desde la que llega la acción.
+     */
     @Override
     public void onPrimaryAction(@NonNull TrackingAlert.Type type) {
         if (type == TrackingAlert.Type.SUSPICIOUS_SPEED) {
@@ -768,6 +893,11 @@ public class InicioFragment extends Fragment
         // La auto-pausa por parada vuelve sola al detectar movimiento real.
     }
 
+    /**
+     * Gestiona la acción secundaria del bottom sheet de tracking.
+     * 
+     * @param type tipo de alerta desde la que llega la acción.
+     */
     @Override
     public void onSecondaryAction(@NonNull TrackingAlert.Type type) {
         if (type == TrackingAlert.Type.STATIONARY_AUTO_PAUSE) {
@@ -782,6 +912,12 @@ public class InicioFragment extends Fragment
         viewModel.stopAndSave();
     }
 
+    /**
+     * Gestiona la acción terciaria del bottom sheet, usada aquí para suprimir
+     * la alerta de auto-pausa por parada durante la actividad actual.
+     * 
+     * @param type tipo de alerta desde la que llega la acción.
+     */
     @Override
     public void onTertiaryAction(@NonNull TrackingAlert.Type type) {
         if (type == TrackingAlert.Type.STATIONARY_AUTO_PAUSE) {
@@ -789,6 +925,10 @@ public class InicioFragment extends Fragment
         }
     }
 
+    /**
+     * Revisa permisos, ajustes del dispositivo y requisitos bloqueantes antes
+     * de arrancar o reanudar el tracking.
+     */
     private void ensureTrackingRequirementsAndStart() {
         List<TrackingRequirementsManager.Requirement> blockedRequirements =
                 TrackingRequirementsManager.getBlockedRuntimeRequirements(this);
@@ -813,6 +953,10 @@ public class InicioFragment extends Fragment
         viewModel.startTracking();
     }
 
+    /**
+     * Reacciona al resultado del launcher de permisos, resincroniza el mapa y
+     * decide si ya puede iniciarse el tracking o todavía faltan requisitos.
+     */
     private void onPermissionsRequestCompleted() {
         if (!isAdded()) return;
 
@@ -848,6 +992,12 @@ public class InicioFragment extends Fragment
         viewModel.startTracking();
     }
 
+    /**
+     * Muestra un diálogo informativo con requisitos pendientes que el usuario
+     * todavía puede activar desde la propia app o desde ajustes.
+     * 
+     * @param requirements requisitos que siguen faltando.
+     */
     private void showNeedsActivationDialog(
             @NonNull List<TrackingRequirementsManager.Requirement> requirements) {
         new AlertDialog.Builder(requireContext())
@@ -859,6 +1009,12 @@ public class InicioFragment extends Fragment
                 .show();
     }
 
+    /**
+     * Muestra un diálogo para requisitos bloqueados cuyo siguiente paso típico
+     * es abrir ajustes del sistema.
+     * 
+     * @param requirements requisitos actualmente bloqueados.
+     */
     private void showBlockedRequirementsDialog(
             @NonNull List<TrackingRequirementsManager.Requirement> requirements) {
         new AlertDialog.Builder(requireContext())
@@ -872,6 +1028,10 @@ public class InicioFragment extends Fragment
                 .show();
     }
 
+    /**
+     * Informa al usuario de que el GPS del dispositivo está desactivado y ofrece
+     * acceso directo a la pantalla de ajustes correspondiente.
+     */
     private void showDeviceLocationDisabledDialog() {
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.tracking_device_location_disabled_title)
@@ -883,6 +1043,13 @@ public class InicioFragment extends Fragment
     }
 
     @NonNull
+    /**
+     * Convierte la lista de requisitos pendientes a un texto con viñetas apto
+     * para diálogos de explicación.
+     * 
+     * @param requirements requisitos que deben representarse.
+     * @return cadena multilínea lista para insertarse en el mensaje del diálogo.
+     */
     private String buildRequirementsBulletList(
             @NonNull List<TrackingRequirementsManager.Requirement> requirements) {
         StringBuilder builder = new StringBuilder();
@@ -894,6 +1061,12 @@ public class InicioFragment extends Fragment
     }
 
     @NonNull
+    /**
+     * Resuelve la etiqueta visible de un requisito de tracking.
+     * 
+     * @param requirement requisito cuya etiqueta debe mostrarse.
+     * @return texto localizado que describe ese requisito.
+     */
     private String getRequirementLabel(@NonNull TrackingRequirementsManager.Requirement requirement) {
         switch (requirement) {
             case LOCATION:
@@ -908,6 +1081,12 @@ public class InicioFragment extends Fragment
         }
     }
 
+    /**
+     * Abre la pantalla de ajustes más útil según el conjunto de requisitos que
+     * permanecen bloqueados.
+     * 
+     * @param requirements requisitos pendientes o bloqueados.
+     */
     private void openBestSettingsForRequirements(
             @NonNull List<TrackingRequirementsManager.Requirement> requirements) {
         if (requirements.size() == 1
@@ -918,22 +1097,34 @@ public class InicioFragment extends Fragment
         openAppSettings();
     }
 
+    /**
+     * Lanza la pantalla de información de la app en ajustes del sistema.
+     */
     private void openAppSettings() {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                 Uri.fromParts("package", requireContext().getPackageName(), null));
         startActivity(intent);
     }
 
+    /**
+     * Lanza la pantalla de ajustes de notificaciones de la aplicación.
+     */
     private void openNotificationSettings() {
         Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                 .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName());
         startActivity(intent);
     }
 
+    /**
+     * Lanza la pantalla de ajustes globales de ubicación del dispositivo.
+     */
     private void openLocationSettings() {
         startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
     }
 
+    /**
+     * Aplica el estilo visual activo al indicador de caminata y desactiva el de carrera.
+     */
     private void showWalkingStatus() {
         binding.statusWalking.setBackground(
                 ContextCompat.getDrawable(requireContext(), R.drawable.pill_active));
@@ -950,6 +1141,9 @@ public class InicioFragment extends Fragment
                 ContextCompat.getColor(requireContext(), R.color.textSecondary));
     }
 
+    /**
+     * Aplica el estilo visual activo al indicador de carrera y desactiva el de caminata.
+     */
     private void showRunningStatus() {
         binding.statusRunning.setBackground(
                 ContextCompat.getDrawable(requireContext(), R.drawable.pill_active));
@@ -967,6 +1161,12 @@ public class InicioFragment extends Fragment
     }
 
     @NonNull
+    /**
+     * Formatea una duración en segundos al patrón mm:ss o h:mm:ss según proceda.
+     * 
+     * @param seconds duración a representar.
+     * @return texto formateado para la UI de tracking.
+     */
     private String formatElapsed(long seconds) {
         long h = TimeUnit.SECONDS.toHours(seconds);
         long m = TimeUnit.SECONDS.toMinutes(seconds) % 60L;
@@ -978,6 +1178,12 @@ public class InicioFragment extends Fragment
     }
 
     @NonNull
+    /**
+     * Representa la distancia en metros o kilómetros usando los recursos de texto de tracking.
+     * 
+     * @param meters distancia total acumulada.
+     * @return texto localizado con la unidad adecuada.
+     */
     private String formatDistance(int meters) {
         if (meters >= 1000) {
             return getString(R.string.tracking_distance_km_format, meters / 1000.0f);

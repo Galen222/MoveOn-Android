@@ -60,10 +60,21 @@ public class PerfilRepository {
     private final PerfilSyncManager syncManager;
     private final ExecutorService io = MoveOnExecutors.io();
 
+    /**
+     * Crea el repositorio usando el repositorio de preferencias por defecto.
+     *
+     * @param context contexto desde el que resolver base de datos y servicios de perfil.
+     */
     public PerfilRepository(@NonNull Context context) {
         this(context, new UserPrefsRepository(context));
     }
 
+    /**
+     * Crea el repositorio de perfil con sus dependencias explícitas.
+     *
+     * @param context contexto desde el que resolver almacenamiento y red.
+     * @param userPrefsRepository repositorio usado para sincronizar objetivos locales del usuario.
+     */
     public PerfilRepository(@NonNull Context context,
                             @NonNull UserPrefsRepository userPrefsRepository) {
         this.appContext = context.getApplicationContext();
@@ -75,6 +86,12 @@ public class PerfilRepository {
 
     // ── Observación ──────────────────────────────────────────────────────────
 
+    /**
+     * Observa el perfil cacheado de una cuenta y lo transforma al modelo de dominio.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @return {@link LiveData} que emite el perfil visible por la UI.
+     */
     public LiveData<PerfilUsuario> observePerfil(@NonNull String accountKey) {
         MediatorLiveData<PerfilUsuario> result = new MediatorLiveData<>();
         result.addSource(local.observeCache(accountKey), entity ->
@@ -82,6 +99,12 @@ public class PerfilRepository {
         return result;
     }
 
+    /**
+     * Devuelve de forma síncrona el perfil cacheado actual si existe.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @return perfil cacheado o {@code null} cuando todavía no hay snapshot local.
+     */
     @Nullable
     public PerfilUsuario getCachedPerfilNow(@NonNull String accountKey) {
         PerfilCacheEntity entity = local.getCacheNow(accountKey);
@@ -90,6 +113,12 @@ public class PerfilRepository {
 
     // ── Refresh ──────────────────────────────────────────────────────────────
 
+    /**
+     * Fuerza una recarga remota del perfil y fusiona el snapshot resultante en la caché local.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @param callback callback opcional notificado al finalizar con error o éxito.
+     */
     public void refreshPerfil(@NonNull String accountKey, @Nullable RefreshCallback callback) {
         remote.fetchPerfil(result -> {
             if (!result.isSuccess() || result.data == null) {
@@ -109,6 +138,13 @@ public class PerfilRepository {
 
     // ── Patch ────────────────────────────────────────────────────────────────
 
+    /**
+     * Aplica un patch local al perfil, intenta sincronizarlo y encola un worker si queda pendiente.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @param patchJson payload parcial con los campos modificados.
+     * @param callback callback opcional con el resultado final del intento.
+     */
     public void applyLocalPatchAndEnqueue(@NonNull String accountKey,
                                           @NonNull JsonObject patchJson,
                                           @Nullable UpdateCallback callback) {
@@ -131,6 +167,13 @@ public class PerfilRepository {
 
     // ── Foto ─────────────────────────────────────────────────────────────────
 
+    /**
+     * Guarda la foto localmente antes de intentar subirla y encola sincronización si queda pendiente.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @param sourceFile archivo original seleccionado por el usuario.
+     * @param callback callback opcional con el resultado del flujo.
+     */
     public void uploadPhotoLocalFirst(@NonNull String accountKey,
                                       @NonNull File sourceFile,
                                       @Nullable UpdateCallback callback) {
@@ -152,11 +195,20 @@ public class PerfilRepository {
 
     // ── Sync (Worker) ────────────────────────────────────────────────────────
 
+    /**
+     * Ejecuta inmediatamente la sincronización offline pendiente del perfil.
+     *
+     * @param accountKey clave lógica de la cuenta.
+     * @return resultado resumido del ciclo de sync.
+     */
     @NonNull
     public SyncResult syncPendingNow(@NonNull String accountKey) {
         return syncManager.syncAllPending(accountKey);
     }
 
+    /**
+     * Programa un {@link SyncPerfilWorker} único con red requerida y backoff exponencial.
+     */
     public void enqueueSync() {
         Constraints constraints = new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -173,6 +225,11 @@ public class PerfilRepository {
 
     // ── Eliminar cuenta ──────────────────────────────────────────────────────
 
+    /**
+     * Solicita la eliminación remota de la cuenta y normaliza el resultado para la capa superior.
+     *
+     * @param callback receptor del estado final de la operación.
+     */
     public void eliminarCuenta(@NonNull AuthRepository.Callback<String> callback) {
         io.execute(() -> remote.eliminarCuenta(result -> {
             if (result.isSuccess()) {
@@ -185,6 +242,9 @@ public class PerfilRepository {
         }));
     }
 
+    /**
+     * Cancela peticiones remotas del módulo de perfil que sigan en curso.
+     */
     public void cancelOngoing() {
         remote.cancelAll();
     }
@@ -204,8 +264,24 @@ public class PerfilRepository {
             this.error  = error;
         }
 
+        /**
+         * Crea un resultado ya sincronizado con éxito.
+         *
+         * @return resultado con estado {@link #STATUS_SYNCED}.
+         */
         public static UpdateResult synced() { return new UpdateResult(STATUS_SYNCED, null); }
+        /**
+         * Crea un resultado que deja trabajo pendiente en cola.
+         *
+         * @return resultado con estado {@link #STATUS_QUEUED}.
+         */
         public static UpdateResult queued() { return new UpdateResult(STATUS_QUEUED, null); }
+        /**
+         * Crea un resultado fallido con su error asociado.
+         *
+         * @param error error final de la operación.
+         * @return resultado con estado {@link #STATUS_FAILED}.
+         */
         public static UpdateResult failed(@NonNull ApiError error) { return new UpdateResult(STATUS_FAILED, error); }
     }
 

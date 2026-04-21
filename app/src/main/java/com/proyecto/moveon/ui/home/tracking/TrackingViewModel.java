@@ -54,6 +54,11 @@ public final class TrackingViewModel extends AndroidViewModel {
         }
     };
 
+    /**
+     * Crea el ViewModel, conecta el controlador del servicio y precarga el peso del usuario.
+     *
+     * @param application aplicación usada para resolver dependencias, repositorios y recursos.
+     */
     public TrackingViewModel(@NonNull Application application) {
         super(application);
         repository = ServiceLocator.getInstance(application).newActivityRepository();
@@ -66,6 +71,9 @@ public final class TrackingViewModel extends AndroidViewModel {
         loadUserWeight();
     }
 
+    /**
+     * Libera observadores y cancela trabajos pendientes cuando la UI deja de usar este ViewModel.
+     */
     @Override
     protected void onCleared() {
         trackingState.removeSource(trackingController.getTrackingState());
@@ -75,21 +83,41 @@ public final class TrackingViewModel extends AndroidViewModel {
         super.onCleared();
     }
 
+    /**
+     * Expone el estado consolidado de la sesión de tracking.
+     *
+     * @return {@link LiveData} con el último {@link TrackingState} emitido.
+     */
     @NonNull
     public LiveData<TrackingState> getTrackingState() {
         return trackingState;
     }
 
+    /**
+     * Expone el estado de guardado de la actividad actual.
+     *
+     * @return {@link LiveData} con el {@link UiState} del guardado en repositorio.
+     */
     @NonNull
     public LiveData<UiState<GuardarActividadResponseDto>> getSaveState() {
         return saveState;
     }
 
+    /**
+     * Expone errores puntuales listos para consumo único por la UI.
+     *
+     * @return flujo de {@link Event} con mensajes de error ya localizados.
+     */
     @NonNull
     public LiveData<Event<String>> getErrorEvent() {
         return errorEvent;
     }
 
+    /**
+     * Expone alertas del servicio envueltas en eventos de un solo consumo.
+     *
+     * @return {@link LiveData} con eventos de {@link TrackingAlert}.
+     */
     @NonNull
     public LiveData<Event<TrackingAlert>> getTrackingAlertEvent() {
         return trackingAlertEvent;
@@ -179,14 +207,29 @@ public final class TrackingViewModel extends AndroidViewModel {
         return state != null && state.isActive();
     }
 
+    /**
+     * Comprueba si la sesión acumuló una distancia mínima distinta de cero.
+     *
+     * @param state estado que se quiere validar.
+     * @return {@code true} cuando la distancia registrada es positiva.
+     */
     private boolean hasValidDistance(@Nullable TrackingState state) {
         return state != null && state.getDistanceMeters() > 0;
     }
 
+    /**
+     * Comprueba si la sesión incluye al menos un segundo de tiempo efectivo en movimiento.
+     *
+     * @param state estado que se quiere validar.
+     * @return {@code true} cuando existe duración de movimiento válida.
+     */
     private boolean hasValidMovingDuration(@Nullable TrackingState state) {
         return state != null && state.getMovingSeconds() > 0;
     }
 
+    /**
+     * Recupera el peso del perfil y lo envía al servicio para mejorar la estimación de calorías.
+     */
     private void loadUserWeight() {
         repository.obtenerPerfil(result -> {
             if (result.isSuccess() && result.data != null) {
@@ -271,6 +314,13 @@ public final class TrackingViewModel extends AndroidViewModel {
         });
     }
 
+    /**
+     * Convierte una combinación de tiempo y distancia en ritmo expresado en segundos por kilómetro.
+     *
+     * @param seconds duración acumulada en segundos.
+     * @param distanceMeters distancia recorrida en metros.
+     * @return ritmo en segundos por kilómetro, o {@code 0} si faltan datos válidos.
+     */
     private int calculatePaceSecondsPerKm(long seconds, double distanceMeters) {
         if (seconds <= 0 || distanceMeters <= 0.0) {
             return 0;
@@ -279,6 +329,12 @@ public final class TrackingViewModel extends AndroidViewModel {
     }
 
 
+    /**
+     * Convierte el texto de ritmo mostrado por la UI al entero que espera el histórico local.
+     *
+     * @param paceText ritmo formateado con el patrón {@code m'ss"}.
+     * @return ritmo en segundos por kilómetro, o {@code 0} si el formato no es reconocible.
+     */
     private int parsePaceTextToSecondsPerKm(@Nullable String paceText) {
         if (paceText == null || paceText.trim().isEmpty()) {
             return 0;
@@ -323,7 +379,10 @@ public final class TrackingViewModel extends AndroidViewModel {
     }
 
     /**
-     * Envía el bloque de diagnóstico al backend solo en builds internas.
+     * Envía telemetría detallada de la sesión al backend solo cuando la build interna tiene activado el diagnóstico.
+     *
+     * @param state estado final de la sesión que se acaba de guardar.
+     * @param response respuesta del backend con el identificador persistido, si existe.
      */
     private void sendDiagnosticsIfEnabled(@NonNull TrackingState state,
                                           @Nullable GuardarActividadResponseDto response) {
@@ -372,6 +431,12 @@ public final class TrackingViewModel extends AndroidViewModel {
         repository.guardarActividadDiagnostico(request);
     }
 
+    /**
+     * Convierte una marca temporal epoch a ISO-8601 en UTC.
+     *
+     * @param epochMs instante en milisegundos desde epoch.
+     * @return fecha en formato ISO offset o {@code null} si el valor no es positivo.
+     */
     @Nullable
     private String toIsoOrNull(long epochMs) {
         if (epochMs <= 0L) {
@@ -381,6 +446,12 @@ public final class TrackingViewModel extends AndroidViewModel {
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 
+    /**
+     * Genera un identificador local estable para correlacionar diagnósticos aunque no exista id remoto.
+     *
+     * @param state estado del que se toma la semilla temporal principal.
+     * @return identificador sintético con prefijo {@code tracking_}.
+     */
     @NonNull
     private String buildSyntheticLocalSessionId(@NonNull TrackingState state) {
         long seed = state.getSessionStartedAtEpochMs() > 0L
@@ -389,6 +460,13 @@ public final class TrackingViewModel extends AndroidViewModel {
         return "tracking_" + seed;
     }
 
+    /**
+     * Calcula la velocidad media y la normaliza a centésimas de km/h para alinearse con el backend.
+     *
+     * @param distanceMeters distancia recorrida en metros.
+     * @param movingSeconds tiempo en movimiento usado como denominador.
+     * @return velocidad media multiplicada por 100.
+     */
     private int calculateAverageSpeedKmhX100(int distanceMeters, long movingSeconds) {
         if (distanceMeters <= 0 || movingSeconds <= 0) {
             return 0;
@@ -397,6 +475,12 @@ public final class TrackingViewModel extends AndroidViewModel {
         return (int) Math.round(kmh * 100.0);
     }
 
+    /**
+     * Convierte un {@code long} a {@code int} saturando el rango para no desbordar los DTOs.
+     *
+     * @param value valor original a convertir.
+     * @return {@code 0} si el valor es no positivo, {@link Integer#MAX_VALUE} si desborda, o el entero convertido.
+     */
     private int safeToInt(long value) {
         if (value <= 0L) return 0;
         if (value > Integer.MAX_VALUE) return Integer.MAX_VALUE;

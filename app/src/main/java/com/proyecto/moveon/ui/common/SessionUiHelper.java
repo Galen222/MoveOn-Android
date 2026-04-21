@@ -13,6 +13,10 @@ import com.proyecto.moveon.utils.OfflineSessionCleaner;
 import com.proyecto.moveon.utils.StringUtils;
 /**
  * Utilidad de apoyo para las tareas de session ui.
+ *
+ * <p>Centraliza la limpieza local de sesión mediante {@link OfflineSessionCleaner} y la
+ * navegación final hacia {@link LoginActivity} para que Activities y Fragments usen el
+ * mismo flujo cuando el backend invalida el refresh token.</p>
  */
 public final class SessionUiHelper {
 

@@ -42,6 +42,12 @@ import java.util.function.Supplier;
 public final class ProfileDialogHelper {
 
     public interface OnValueSavedListener {
+        /**
+         * Recibe el valor confirmado en un diálogo de edición textual.
+         *
+         * @param value valor ya trimado introducido por el usuario.
+         * @return {@code true} si el diálogo puede cerrarse; {@code false} si debe permanecer abierto.
+         */
         boolean onSaved(@NonNull String value);
     }
 
@@ -50,6 +56,14 @@ public final class ProfileDialogHelper {
     private final Supplier<PerfilUsuario> perfilSupplier;
     private final Consumer<String> onError;
 
+    /**
+     * Crea el helper que centraliza los diálogos de edición del perfil.
+     *
+     * @param fragment fragment dueño de los diálogos.
+     * @param viewModel ViewModel de perfil que ejecuta las actualizaciones.
+     * @param perfilSupplier proveedor del perfil actual visible.
+     * @param onError callback para mostrar errores de validación.
+     */
     public ProfileDialogHelper(@NonNull Fragment fragment,
                                @NonNull ProfileViewModel viewModel,
                                @NonNull Supplier<PerfilUsuario> perfilSupplier,
@@ -62,6 +76,9 @@ public final class ProfileDialogHelper {
 
     // ── Picker de Altura (100–220 cm, enteros) ────────────────────────────────
 
+    /**
+     * Muestra el selector numérico de altura y envía el cambio si pasa validación.
+     */
     public void showAlturaPickerDialog() {
         final int minAltura = 50;
         final int maxAltura = 300;
@@ -103,6 +120,9 @@ public final class ProfileDialogHelper {
 
     // ── Picker de Peso (40–200 kg, pasos de 0.5) ─────────────────────────────
 
+    /**
+     * Muestra el selector de peso con incrementos de medio kilo y valida el resultado.
+     */
     public void showPesoPickerDialog() {
         final double pesoMin  = 20.0;
         final double pesoMax  = 300.0;
@@ -152,6 +172,15 @@ public final class ProfileDialogHelper {
                 .show();
     }
 
+    /**
+     * Muestra un diálogo genérico de edición textual con validación básica de requerido.
+     *
+     * @param label etiqueta usada como título y hint.
+     * @param currentValue valor actual a precargar.
+     * @param inputType tipo de entrada Android del campo.
+     * @param required indica si el campo no puede quedar vacío.
+     * @param listener callback que decide si el diálogo debe cerrarse tras guardar.
+     */
     public void showEditTextDialog(@NonNull String label,
                                    @Nullable String currentValue,
                                    int inputType,
@@ -190,6 +219,9 @@ public final class ProfileDialogHelper {
         dialog.show();
     }
 
+    /**
+     * Muestra el selector de fecha de nacimiento limitando las fechas a usuarios mayores de edad.
+     */
     public void showBirthDatePicker() {
         LocalDate maxAllowedDate = LocalDate.now(ZoneOffset.UTC).minusYears(18);
         long maxAllowedMillis = maxAllowedDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
@@ -241,6 +273,9 @@ public final class ProfileDialogHelper {
         picker.show(fragment.getParentFragmentManager(), "birthdate_picker");
     }
 
+    /**
+     * Muestra el selector de provincia usando las etiquetas localizadas visibles en UI.
+     */
     public void showEditProvinciaDialog() {
         DialogEditProvinciaBinding dialogBinding =
                 DialogEditProvinciaBinding.inflate(LayoutInflater.from(fragment.requireContext()));
@@ -296,6 +331,9 @@ public final class ProfileDialogHelper {
         dialog.show();
     }
 
+    /**
+     * Muestra el selector rápido de género y persiste la opción elegida.
+     */
     public void showGeneroDialog() {
         String[] opciones = fragment.getResources().getStringArray(R.array.generos_labels);
         new MaterialAlertDialogBuilder(fragment.requireContext())
@@ -309,6 +347,9 @@ public final class ProfileDialogHelper {
     }
 
 
+    /**
+     * Muestra el selector de idioma de la app y fuerza recreación visual si cambia el modo.
+     */
     public void showLanguageDialog() {
         String[] modes = fragment.getResources().getStringArray(R.array.app_language_modes);
         String[] labels = fragment.getResources().getStringArray(R.array.app_language_labels);
@@ -333,6 +374,11 @@ public final class ProfileDialogHelper {
 
 
 
+    /**
+     * Ejecuta una acción que recrea la UI dejando preparada la transición visual con splash.
+     *
+     * @param action acción que aplicará el cambio y recreará la activity.
+     */
     public void startUiRecreationWithSplash(@NonNull Runnable action) {
         Context context = fragment.requireContext();
         AppSettingsManager.requestUiTransitionSplash(context);
@@ -345,6 +391,12 @@ public final class ProfileDialogHelper {
         action.run();
     }
 
+    /**
+     * Busca la posición del modo de idioma dentro del array configurable de recursos.
+     *
+     * @param mode modo actualmente guardado.
+     * @return índice seleccionado por defecto para el diálogo.
+     */
     public int findLanguageModeIndex(@Nullable String mode) {
         String normalizedMode = AppLanguageManager.sanitizeSelectableMode(mode);
         String[] modes = fragment.getResources().getStringArray(R.array.app_language_modes);
@@ -354,6 +406,12 @@ public final class ProfileDialogHelper {
         return 0;
     }
 
+    /**
+     * Extrae un mensaje de error usable desde un {@link AppInputValidator.ValidationResult}.
+     *
+     * @param result resultado de validación.
+     * @return texto de error o un fallback genérico si faltara.
+     */
     @NonNull
     public String validationError(@NonNull AppInputValidator.ValidationResult<?> result) {
         String msg = result.getErrorMessage();

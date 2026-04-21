@@ -38,12 +38,37 @@ public abstract class AppDatabase extends RoomDatabase {
 
     private static volatile AppDatabase INSTANCE;
 
+    /**
+     * Expone el DAO de caché de perfil.
+     *
+     * @return acceso Room a {@link PerfilCacheEntity}.
+     */
     public abstract PerfilCacheDao perfilCacheDao();
+    /**
+     * Expone el DAO de parches de perfil pendientes de sincronizar.
+     *
+     * @return acceso Room a {@link PerfilPendingPatchEntity}.
+     */
     public abstract PerfilPendingPatchDao perfilPendingPatchDao();
+    /**
+     * Expone el DAO de actividades locales.
+     *
+     * @return acceso Room a {@link ActividadEntity}.
+     */
     public abstract ActividadDao actividadDao();
+    /**
+     * Expone el DAO de preferencias de usuario persistidas localmente.
+     *
+     * @return acceso Room a {@link UserPrefsEntity}.
+     */
     public abstract UserPrefsDao userPrefsDao();
 
     static final Migration MIGRATION_4_5 = new Migration(4, 5) {
+        /**
+         * Crea la tabla de preferencias y amplía la caché de perfil con métricas agregadas.
+         *
+         * @param database base de datos sobre la que se aplica la migración.
+         */
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
             database.execSQL(
@@ -61,6 +86,11 @@ public abstract class AppDatabase extends RoomDatabase {
     };
 
     static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        /**
+         * Reestructura la tabla de actividades para almacenar duraciones, ritmos y alertas desglosadas.
+         *
+         * @param database base de datos sobre la que se aplica la migración.
+         */
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
             database.execSQL("ALTER TABLE `actividades_locales` ADD COLUMN `duracion_total` INTEGER NOT NULL DEFAULT 0");
@@ -132,12 +162,23 @@ public abstract class AppDatabase extends RoomDatabase {
 
 
     static final Migration MIGRATION_6_7 = new Migration(6, 7) {
+        /**
+         * Añade la columna del ritmo máximo para conservar el nuevo dato sin recrear la tabla.
+         *
+         * @param database base de datos sobre la que se aplica la migración.
+         */
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
             database.execSQL("ALTER TABLE `actividades_locales` ADD COLUMN `ritmo_maximo` INTEGER NOT NULL DEFAULT 0");
         }
     };
 
+    /**
+     * Devuelve la instancia singleton de la base de datos local.
+     *
+     * @param context contexto desde el que inicializar Room si aún no existe la instancia.
+     * @return instancia compartida de {@link AppDatabase}.
+     */
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {

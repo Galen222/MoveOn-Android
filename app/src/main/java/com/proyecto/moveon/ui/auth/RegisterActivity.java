@@ -66,11 +66,26 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
 
     @Nullable private SocialGoogleAccount pendingGoogleAccount;
 
+    /**
+     * Reenvuelve el contexto base con el idioma activo antes de que Android
+     * infle recursos de la pantalla.
+     * 
+     * @param newBase contexto original recibido por la {@link AppCompatActivity}.
+     */
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(AppLanguageManager.wrapContext(newBase));
     }
 
+    /**
+     * Inicializa la pantalla de registro, aplica el tema persistido y conecta
+     * el flujo clásico y el social con {@link AuthViewModel}.
+     * 
+     * <p>También restaura una posible cuenta de Google pendiente enviada desde
+     * {@link LoginActivity} para continuar el alta sin repetir el sign-in.</p>
+     * 
+     * @param savedInstanceState estado restaurado por Android, o {@code null}.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ThemeManager.applySavedTheme(this);
@@ -90,6 +105,11 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         renderSocialMode(null, false);
     }
 
+    /**
+     * Reconstruye una cuenta de Google pendiente a partir de los extras del
+     * {@link android.content.Intent} cuando la pantalla se abre para completar
+     * un registro social interrumpido.
+     */
     private void restorePendingGoogleAccountFromExtras() {
         String idToken = getIntent().getStringExtra(EXTRA_GOOGLE_ID_TOKEN);
         if (!StringUtils.hasText(idToken)) return;
@@ -104,6 +124,10 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_complete_profile));
     }
 
+    /**
+     * Prepara el texto legal con spans clicables y sincroniza los mensajes de
+     * error del consentimiento con la interacción del usuario.
+     */
     private void setupEulaCheckbox() {
         String terminos = getString(R.string.registro_eula_link_terminos);
         String politica = getString(R.string.registro_eula_link_politica);
@@ -138,14 +162,32 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         });
     }
 
+    /**
+     * Crea el span clicable que abre el diálogo legal correspondiente dentro
+     * del texto del consentimiento.
+     * 
+     * @param isTerminos {@code true} para abrir términos y condiciones;
+     * {@code false} para abrir la política.
+     * @return span configurado con color, subrayado y acción de apertura.
+     */
     private ClickableSpan buildLinkSpan(boolean isTerminos) {
         return new ClickableSpan() {
+            /**
+             * Abre el diálogo legal asociado al tramo pulsado dentro del texto de consentimiento.
+             *
+             * @param widget vista de texto que recibió el clic sobre el span.
+             */
             @Override
             public void onClick(@NonNull View widget) {
                 if (isTerminos) showTerminosDialog();
                 else showPoliticaDialog();
             }
 
+            /**
+             * Aplica el estilo visual del enlace legal para mantener color corporativo y subrayado.
+             *
+             * @param ds objeto de pintura que define cómo debe renderizarse el span.
+             */
             @Override
             public void updateDrawState(@NonNull TextPaint ds) {
                 super.updateDrawState(ds);
@@ -155,6 +197,10 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         };
     }
 
+    /**
+     * Enlaza todos los controles interactivos de la pantalla, incluyendo el
+     * alta clásica, el flujo social y la limpieza de errores al recuperar foco.
+     */
     private void setupListeners() {
         binding.btnIniciarSesion.setOnClickListener(v -> finish());
         binding.etFechaNacimiento.setOnClickListener(v -> showDatePicker());
@@ -180,6 +226,10 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         binding.etConfirmarPassword.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) binding.tilConfirmarPassword.setError(null); });
     }
 
+    /**
+     * Observa los estados expuestos por {@link AuthViewModel} para reflejar en
+     * la UI los loaders, errores de backend y la navegación tras el auto-login.
+     */
     private void observeViewModel() {
         viewModel.getRegisterState().observe(this, state -> {
             if (state == null) return;
@@ -222,14 +272,27 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
 
 
 
+    /**
+     * Abre el diálogo de términos y condiciones usando los recursos localizados.
+     */
     private void showTerminosDialog() {
         showLegalDialog(getString(R.string.registro_eula_titulo_terminos), getString(R.string.registro_eula_contenido_terminos));
     }
 
+    /**
+     * Abre el diálogo de política de privacidad usando los recursos localizados.
+     */
     private void showPoliticaDialog() {
         showLegalDialog(getString(R.string.registro_eula_titulo_politica), getString(R.string.registro_eula_contenido_politica));
     }
 
+    /**
+     * Muestra un diálogo legal reutilizable y, si el usuario acepta desde él,
+     * marca automáticamente el consentimiento en el checkbox principal.
+     * 
+     * @param title título del documento legal mostrado.
+     * @param content contenido completo que se pinta en el mensaje del diálogo.
+     */
     private void showLegalDialog(String title, String content) {
         new AlertDialog.Builder(this)
                 .setTitle(title)
@@ -242,6 +305,10 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                 .show();
     }
 
+    /**
+     * Abre un {@link MaterialDatePicker} limitado a fechas válidas para el
+     * registro y reutiliza, si existe, la fecha ya escrita por el usuario.
+     */
     private void showDatePicker() {
         LocalDate maxAllowedDate = LocalDate.now(ZoneOffset.UTC).minusYears(MIN_AGE_YEARS);
         long maxAllowedMillis = maxAllowedDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
@@ -279,11 +346,23 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         picker.show(getSupportFragmentManager(), "registro_date_picker");
     }
 
+    /**
+     * Calcula la selección inicial segura del date picker respetando la edad
+     * mínima exigida por la pantalla.
+     * 
+     * @param maxAllowedDate fecha máxima permitida tras aplicar la mayoría de edad.
+     * @return instante en milisegundos UTC que se usará como selección inicial.
+     */
     private long getDefaultBirthDateSelectionMillis(@NonNull LocalDate maxAllowedDate) {
         LocalDate safeDefaultDate = DEFAULT_BIRTH_DATE.isAfter(maxAllowedDate) ? maxAllowedDate : DEFAULT_BIRTH_DATE;
         return safeDefaultDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
     }
 
+    /**
+     * Valida todos los campos del registro clásico, pinta los errores inline y,
+     * si todo es correcto, construye el {@link RegisterInput} para registrar y
+     * lanzar el auto-login posterior.
+     */
     private void attemptRegister() {
         clearErrors();
 
@@ -317,6 +396,12 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         viewModel.registerAndAutoLogin(input);
     }
 
+    /**
+     * Inicia el flujo de autenticación social y muestra la overlay específica
+     * mientras se resuelve la cuenta externa.
+     * 
+     * @param provider identificador del proveedor solicitado.
+     */
     private void attemptSocialRegister(@NonNull String provider) {
         clearErrors();
         if (!SocialAuthProvider.GOOGLE.equals(provider)) {
@@ -332,6 +417,10 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         socialAuthManager.signInWithGoogle();
     }
 
+    /**
+     * Completa el alta después del sign-in con Google usando únicamente los
+     * campos que siguen siendo responsabilidad del usuario dentro de la app.
+     */
     private void attemptCompleteGoogleRegister() {
         clearErrors();
         if (pendingGoogleAccount == null) {
@@ -350,6 +439,12 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         viewModel.registerWithSocial(input);
     }
 
+    /**
+     * Valida los campos que siguen pendientes en el registro social antes de
+     * enviar el alta definitiva al backend.
+     * 
+     * @return {@code true} si usuario, fecha y aceptación legal son válidos.
+     */
     private boolean validatePendingSocialFields() {
         AppInputValidator.ValidationResult<String> nombreUsuarioResult = AppInputValidator.validateUsername(this, StringUtils.textOf(binding.etUsuario.getText()), true);
         AppInputValidator.ValidationResult<String> fechaNacimientoResult = AppInputValidator.validateBirthDate(this, StringUtils.textOf(binding.etFechaNacimiento.getText()), true);
@@ -361,6 +456,14 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
     }
 
     @Nullable
+    /**
+     * Construye el payload final del registro social usando los datos locales y
+     * el token del proveedor ya resuelto.
+     * 
+     * @param provider proveedor social con el que se autenticó el usuario.
+     * @param token token de identidad emitido por el proveedor.
+     * @return input listo para backend, o {@code null} si aún fallan validaciones locales.
+     */
     private SocialRegisterInput buildSocialRegisterInput(@NonNull String provider, @NonNull String token) {
         if (!validatePendingSocialFields()) return null;
         String fechaAceptacion = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC).format(Instant.now());
@@ -375,6 +478,13 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         );
     }
 
+    /**
+     * Vuelca en la UI la cuenta de Google recuperada, activa el modo social y
+     * propone un nombre de usuario inicial.
+     * 
+     * @param account cuenta externa ya autenticada.
+     * @param announce {@code true} si debe mostrarse feedback visible al usuario.
+     */
     private void applyPendingGoogleAccount(@NonNull SocialGoogleAccount account, boolean announce) {
         pendingGoogleAccount = account;
         renderSocialMode(account, true);
@@ -383,6 +493,13 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         setLoading(false);
     }
 
+    /**
+     * Interpreta conflictos de negocio devueltos por el backend para decidir si
+     * la pantalla debe mostrar un tratamiento específico en lugar del error genérico.
+     * 
+     * @param error error devuelto por la operación de registro.
+     * @return {@code true} si el conflicto ya se ha tratado de forma específica.
+     */
     private boolean handleRegisterConflict(@NonNull ApiError error) {
         boolean socialFlow = pendingGoogleAccount != null;
 
@@ -404,6 +521,10 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         return false;
     }
 
+    /**
+     * Muestra el conflicto de nombre de usuario en el campo y en el canal de
+     * feedback superior para forzar al usuario a elegir otro identificador.
+     */
     private void showUsernameAlreadyInUseFeedback() {
         binding.tilUsuario.setHelperText(null);
         binding.tilUsuario.setError(getString(R.string.backend_error_username_already_in_use));
@@ -411,6 +532,11 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         TopSnackbar.error(binding.getRoot(), getString(R.string.registro_username_already_exists_choose_another));
     }
 
+    /**
+     * Presenta el conflicto de email adaptando el feedback al flujo actual.
+     * 
+     * @param socialFlow {@code true} si el conflicto llegó durante el alta social.
+     */
     private void showEmailAlreadyInUseFeedback(boolean socialFlow) {
         if (!socialFlow) {
             binding.tilUsuarioCorreo.setError(getString(R.string.backend_error_email_already_in_use));
@@ -419,6 +545,13 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         TopSnackbar.error(binding.getRoot(), getString(R.string.social_google_email_already_registered));
     }
 
+    /**
+     * Comprueba si el error recibido describe un conflicto de nombre de usuario
+     * buscando tanto códigos como mensajes localizados y errores por campo.
+     * 
+     * @param error error a inspeccionar.
+     * @return {@code true} si corresponde a un username ya ocupado.
+     */
     private boolean isUsernameAlreadyInUse(@NonNull ApiError error) {
         if ("USERNAME_ALREADY_IN_USE".equals(error.getErrorCode())) {
             return true;
@@ -428,6 +561,13 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                 || matchesLocalizedConflict(error.getMessage(), R.string.backend_error_username_already_in_use);
     }
 
+    /**
+     * Comprueba si el error recibido describe un conflicto de email teniendo en
+     * cuenta mensajes globales y errores por campo.
+     * 
+     * @param error error a inspeccionar.
+     * @return {@code true} si el backend indica que el correo ya existe.
+     */
     private boolean isEmailAlreadyInUse(@NonNull ApiError error) {
         if ("EMAIL_ALREADY_IN_USE".equals(error.getErrorCode())) {
             return true;
@@ -437,12 +577,27 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                 || matchesLocalizedConflict(error.getMessage(), R.string.backend_error_email_already_in_use);
     }
 
+    /**
+     * Compara un mensaje real con la traducción esperada tras normalizar ambos
+     * textos para soportar diferencias de acentos, espacios o puntuación.
+     * 
+     * @param actualMessage mensaje real recibido del backend.
+     * @param expectedRes recurso string que actúa como referencia localizable.
+     * @return {@code true} si ambos mensajes representan el mismo conflicto.
+     */
     private boolean matchesLocalizedConflict(@Nullable String actualMessage, @StringRes int expectedRes) {
         return normalizeForComparison(actualMessage)
                 .equals(normalizeForComparison(getString(expectedRes)));
     }
 
     @NonNull
+    /**
+     * Normaliza un texto para comparaciones laxas eliminando diacríticos,
+     * símbolos y diferencias de mayúsculas.
+     * 
+     * @param value texto original, puede ser {@code null}.
+     * @return representación estable apta para comparaciones internas.
+     */
     private String normalizeForComparison(@Nullable String value) {
         if (!StringUtils.hasText(value)) return "";
         return Normalizer.normalize(value, Normalizer.Form.NFD)
@@ -452,6 +607,13 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                 .trim();
     }
 
+    /**
+     * Alterna la pantalla entre registro clásico y finalización de registro
+     * social ocultando o mostrando los campos que corresponden.
+     * 
+     * @param account cuenta social actualmente seleccionada, o {@code null}.
+     * @param enabled {@code true} si la UI debe pasar al modo social.
+     */
     private void renderSocialMode(@Nullable SocialGoogleAccount account, boolean enabled) {
         binding.cardGoogleSummary.setVisibility(enabled ? View.VISIBLE : View.GONE);
         binding.tilUsuarioCorreo.setVisibility(enabled ? View.GONE : View.VISIBLE);
@@ -479,6 +641,13 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         }
     }
 
+    /**
+     * Genera y aplica una sugerencia de nombre de usuario basada en el perfil
+     * de Google para reducir fricción durante el alta.
+     * 
+     * @param account cuenta desde la que se toma el nombre visible.
+     * @param announce {@code true} si debe informarse al usuario del autocompletado.
+     */
     private void suggestUsernameFromGoogle(@Nullable SocialGoogleAccount account, boolean announce) {
         if (account == null) return;
         String suggested = buildSuggestedUsername(account.displayName);
@@ -492,6 +661,13 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
     }
 
     @NonNull
+    /**
+     * Construye una sugerencia de nombre de usuario combinando una base limpia
+     * derivada del nombre visible con un sufijo aleatorio.
+     * 
+     * @param displayName nombre mostrado por Google, o {@code null}.
+     * @return sugerencia final lista para precargar el input de usuario.
+     */
     private String buildSuggestedUsername(@Nullable String displayName) {
         String base = normalizeUsernameBase(displayName);
         if (base.length() > 46) {
@@ -502,6 +678,13 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
     }
 
     @NonNull
+    /**
+     * Reduce el nombre visible a una base compatible con las reglas del nombre
+     * de usuario eliminando espacios, símbolos y acentos.
+     * 
+     * @param displayName nombre original obtenido del proveedor.
+     * @return base normalizada con una longitud mínima segura.
+     */
     private String normalizeUsernameBase(@Nullable String displayName) {
         String raw = StringUtils.hasText(displayName) ? displayName : "moveon";
         String normalized = Normalizer.normalize(raw, Normalizer.Form.NFD)
@@ -518,6 +701,12 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         return normalized;
     }
 
+    /**
+     * Reparte los errores de backend entre los campos visibles de la pantalla
+     * para que el usuario vea exactamente qué dato debe corregir.
+     * 
+     * @param err error con posibles mensajes por campo.
+     */
     private void applyBackendErrors(ApiError err) {
         String usuarioError = err.firstFieldMessage("nombre_usuario", "usuario", "nombreUsuario");
         String emailError = err.firstFieldMessage("email", "correo");
@@ -530,6 +719,12 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         if (StringUtils.hasText(fechaError)) binding.tilFechaNacimiento.setError(fechaError);
     }
 
+    /**
+     * Habilita o bloquea los controles de la pantalla mientras hay una petición
+     * en vuelo y actualiza el texto principal del CTA según el flujo actual.
+     * 
+     * @param loading {@code true} si debe bloquearse la interacción.
+     */
     private void setLoading(boolean loading) {
         binding.btnCrearCuenta.setEnabled(!loading);
         binding.btnGoogleRegister.setEnabled(!loading);
@@ -547,6 +742,10 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                     : getString(R.string.registro_btn_crear)));
     }
 
+    /**
+     * Limpia todos los errores inline y el aviso de EULA antes de iniciar una
+     * nueva validación o un nuevo intento de envío.
+     */
     private void clearErrors() {
         binding.tilUsuario.setError(null);
         binding.tilUsuarioCorreo.setError(null);
@@ -582,6 +781,13 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         }).start();
     }
 
+    /**
+     * Pinta el avatar de Google en las overlays de carga o, si no existe URL,
+     * deja el icono por defecto del proveedor.
+     * 
+     * @param imageView destino en el que se renderiza el avatar.
+     * @param account cuenta social de la que se toma la foto, o {@code null}.
+     */
     private void renderLoadingAvatar(@NonNull ImageView imageView, @Nullable SocialGoogleAccount account) {
         String avatarUrl = account != null ? account.avatarUrl : null;
         if (StringUtils.hasText(avatarUrl)) {
@@ -596,11 +802,24 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         imageView.setImageResource(R.drawable.ic_google);
     }
 
+    /**
+     * Callback del {@link SocialAuthManager} cuando Google devuelve una cuenta válida.
+     * 
+     * @param account cuenta autenticada y lista para completar el registro.
+     * @param silent indica si el flujo se realizó en modo silencioso.
+     */
     @Override
     public void onGoogleAccountReady(@NonNull SocialGoogleAccount account, boolean silent) {
         applyPendingGoogleAccount(account, true);
     }
 
+    /**
+     * Callback de error del flujo social. Cierra la overlay y muestra el fallo
+     * salvo en reintentos silenciosos.
+     * 
+     * @param message mensaje visible del error.
+     * @param silent {@code true} cuando el fallo no debe notificarse al usuario.
+     */
     @Override
     public void onSocialFlowError(@NonNull String message, boolean silent) {
         showGoogleLoading(false, silent, null, 0, 0);
@@ -608,6 +827,10 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         if (!silent) TopSnackbar.error(binding.getRoot(), message);
     }
 
+    /**
+     * Callback invocado cuando el usuario cancela explícitamente el flujo de
+     * autenticación social desde el proveedor externo.
+     */
     @Override
     public void onSocialFlowCanceled() {
         showGoogleLoading(false, false, null, 0, 0);
@@ -615,6 +838,10 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
         TopSnackbar.warning(binding.getRoot(), getString(R.string.social_auth_canceled));
     }
 
+    /**
+     * Libera la referencia al binding para evitar fugas cuando la actividad se
+     * destruye definitivamente.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
