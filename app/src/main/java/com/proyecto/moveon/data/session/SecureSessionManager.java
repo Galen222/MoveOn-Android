@@ -37,11 +37,17 @@ import javax.crypto.spec.GCMParameterSpec;
  * cuando un refresh devuelve un nuevo par de tokens, el guardado debe poder hacerse
  * de forma síncrona. Así evitamos que otro hilo lea el refresh antiguo justo después
  * de un refresh exitoso y provoque una reutilización detectada por el backend.</p>
+ *
+ * <p>La rotación de la clave del Keystore se controla con una versión explícita en el alias.
+ * Cuando cambie, hay que migrar o limpiar los datos cifrados persistidos con la versión anterior.</p>
  */
 public final class SecureSessionManager {
 
     private static final String PREF_NAME = "user_prefs_secure";
-    private static final String KEYSTORE_ALIAS = "moveon_session_key_v1";
+    private static final String KEYSTORE_ALIAS_BASE = "moveon_session_key";
+    private static final int KEYSTORE_ALIAS_VERSION = 1;
+    private static final String KEYSTORE_ALIAS =
+            KEYSTORE_ALIAS_BASE + "_v" + KEYSTORE_ALIAS_VERSION;
     private static final String ANDROID_KEYSTORE = "AndroidKeyStore";
 
     private static final String KEY_ACCESS_TOKEN_CT = "access_token_ct";
