@@ -12,6 +12,7 @@ import com.proyecto.moveon.data.local.entity.ActividadEntity;
  */
 public final class ActividadCreatePayload {
 
+    private final String clientLocalId;
     private final String tipo;
     private final int distancia;
     private final int duracionTotal;
@@ -32,6 +33,7 @@ public final class ActividadCreatePayload {
     private final String fechaRutaIso;
 
     public ActividadCreatePayload(
+            @NonNull String clientLocalId,
             @NonNull String tipo,
             int distancia,
             int duracionTotal,
@@ -50,6 +52,7 @@ public final class ActividadCreatePayload {
             @Nullable String rutaPolilinea,
             @Nullable String rutaMapaUrl,
             @NonNull String fechaRutaIso) {
+        this.clientLocalId = clientLocalId;
         this.tipo = tipo;
         this.distancia = distancia;
         this.duracionTotal = duracionTotal;
@@ -73,6 +76,7 @@ public final class ActividadCreatePayload {
     @NonNull
     public JsonObject toJson() {
         JsonObject json = new JsonObject();
+        json.addProperty("client_local_id", clientLocalId);
         json.addProperty("tipo", tipo);
         json.addProperty("distancia", distancia);
         json.addProperty("duracion_total", duracionTotal);
@@ -102,6 +106,7 @@ public final class ActividadCreatePayload {
     @NonNull
     public static ActividadCreatePayload fromEntity(@NonNull ActividadEntity entity) {
         return new ActividadCreatePayload(
+                entity.localId,
                 entity.tipo,
                 entity.distancia,
                 entity.duracionTotal,

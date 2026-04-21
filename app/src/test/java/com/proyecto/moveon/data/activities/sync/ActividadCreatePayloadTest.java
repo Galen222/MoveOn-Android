@@ -14,6 +14,7 @@ public class ActividadCreatePayloadTest {
     @Test
     public void toJson_includesAllRequiredFields() {
         ActividadCreatePayload payload = new ActividadCreatePayload(
+                "local-1",
                 "Correr",
                 5000,
                 1800,
@@ -36,6 +37,7 @@ public class ActividadCreatePayloadTest {
 
         JsonObject json = payload.toJson();
 
+        assertEquals("local-1", json.get("client_local_id").getAsString());
         assertEquals("Correr", json.get("tipo").getAsString());
         assertEquals(5000, json.get("distancia").getAsInt());
         assertEquals(1800, json.get("duracion_total").getAsInt());
@@ -59,6 +61,7 @@ public class ActividadCreatePayloadTest {
     @Test
     public void toJson_nullRouteFields_sendJsonNull() {
         ActividadCreatePayload payload = new ActividadCreatePayload(
+                "local-2",
                 "Caminar",
                 1000,
                 600,
@@ -88,6 +91,7 @@ public class ActividadCreatePayloadTest {
     @Test
     public void toJson_usesCurrentFieldNames() {
         ActividadCreatePayload payload = new ActividadCreatePayload(
+                "local-3",
                 "Correr",
                 3000,
                 900,
@@ -110,6 +114,7 @@ public class ActividadCreatePayloadTest {
 
         JsonObject json = payload.toJson();
 
+        assertTrue(json.has("client_local_id"));
         assertTrue(json.has("duracion_total"));
         assertTrue(json.has("duracion_movimiento"));
         assertTrue(json.has("duracion_parado"));
@@ -130,6 +135,7 @@ public class ActividadCreatePayloadTest {
     @Test
     public void toJson_zeroValues_areValid() {
         ActividadCreatePayload payload = new ActividadCreatePayload(
+                "local-4",
                 "Caminar",
                 0,
                 0,

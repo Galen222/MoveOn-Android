@@ -292,7 +292,7 @@ public final class ActivityRepository {
                 .build();
 
         WorkManager.getInstance(appContext)
-                .enqueueUniqueWork(UNIQUE_SYNC_WORK_NAME, ExistingWorkPolicy.REPLACE, request);
+                .enqueueUniqueWork(UNIQUE_SYNC_WORK_NAME, ExistingWorkPolicy.KEEP, request);
     }
 
     public void cancelAll() {
