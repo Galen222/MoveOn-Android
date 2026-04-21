@@ -9,11 +9,14 @@ import com.proyecto.moveon.core.theme.ThemeManager;
 import com.proyecto.moveon.data.local.db.AppDatabase;
 
 /**
- * Clase Application principal encargada de inicializar la aplicación.
+ * {@link Application} principal del proceso MoveOn.
+ *
+ * <p>Centraliza la inicialización temprana que debe ocurrir una sola vez por arranque:
+ * idioma, tema, calentamiento de {@link AppDatabase} y registro del
+ * {@link ConnectivityObserver} global.</p>
  */
 public class MoveOnApp extends Application {
 
-    @Override
     /**
      * Arranque a nivel de proceso. Aplica idioma y tema persistidos antes
      * de que se cree la primera Activity (evita parpadeos) y hace un
@@ -23,7 +26,12 @@ public class MoveOnApp extends Application {
      * <p>También arranca el observador de conectividad e inscribe la
      * acción de reconexión que dispara los Workers de sincronización
      * cuando la red vuelve.</p>
+     *
+     * <p>La acción de reconexión reutiliza {@link ServiceLocator} para obtener
+     * repositorios ya cableados con sus dependencias compartidas en vez de crear
+     * instancias aisladas a mano.</p>
      */
+    @Override
     public void onCreate() {
         super.onCreate();
         AppLanguageManager.applySavedLanguage(this);

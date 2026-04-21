@@ -34,6 +34,8 @@ public final class OfflineSessionCleaner {
      * hilo principal al cerrar sesión.
      *
      * @param context contexto desde el que se resuelve el {@code applicationContext}.
+     *
+     * @see #clearSessionAndLocalDataBlocking(Context)
      */
     public static void clearSessionAndLocalDataAsync(@NonNull Context context) {
         Context appContext = context.getApplicationContext();
@@ -64,6 +66,8 @@ public final class OfflineSessionCleaner {
      * limpio antes de continuar.
      *
      * @param context contexto desde el que se resuelve el {@code applicationContext}.
+     *
+     * @see #clearSessionAndLocalDataAsync(Context)
      */
     public static void clearSessionAndLocalDataBlocking(@NonNull Context context) {
         Context appContext = context.getApplicationContext();

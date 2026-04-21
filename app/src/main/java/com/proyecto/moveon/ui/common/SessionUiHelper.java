@@ -1,6 +1,7 @@
 package com.proyecto.moveon.ui.common;
 
 import android.app.Activity;
+import android.content.Context;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -11,6 +12,7 @@ import com.proyecto.moveon.ui.auth.LoginActivity;
 import com.proyecto.moveon.utils.NavigationUtils;
 import com.proyecto.moveon.utils.OfflineSessionCleaner;
 import com.proyecto.moveon.utils.StringUtils;
+
 /**
  * Utilidad de apoyo para las tareas de session ui.
  *
@@ -34,6 +36,9 @@ public final class SessionUiHelper {
      *
      * @param activity actividad desde la que se dispara la transición.
      * @param message mensaje a mostrar en el Toast; si es vacío se usa el genérico de "sesión expirada".
+     *
+     * @see OfflineSessionCleaner#clearSessionAndLocalDataAsync(Context)
+     * @see NavigationUtils#goToActivityAndClearTask(Context, Class)
      */
     public static void handleSessionExpired(@NonNull Activity activity, String message) {
         OfflineSessionCleaner.clearSessionAndLocalDataAsync(activity);

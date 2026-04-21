@@ -7,8 +7,13 @@ import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+
 /**
- * Interceptor que adapta peticiones o respuestas relacionadas con app session interceptor.
+ * {@link Interceptor} que inyecta la cabecera técnica {@code x-app-session} en las llamadas al backend.
+ *
+ * <p>Su responsabilidad es independiente del access token del usuario: trabaja con la sesión de
+ * aplicación obtenida mediante {@link AppSessionProvider}, reintentando una vez cuando el backend
+ * marca la app-session como expirada.</p>
  */
 public final class AppSessionInterceptor implements Interceptor {
 
@@ -17,8 +22,6 @@ public final class AppSessionInterceptor implements Interceptor {
     private static final String TARGET_HOST = TARGET_URL.host();
     private static final int TARGET_PORT = TARGET_URL.port();
 
-    @NonNull
-    @Override
     /**
      * Inyecta el header {@code x-app-session} solo en las peticiones que
      * van al host y puerto del backend, y nunca en el propio endpoint de
@@ -27,8 +30,13 @@ public final class AppSessionInterceptor implements Interceptor {
      *
      * @param chain cadena de interceptores de OkHttp.
      * @return la respuesta producida por el siguiente eslabón de la cadena.
-     * @throws IOException si la petición subyacente falla.
+     * @throws IOException si la petición subyacente falla o si no pudo renovarse la app-session.
+     *
+     * @see AppSessionProvider#getOrFetch()
+     * @see AppSessionProvider#invalidate()
      */
+    @NonNull
+    @Override
     public Response intercept(Chain chain) throws IOException {
         Request original = chain.request();
 

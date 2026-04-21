@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel;
 import com.proyecto.moveon.core.auth.GlobalAuthManager;
 import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.data.session.SessionRefreshCoordinator;
+
 /**
  * ViewModel que expone el estado y las acciones de main.
  *
@@ -53,6 +54,8 @@ public class MainViewModel extends AndroidViewModel {
      * <p>No hace nada si no hay refresh token guardado ({@link SecureSessionManager#hasRefreshToken()}
      * devuelve {@code false}) o si el coordinador considera que aún no es
      * momento de refrescar.</p>
+     *
+     * @see SessionRefreshCoordinator#ensureFreshSessionAsync(SessionRefreshCoordinator.Callback)
      */
     public void ensureSessionFresh() {
         if (!sessionManager.hasRefreshToken()) return;

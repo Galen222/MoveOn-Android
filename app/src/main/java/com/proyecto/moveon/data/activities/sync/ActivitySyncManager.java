@@ -50,7 +50,6 @@ public final class ActivitySyncManager {
         this.remote = remote;
     }
 
-    @NonNull
     /**
      * Empuja al backend todas las actividades locales en estado pendiente
      * del usuario indicado. Por cada actividad creada con éxito, actualiza
@@ -63,8 +62,10 @@ public final class ActivitySyncManager {
      * al servidor con muchas subidas simultáneas.</p>
      *
      * @param accountKey clave de la cuenta sobre la que se sincroniza.
-     * @return resultado agregado indicando si había pendientes y si todas subieron correctamente.
+     * @return {@link SyncResult#retry()} si se detecta un error transitorio; en otro caso,
+     * resultado de éxito distinguiendo entre sincronización efectiva y no-op.
      */
+    @NonNull
     public SyncResult syncPendingNow(@NonNull String accountKey) {
         List<ActividadEntity> creates = local.getPendingCreates(accountKey);
         boolean hadPendingCreates = creates != null && !creates.isEmpty();
@@ -163,6 +164,9 @@ public final class ActivitySyncManager {
      * {@code @Nullable} en el DTO (el servidor siempre los devuelve, pero Gson
      * puede dejarlos null si el campo falta en la respuesta). En ese caso
      * se preserva el valor local para no romper la constraint de Room.</p>
+     *
+     * @param entity entidad local que debe actualizarse con el estado canónico remoto.
+     * @param dto dto devuelto por el backend con los campos persistidos y enriquecidos.
      */
     private void mapDtoIntoEntity(@NonNull ActividadEntity entity,
                                   @NonNull ActividadResponseDto dto) {

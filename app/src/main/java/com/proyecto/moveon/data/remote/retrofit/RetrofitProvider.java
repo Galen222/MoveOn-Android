@@ -3,8 +3,11 @@ package com.proyecto.moveon.data.remote.retrofit;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+
 import com.proyecto.moveon.BuildConfig;
+
 import java.util.concurrent.TimeUnit;
+
 import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
@@ -12,8 +15,12 @@ import okhttp3.Request;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+
 /**
  * Punto central de creación perezosa de los clientes Retrofit públicos y protegidos.
+ *
+ * <p>Concentra la configuración común de {@link OkHttpClient}, interceptores, timeouts y
+ * servicios Retrofit para que toda la app reutilice el mismo contrato de red.</p>
  */
 public final class RetrofitProvider {
 
@@ -32,6 +39,8 @@ public final class RetrofitProvider {
      *
      * @param context cualquier contexto; se usa sólo para inicializar los clientes.
      * @return cliente Retrofit para endpoints de autenticación.
+     *
+     * @see #protectedApi(Context)
      */
     public static MoveOnApi authApi(Context context) {
         ensureInit(context);
@@ -45,6 +54,8 @@ public final class RetrofitProvider {
      *
      * @param context cualquier contexto; se usa sólo para inicializar los clientes.
      * @return cliente Retrofit para endpoints protegidos.
+     *
+     * @see #authApi(Context)
      */
     public static ProtectedApi protectedApi(Context context) {
         ensureInit(context);

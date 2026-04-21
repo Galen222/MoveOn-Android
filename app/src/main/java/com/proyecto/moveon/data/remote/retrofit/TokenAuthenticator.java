@@ -47,6 +47,8 @@ public class TokenAuthenticator implements Authenticator {
      *
      * <p>Permite inyectar un coordinador con backend y almacenamiento falsos para validar
      * escenarios de concurrencia de forma determinista.</p>
+     *
+     * @param sessionRefreshCoordinator coordinador a reutilizar para deduplicar refreshes.
      */
     TokenAuthenticator(@NonNull SessionRefreshCoordinator sessionRefreshCoordinator) {
         this.sessionRefreshCoordinator = sessionRefreshCoordinator;
@@ -142,18 +144,21 @@ public class TokenAuthenticator implements Authenticator {
          * @return código HTTP recibido del backend.
          */
         public int getCode() { return code; }
+
         /**
          * Devuelve el valor de {@code Retry-After} cuando el backend lo proporcionó.
          *
          * @return cabecera de reintento o {@code null}.
          */
         @Nullable public String getRetryAfter() { return retryAfter; }
+
         /**
          * Devuelve el código de error interno enviado por el backend, si existe.
          *
          * @return código interno o {@code null}.
          */
         @Nullable public String getErrorCode() { return errorCode; }
+
         /**
          * Devuelve el mensaje textual devuelto por el backend, si existe.
          *

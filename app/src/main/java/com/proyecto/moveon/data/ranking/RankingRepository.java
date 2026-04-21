@@ -25,7 +25,7 @@ import java.util.List;
  * <p>Además de obtener el ranking, esta versión añade la operación de reportar
  * un perfil desde el listado. Se mantiene el mismo cliente autenticado que ya
  * usaba el módulo para no duplicar lógica de sesión, parsing ni manejo de
- * errores HTTP.</p>
+ * errores HTTP, delegando el transporte en {@link AuthenticatedApiClient}.</p>
  */
 public final class RankingRepository {
 
@@ -81,7 +81,9 @@ public final class RankingRepository {
      * Recupera el ranking nacional o filtrado por provincia.
      *
      * @param provincia provincia opcional. {@code null} o vacío implica ranking nacional.
-     * @param callback  callback con el resultado ya parseado.
+     * @param callback callback con el resultado ya parseado.
+     *
+     * @see #buildUrl(String)
      */
     public void obtenerRanking(@Nullable String provincia, @NonNull Callback callback) {
         apiClient.get(buildUrl(provincia), this::parseRanking, callback::onResult);
@@ -156,7 +158,8 @@ public final class RankingRepository {
      * Convierte el array JSON del backend en una lista de DTOs del ranking.
      *
      * @param json cuerpo recibido desde el endpoint de ranking.
-     * @return lista de {@link RankingItemDto} o {@code null} si el payload no es un array válido.
+     * @return lista de {@link RankingItemDto} o {@code null} si el payload no es un array válido
+     * o si el backend devolvió un objeto distinto al contrato esperado.
      */
     @Nullable
     private List<RankingItemDto> parseRanking(@Nullable JsonElement json) {

@@ -13,7 +13,7 @@ import retrofit2.Response;
 
 /**
  * Clase base para repositorios y clientes de red.
- * Centraliza el seguimiento y cancelación de peticiones.
+ * Centraliza el seguimiento y cancelación de peticiones Retrofit.
  *
  * <p>Usa {@code Collections.synchronizedList(new ArrayList<>())}
  * porque esta lista se muta con frecuencia y
@@ -79,6 +79,9 @@ public abstract class BaseRepository {
      * @param call llamada que debe seguirse y encolarse.
      * @param delegate callback real que procesará la respuesta o el fallo.
      * @param <T> tipo de cuerpo esperado por la llamada.
+     *
+     * @see #trackCall(Call)
+     * @see #untrackCall(Call)
      */
     protected final <T> void enqueueTracked(@NonNull Call<T> call, @NonNull Callback<T> delegate) {
         trackCall(call);

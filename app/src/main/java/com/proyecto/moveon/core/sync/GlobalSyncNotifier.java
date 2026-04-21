@@ -17,7 +17,8 @@ import com.proyecto.moveon.ui.common.TopSnackbar;
  *
  * <p>En esta versión se homogeneiza el contrato con el resto de notifiers globales de la app:
  * perfil, estadísticas y sincronización transportan todos un {@link GlobalSnackbarMessage}
- * dentro de un {@link Event} consumible una sola vez.</p>
+ * dentro de un {@link Event} consumible una sola vez, de forma equivalente a los flujos usados
+ * por la pantalla principal y por {@link TopSnackbar}.</p>
  */
 public final class GlobalSyncNotifier {
 

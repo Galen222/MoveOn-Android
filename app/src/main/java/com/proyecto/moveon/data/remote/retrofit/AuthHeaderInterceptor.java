@@ -14,8 +14,12 @@ import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+
 /**
- * Interceptor que adapta peticiones o respuestas relacionadas con auth header interceptor.
+ * {@link Interceptor} que inyecta la cabecera {@code Authorization} en endpoints protegidos.
+ *
+ * <p>Lee el access token actual desde {@link SecureSessionManager} y evita añadirlo a endpoints
+ * públicos como login, refresh o recuperación de contraseña.</p>
  */
 public final class AuthHeaderInterceptor implements Interceptor {
 
@@ -36,8 +40,6 @@ public final class AuthHeaderInterceptor implements Interceptor {
         this.sessionManager = SecureSessionManager.getInstance(context.getApplicationContext());
     }
 
-    @NonNull
-    @Override
     /**
      * Inyecta la cabecera {@code Authorization: Bearer <access>} en todas
      * las peticiones al backend, excepto las que van a endpoints públicos
@@ -48,7 +50,11 @@ public final class AuthHeaderInterceptor implements Interceptor {
      * @param chain cadena de interceptores de OkHttp.
      * @return respuesta del siguiente eslabón, tras modificar la petición si procede.
      * @throws IOException si la petición subyacente falla.
+     *
+     * @see #isPublicEndpoint(Request)
      */
+    @NonNull
+    @Override
     public Response intercept(Chain chain) throws IOException {
         Request original = chain.request();
 

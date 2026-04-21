@@ -26,8 +26,12 @@ import com.proyecto.moveon.utils.StringUtils;
 
 import retrofit2.Call;
 import retrofit2.Response;
+
 /**
- * Repositorio encargado de centralizar las operaciones de auth.
+ * Repositorio encargado de centralizar las operaciones de autenticación.
+ *
+ * <p>Encapsula login, registro, logout y recuperación de contraseña sobre {@link RetrofitProvider}
+ * y devuelve resultados unificados mediante {@link ApiResult}.</p>
  */
 public class AuthRepository extends BaseRepository {
 
@@ -64,6 +68,8 @@ public class AuthRepository extends BaseRepository {
      * @param identificador email o nombre de usuario ya validado en cliente.
      * @param password contraseña escrita por el usuario.
      * @param callback callback que recibe un {@link LoginSession} o el error correspondiente.
+     *
+     * @see AuthMapper#toLoginRequest(String, String)
      */
     public void login(String identificador, String password, Callback<LoginSession> callback) {
         Call<LoginResponseDto> call =
@@ -208,6 +214,8 @@ public class AuthRepository extends BaseRepository {
      *
      * @param input datos adicionales requeridos para terminar el registro social.
      * @param callback callback que recibe un {@link LoginSession} o el error correspondiente.
+     *
+     * @see AuthMapper#toSocialRegisterRequest(SocialRegisterInput)
      */
     public void registerSocial(SocialRegisterInput input, Callback<LoginSession> callback) {
         Call<LoginResponseDto> call =

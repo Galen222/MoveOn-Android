@@ -11,8 +11,12 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+
 /**
  * Gestiona el token de sesión de aplicación usado por el handshake con el backend.
+ *
+ * <p>Mantiene una caché corta en memoria y un cooldown tras fallo para evitar que cada petición
+ * pague un nuevo handshake cuando el backend está temporalmente caído.</p>
  */
 public final class AppSessionProvider {
 
@@ -40,6 +44,8 @@ public final class AppSessionProvider {
      * no responde rápido, la app cae al fallback offline sin bloquearse.
      *
      * @return cliente Retrofit para el endpoint de handshake.
+     *
+     * @see HandshakeApi#getHandshake(String)
      */
     private static HandshakeApi getApi() {
         if (handshakeApi == null) {
@@ -75,6 +81,9 @@ public final class AppSessionProvider {
      *
      * @return token de sesión válido.
      * @throws Exception si la petición al backend de handshake falla y tampoco hay valor cacheado utilizable.
+     *
+     * @see #invalidate()
+     * @see #resetFailureCooldown()
      */
     public static String getOrFetch() throws Exception {
         long now = SystemClock.elapsedRealtime();
@@ -139,6 +148,8 @@ public final class AppSessionProvider {
      *
      * @return token fresco emitido por el backend.
      * @throws Exception si la respuesta no es exitosa, viene vacía o falla la red.
+     *
+     * @see #getApi()
      */
     private static String fetchNewSession() throws Exception {
         retrofit2.Response<AppSessionResponseDto> response =

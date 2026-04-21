@@ -10,7 +10,11 @@ import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.data.common.BaseRepository;
 import com.proyecto.moveon.data.remote.AuthenticatedApiClient;
 /**
- * Repositorio encargado de centralizar las operaciones de rutas remote.
+ * Repositorio encargado de centralizar las operaciones remotas de rutas.
+ *
+ * <p>Actualmente es código de ejemplo para el futuro módulo de rutas, pero ya
+ * encapsula el uso de {@link AuthenticatedApiClient} para mantener uniforme el
+ * manejo de sesión, errores y cancelación de llamadas.</p>
  */
 public class RutasRemoteRepository extends BaseRepository {
 
@@ -73,13 +77,15 @@ public class RutasRemoteRepository extends BaseRepository {
                 callback::onResult);
     }
 
-    @Override
     /**
      * Cancela cualquier petición en vuelo del repositorio y propaga la
      * cancelación al {@link AuthenticatedApiClient} subyacente. Se invoca
      * desde {@code onCleared} del ViewModel para no entregar resultados a
      * una UI ya destruida.
+     *
+     * @see AuthenticatedApiClient#cancelAll()
      */
+    @Override
     public void cancelAll() {
         super.cancelAll(); // Cancela cualquier petición directa si se añadiera en el futuro
         api.cancelAll();   // Propaga la cancelación al cliente API
