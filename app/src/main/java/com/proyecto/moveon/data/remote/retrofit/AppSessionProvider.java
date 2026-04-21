@@ -19,10 +19,8 @@ public final class AppSessionProvider {
     private static final long CACHE_TTL_MS = BuildConfig.APP_SESSION_CACHE_TTL_MS;
     private static volatile HandshakeApi handshakeApi;
 
-    // FIX: Caché de fallos para no repetir timeouts de handshake.
-    // Sin esto, cada operación de red con sesión expirada pagaba 10 s de
-    // connectTimeout. Ahora, tras un fallo, las siguientes llamadas dentro
-    // del cooldown fallan instantáneamente.
+    // Registra el instante del último fallo para aplicar un cooldown corto
+    // y evitar reintentos de handshake consecutivos cuando el backend está caído.
     private static volatile long lastFailureTime = 0;
     private static final long FAILURE_COOLDOWN_MS = 5_000; // 5 s entre reintentos
 
@@ -34,10 +32,8 @@ public final class AppSessionProvider {
         if (handshakeApi == null) {
             synchronized (AppSessionProvider.class) {
                 if (handshakeApi == null) {
-                    // FIX: Reducidos de 10/15/15 a 3/5/5 segundos.
-                    // 3 s es más que suficiente para un handshake tanto en LAN como
-                    // en producción. Con backend caído, el usuario espera 3 s en vez
-                    // de 10 s antes de recibir el fallback offline.
+                    // Tiempos agresivos pero suficientes para un handshake ligero.
+                    // Así el fallback offline llega rápido cuando el backend no responde.
                     OkHttpClient cleanClient = new OkHttpClient.Builder()
                             .connectTimeout(3, TimeUnit.SECONDS)
                             .readTimeout(5, TimeUnit.SECONDS)
@@ -72,9 +68,8 @@ public final class AppSessionProvider {
                 return cachedSession;
             }
 
-            // FIX: Si falló recientemente, no reintentar — fallo instantáneo.
-            // Evita que cada toggle o cambio de campo pague 3 s de timeout
-            // cuando el backend está caído.
+            // Si hubo un fallo reciente, no reintenta todavía para evitar
+            // que cada operación vuelva a pagar el timeout de handshake.
             if (lastFailureTime > 0 && (now - lastFailureTime) < FAILURE_COOLDOWN_MS) {
                 throw new Exception("Handshake en cooldown tras fallo reciente");
             }
@@ -85,7 +80,7 @@ public final class AppSessionProvider {
                 lastFailureTime = 0; // resetear cooldown tras éxito
                 return cachedSession;
             } catch (Exception e) {
-                // FIX: Registrar el fallo para activar cooldown.
+                // Registra el fallo para activar el cooldown antes del siguiente intento.
                 lastFailureTime = SystemClock.elapsedRealtime();
                 throw e;
             }
@@ -101,11 +96,10 @@ public final class AppSessionProvider {
     }
 
     /**
-     * MEJ-11: Resetea el cooldown de fallo para que la próxima operación
+     * Resetea el cooldown de fallo para que la próxima operación
      * intente el handshake real en vez de fallar instantáneamente.
-     * Llamado por {@code ConnectivityObserver} cuando la red vuelve tras
-     * una desconexión — si el backend estaba caído y ahora hay red, el
-     * cooldown del fallo anterior ya no es relevante.
+     * Lo llama {@code ConnectivityObserver} cuando la red vuelve tras
+     * una desconexión y el fallo anterior deja de ser representativo.
      */
     public static void resetFailureCooldown() {
         lastFailureTime = 0;
@@ -122,7 +116,7 @@ public final class AppSessionProvider {
             }
         }
 
-        // PUNTO 2: Extracción del body para Debug sin fugas de memoria
+        // Extrae el body solo en debug y garantiza el cierre del recurso.
         String errorSnippet = "";
         if (response.errorBody() != null) {
             try {

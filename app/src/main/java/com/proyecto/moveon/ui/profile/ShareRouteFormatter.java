@@ -124,7 +124,7 @@ public final class ShareRouteFormatter {
     /**
      * Formatea la fecha ISO intentando soportar tanto {@link LocalDate} como {@link OffsetDateTime}.
      *
-     * <p>Bugfix: cuando la entrada trae offset, primero se normaliza a la zona horaria local del
+     * <p>Cuando la entrada trae offset, primero se normaliza a la zona horaria local del
      * dispositivo. Así la fecha mostrada en la tarjeta compartida coincide con la usada por las
      * estadísticas y por el historial.</p>
      */

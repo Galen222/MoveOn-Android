@@ -7,7 +7,7 @@ import org.junit.Test;
 /**
  * Tests unitarios para {@link SocialRegisterConflictResolver}.
  *
- * <p>Verifican el caso crítico corregido: en el alta con Google, si el backend
+ * <p>Verifican que, en el alta con Google, si el backend
  * indica username o email duplicados, la UI debe bloquear la finalización del
  * proceso y mostrar el conflicto correspondiente, sin fallback silencioso.</p>
  */

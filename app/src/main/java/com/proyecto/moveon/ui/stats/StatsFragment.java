@@ -74,8 +74,8 @@ public class StatsFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        // Bugfix: si la vista se destruye en mitad de un share, la siguiente vista no debe heredar
-        // un estado de "compartiendo" atascado de la instancia anterior.
+        // Si la vista se destruye en mitad de un share, la siguiente no debe heredar
+        // un estado de "compartiendo" pendiente de la instancia anterior.
         isSharingInProgress = false;
         super.onDestroyView();
         binding = null;
@@ -484,9 +484,9 @@ public class StatsFragment extends Fragment {
 
                 FragmentActivity activity = getActivity();
                 if (activity == null) {
-                    // Bugfix: el fragment puede quedar desacoplado mientras el trabajo en background
-                    // sigue ejecutándose. Restablecemos la flag manualmente para evitar un bloqueo
-                    // permanente de nuevos intentos de share en esta instancia.
+                    // El fragment puede desacoplarse mientras el trabajo en background
+                    // sigue ejecutándose. Restablecemos la flag para no bloquear
+                    // nuevos intentos de share en esta instancia.
                     isSharingInProgress = false;
                     return;
                 }
@@ -513,7 +513,7 @@ public class StatsFragment extends Fragment {
     /**
      * Restablece el estado interno del flujo de share y muestra el error si la vista sigue activa.
      *
-     * <p>Bugfix: si la activity ya no existe, igualmente se limpia la flag para que la instancia del
+     * <p>Si la activity ya no existe, igualmente se limpia la flag para que la instancia del
      * fragment no quede inutilizable al volver a la pestaña.</p>
      */
     private void handleShareError(int messageRes) {

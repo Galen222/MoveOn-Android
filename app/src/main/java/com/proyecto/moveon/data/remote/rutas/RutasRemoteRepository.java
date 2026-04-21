@@ -23,7 +23,7 @@ public class RutasRemoteRepository extends BaseRepository {
     }
 
     public void obtenerRutas(Callback<JsonArray> callback) {
-        // CORREGIDO: "rutas" en vez de "/rutas"
+        // El endpoint relativo se mantiene sin barra inicial para respetar la base URL.
         api.get("rutas", json -> {
             if (json != null && json.isJsonObject()) {
                 JsonObject obj = json.getAsJsonObject();
@@ -35,7 +35,7 @@ public class RutasRemoteRepository extends BaseRepository {
     }
 
     public void subirRutaPendiente(JsonObject rutaPayload, Callback<JsonObject> callback) {
-        // CORREGIDO: "rutas" en vez de "/rutas"
+        // El endpoint relativo se mantiene sin barra inicial para respetar la base URL.
         api.postJson("rutas", rutaPayload,
                 json -> (json != null && json.isJsonObject()) ? json.getAsJsonObject() : new JsonObject(),
                 callback::onResult);

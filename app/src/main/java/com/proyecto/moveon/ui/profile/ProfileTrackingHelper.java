@@ -20,7 +20,7 @@ import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.databinding.FragmentProfileBinding;
 
 /**
- * MEJ-04: Requisitos de tracking extraídos de ProfileFragment.
+ * Utilidades para evaluar y solicitar los requisitos de tracking desde la UI de perfil.
  */
 public final class ProfileTrackingHelper {
 

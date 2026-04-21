@@ -31,7 +31,7 @@ import retrofit2.Response;
  * Prioridad para el mensaje visible:
  *   1. Primer error específico de "detail" (por su error_code)
  *   2. error_code top-level
- *   3. mensaje backend (solo fallback de compatibilidad/debug)
+ *   3. mensaje backend (solo como fallback de compatibilidad o diagnóstico)
  *   4. fallback HTTP genérico
  *
  * "detail" se sigue procesando porque aporta errores por campo y el primer error
@@ -44,8 +44,8 @@ public final class ApiErrorParser {
     private ApiErrorParser() {}
 
     /**
-     * FIX: Reemplazado {@code catch (Exception ignored)} por catches tipados
-     * con {@code Log.w} para dejar traza cuando falla la lectura del errorBody.
+     * Lee el {@code errorBody} con catches tipados y deja traza con {@code Log.w}
+     * cuando falla la lectura.
      * El {@code IOException} cubre el caso habitual (conexión cortada, body ya
      * consumido); el {@code RuntimeException} cubre edge cases de OkHttp.
      */

@@ -16,10 +16,11 @@ import com.proyecto.moveon.data.session.SecureSessionManager;
 /**
  * Worker que sincroniza los patches de perfil pendientes con el backend.
  *
- * <p>FIX: Usa {@link ServiceLocator} para obtener el repositorio en lugar
- * de instanciarlo con {@code new}. Esto garantiza que se reutilice el
- * {@code UserPrefsRepository} singleton (como hace el resto de la app)
- * y permite sustituir el locator en tests vía {@code ServiceLocator.swap()}.</p>
+ * <p>Usa {@link ServiceLocator} para obtener el repositorio en lugar
+ * de instanciarlo con {@code new}. Así reutiliza el
+ * {@code UserPrefsRepository} singleton, mantiene la construcción de
+ * dependencias alineada con el resto de la app y permite sustituir el
+ * locator en tests vía {@code ServiceLocator.swap()}.</p>
  */
 public class SyncPerfilWorker extends Worker {
 

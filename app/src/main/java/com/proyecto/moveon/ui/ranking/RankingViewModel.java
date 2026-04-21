@@ -19,18 +19,9 @@ import java.util.List;
  * ViewModel del ranking.
  *
  * <p>Este ViewModel expone un {@link UiState} con la lista del ranking nacional
- * o provincial y corrige un problema de carreras entre peticiones sucesivas.</p>
+ * o provincial y protege la UI frente a respuestas tardías de peticiones sucesivas.</p>
  *
- * <p>Bug corregido:</p>
- * <ul>
- *     <li>La pantalla se abría cargando España automáticamente.</li>
- *     <li>Si el usuario cambiaba rápido a una provincia, quedaban dos requests en vuelo:
- *     la de España y la nueva de provincia.</li>
- *     <li>Si la de España devolvía más tarde, podía repintar momentáneamente la lista vieja
- *     antes de que llegase la respuesta correcta de provincia.</li>
- * </ul>
- *
- * <p>Para evitarlo, esta versión aplica dos defensas:</p>
+ * <p>Para ello aplica dos defensas:</p>
  * <ol>
  *     <li>Cancela las peticiones anteriores del repositorio antes de lanzar una nueva.</li>
  *     <li>Asigna un identificador incremental a cada carga e ignora cualquier callback

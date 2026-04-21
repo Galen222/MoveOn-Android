@@ -15,9 +15,9 @@ import retrofit2.Response;
  * Clase base para repositorios y clientes de red.
  * Centraliza el seguimiento y cancelación de peticiones.
  *
- * <p>FIX: Reemplazado {@code CopyOnWriteArrayList} por
- * {@code Collections.synchronizedList(new ArrayList<>())}.
- * COWArrayList copia el array completo en cada add/remove,
+ * <p>Usa {@code Collections.synchronizedList(new ArrayList<>())}
+ * porque esta lista se muta con frecuencia y
+ * {@code CopyOnWriteArrayList} copiaría el array completo en cada add/remove,
  * lo cual es innecesariamente costoso para listas que se mutan
  * frecuentemente (track/untrack por cada petición).
  * {@code synchronizedList} solo necesita un lock y es más eficiente

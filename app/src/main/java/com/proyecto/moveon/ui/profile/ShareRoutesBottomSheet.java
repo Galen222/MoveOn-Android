@@ -135,15 +135,15 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
 
                 FragmentActivity activity = getActivity();
                 if (activity == null) {
-                    // Bugfix: el sheet puede quedar retenido por FragmentManager aunque la activity
+                    // El sheet puede quedar retenido por FragmentManager aunque la activity
                     // ya no esté disponible. Limpiamos la flag para no bloquear futuros shares.
                     isSharingInProgress = false;
                     return;
                 }
 
                 activity.runOnUiThread(() -> {
-                    // Bugfix: primero limpiamos el estado interno y luego tocamos la UI. Así evitamos
-                    // dejar el flujo atascado si la vista ya fue destruida cuando vuelve el callback.
+                    // Primero se limpia el estado interno y después se toca la UI.
+                    // Así el flujo no queda atascado si la vista ya fue destruida.
                     setSharingInProgress(false);
                     if (binding == null) return;
                     openPreview(uri, shareText);
@@ -220,8 +220,8 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
 
     @Override
     public void onDestroyView() {
-        // Bugfix: al destruir la vista limpiamos el estado para que una recreación del sheet no herede
-        // un bloqueo de compartición pendiente de una vista anterior.
+        // Al destruir la vista se limpia el estado para que una recreación del sheet
+        // no herede un bloqueo de compartición pendiente de una vista anterior.
         setSharingInProgress(false);
         binding = null;
         super.onDestroyView();

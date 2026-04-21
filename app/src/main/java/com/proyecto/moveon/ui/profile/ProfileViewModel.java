@@ -43,17 +43,17 @@ public class ProfileViewModel extends AndroidViewModel {
 
     public ProfileViewModel(@NonNull Application application) {
         super(application);
-        // MEJ-01: Creación centralizada vía ServiceLocator.
+        // La creación centralizada vía ServiceLocator mantiene las dependencias alineadas.
         ServiceLocator locator = ServiceLocator.getInstance(application);
         authRepository = locator.newAuthRepository();
         sessionManager = SecureSessionManager.getInstance(application);
         perfilRepository = locator.newPerfilRepository();
         accountKey = sessionManager.getAccountKey();
 
-        // FIX: Carga inicial del caché movida a hilo IO para evitar
-        // IllegalStateException por acceso síncrono a Room en el main thread.
-        // En instalación limpia, Room necesita crear las tablas dentro de esta
-        // llamada, lo que agrava el problema y provoca el crash tras el login.
+        // La carga inicial del caché se hace en hilo IO para evitar
+        // accesos síncronos a Room desde el main thread.
+        // En instalación limpia, Room puede crear tablas en esta llamada y
+        // ese trabajo no debe ejecutarse en la UI.
         if (accountKey != null) {
             //noinspection resource
             MoveOnExecutors.io().execute(() -> {
@@ -126,10 +126,9 @@ public class ProfileViewModel extends AndroidViewModel {
         }
 
         lastFailedPatchJson = patchJson.deepCopy();
-        // FIX: Eliminado updateState.setValue(UiState.loading()).
-        // Todos los campos se aplican ahora de forma optimista en Room, y la UI
-        // se actualiza instantáneamente vía perfilState (Room LiveData).
-        // Poner loading aquí activaba el overlay fullscreen (clickable=true),
+        // Los campos se aplican de forma optimista en Room y la UI se
+        // actualiza instantáneamente vía perfilState (Room LiveData).
+        // Activar loading aquí dispararía el overlay fullscreen (clickable=true),
         // que se cancelaba 5 ms después por la emisión de perfilState y luego
         // no se quitaba hasta que el timeout de red terminaba (8-30 s con
         // backend caído). Resultado: overlay bloqueante o parpadeo confuso.
@@ -151,9 +150,8 @@ public class ProfileViewModel extends AndroidViewModel {
         }
 
         lastFailedPhotoPath = file.getAbsolutePath();
-        // FIX: Eliminado photoState.setValue(UiState.loading()).
-        // La foto preview se muestra instantáneamente desde pendingLocalPhotoPath
-        // gracias al patch optimista en uploadPhotoLocalFirst → savePendingPhoto
+        // La preview de la foto se muestra de inmediato desde pendingLocalPhotoPath
+        // gracias al flujo optimista uploadPhotoLocalFirst → savePendingPhoto
         // → saveCache → Room emite → bindPerfilData muestra la preview.
         // El overlay bloqueaba la UI 8-60 s (writeTimeout) con backend caído.
         perfilRepository.uploadPhotoLocalFirst(accountKey, file, result -> {

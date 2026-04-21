@@ -39,7 +39,7 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     /**
      * Indica si la UI está mostrando el paso 2.
      *
-     * <p>Bugfix: este valor se persiste para no volver siempre al paso 1 tras una recreación
+     * <p>Este valor se persiste para no volver siempre al paso 1 tras una recreación
      * de la activity (rotación, cambio de idioma, proceso reclamado por el sistema, etc.).</p>
      */
     private boolean isStepTwoVisible = false;

@@ -29,7 +29,7 @@ public class MoveOnApp extends Application {
 
         // Usar ServiceLocator en vez de new para que
         // PerfilRepository reutilice el UserPrefsRepository singleton.
-        // BUG-N05: addOnReconnectListener en vez de setOnReconnect.
+        // Se registra como listener adicional para no sobrescribir otros callbacks de reconexión.
         connectivity.addOnReconnectListener(() -> {
             ServiceLocator locator = ServiceLocator.getInstance(this);
             locator.newActivityRepository().enqueueSync();

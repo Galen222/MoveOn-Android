@@ -30,10 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public final class MoveOnExecutors {
 
-    // FIX: de newSingleThreadExecutor a newFixedThreadPool(3).
-    // Evita que una llamada de red bloqueante (ej. patchPerfilBlocking con
-    // backend caído → connectTimeout 8-20 s) bloquee TODAS las demás
-    // operaciones de IO encoladas detrás.
+    // Un pool fijo evita que una llamada de red bloqueante monopolice
+    // todas las operaciones de IO encoladas detrás.
     private static final ExecutorService IO = Executors.newFixedThreadPool(
             3, new NamedThreadFactory("moveon-io")
     );

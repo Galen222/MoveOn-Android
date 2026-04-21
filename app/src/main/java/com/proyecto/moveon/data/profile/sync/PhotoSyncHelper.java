@@ -23,7 +23,7 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * MEJ-07: Lógica de sincronización de fotos de perfil extraída de
+ * Lógica de sincronización de fotos de perfil separada de
  * {@link PerfilSyncManager}.
  *
  * <p>Concentra todo el ciclo de vida de la foto (pending → upload → promote/revert),

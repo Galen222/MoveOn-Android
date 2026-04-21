@@ -34,7 +34,7 @@ import java.util.UUID;
  *
  * <p>Contiene la lógica de sync, merge, patch optimista y helpers de caché.
  * La lógica de foto (upload, promote, revert, merge de estado fotográfico)
- * se delega a {@link PhotoSyncHelper} (MEJ-07).</p>
+ * se delega a {@link PhotoSyncHelper}.</p>
  *
  * <p>Todos los métodos públicos son <b>blocking</b> — el Repository los invoca
  * dentro de {@code io.execute()} o desde el Worker.</p>
@@ -42,7 +42,7 @@ import java.util.UUID;
 public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridge {
 
     /**
-     * FIX: Máximo de reintentos para patches pendientes.
+     * Máximo de reintentos para patches pendientes.
      * Tras alcanzar este límite, el patch se marca como FAILED y deja de
      * aparecer en {@code getPending()} (el DAO solo lee state = 'PENDING').
      * Esto evita que un error retryable repetido (ej. backend caído durante
@@ -182,7 +182,7 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
             return UpdateResult.synced();
         }
 
-        // FIX: Usa shouldKeepRetrying en vez de lógica inline sin límite.
+        // Centraliza la decisión de reintento para mantener un límite consistente.
         ApiError error = result.error != null
                 ? result.error
                 : ApiError.local(AppLanguageManager.getString(appContext, R.string.error_sincronizando_perfil));
@@ -247,7 +247,7 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
                     continue;
                 }
 
-                // FIX: Usa shouldKeepRetrying en vez de lógica inline sin límite.
+                // Centraliza la decisión de reintento para mantener un límite consistente.
                 ApiError error = result.error != null
                         ? result.error
                         : ApiError.local(AppLanguageManager.getString(appContext, R.string.error_sincronizando_perfil));
@@ -427,7 +427,13 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     // Patch helpers
     // ══════════════════════════════════════════════════════════════════════════
 
-    // FIX: Siempre aplicar optimistamente. Ver comentario original en V2.
+    /**
+     * Indica si el patch debe reflejarse de forma optimista en la caché local.
+     *
+     * <p>Actualmente todos los patches se aplican de forma optimista para que la
+     * UI responda de inmediato y la sincronización posterior solo tenga que
+     * confirmar o revertir el resultado remoto.</p>
+     */
     private boolean shouldApplyPatchOptimistically(@NonNull JsonObject patch) {
         return true;
     }

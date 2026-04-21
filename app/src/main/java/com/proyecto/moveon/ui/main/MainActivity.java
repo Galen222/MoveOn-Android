@@ -157,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // MEJ-11: Observar estado de red para mostrar/ocultar banner offline.
+        // Observa el estado de red para mostrar u ocultar el banner offline.
         ConnectivityObserver.getInstance().isConnected().observe(this, online -> {
             if (binding != null) {
                 binding.offlineBanner.setVisibility(

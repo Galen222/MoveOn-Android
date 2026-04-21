@@ -62,7 +62,7 @@ public final class OfflineSessionCleaner {
 
     private static void safeLogout(@NonNull Context context) {
         try {
-            // BUG-08: Singleton en lugar de new para evitar múltiples instancias.
+            // Reutiliza el singleton para mantener un único gestor de sesión seguro.
             SecureSessionManager.getInstance(context).logout();
         } catch (Exception ignored) {
         }

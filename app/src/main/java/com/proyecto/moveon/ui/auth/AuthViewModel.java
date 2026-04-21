@@ -38,9 +38,9 @@ public class AuthViewModel extends AndroidViewModel {
 
     public AuthViewModel(@NonNull Application app) {
         super(app);
-        // MEJ-01: Creación centralizada vía ServiceLocator.
+        // La creación centralizada vía ServiceLocator mantiene las dependencias alineadas.
         authRepository = ServiceLocator.getInstance(app).newAuthRepository();
-        // BUG-08: Singleton en lugar de new para evitar múltiples instancias.
+        // Reutiliza el singleton para mantener un único gestor de sesión seguro.
         sessionManager = SecureSessionManager.getInstance(app);
     }
 
@@ -109,8 +109,8 @@ public class AuthViewModel extends AndroidViewModel {
 
     // ── Registro + auto-login ────────────────────────────────────────────────
 
-    // MEJ-03: Callback hell eliminado extrayendo cada nivel a un método con
-    // nombre descriptivo. Antes: register(callback → login(callback → ...)).
+    // El flujo se divide en métodos con nombre descriptivo para mantener
+    // legible la secuencia register → login → persistencia de sesión.
 
     public void registerAndAutoLogin(RegisterInput input) {
         registerState.setValue(UiState.loading());
@@ -208,7 +208,7 @@ public class AuthViewModel extends AndroidViewModel {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    // MEJ-03: Extraído patrón repetitivo de "result.error ?? error genérico".
+    // Centraliza la selección entre el error devuelto por la API y el fallback genérico.
 
     @NonNull
     private ApiError errorOrDefault(@NonNull ApiResult<?> result) {

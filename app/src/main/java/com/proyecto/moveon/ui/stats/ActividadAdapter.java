@@ -122,8 +122,8 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
         /**
          * Vincula una actividad con la tarjeta del historial.
          *
-         * <p>Aquí está el fix principal: los campos de ritmo del detalle expandido se rellenan
-         * con un formateador propio que añade siempre {@code /km} al final cuando hay un ritmo
+         * <p>Los campos de ritmo del detalle expandido se rellenan con un formateador
+         * propio que añade siempre {@code /km} al final cuando hay un ritmo
          * válido, y también lo mantiene en el placeholder cuando el ritmo no existe.</p>
          */
         void bind(@NonNull ActividadItem item) {
@@ -164,7 +164,7 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
                     context.getString(R.string.stats_format_kcal, item.caloriasQuemadas)
             );
 
-            // FIX EXPLÍCITO: no dependemos solo del recurso; aquí se compone siempre el "/km".
+            // La unidad "/km" se compone siempre en el valor visible del ritmo.
             binding.tvActivityPace.setText(
                     formatPaceWithUnit(PaceDisplayUtils.getPreferredAveragePaceSeconds(context, item))
             );

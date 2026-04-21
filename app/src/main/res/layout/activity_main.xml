@@ -10,7 +10,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- MEJ-11: Banner de estado offline -->
+        <!-- Banner de estado offline -->
         <TextView
             android:id="@+id/offline_banner"
             android:layout_width="match_parent"

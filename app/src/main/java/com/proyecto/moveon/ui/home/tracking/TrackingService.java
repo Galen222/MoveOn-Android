@@ -215,7 +215,7 @@ public final class TrackingService extends Service implements SensorEventListene
     /**
      * Margen aplicado a la velocidad plausible para limitar saltos GPS grandes.
      *
-     * <p>No recorta el movimiento normal, pero sí evita que uno o dos fixes ruidosos
+     * <p>No recorta el movimiento normal, pero sí evita que una o dos lecturas GPS ruidosas
      * inflen decenas de metros frente a lo que haría un reloj deportivo.</p>
      */
     private static final float GPS_DISTANCE_CAP_SPEED_FACTOR = 1.35f;
@@ -628,7 +628,7 @@ public final class TrackingService extends Service implements SensorEventListene
         long nowRealtime = SystemClock.elapsedRealtime();
 
         if (lastObservedLocation == null) {
-            // Primer fix de la sesión: queda registrado como punto observado y aceptado.
+            // Primera lectura válida de la sesión: queda registrada como punto observado y aceptado.
             lastObservedLocation = location;
             lastAcceptedLocation = location;
             lastAcceptedRealtimeMs = nowRealtime;
@@ -986,7 +986,7 @@ public final class TrackingService extends Service implements SensorEventListene
             return;
         }
         if (location.getAccuracy() > MAX_VALID_ACCURACY_FOR_DISTANCE_ACCUMULATION_M) {
-            // El mejor ritmo no debe contaminarse con velocidades calculadas sobre un fix flojo.
+            // El mejor ritmo no debe contaminarse con velocidades calculadas sobre una lectura imprecisa.
             return;
         }
         recentMovingSpeeds.addLast(speedMs);

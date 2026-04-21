@@ -357,8 +357,8 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         binding.tvActivityCalories.setText(
                 context.getString(R.string.stats_format_kcal, item.caloriasQuemadas)
         );
-        // Fix: este detalle expandido del historial usa un binder propio dentro del
-        // bottom sheet, distinto del adapter principal. Aquí es donde faltaba "/km".
+        // Este detalle expandido del historial usa un binder propio dentro del
+        // bottom sheet, distinto del adapter principal. Aquí se compone también "/km".
         binding.tvActivityPace.setText(
                 formatPace(PaceDisplayUtils.getPreferredAveragePaceSeconds(context, item), context)
         );
@@ -458,7 +458,7 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
     /**
      * Convierte la fecha ISO de la actividad a la fecha local visible por el usuario.
      *
-     * <p>Bugfix: se alinea con {@code StatsCalculator.parseFecha(...)} para que el histórico no
+     * <p>Se alinea con {@code StatsCalculator.parseFecha(...)} para que el histórico no
      * clasifique una actividad en un día distinto al usado por las estadísticas.</p>
      */
     @Nullable
@@ -503,10 +503,9 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
     /**
      * Formatea el ritmo para el detalle expandido del historial.
      *
-     * <p>Fix real del bug reportado: este bottom sheet no reutiliza el
-     * {@link ActividadAdapter}, sino que vuelve a inflar y bindear
-     * {@link ItemActividadBinding} manualmente. Por eso el cambio anterior en
-     * el adapter principal no afectaba a esta vista. Aquí devolvemos siempre el
+     * <p>Este bottom sheet no reutiliza el {@link ActividadAdapter}, sino que
+     * vuelve a inflar y bindear {@link ItemActividadBinding} manualmente.
+     * Por eso necesita su propio formateo y aquí devolvemos siempre el
      * valor final con la unidad {@code /km} ya incluida.</p>
      */
     @NonNull

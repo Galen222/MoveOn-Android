@@ -40,9 +40,9 @@ import java.util.List;
  * sustitución por la nueva lista son síncronos en el hilo principal. Eso elimina el
  * parpadeo del ranking anterior al cambiar de filtro.</p>
  *
- * <p>Esta versión asume que {@link RankingItemDto} ya incluye el campo {@code posicion}
- * calculado por backend, que es la solución recomendada para el bug de puestos
- * nacionales/provinciales.</p>
+ * <p>Asume que {@link RankingItemDto} ya incluye el campo {@code posicion}
+ * calculado por backend, que es la fuente de verdad para los puestos
+ * nacionales y provinciales.</p>
  */
 public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.ViewHolder> {
 

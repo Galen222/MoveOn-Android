@@ -36,7 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * MEJ-07: Coordinador delgado del perfil.
+ * Coordinador delgado del módulo de perfil.
  *
  * <p>Responsabilidades: exponer LiveData, validar inputs, despachar trabajo
  * al hilo IO, y programar WorkManager. Toda la lógica de sync, merge y

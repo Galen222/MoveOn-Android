@@ -78,7 +78,7 @@ public final class SessionRefreshCoordinator {
      * Backend mínimo capaz de ejecutar {@code /token/refresh}.
      *
      * <p>Separarlo de Retrofit permite comprobar que dos 401 concurrentes terminan en una sola
-     * llamada real de refresh, que era el blindaje adicional que queríamos para el bug.</p>
+     * llamada real de refresh y que la coordinación sigue siendo correcta bajo concurrencia.</p>
      */
     public interface RefreshBackend {
         @NonNull
@@ -501,10 +501,9 @@ public final class SessionRefreshCoordinator {
                         ? refreshResp.getUsername()
                         : StringUtils.textOf(snapshot.getUsername());
 
-                // Punto crítico del bug:
-                // tras una rotación exitosa del refresh token, la publicación del nuevo
-                // par access/refresh debe ser síncrona para que ninguna petición tardía
-                // relea el refresh antiguo y provoque "reutilizacion_refresh_detectada".
+                // La publicación del nuevo par access/refresh debe ser síncrona
+                // para que ninguna petición tardía relea el refresh antiguo y
+                // provoque "reutilizacion_refresh_detectada".
                 sessionStore.saveLoginSync(username, newAccess, newRefresh);
                 return RefreshOutcome.success(newAccess, newRefresh);
             }

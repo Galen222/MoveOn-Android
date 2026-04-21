@@ -47,10 +47,9 @@ public class UserPrefsRepository {
      * 1. Guarda en Room de inmediato (UI reactiva instantánea).
      * 2. Envía PATCH al servidor de forma asíncrona (no bloquea el hilo IO).
      *
-     * FIX: Antes usaba patchPerfilBlocking, que bloqueaba el hilo IO 8-30 s
-     * con backend caído y además ignoraba el resultado (fire-and-forget).
-     * Ahora usa patchPerfil (async) para no bloquear. El resultado se sigue
-     * ignorando, pero al menos no impide que otras operaciones IO se ejecuten.
+     * Usa {@code patchPerfil(...)} de forma asíncrona para no bloquear el hilo IO.
+     * El resultado se sigue tratando como fire-and-forget, pero ya no impide que
+     * otras operaciones de IO se ejecuten mientras el backend responde.
      */
     public void setWeeklyGoal(@NonNull String accountKey, long meters) {
         io.execute(() -> {
@@ -70,7 +69,8 @@ public class UserPrefsRepository {
      * 1. Guarda en Room de inmediato (UI reactiva instantánea).
      * 2. Envía PATCH al servidor de forma asíncrona (no bloquea el hilo IO).
      *
-     * FIX: Mismo cambio que setWeeklyGoal — de blocking a async.
+     * Igual que {@link #setWeeklyGoal(String, long)}, usa un envío asíncrono
+     * para no bloquear el hilo IO.
      */
     public void setMonthlyGoal(@NonNull String accountKey, long meters) {
         io.execute(() -> {

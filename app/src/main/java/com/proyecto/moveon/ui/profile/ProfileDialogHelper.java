@@ -35,7 +35,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * MEJ-04: Diálogos de edición del perfil extraídos de ProfileFragment.
+ * Agrupa los diálogos de edición del perfil que usa {@link ProfileFragment}.
  *
  * <p>La eliminación de cuenta se ha movido a {@link DeleteAccountBottomSheet}.</p>
  */

@@ -34,8 +34,8 @@ public final class ProfilePhotoStorage {
 
     /**
      * Cliente dedicado para descargas de foto remota.
-     * BUG-06: followRedirects y followSslRedirects habilitados para soportar
-     * redirects 301/302 habituales en CDNs como Cloudinary.
+     * Mantiene {@code followRedirects} y {@code followSslRedirects} activados
+     * para soportar redirects 301/302 habituales en CDNs como Cloudinary.
      */
     private static final OkHttpClient HTTP = new OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)

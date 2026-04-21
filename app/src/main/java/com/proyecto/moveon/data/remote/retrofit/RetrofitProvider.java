@@ -42,7 +42,7 @@ public final class RetrofitProvider {
                 log = new HttpLoggingInterceptor();
                 log.setLevel(HttpLoggingInterceptor.Level.BODY);
 
-                // REDACCIÓN: Evita que los tokens se filtren en la consola de Android Studio
+                // Redacta las cabeceras sensibles para no exponer tokens en la consola.
                 log.redactHeader("Authorization");
                 log.redactHeader("x-app-session");
             }
@@ -64,7 +64,8 @@ public final class RetrofitProvider {
                     .build();
 
             // 3. Cliente PROTEGIDO
-            // FIX: connectTimeout reducido de 20 s a 8 s.
+            // 8 s ofrece margen suficiente para producción y evita que un backend caído
+            // bloquee el hilo IO durante demasiado tiempo.
             // 8 s es generoso para producción (con proxy: TCP connect ~200 ms,
             // sin proxy: ~1 s). Con backend caído, 20 s bloqueaba el hilo IO
             // y congelaba la UI. writeTimeout(60 s) se mantiene para subida de

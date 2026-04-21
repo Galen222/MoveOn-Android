@@ -58,9 +58,9 @@ public class ActividadRemoteDataSource {
     /**
      * Obtiene todas las actividades con paginación automática.
      *
-     * <p>FIX: Eliminada la recursión de callbacks {@code fetchPage()}.
-     * Ahora delega en {@link #fetchAllActividadesBlocking()} (iterativo)
+     * <p>La carga delega en {@link #fetchAllActividadesBlocking()} (iterativo),
      * ejecutándolo en hilo IO y devolviendo el resultado en main thread.
+     * Así se evita la recursión de callbacks en {@code fetchPage()}.
      * Esto elimina el riesgo teórico de acumulación de stack frames
      * con backends que devuelvan muchas páginas.</p>
      */
