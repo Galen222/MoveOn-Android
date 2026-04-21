@@ -2,7 +2,6 @@ package com.proyecto.moveon.core.validation;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.util.Patterns;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -43,6 +42,8 @@ import java.util.regex.Pattern;
  * app/src/main/assets/data/profanity/ldnoobwv2/en.txt
  */
 public final class AppInputValidator {
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
     private static final boolean TEXT_MODERATION_ENABLED = true;
     private static final boolean TEXT_MODERATION_FAIL_OPEN = false;
@@ -244,7 +245,7 @@ public final class AppInputValidator {
             if (!required) return ValidationResult.ok("");
             return ValidationResult.error(messageForCode(context, "EMAIL_REQUIRED", R.string.registro_error_correo_vacio));
         }
-        if (!Patterns.EMAIL_ADDRESS.matcher(value).matches()) {
+        if (!EMAIL_PATTERN.matcher(value).matches()) {
             return ValidationResult.error(messageForCode(context, "EMAIL_FORMAT_INVALID", R.string.registro_error_correo_formato));
         }
         return ValidationResult.ok(value);
@@ -266,7 +267,8 @@ public final class AppInputValidator {
                     : R.string.registro_error_password_vacio;
             return ValidationResult.error(messageForCode(context, code, fallback));
         }
-        if (value.length() < 8) {
+        int codePointLength = value.codePointCount(0, value.length());
+        if (codePointLength < 8) {
             int fallback = useNewPasswordRequiredCode
                     ? R.string.forgot_error_password_corta
                     : R.string.registro_error_password_corta;

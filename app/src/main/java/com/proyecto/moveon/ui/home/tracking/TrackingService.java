@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.home.tracking;
 
 import android.app.Notification;
@@ -1795,7 +1794,8 @@ public final class TrackingService extends Service implements SensorEventListene
         }
         long pausedMs = SystemClock.elapsedRealtime() - manualPauseStartedRealtimeMs;
         if (pausedMs > 0L) {
-            manualPausedSeconds += (pausedMs / 1000L);
+            manualPausedAccumulatedMs += pausedMs;
+            manualPausedSeconds = TimeUnit.MILLISECONDS.toSeconds(manualPausedAccumulatedMs);
         }
         manualPauseStartedRealtimeMs = 0L;
     }

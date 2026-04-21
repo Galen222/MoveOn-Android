@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
 import com.proyecto.moveon.data.remote.retrofit.RetrofitProvider;
 import com.proyecto.moveon.data.session.dto.LoginResponseDto;
 import com.proyecto.moveon.data.session.dto.RefreshRequestDto;
@@ -38,6 +39,7 @@ import retrofit2.Response;
 public final class SessionRefreshCoordinator {
 
     private static final long PROACTIVE_REFRESH_WINDOW_SECONDS = 90L;
+    private static final long REFRESH_WAIT_TIMEOUT_MS = 5000L;
 
     private static volatile SessionRefreshCoordinator instance;
 
@@ -298,11 +300,10 @@ public final class SessionRefreshCoordinator {
      * por {@link #refreshBlocking(String, boolean)}.</p>
      */
     public void ensureFreshSessionAsync(@NonNull Callback callback) {
-        Thread worker = new Thread(() -> {
+        MoveOnExecutors.io().execute(() -> {
             RefreshOutcome outcome = refreshBlocking(null, false);
             callback.onComplete(outcome);
-        }, "moveon-session-refresh");
-        worker.start();
+        });
     }
 
     /**
@@ -331,12 +332,23 @@ public final class SessionRefreshCoordinator {
             refreshInFlight = true;
         }
 
-        RefreshOutcome outcome = executeRefreshNow();
+        RefreshOutcome outcome = RefreshOutcome.transientError(
+                0,
+                null,
+                null,
+                "Unexpected refresh termination"
+        );
+        try {
+            outcome = executeRefreshNow();
+        } finally {
+            synchronized (monitor) {
+                lastOutcome = outcome;
+                refreshInFlight = false;
+                monitor.notifyAll();
+            }
+        }
 
         synchronized (monitor) {
-            lastOutcome = outcome;
-            refreshInFlight = false;
-            monitor.notifyAll();
             return adaptOutcomeForCallerLocked(failedAuthorizationHeader, forceRefresh, outcome);
         }
     }
@@ -444,9 +456,16 @@ public final class SessionRefreshCoordinator {
     }
 
     private void waitForCurrentRefreshLocked() {
+        long deadlineMs = System.currentTimeMillis() + REFRESH_WAIT_TIMEOUT_MS;
         while (refreshInFlight) {
+            long remainingMs = deadlineMs - System.currentTimeMillis();
+            if (remainingMs <= 0L) {
+                refreshInFlight = false;
+                monitor.notifyAll();
+                break;
+            }
             try {
-                monitor.wait();
+                monitor.wait(remainingMs);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
