@@ -449,6 +449,7 @@ public class StatsFragment extends Fragment {
         int labelSizePx = (int) getResources().getDimension(R.dimen.stats_chart_label_size);
 
         int colorActive = ContextCompat.getColor(requireContext(), R.color.greenPrimary);
+        int colorHasData = ContextCompat.getColor(requireContext(), R.color.statsBarHasDataColor);
         int colorInactive = ContextCompat.getColor(requireContext(), R.color.dividerColor);
         int colorLabel = ContextCompat.getColor(requireContext(), R.color.textTertiary);
 
@@ -475,7 +476,8 @@ public class StatsFragment extends Fragment {
                     0, 0
             });
             boolean isHighlighted = highlightedIndex != null && highlightedIndex >= 0 && i == highlightedIndex;
-            shape.setColor(isHighlighted ? colorActive : colorInactive);
+            boolean hasData = values[i] > 0L;
+            shape.setColor(isHighlighted ? colorActive : (hasData ? colorHasData : colorInactive));
             bar.setBackground(shape);
 
             TextView label = new TextView(requireContext());

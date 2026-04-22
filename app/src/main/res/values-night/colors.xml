@@ -21,6 +21,7 @@
     <color name="cardBackground">#2A323E</color>
     <color name="surfaceBackground">#242B36</color>
     <color name="dividerColor">#374151</color>
+    <color name="statsBarHasDataColor">#8E949E</color>
 
     <!-- Texto OSCURO -->
     <color name="textPrimary">#FFFFFF</color>
