@@ -20,7 +20,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
  * Punto central de creación perezosa de los clientes Retrofit públicos y protegidos.
  *
  * <p>Concentra la configuración común de {@link OkHttpClient}, interceptores, timeouts y
- * servicios Retrofit para que toda la app reutilice el mismo contrato de red.</p>
+ * servicios Retrofit para que toda la app reutilice el mismo contrato de red. Ambos clientes
+ * comparten identidad de aplicación y {@link AppSessionInterceptor}; el protegido añade además
+ * {@link AuthHeaderInterceptor} y {@link TokenAuthenticator}.</p>
  */
 public final class RetrofitProvider {
 
@@ -34,12 +36,13 @@ public final class RetrofitProvider {
 
     /**
      * Devuelve el {@link MoveOnApi} para endpoints públicos y de auth
-     * (login, registro, recuperación, handshake). Inicializa perezosamente
-     * los clientes Retrofit la primera vez que se pide.
+     * (login, registro, recuperación, handshake).
+     *
+     * <p>Inicializa perezosamente ambos clientes la primera vez que se invoca y después reutiliza
+     * la misma instancia compartida por todo el proceso.</p>
      *
      * @param context cualquier contexto; se usa sólo para inicializar los clientes.
      * @return cliente Retrofit para endpoints de autenticación.
-     *
      * @see #protectedApi(Context)
      */
     public static MoveOnApi authApi(Context context) {
@@ -48,13 +51,14 @@ public final class RetrofitProvider {
     }
 
     /**
-     * Devuelve el cliente Retrofit para endpoints protegidos (los que
-     * exigen {@code Authorization: Bearer}). Reutiliza el mismo pool HTTP
-     * que {@link #authApi} añadiendo el interceptor de token.
+     * Devuelve el cliente Retrofit para endpoints protegidos (los que exigen
+     * {@code Authorization: Bearer}).
+     *
+     * <p>Reutiliza la misma infraestructura base que {@link #authApi(Context)} y añade el pipeline
+     * de autenticación formado por {@link AuthHeaderInterceptor} y {@link TokenAuthenticator}.</p>
      *
      * @param context cualquier contexto; se usa sólo para inicializar los clientes.
      * @return cliente Retrofit para endpoints protegidos.
-     *
      * @see #authApi(Context)
      */
     public static ProtectedApi protectedApi(Context context) {
@@ -64,8 +68,10 @@ public final class RetrofitProvider {
 
     /**
      * Inicializa (una única vez) los clientes Retrofit con su base URL,
-     * interceptores y logger. Hace doble-check locking para que varios
-     * hilos pidiendo a la vez no construyan más de un cliente.
+     * interceptores y logger.
+     *
+     * <p>Usa doble-check locking para que varios hilos pidiendo a la vez no construyan más de un
+     * cliente y normaliza la URL con {@link #normalizeBaseUrl(String)} antes de crear Retrofit.</p>
      *
      * @param context contexto desde el que se resuelve el {@code applicationContext} para los interceptores.
      */

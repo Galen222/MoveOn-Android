@@ -18,7 +18,8 @@ import java.util.concurrent.Executors;
  * Limpia sesión y datos locales cuando la cuenta se cierra o se elimina.
  *
  * <p>Delegar el logout en {@link SecureSessionManager} garantiza que, además de los tokens,
- * también se reinicien el provider persistido y el silent sign-in de Google.</p>
+ * también se reinicien el provider persistido y el silent sign-in de Google. Después elimina
+ * datos de Room, foto de perfil en disco y trabajos pendientes de sincronización.</p>
  */
 public final class OfflineSessionCleaner {
 
@@ -28,14 +29,15 @@ public final class OfflineSessionCleaner {
     private OfflineSessionCleaner() {}
 
     /**
-     * Limpia credenciales y datos locales en background: cierra sesión,
-     * cancela workers de sincronización y borra Room y la foto de perfil
-     * en un executor desechable. Se usa desde la UI para no bloquear el
-     * hilo principal al cerrar sesión.
+     * Limpia credenciales y datos locales en background.
+     *
+     * <p>Cierra sesión, cancela workers de sincronización y borra Room y la foto de perfil en un
+     * executor desechable. Se usa desde la UI para no bloquear el hilo principal al cerrar sesión.</p>
      *
      * @param context contexto desde el que se resuelve el {@code applicationContext}.
-     *
      * @see #clearSessionAndLocalDataBlocking(Context)
+     * @see SecureSessionManager#logout()
+     * @see ProfilePhotoStorage#deleteAll(Context)
      */
     public static void clearSessionAndLocalDataAsync(@NonNull Context context) {
         Context appContext = context.getApplicationContext();
@@ -60,14 +62,14 @@ public final class OfflineSessionCleaner {
     }
 
     /**
-     * Variante síncrona de {@link #clearSessionAndLocalDataAsync}. Sólo
-     * debe llamarse desde un hilo IO (p. ej. un Worker que ya está fuera
-     * del hilo principal) y cuando se necesita garantizar que todo esté
-     * limpio antes de continuar.
+     * Variante síncrona de {@link #clearSessionAndLocalDataAsync(Context)}.
+     *
+     * <p>Solo debe llamarse desde un hilo IO (por ejemplo un Worker) y cuando se necesita garantizar
+     * que todo esté limpio antes de continuar.</p>
      *
      * @param context contexto desde el que se resuelve el {@code applicationContext}.
-     *
      * @see #clearSessionAndLocalDataAsync(Context)
+     * @see WorkManager#cancelUniqueWork(String)
      */
     public static void clearSessionAndLocalDataBlocking(@NonNull Context context) {
         Context appContext = context.getApplicationContext();

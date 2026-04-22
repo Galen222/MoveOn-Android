@@ -19,7 +19,9 @@ import okhttp3.Response;
  * {@link Interceptor} que inyecta la cabecera {@code Authorization} en endpoints protegidos.
  *
  * <p>Lee el access token actual desde {@link SecureSessionManager} y evita añadirlo a endpoints
- * públicos como login, refresh o recuperación de contraseña.</p>
+ * públicos como login, refresh o recuperación de contraseña. Solo actúa sobre peticiones dirigidas
+ * al host y puerto configurados en {@code BASE_URL}; la renovación posterior queda en manos de
+ * {@link TokenAuthenticator} cuando el backend devuelve 401.</p>
  */
 public final class AuthHeaderInterceptor implements Interceptor {
 
@@ -41,17 +43,18 @@ public final class AuthHeaderInterceptor implements Interceptor {
     }
 
     /**
-     * Inyecta la cabecera {@code Authorization: Bearer <access>} en todas
-     * las peticiones al backend, excepto las que van a endpoints públicos
-     * (login, registro, recuperación) y las que no apuntan al host+puerto
-     * del backend. Si no hay access token disponible, la petición se deja
-     * pasar sin cabecera y el backend responderá 401 si era necesaria.
+     * Inyecta la cabecera {@code Authorization: Bearer <access>} en todas las peticiones al backend,
+     * excepto las que van a endpoints públicos (login, registro, recuperación, refresh y handshake)
+     * y las que no apuntan al host+puerto del backend.
+     *
+     * <p>Si no hay access token disponible, la petición se deja pasar sin cabecera y el backend
+     * responderá 401 si realmente era necesaria.</p>
      *
      * @param chain cadena de interceptores de OkHttp.
      * @return respuesta del siguiente eslabón, tras modificar la petición si procede.
      * @throws IOException si la petición subyacente falla.
-     *
      * @see #isPublicEndpoint(Request)
+     * @see SecureSessionManager#getAccessToken()
      */
     @NonNull
     @Override

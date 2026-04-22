@@ -80,9 +80,11 @@ public final class RankingRepository {
     /**
      * Recupera el ranking nacional o filtrado por provincia.
      *
+     * <p>La llamada se delega en {@link AuthenticatedApiClient#get(String, AuthenticatedApiClient.Mapper, AuthenticatedApiClient.Callback)}
+     * y el cuerpo se transforma con {@link #parseRanking(JsonElement)} antes de entregarlo a la UI.</p>
+     *
      * @param provincia provincia opcional. {@code null} o vacío implica ranking nacional.
      * @param callback callback con el resultado ya parseado.
-     *
      * @see #buildUrl(String)
      */
     public void obtenerRanking(@Nullable String provincia, @NonNull Callback callback) {
@@ -90,13 +92,16 @@ public final class RankingRepository {
     }
 
     /**
-     * Envía un reporte de perfil al nuevo endpoint del backend.
+     * Envía un reporte de perfil al endpoint de moderación del backend.
+     *
+     * <p>Normaliza las observaciones para no mandar cadenas vacías y transforma la respuesta con
+     * {@link #parseMensaje(JsonElement)} antes de reenviarla al callback.</p>
      *
      * @param nombreUsuarioReportado usuario seleccionado en el ranking.
-     * @param reportarNombre         true si el motivo incluye el nombre.
-     * @param reportarFoto           true si el motivo incluye la foto.
-     * @param observaciones          texto libre opcional.
-     * @param callback               callback que recibe el mensaje final del backend.
+     * @param reportarNombre {@code true} si el motivo incluye el nombre.
+     * @param reportarFoto {@code true} si el motivo incluye la foto.
+     * @param observaciones texto libre opcional.
+     * @param callback callback que recibe el mensaje final del backend.
      */
     public void reportarUsuario(@NonNull String nombreUsuarioReportado,
                                 boolean reportarNombre,
@@ -127,8 +132,10 @@ public final class RankingRepository {
     /**
      * Cancela todas las peticiones en vuelo asociadas a este repositorio.
      *
-     * <p>Es útil cuando se destruye el Fragment o el BottomSheet para evitar
-     * callbacks tardíos sobre una vista ya liberada.</p>
+     * <p>Es útil cuando se destruye el Fragment o el BottomSheet para evitar callbacks tardíos
+     * sobre una vista ya liberada.</p>
+     *
+     * @see AuthenticatedApiClient#cancelAll()
      */
     public void cancelAll() {
         apiClient.cancelAll();

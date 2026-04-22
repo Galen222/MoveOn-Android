@@ -18,18 +18,20 @@ import com.proyecto.moveon.data.local.db.AppDatabase;
 public class MoveOnApp extends Application {
 
     /**
-     * Arranque a nivel de proceso. Aplica idioma y tema persistidos antes
-     * de que se cree la primera Activity (evita parpadeos) y hace un
-     * calentamiento de Room en IO para que la primera navegación no
-     * pague el coste de abrir la base de datos en el hilo principal.
+     * Arranque a nivel de proceso de la app.
      *
-     * <p>También arranca el observador de conectividad e inscribe la
-     * acción de reconexión que dispara los Workers de sincronización
-     * cuando la red vuelve.</p>
+     * <p>Aplica idioma y tema persistidos antes de que nazca la primera Activity para
+     * evitar parpadeos visuales, precalienta {@link AppDatabase} en {@link MoveOnExecutors#io()}
+     * para amortizar la apertura inicial de Room y deja preparado el observador global de red.</p>
      *
-     * <p>La acción de reconexión reutiliza {@link ServiceLocator} para obtener
-     * repositorios ya cableados con sus dependencias compartidas en vez de crear
-     * instancias aisladas a mano.</p>
+     * <p>Cuando la conectividad se recupera, registra una acción de reconexión que reutiliza
+     * {@link ServiceLocator#getInstance(android.content.Context)} para lanzar
+     * {@link com.proyecto.moveon.data.activities.ActivityRepository#enqueueSync()} y
+     * {@link com.proyecto.moveon.data.profile.PerfilRepository#enqueueSync()} sin crear
+     * repositorios desconectados del grafo principal.</p>
+     *
+     * @see ConnectivityObserver#init(android.content.Context)
+     * @see ConnectivityObserver#addOnReconnectListener(Runnable)
      */
     @Override
     public void onCreate() {

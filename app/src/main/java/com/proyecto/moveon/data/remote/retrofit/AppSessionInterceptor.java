@@ -12,8 +12,11 @@ import okhttp3.Response;
  * {@link Interceptor} que inyecta la cabecera técnica {@code x-app-session} en las llamadas al backend.
  *
  * <p>Su responsabilidad es independiente del access token del usuario: trabaja con la sesión de
- * aplicación obtenida mediante {@link AppSessionProvider}, reintentando una vez cuando el backend
- * marca la app-session como expirada.</p>
+ * aplicación obtenida mediante {@link AppSessionProvider}, reintentando una sola vez cuando el backend
+ * marca la app-session como expirada y excluyendo el propio handshake para no crear un bucle.</p>
+ *
+ * @see AppSessionProvider#getOrFetch()
+ * @see HandshakeApi#getHandshake(String)
  */
 public final class AppSessionInterceptor implements Interceptor {
 

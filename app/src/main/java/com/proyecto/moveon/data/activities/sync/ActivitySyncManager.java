@@ -51,19 +51,19 @@ public final class ActivitySyncManager {
     }
 
     /**
-     * Empuja al backend todas las actividades locales en estado pendiente
-     * del usuario indicado. Por cada actividad creada con éxito, actualiza
-     * la entidad local con el {@code remoteId} y el estado {@code SYNCED}
-     * devuelto por el servidor para que no se reintente en la siguiente
-     * pasada.
+     * Empuja al backend todas las actividades locales en estado pendiente del usuario indicado.
      *
-     * <p>El bucle es secuencial a propósito, no paralelo: así el orden de
-     * llegada al backend respeta el orden cronológico local y evita saturar
-     * al servidor con muchas subidas simultáneas.</p>
+     * <p>Por cada alta aceptada por el backend, actualiza la entidad local con el
+     * {@code remoteId}, limpia el último error y la marca como {@link ActivitySyncState#SYNCED}
+     * antes de refrescar el snapshot remoto completo mediante {@link #mergeRemoteSnapshot(String, List)}.</p>
+     *
+     * <p>El bucle es secuencial a propósito, no paralelo: así el orden de llegada al backend
+     * respeta el orden cronológico local y evita saturar al servidor con varias subidas a la vez.</p>
      *
      * @param accountKey clave de la cuenta sobre la que se sincroniza.
-     * @return {@link SyncResult#retry()} si se detecta un error transitorio; en otro caso,
-     * resultado de éxito distinguiendo entre sincronización efectiva y no-op.
+     * @return {@link SyncResult#retry()} cuando aparece un error transitorio detectable con
+     * {@link #isRetryable(ApiError)}; en cualquier otro caso, un resultado de éxito que distingue
+     * entre sincronización efectiva y no-op.
      */
     @NonNull
     public SyncResult syncPendingNow(@NonNull String accountKey) {
@@ -117,13 +117,15 @@ public final class ActivitySyncManager {
     }
 
     /**
-     * Integra el listado remoto con el estado local: inserta o actualiza
-     * las filas que existen en el servidor (manteniendo el {@code remoteId}
-     * como clave) y deja intactas las locales en estado pendiente para no
-     * perder trabajo que aún no se ha subido.
+     * Integra el listado remoto con el estado local.
+     *
+     * <p>Inserta o actualiza las filas que existen en el servidor usando el {@code remoteId}
+     * como referencia, mantiene intactas las locales todavía pendientes para no perder trabajo
+     * offline y elimina las ya sincronizadas que han desaparecido del snapshot remoto.</p>
      *
      * @param accountKey clave de la cuenta a la que pertenecen las actividades.
      * @param remoteItems lista recibida del backend con el estado canónico de cada actividad.
+     * @see #mapDtoIntoEntity(ActividadEntity, ActividadResponseDto)
      */
     public void mergeRemoteSnapshot(@NonNull String accountKey,
                                     @NonNull List<ActividadResponseDto> remoteItems) {
@@ -192,10 +194,11 @@ public final class ActivitySyncManager {
     }
 
     /**
-     * Decide si un error devuelto al intentar sincronizar merece reintento:
-     * problemas de red, timeouts, rate limit, errores 5xx y cancelaciones
-     * son transitorios; el resto (400, 401, 409…) requieren intervención
-     * y no se reintentan.
+     * Decide si un error devuelto al intentar sincronizar merece reintento.
+     *
+     * <p>Se consideran transitorios los errores de red, timeout, rate limit, servidor y
+     * cancelación; el resto de tipos de {@link ApiErrorType} suelen requerir intervención
+     * del usuario o revisar el payload y por eso no se reencolan automáticamente.</p>
      *
      * @param error error producido en la subida al backend.
      * @return {@code true} si el Worker debe reencolar el intento más tarde.

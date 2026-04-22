@@ -24,6 +24,9 @@ import okhttp3.Route;
  * en {@link SessionRefreshCoordinator}. La clave es que el coordinador deduplica refreshes,
  * de forma que varias respuestas 401 casi simultáneas no terminan en múltiples llamadas a
  * {@code /token/refresh} con el mismo refresh token rotado.</p>
+ *
+ * <p>Si el refresh concluye que la sesión ya no es recuperable, detiene el reintento y avisa a
+ * {@link GlobalAuthManager} para que la UI cierre sesión.</p>
  */
 public class TokenAuthenticator implements Authenticator {
 
@@ -57,10 +60,15 @@ public class TokenAuthenticator implements Authenticator {
     /**
      * Intenta reconstruir una petición protegida tras un 401 renovando antes el access token.
      *
+     * <p>Solo actúa sobre respuestas dirigidas al backend configurado y corta el bucle si la misma
+     * petición ya ha pasado por autenticación demasiadas veces.</p>
+     *
      * @param route ruta de red propuesta por OkHttp, no utilizada directamente.
      * @param response respuesta 401 original que disparó la autenticación.
      * @return nueva {@link Request} con token renovado o {@code null} si la petición no debe reintentarse.
      * @throws IOException cuando el refresh falla de forma transitoria y OkHttp debe propagar el error.
+     * @see SessionRefreshCoordinator#refreshBlocking(String, boolean)
+     * @see GlobalAuthManager#notifySessionExpired()
      */
     @Nullable
     @Override

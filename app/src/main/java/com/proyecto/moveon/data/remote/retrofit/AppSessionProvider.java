@@ -16,7 +16,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
  * Gestiona el token de sesión de aplicación usado por el handshake con el backend.
  *
  * <p>Mantiene una caché corta en memoria y un cooldown tras fallo para evitar que cada petición
- * pague un nuevo handshake cuando el backend está temporalmente caído.</p>
+ * pague un nuevo handshake cuando el backend está temporalmente caído. Es la contraparte en memoria
+ * de {@link AppSessionInterceptor}, que consume esta sesión técnica en cada request al backend.</p>
  */
 public final class AppSessionProvider {
 
@@ -75,15 +76,16 @@ public final class AppSessionProvider {
     }
 
     /**
-     * Devuelve el token de sesión de app cacheado si sigue dentro de TTL,
-     * y en caso contrario lo pide de nuevo al backend con doble-check
-     * locking para que varios hilos no dupliquen la llamada de red.
+     * Devuelve el token de sesión de app cacheado si sigue dentro de TTL y, en caso contrario,
+     * lo pide de nuevo al backend con doble-check locking para que varios hilos no dupliquen la
+     * misma llamada de red.
      *
-     * @return token de sesión válido.
-     * @throws Exception si la petición al backend de handshake falla y tampoco hay valor cacheado utilizable.
-     *
+     * @return token de sesión válido para poblar la cabecera {@code x-app-session}.
+     * @throws Exception si el handshake falla, si el provider sigue en cooldown tras un fallo reciente
+     * o si el backend devuelve una respuesta sin token utilizable.
      * @see #invalidate()
      * @see #resetFailureCooldown()
+     * @see #fetchNewSession()
      */
     public static String getOrFetch() throws Exception {
         long now = SystemClock.elapsedRealtime();
@@ -122,6 +124,8 @@ public final class AppSessionProvider {
      *
      * <p>No resetea el cooldown de fallos, que solo se limpia tras un fetch exitoso o una
      * reconexión explícita.</p>
+     *
+     * @see #getOrFetch()
      */
     public static void invalidate() {
         synchronized (LOCK) {
@@ -134,21 +138,24 @@ public final class AppSessionProvider {
     /**
      * Limpia el cooldown tras un fallo reciente para permitir un nuevo intento de handshake.
      *
-     * <p>Lo invoca {@code ConnectivityObserver} cuando la red vuelve y el fallo previo deja de
+     * <p>Lo invoca el flujo de reconexión global cuando la red vuelve y el fallo previo deja de
      * ser representativo.</p>
+     *
+     * @see #getOrFetch()
      */
     public static void resetFailureCooldown() {
         lastFailureTime = 0;
     }
 
     /**
-     * Ejecuta la llamada síncrona al endpoint de handshake y extrae el
-     * token. En debug deja traza del cuerpo de la respuesta cuando no es
-     * exitosa para facilitar diagnósticos; en release no.
+     * Ejecuta la llamada síncrona al endpoint de handshake y extrae el token.
+     *
+     * <p>En debug intenta incorporar una porción del cuerpo de error para facilitar diagnósticos;
+     * en release evita exponer ese detalle adicional.</p>
      *
      * @return token fresco emitido por el backend.
-     * @throws Exception si la respuesta no es exitosa, viene vacía o falla la red.
-     *
+     * @throws Exception si la respuesta no es exitosa, si llega sin {@code appSession} útil o si
+     * falla la red al ejecutar el handshake.
      * @see #getApi()
      */
     private static String fetchNewSession() throws Exception {

@@ -62,6 +62,7 @@ public final class GlobalSyncNotifier {
      * evento representa una finalización correcta de trabajo pendiente offline.</p>
      *
      * @param message texto final a mostrar al usuario.
+     * @see #notifyMessage(GlobalSnackbarMessage)
      */
     public void notifySyncCompleted(@NonNull CharSequence message) {
         notifyMessage(new GlobalSnackbarMessage(TopSnackbar.Type.SUCCESS, message));
@@ -92,7 +93,9 @@ public final class GlobalSyncNotifier {
     /**
      * Expone el canal observable para que la actividad principal consuma los avisos pendientes.
      *
-     * @return {@link LiveData} one-shot con mensajes de sincronización.
+     * @return {@link LiveData} que emite un {@link Event} con {@link GlobalSnackbarMessage};
+     * cada emisión debe consumirse con {@link Event#getContentIfNotHandled()} para evitar
+     * replays tras recreaciones de la UI.
      */
     @NonNull
     public LiveData<Event<GlobalSnackbarMessage>> getMessageEvent() {
