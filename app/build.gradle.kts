@@ -1,6 +1,8 @@
 import java.util.Properties
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.javadoc.Javadoc
+import org.gradle.external.javadoc.StandardJavadocDocletOptions
 
 plugins {
     alias(libs.plugins.android.application)
@@ -225,4 +227,44 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+}
+
+tasks.register<Javadoc>("generateDebugJavadocs") {
+    group = "documentation"
+    description = "Genera documentación Javadoc HTML para el código Java de la app"
+
+    val compileDebugJava = tasks.named<JavaCompile>("compileDebugJavaWithJavac")
+    dependsOn(compileDebugJava)
+
+    source = fileTree("src/main/java") {
+        include("**/*.java")
+        exclude("**/R.java")
+        exclude("**/BuildConfig.java")
+        exclude("**/*Test.java")
+    }
+
+    destinationDir = layout.buildDirectory.dir("docs/javadoc").get().asFile
+    isFailOnError = false
+
+    options.encoding = "UTF-8"
+
+    (options as StandardJavadocDocletOptions).apply {
+        charSet = "UTF-8"
+        docEncoding = "UTF-8"
+        author(true)
+        version(true)
+        addBooleanOption("Xdoclint:none", true)
+        addStringOption("windowtitle", "MoveOn Android")
+        addStringOption("doctitle", "MoveOn Android - Documentación técnica")
+        addStringOption("header", "MoveOn Android")
+        links("https://developer.android.com/reference/")
+        links("https://docs.oracle.com/en/java/javase/11/docs/api/")
+    }
+
+    doFirst {
+        val javaCompile = compileDebugJava.get()
+        classpath = files(androidComponents.sdkComponents.bootClasspath.get()) +
+                javaCompile.classpath +
+                files(javaCompile.destinationDirectory.get().asFile)
+    }
 }

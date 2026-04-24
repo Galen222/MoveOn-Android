@@ -189,8 +189,9 @@ public class StatsViewModel extends AndroidViewModel {
     /**
      * Elimina una actividad individual y publica el resultado como evento de un solo consumo.
      *
-     * <p>El borrado real se delega en {@link ActivityRepository(String, java.util.function.Consumer)}
-     * y el feedback se reemite en {@link #deleteEvent} para que el fragment lo consuma una sola vez.</p>
+     * <p>El borrado real se delega en {@link ActivityRepository} mediante
+     * <code>borrarActividad(...)</code>, y el feedback se reemite en {@link #deleteEvent}
+     * para que el fragment lo consuma una sola vez.</p>
      *
      * @param localId identificador local estable de la actividad a eliminar.
      */
