@@ -157,6 +157,14 @@ public final class TrackingService extends Service implements SensorEventListene
     private static final long RECENT_MOTION_EVIDENCE_MS = 8_000L;
 
     /**
+     * Ventana durante la que una lectura de velocidad sospechosa bloquea la auto-pausa
+     * por inactividad. En vehículo puede haber velocidad real, pero no distancia válida
+     * para la ruta y sin esta protección el temporizador puede alternar entre aviso de
+     * velocidad alta y auto-pausa por parado.
+     */
+    private static final long RECENT_SUSPICIOUS_SPEED_MS = 15_000L;
+
+    /**
      * Factor aplicado a la precisión actual para decidir cuánto debe medir un salto GPS
      * antes de contarlo como distancia válida.
      *
@@ -332,6 +340,7 @@ public final class TrackingService extends Service implements SensorEventListene
     private long sessionFinishedRealtimeMs = 0L;
     private long lastMovementRealtimeMs = 0L;
     private long lastMotionEvidenceRealtimeMs = 0L;
+    private long lastSuspiciousSpeedRealtimeMs = 0L;
     private long activityTypeDowngradeGraceDeadlineRealtimeMs = 0L;
     private boolean currentMovementSample = false;
     private long runningClassifiedSeconds = 0L;
@@ -720,6 +729,13 @@ public final class TrackingService extends Service implements SensorEventListene
         lastObservedRealtimeMs = nowRealtime;
 
         if (isSuspiciousVehicleSpeed(location, resolvedSpeedMs)) {
+            lastSuspiciousSpeedRealtimeMs = nowRealtime;
+            currentMovementSample = false;
+            consecutiveMovingSamples = 0;
+            consecutiveStationarySamples = 0;
+            consecutiveDistanceAccumulationSamples = 0;
+            recentMovingSpeeds.clear();
+
             highSpeedCount++;
             if (highSpeedCount >= SPEED_ALERT_CONSECUTIVE) {
                 highSpeedCount = 0;
@@ -764,42 +780,47 @@ public final class TrackingService extends Service implements SensorEventListene
             updateActivityTypeFromGps(resolvedSpeedMs, true);
 
             if (currentStatus == TrackingState.Status.AUTO_PAUSED
+                    && currentPauseReason != TrackingState.PauseReason.SUSPICIOUS_SPEED
                     && consecutiveMovingSamples >= AUTO_RESUME_MOVING_CONSECUTIVE) {
                 currentStatus = TrackingState.Status.RUNNING;
                 currentPauseReason = TrackingState.PauseReason.NONE;
                 armActivityTypeDowngradeGracePeriod();
             }
 
-            float sanitizedAcceptedDeltaMeters = sanitizeAcceptedDeltaMeters(
-                    location,
-                    acceptedDeltaMeters,
-                    acceptedDeltaTimeMs,
-                    resolvedSpeedMs,
-                    movingSample
-            );
+            if (currentStatus == TrackingState.Status.RUNNING) {
+                float sanitizedAcceptedDeltaMeters = sanitizeAcceptedDeltaMeters(
+                        location,
+                        acceptedDeltaMeters,
+                        acceptedDeltaTimeMs,
+                        resolvedSpeedMs,
+                        movingSample
+                );
 
-            boolean accumulableDistanceSample = isDistanceAccumulableSample(
-                    location,
-                    sanitizedAcceptedDeltaMeters,
-                    movingSample
-            );
-            if (accumulableDistanceSample) {
-                consecutiveDistanceAccumulationSamples++;
+                boolean accumulableDistanceSample = isDistanceAccumulableSample(
+                        location,
+                        sanitizedAcceptedDeltaMeters,
+                        movingSample
+                );
+                if (accumulableDistanceSample) {
+                    consecutiveDistanceAccumulationSamples++;
+                } else {
+                    consecutiveDistanceAccumulationSamples = 0;
+                }
+
+                if (shouldAccumulateDistance(location, sanitizedAcceptedDeltaMeters, movingSample)) {
+                    // Se suma la distancia desde el último punto aceptado, no desde el último
+                    // observado. Así evitamos "evaporar" metros en saltos pequeños consecutivos.
+                    //
+                    // Además se aplica una segunda capa anti-ruido que limita saltos muy por encima
+                    // de la velocidad humana plausible para el intervalo real entre puntos aceptados.
+                    preciseDistanceMeters += sanitizedAcceptedDeltaMeters;
+                    syncRoundedDistanceMeters();
+                    acceptRoutePoint(location);
+                    lastAcceptedLocation = location;
+                    lastAcceptedRealtimeMs = nowRealtime;
+                }
             } else {
                 consecutiveDistanceAccumulationSamples = 0;
-            }
-
-            if (shouldAccumulateDistance(location, sanitizedAcceptedDeltaMeters, movingSample)) {
-                // Se suma la distancia desde el último punto aceptado, no desde el último
-                // observado. Así evitamos "evaporar" metros en saltos pequeños consecutivos.
-                //
-                // Además se aplica una segunda capa anti-ruido que limita saltos muy por encima
-                // de la velocidad humana plausible para el intervalo real entre puntos aceptados.
-                preciseDistanceMeters += sanitizedAcceptedDeltaMeters;
-                syncRoundedDistanceMeters();
-                acceptRoutePoint(location);
-                lastAcceptedLocation = location;
-                lastAcceptedRealtimeMs = nowRealtime;
             }
         } else if (stationarySample) {
             consecutiveStationarySamples++;
@@ -1072,6 +1093,19 @@ public final class TrackingService extends Service implements SensorEventListene
             return false;
         }
         return (nowRealtime - lastEvidenceRealtimeMs) <= RECENT_MOTION_EVIDENCE_MS;
+    }
+
+    /**
+     * Indica si se ha detectado velocidad incompatible con actividad humana hace poco.
+     *
+     * <p>Sirve para no convertir un desplazamiento en vehículo en auto-pausa por parado
+     * solo porque esos puntos no se usen para dibujar polilínea ni sumar distancia.</p>
+     */
+    private boolean hasRecentSuspiciousSpeed(long nowRealtime) {
+        if (lastSuspiciousSpeedRealtimeMs <= 0L) {
+            return false;
+        }
+        return (nowRealtime - lastSuspiciousSpeedRealtimeMs) <= RECENT_SUSPICIOUS_SPEED_MS;
     }
 
     /**
@@ -1459,7 +1493,8 @@ public final class TrackingService extends Service implements SensorEventListene
                     stoppedSeconds++;
                 }
 
-                if (inactivityMs >= AUTO_PAUSE_INACTIVITY_MS) {
+                if (inactivityMs >= AUTO_PAUSE_INACTIVITY_MS
+                        && !hasRecentSuspiciousSpeed(nowRealtime)) {
                     enterAutoPause(
                             TrackingState.PauseReason.STATIONARY,
                             TrackingAlert.Type.STATIONARY_AUTO_PAUSE
@@ -1945,6 +1980,7 @@ public final class TrackingService extends Service implements SensorEventListene
         lastMovementRealtimeMs = 0L;
         lastAcceptedRealtimeMs = 0L;
         lastMotionEvidenceRealtimeMs = 0L;
+        lastSuspiciousSpeedRealtimeMs = 0L;
         activityTypeDowngradeGraceDeadlineRealtimeMs = 0L;
         lastAcceptedLocation = null;
         lastObservedLocation = null;
