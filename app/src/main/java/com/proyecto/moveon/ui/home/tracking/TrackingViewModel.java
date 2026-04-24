@@ -1,4 +1,3 @@
-
 package com.proyecto.moveon.ui.home.tracking;
 
 import android.app.Application;
@@ -41,6 +40,20 @@ import java.time.format.DateTimeFormatter;
  * y en {@link ActivityRepository} para persistir y sincronizar la actividad resultante.</p>
  */
 public final class TrackingViewModel extends AndroidViewModel {
+
+    /**
+     * Porcentaje mínimo del tiempo clasificado que debe ser running para guardar como carrera.
+     */
+    private static final long RUNNING_DOMINANCE_PERCENT = 60L;
+
+    /**
+     * Velocidad media mínima en movimiento para aceptar que la sesión completa fue carrera.
+     *
+     * <p>Equivale aproximadamente a 6,84 km/h o 8:46 min/km. Este filtro evita que
+     * rebotes del móvil al caminar acumulen suficientes segundos running como para que
+     * una caminata lenta termine guardándose como carrera.</p>
+     */
+    private static final double MIN_RUNNING_AVERAGE_SPEED_MPS = 1.90;
 
     private final ActivityRepository repository;
     private final TrackingServiceController trackingController;
@@ -368,11 +381,12 @@ public final class TrackingViewModel extends AndroidViewModel {
 
 
     /**
-     * Resuelve el tipo final de actividad usando predominio temporal de la sesión.
+     * Resuelve el tipo final de actividad usando predominio temporal y una validación
+     * de velocidad media real.
      *
      * <p>Se considera carrera si al menos el 60% del tiempo clasificado fue running.
-     * Así evitamos que la sesión completa quede marcada como caminar solo porque el
-     * usuario aflojó o caminó en los últimos segundos antes de guardar.</p>
+     * Y además del predominio temporal, la velocidad media durante el tiempo en movimiento
+     * debe ser compatible con carrera.</p>
      */
     @NonNull
     private String resolvePredominantActivityType(@NonNull TrackingState state) {
@@ -380,8 +394,12 @@ public final class TrackingViewModel extends AndroidViewModel {
         long walkingSeconds = state.getWalkingClassifiedSeconds();
         long classifiedSeconds = runningSeconds + walkingSeconds;
 
-        boolean isRunning = classifiedSeconds > 0L
-                && (runningSeconds * 100L) >= (classifiedSeconds * 60L);
+        boolean runningDominates = classifiedSeconds > 0L
+                && (runningSeconds * 100L) >= (classifiedSeconds * RUNNING_DOMINANCE_PERCENT);
+
+        boolean paceLooksLikeRunning = hasRunningAverageSpeed(state);
+
+        boolean isRunning = runningDominates && paceLooksLikeRunning;
 
         String activityTypeLabel = isRunning
                 ? AppLanguageManager.getString(getApplication(), R.string.activity_type_run)
@@ -390,6 +408,27 @@ public final class TrackingViewModel extends AndroidViewModel {
         String tipo = ProfileValueLocalizer.canonicalActivityTypeFromLabel(getApplication(), activityTypeLabel);
         return tipo != null ? tipo : (isRunning ? "Correr" : "Caminar");
     }
+
+    /**
+     * Comprueba si la velocidad media en movimiento es suficiente para considerar la
+     * actividad como carrera.
+     *
+     * @param state snapshot final de tracking.
+     * @return {@code true} si hay distancia, tiempo en movimiento y la velocidad media
+     *         supera el umbral mínimo configurado para carrera.
+     */
+    private boolean hasRunningAverageSpeed(@NonNull TrackingState state) {
+        long movingSeconds = state.getMovingSeconds();
+        double distanceMeters = state.getPreciseDistanceMeters();
+
+        if (movingSeconds <= 0L || distanceMeters <= 0.0) {
+            return false;
+        }
+
+        double averageSpeedMps = distanceMeters / movingSeconds;
+        return averageSpeedMps >= MIN_RUNNING_AVERAGE_SPEED_MPS;
+    }
+
 
     /**
      * Envía telemetría detallada de la sesión al backend solo cuando la build interna tiene activado el diagnóstico.
