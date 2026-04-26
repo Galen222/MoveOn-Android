@@ -41,6 +41,9 @@ public class TokenAuthenticatorConcurrencyTest {
 
     private static final MediaType JSON_MEDIA_TYPE = MediaType.get("application/json");
 
+    /**
+     * Verifica el escenario cubierto por {@link #authenticate_twoConcurrent401s_performSingleRefreshAndReuseNewAccessToken()}.
+     */
     @Test
     public void authenticate_twoConcurrent401s_performSingleRefreshAndReuseNewAccessToken()
             throws Exception {

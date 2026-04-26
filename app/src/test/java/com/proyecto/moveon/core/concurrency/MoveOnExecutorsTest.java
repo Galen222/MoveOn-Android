@@ -13,12 +13,18 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MoveOnExecutorsTest {
 
+    /**
+     * Verifica el escenario cubierto por {@link #io_returnsNonNull()}.
+     */
     @Test
     public void io_returnsNonNull() {
         ExecutorService io = MoveOnExecutors.io();
         assertNotNull(io);
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #io_returnsSameInstance()}.
+     */
     @Test
     public void io_returnsSameInstance() {
         ExecutorService a = MoveOnExecutors.io();
@@ -26,6 +32,9 @@ public class MoveOnExecutorsTest {
         assertSame(a, b);
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #io_canExecuteTasks()}.
+     */
     @Test
     public void io_canExecuteTasks() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
@@ -40,6 +49,9 @@ public class MoveOnExecutorsTest {
         assertEquals(42, result.get());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #io_supportsParallelExecution()}.
+     */
     @Test
     public void io_supportsParallelExecution() throws InterruptedException {
         // El pool tiene 3 hilos; 3 tareas deben poder ejecutarse en paralelo
@@ -66,6 +78,9 @@ public class MoveOnExecutorsTest {
         assertTrue(allDone.await(2, TimeUnit.SECONDS));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #io_threadNaming()}.
+     */
     @Test
     public void io_threadNaming() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);

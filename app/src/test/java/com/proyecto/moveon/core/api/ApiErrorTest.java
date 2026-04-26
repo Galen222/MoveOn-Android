@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 /**
  * Pruebas para validar el comportamiento de api error.
  */
@@ -15,6 +16,9 @@ public class ApiErrorTest {
 
     // ── Factory methods ─────────────────────────────────────────────────────
 
+    /**
+     * Verifica el escenario cubierto por {@link #local_createsUnknownTypeWithZeroCode()}.
+     */
     @Test
     public void local_createsUnknownTypeWithZeroCode() {
         ApiError error = ApiError.local("something broke");
@@ -27,6 +31,9 @@ public class ApiErrorTest {
         assertNull(error.getRaw());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #typed_twoArgs_setsTypeAndMessage()}.
+     */
     @Test
     public void typed_twoArgs_setsTypeAndMessage() {
         ApiError error = ApiError.typed(ApiErrorType.NETWORK, "sin conexión");
@@ -36,6 +43,9 @@ public class ApiErrorTest {
         assertEquals("sin conexión", error.getMessage());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #typed_threeArgs_setsTypeCodeMessage()}.
+     */
     @Test
     public void typed_threeArgs_setsTypeCodeMessage() {
         ApiError error = ApiError.typed(ApiErrorType.SERVER, 503, "servicio no disponible");
@@ -45,6 +55,9 @@ public class ApiErrorTest {
         assertEquals("servicio no disponible", error.getMessage());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #typed_fourArgs_includesErrorCode()}.
+     */
     @Test
     public void typed_fourArgs_includesErrorCode() {
         ApiError error = ApiError.typed(ApiErrorType.VALIDATION, 422, "campo inválido", "FIELD_INVALID");
@@ -57,6 +70,9 @@ public class ApiErrorTest {
 
     // ── Field errors ────────────────────────────────────────────────────────
 
+    /**
+     * Verifica el escenario cubierto por {@link #hasFieldErrors_falseWhenEmpty()}.
+     */
     @Test
     public void hasFieldErrors_falseWhenEmpty() {
         ApiError error = ApiError.local("test");
@@ -64,6 +80,9 @@ public class ApiErrorTest {
         assertTrue(error.getFieldErrors().isEmpty());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #withFieldError_returnsNewInstanceWithField()}.
+     */
     @Test
     public void withFieldError_returnsNewInstanceWithField() {
         ApiError original = ApiError.local("test");
@@ -78,6 +97,9 @@ public class ApiErrorTest {
         assertEquals("Email inválido", withField.getFieldErrors().get("email").get(0));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #withFieldError_accumulates_multipleForSameKey()}.
+     */
     @Test
     public void withFieldError_accumulates_multipleForSameKey() {
         ApiError error = ApiError.local("test")
@@ -91,6 +113,9 @@ public class ApiErrorTest {
         assertEquals("Falta mayúscula", msgs.get(1));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #withFieldError_preservesOriginalTypeAndCode()}.
+     */
     @Test
     public void withFieldError_preservesOriginalTypeAndCode() {
         ApiError original = ApiError.typed(ApiErrorType.VALIDATION, 422, "error", "CODE");
@@ -104,18 +129,27 @@ public class ApiErrorTest {
 
     // ── firstFieldMessage ───────────────────────────────────────────────────
 
+    /**
+     * Verifica el escenario cubierto por {@link #firstFieldMessage_returnsNullWhenNoFieldErrors()}.
+     */
     @Test
     public void firstFieldMessage_returnsNullWhenNoFieldErrors() {
         ApiError error = ApiError.local("test");
         assertNull(error.firstFieldMessage("email"));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #firstFieldMessage_returnsNullForUnknownKey()}.
+     */
     @Test
     public void firstFieldMessage_returnsNullForUnknownKey() {
         ApiError error = ApiError.local("test").withFieldError("email", "bad");
         assertNull(error.firstFieldMessage("password"));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #firstFieldMessage_findsFirstMatchingKey()}.
+     */
     @Test
     public void firstFieldMessage_findsFirstMatchingKey() {
         ApiError error = ApiError.local("test")
@@ -125,6 +159,9 @@ public class ApiErrorTest {
         assertEquals("email inválido", error.firstFieldMessage("email", "password"));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #firstFieldMessage_skipsKeysWithEmptyMessages()}.
+     */
     @Test
     public void firstFieldMessage_skipsKeysWithEmptyMessages() {
         // Construir manualmente con mensaje vacío
@@ -138,12 +175,18 @@ public class ApiErrorTest {
         assertEquals("error real", error.firstFieldMessage("email", "password"));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #firstFieldMessage_returnsNullForEmptyKeys()}.
+     */
     @Test
     public void firstFieldMessage_returnsNullForEmptyKeys() {
         ApiError error = ApiError.local("test").withFieldError("email", "bad");
         assertNull(error.firstFieldMessage(/* vacío */));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #firstFieldMessage_skipsNullKeys()}.
+     */
     @Test
     public void firstFieldMessage_skipsNullKeys() {
         ApiError error = ApiError.local("test").withFieldError("email", "bad");
@@ -152,6 +195,9 @@ public class ApiErrorTest {
 
     // ── Constructor directo con campo raw ────────────────────────────────────
 
+    /**
+     * Verifica el escenario cubierto por {@link #constructor_preservesRawBody()}.
+     */
     @Test
     public void constructor_preservesRawBody() {
         String rawJson = "{\"error\":\"test\"}";
@@ -161,10 +207,110 @@ public class ApiErrorTest {
         assertEquals(rawJson, error.getRaw());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #constructor_nullFieldErrors_becomesEmptyMap()}.
+     */
     @Test
     public void constructor_nullFieldErrors_becomesEmptyMap() {
         ApiError error = new ApiError(ApiErrorType.UNKNOWN, 0, "msg", null, null, null);
         assertNotNull(error.getFieldErrors());
         assertTrue(error.getFieldErrors().isEmpty());
+    }
+    /**
+     * Verifica que la factoría local crea un error desconocido sin metadatos remotos.
+     */
+    @Test
+    public void localFactory_createsUnknownErrorWithoutRemoteMetadata() {
+        ApiError error = ApiError.local("fallo local");
+
+        assertEquals(ApiErrorType.UNKNOWN, error.getType());
+        assertEquals(0, error.getHttpCode());
+        assertEquals("fallo local", error.getMessage());
+        assertNull(error.getErrorCode());
+        assertNull(error.getRaw());
+        assertFalse(error.hasFieldErrors());
+    }
+
+    /**
+     * Verifica que las factorías tipadas conservan tipo, código HTTP y código funcional.
+     */
+    @Test
+    public void typedFactories_preserveTypeHttpCodeAndBusinessCode() {
+        ApiError simple = ApiError.typed(ApiErrorType.NETWORK, "sin red");
+        ApiError withHttp = ApiError.typed(ApiErrorType.UNAUTHORIZED, 401, "caducada");
+        ApiError withBusinessCode = ApiError.typed(ApiErrorType.VALIDATION, 422, "inválido", "invalid_payload");
+
+        assertEquals(ApiErrorType.NETWORK, simple.getType());
+        assertEquals(0, simple.getHttpCode());
+        assertEquals("sin red", simple.getMessage());
+
+        assertEquals(ApiErrorType.UNAUTHORIZED, withHttp.getType());
+        assertEquals(401, withHttp.getHttpCode());
+        assertEquals("caducada", withHttp.getMessage());
+
+        assertEquals(ApiErrorType.VALIDATION, withBusinessCode.getType());
+        assertEquals(422, withBusinessCode.getHttpCode());
+        assertEquals("invalid_payload", withBusinessCode.getErrorCode());
+    }
+
+    /**
+     * Verifica que el constructor tolera un mapa nulo de errores por campo.
+     */
+    @Test
+    public void constructor_withNullFieldErrors_usesEmptyMap() {
+        ApiError error = new ApiError(ApiErrorType.SERVER, 500, "server", "E500", null, "raw");
+
+        assertFalse(error.hasFieldErrors());
+        assertTrue(error.getFieldErrors().isEmpty());
+        assertEquals("raw", error.getRaw());
+    }
+
+    /**
+     * Verifica que {@link ApiError#withFieldError(String, String)} acumula mensajes y conserva el error original.
+     */
+    @Test
+    public void withFieldError_accumulatesMessagesWithoutMutatingOriginal() {
+        ApiError original = ApiError.typed(ApiErrorType.VALIDATION, 422, "formulario", "invalid_form");
+
+        ApiError withEmail = original.withFieldError("email", "Email obligatorio");
+        ApiError withTwoEmailErrors = withEmail.withFieldError("email", "Email inválido");
+        ApiError withPassword = withTwoEmailErrors.withFieldError("password", "Password corta");
+
+        assertFalse(original.hasFieldErrors());
+        assertEquals(Collections.singletonList("Email obligatorio"), withEmail.getFieldErrors().get("email"));
+        assertEquals(Arrays.asList("Email obligatorio", "Email inválido"), withTwoEmailErrors.getFieldErrors().get("email"));
+        assertEquals("Password corta", withPassword.firstFieldMessage("password"));
+        assertEquals(ApiErrorType.VALIDATION, withPassword.getType());
+        assertEquals(422, withPassword.getHttpCode());
+        assertEquals("invalid_form", withPassword.getErrorCode());
+    }
+
+    /**
+     * Verifica que la búsqueda de mensaje por campo respeta prioridad, ignora nulls y salta textos en blanco.
+     */
+    @Test
+    public void firstFieldMessage_usesPriorityAndSkipsBlankValues() {
+        Map<String, List<String>> fieldErrors = new HashMap<>();
+        fieldErrors.put("username", Arrays.asList("   ", "segundo ignorado"));
+        fieldErrors.put("email", Arrays.asList("Email inválido"));
+        fieldErrors.put("password", Collections.singletonList("Password corta"));
+        ApiError error = new ApiError(ApiErrorType.VALIDATION, 422, "form", null, fieldErrors, null);
+
+        assertEquals("Email inválido", error.firstFieldMessage(null, "username", "email", "password"));
+        assertEquals("Password corta", error.firstFieldMessage("password", "email"));
+        assertNull(error.firstFieldMessage("unknown"));
+        assertNull(error.firstFieldMessage());
+    }
+
+    /**
+     * Verifica que se informa correctamente de la existencia de errores por campo.
+     */
+    @Test
+    public void hasFieldErrors_reflectsCurrentFieldErrorMap() {
+        ApiError empty = ApiError.local("x");
+        ApiError enriched = empty.withFieldError("field", "message");
+
+        assertFalse(empty.hasFieldErrors());
+        assertTrue(enriched.hasFieldErrors());
     }
 }

@@ -49,8 +49,31 @@ public final class ApiError {
         this.httpCode = httpCode;
         this.message = message;
         this.errorCode = errorCode;
-        this.fieldErrors = fieldErrors != null ? fieldErrors : Collections.emptyMap();
+        this.fieldErrors = immutableFieldErrors(fieldErrors);
         this.raw = raw;
+    }
+
+    /**
+     * Crea una copia defensiva e inmutable del mapa de errores por campo.
+     *
+     * @param fieldErrors mapa recibido desde parser, constructor o factorías.
+     * @return mapa seguro frente a mutaciones externas y cambios entre instancias.
+     */
+    @NonNull
+    private static Map<String, List<String>> immutableFieldErrors(@Nullable Map<String, List<String>> fieldErrors) {
+        if (fieldErrors == null || fieldErrors.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, List<String>> copy = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : fieldErrors.entrySet()) {
+            List<String> values = entry.getValue();
+            if (values == null || values.isEmpty()) {
+                copy.put(entry.getKey(), Collections.emptyList());
+            } else {
+                copy.put(entry.getKey(), Collections.unmodifiableList(new ArrayList<>(values)));
+            }
+        }
+        return Collections.unmodifiableMap(copy);
     }
 
     /**
@@ -181,7 +204,7 @@ public final class ApiError {
     public ApiError withFieldError(@NonNull String key, @NonNull String value) {
         Map<String, List<String>> m = new HashMap<>(this.fieldErrors);
         List<String> list = m.get(key);
-        if (list == null) list = new ArrayList<>();
+        list = list == null ? new ArrayList<>() : new ArrayList<>(list);
         list.add(value);
         m.put(key, list);
         return new ApiError(this.type, this.httpCode, this.message, this.errorCode, m, this.raw);

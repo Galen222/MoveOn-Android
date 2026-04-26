@@ -35,66 +35,105 @@ public class ActivitySyncManagerRetryableTest {
                 || type == ApiErrorType.CANCELED;
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #network_isRetryable()}.
+     */
     @Test
     public void network_isRetryable() {
         assertTrue(isRetryable(ApiError.typed(ApiErrorType.NETWORK, "sin red")));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #timeout_isRetryable()}.
+     */
     @Test
     public void timeout_isRetryable() {
         assertTrue(isRetryable(ApiError.typed(ApiErrorType.TIMEOUT, "timeout")));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #rateLimit_isRetryable()}.
+     */
     @Test
     public void rateLimit_isRetryable() {
         assertTrue(isRetryable(ApiError.typed(ApiErrorType.RATE_LIMIT, "rate limit")));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #server_isRetryable()}.
+     */
     @Test
     public void server_isRetryable() {
         assertTrue(isRetryable(ApiError.typed(ApiErrorType.SERVER, 500, "error interno")));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #canceled_isRetryable()}.
+     */
     @Test
     public void canceled_isRetryable() {
         assertTrue(isRetryable(ApiError.typed(ApiErrorType.CANCELED, "cancelado")));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #validation_isNotRetryable()}.
+     */
     @Test
     public void validation_isNotRetryable() {
         assertFalse(isRetryable(ApiError.typed(ApiErrorType.VALIDATION, 422, "dato inválido")));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #unauthorized_isNotRetryable()}.
+     */
     @Test
     public void unauthorized_isNotRetryable() {
         assertFalse(isRetryable(ApiError.typed(ApiErrorType.UNAUTHORIZED, 401, "no autorizado")));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #forbidden_isNotRetryable()}.
+     */
     @Test
     public void forbidden_isNotRetryable() {
         assertFalse(isRetryable(ApiError.typed(ApiErrorType.FORBIDDEN, 403, "prohibido")));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #notFound_isNotRetryable()}.
+     */
     @Test
     public void notFound_isNotRetryable() {
         assertFalse(isRetryable(ApiError.typed(ApiErrorType.NOT_FOUND, 404, "no encontrado")));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #conflict_isNotRetryable()}.
+     */
     @Test
     public void conflict_isNotRetryable() {
         assertFalse(isRetryable(ApiError.typed(ApiErrorType.CONFLICT, 409, "conflicto")));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #parse_isNotRetryable()}.
+     */
     @Test
     public void parse_isNotRetryable() {
         assertFalse(isRetryable(ApiError.typed(ApiErrorType.PARSE, "json inválido")));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #unknown_isNotRetryable()}.
+     */
     @Test
     public void unknown_isNotRetryable() {
         assertFalse(isRetryable(ApiError.local("error desconocido")));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #payloadTooLarge_isNotRetryable()}.
+     */
     @Test
     public void payloadTooLarge_isNotRetryable() {
         assertFalse(isRetryable(ApiError.typed(ApiErrorType.PAYLOAD_TOO_LARGE, 413, "muy grande")));

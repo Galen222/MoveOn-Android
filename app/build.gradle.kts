@@ -2,10 +2,14 @@ import java.util.Properties
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.javadoc.Javadoc
+import org.gradle.api.tasks.testing.Test
 import org.gradle.external.javadoc.StandardJavadocDocletOptions
+import org.gradle.testing.jacoco.tasks.JacocoReport
+import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
 
 plugins {
     alias(libs.plugins.android.application)
+    id("jacoco")
 }
 
 /**
@@ -79,7 +83,7 @@ val moveonProdBaseUrl = when (moveonBackend) {
 /**
  * URL del backend según selector.
  * - LOCAL: emulador Android Studio + backend local en tu PC -> http://10.0.2.2:8000/
- * - LAN: móvil físico en la misma red Wi‑Fi -> MOVEON_LAN_BASE_URL
+ * - LAN: móvil físico en la misma red Wi-Fi -> MOVEON_LAN_BASE_URL
  * - PRODUCCION: backend desplegado -> MOVEON_PROD_BASE_URL
  */
 val moveonBaseUrl = when (moveonBackend) {
@@ -127,7 +131,7 @@ android {
         minSdk = 29
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0.2"
+        versionName = "1.0.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -154,6 +158,8 @@ android {
         debug {
             isMinifyEnabled = false
             isShrinkResources = false
+            enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
         }
 
         release {
@@ -180,7 +186,137 @@ android {
     sourceSets {
         getByName("androidTest").assets.directories.add("$projectDir/schemas")
     }
+
+    // Permite que los unit tests JVM usen stubs Android sin lanzar "Method ... not mocked".
+    // Los tests que necesitan valores reales inyectan recursos/preferencias mediante MemoryContext.
+    // includeAndroidResources = true habilita que Robolectric resuelva R.string.*,
+    // R.string-arrays.* y R.raw.* desde los assets reales del módulo app.
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+            isIncludeAndroidResources = true
+        }
+    }
 }
+
+
+jacoco {
+    // JaCoCo 0.8.14 soporta Java 25; evita los "Unsupported class file major version 69".
+    toolVersion = "0.8.14"
+}
+
+// Robolectric 4.14.1 trae ASM 9.7.1 que NO soporta bytecode Java 25 (major 69).
+// Forzamos ASM 9.8 en los classpaths de test para evitar
+// "IllegalArgumentException: Unsupported class file major version 69" cuando el
+// instrumentador de Robolectric procesa clases compiladas con JDK 25.
+configurations.matching {
+    it.name.startsWith("test") || it.name.contains("UnitTest")
+}.configureEach {
+    resolutionStrategy {
+        force(
+            "org.ow2.asm:asm:9.8",
+            "org.ow2.asm:asm-commons:9.8",
+            "org.ow2.asm:asm-tree:9.8",
+            "org.ow2.asm:asm-util:9.8",
+            "org.ow2.asm:asm-analysis:9.8"
+        )
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    extensions.configure<JacocoTaskExtension> {
+        isIncludeNoLocationClasses = true
+        excludes = listOf(
+            "jdk.*",
+            "java.*",
+            "javax.*",
+            "sun.*",
+            "com.sun.*",
+            "org.jcp.*",
+            "jdk.internal.*"
+        )
+    }
+
+    finalizedBy("jacocoTestReport")
+}
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    group = "verification"
+    description = "Genera un informe HTML/XML de cobertura JaCoCo para tests unitarios debug."
+
+    dependsOn("testDebugUnitTest")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+
+    val fileFilter = listOf(
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "android/**/*.*",
+        "**/databinding/**/*.*",
+        "**/generated/**/*.*",
+        "**/*_Factory.*",
+        "**/*_MembersInjector.*",
+
+        // El informe de unit tests JVM debe medir código de negocio testeable sin emulador.
+        // Estas clases dependen de framework Android, ciclo de vida, vistas, Room generado o WorkManager.
+        "**/app/**",
+        "**/ui/**/*Activity*.*",
+        "**/ui/**/*Fragment*.*",
+        "**/ui/**/*BottomSheet*.*",
+        "**/ui/**/*Dialog*.*",
+        "**/ui/**/*Adapter*.*",
+        "**/ui/**/*ViewModel*.*",
+        "**/ui/**/*View*.*",
+        "**/ui/**/SessionUiHelper*.*",
+        "**/ui/**/TopSnackbar*.*",
+        "**/ui/home/InicioFragment*.*",
+        "**/ui/home/TrackingAlertBottomSheet*.*",
+        "**/ui/home/tracking/TrackingService*.*",
+        "**/ui/home/tracking/TrackingServiceController*.*",
+        "**/ui/home/tracking/TrackingSessionStore*.*",
+        "**/ui/profile/ShareRoute*.*",
+        "**/ui/profile/ProfileDialogHelper*.*",
+        "**/ui/profile/ProfileTrackingHelper*.*",
+        "**/data/local/dao/**",
+        "**/data/local/db/**",
+        "**/workers/**",
+        "**/data/remote/retrofit/*Api*.*",
+        "**/data/remote/retrofit/RetrofitProvider*.*",
+        "**/data/remote/rutas/**"
+    )
+
+    val javaDebugTree = fileTree(layout.buildDirectory.dir("intermediates/javac/debug/compileDebugJavaWithJavac/classes")) {
+        exclude(fileFilter)
+    }
+
+    val javaLegacyDebugTree = fileTree(layout.buildDirectory.dir("intermediates/javac/debug/classes")) {
+        exclude(fileFilter)
+    }
+
+    val kotlinDebugTree = fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debug")) {
+        exclude(fileFilter)
+    }
+
+    sourceDirectories.setFrom(files("$projectDir/src/main/java"))
+    classDirectories.setFrom(files(javaDebugTree, javaLegacyDebugTree, kotlinDebugTree))
+    executionData.setFrom(
+        fileTree(layout.buildDirectory) {
+            include(
+                "jacoco/testDebugUnitTest.exec",
+                "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+                "outputs/code_coverage/debugAndroidTest/connected/*coverage.ec"
+            )
+        }
+    )
+}
+
 
 tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("-Xlint:deprecation")
@@ -225,6 +361,18 @@ dependencies {
 
     // Pruebas (Testing Unitario y de Interfaz)
     testImplementation(libs.junit)
+    // MockWebServer para tests JVM puros que verifican la capa de red real
+    // (OkHttp + Retrofit) sin emulador y sin tocar el backend.
+    // Misma línea que okhttp 5.x para mantener la compatibilidad de cliente.
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.3.2")
+    // Robolectric 4.14.x ya soporta hasta SDK 35; el proyecto usa
+    // compileSdk/targetSdk = 36 pero tests JVM ejecutarán con sdk=35
+    // (configurado en src/test/resources/robolectric.properties).
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    // androidx.test:core publica ApplicationProvider, que es la API
+    // recomendada para obtener el Context de la aplicación en tests
+    // basados en Robolectric.
+    testImplementation("androidx.test:core:1.6.1")
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }

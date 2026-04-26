@@ -134,7 +134,7 @@ public final class TrackingState {
         this.autoPauseCount = autoPauseCount;
         this.manualPauseCount = manualPauseCount;
         this.suspiciousSpeedEventCount = suspiciousSpeedEventCount;
-        this.routePoints = Collections.unmodifiableList(routePoints);
+        this.routePoints = Collections.unmodifiableList(new ArrayList<>(routePoints));
         this.currentLocation = currentLocation;
         this.encodedPolyline = encodedPolyline;
         this.runningClassifiedSeconds = runningClassifiedSeconds;

@@ -44,6 +44,9 @@ public class SecureSessionManagerInstrumentedTest {
         manager.logout();
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #isLoggedIn_requiresBothTokens()}.
+     */
     @Test
     public void isLoggedIn_requiresBothTokens() throws Exception {
         assertFalse(manager.isLoggedIn());
@@ -60,6 +63,9 @@ public class SecureSessionManagerInstrumentedTest {
         assertFalse(manager.isLoggedIn());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #saveLogin_derivesStableUserIdAndAccountKeyFromJwtSub()}.
+     */
     @Test
     public void saveLogin_derivesStableUserIdAndAccountKeyFromJwtSub() {
         manager.saveLogin("alice", fakeJwtWithSub("987"), "refresh_987");
@@ -68,6 +74,9 @@ public class SecureSessionManagerInstrumentedTest {
         assertEquals("uid_987", manager.getAccountKey());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #updateTokens_preservesUsernameAndRefreshesDerivedIdentity()}.
+     */
     @Test
     public void updateTokens_preservesUsernameAndRefreshesDerivedIdentity() {
         manager.saveLogin("alice", fakeJwtWithSub("111"), "refresh_old");
@@ -81,6 +90,9 @@ public class SecureSessionManagerInstrumentedTest {
         assertEquals("refresh_new", manager.getRefreshToken());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #saveLoginSync_publishesTokensImmediatelyForConcurrentReaders()}.
+     */
     @Test
     public void saveLoginSync_publishesTokensImmediatelyForConcurrentReaders() {
         manager.saveLoginSync("alice", fakeJwtWithSub("321"), "refresh_rotated");
@@ -91,6 +103,9 @@ public class SecureSessionManagerInstrumentedTest {
         assertEquals("refresh_rotated", manager.getRefreshToken());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #updateTokensSync_preservesUsernameAndRotatesRefreshTokenImmediately()}.
+     */
     @Test
     public void updateTokensSync_preservesUsernameAndRotatesRefreshTokenImmediately() {
         manager.saveLogin("alice", fakeJwtWithSub("111"), "refresh_old");
@@ -104,6 +119,9 @@ public class SecureSessionManagerInstrumentedTest {
         assertEquals("refresh_new", manager.getRefreshToken());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #getUserId_recoversFromStoredAccessTokenWhenUserIdWasNotCached()}.
+     */
     @Test
     public void getUserId_recoversFromStoredAccessTokenWhenUserIdWasNotCached() throws Exception {
         manager.saveLogin("alice", fakeJwtWithSub("456"), "refresh_456");
@@ -113,6 +131,9 @@ public class SecureSessionManagerInstrumentedTest {
         assertEquals("uid_456", manager.getAccountKey());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #saveLoginWithProvider_persistsGoogleProvider()}.
+     */
     @Test
     public void saveLoginWithProvider_persistsGoogleProvider() {
         manager.saveLoginWithProvider(
@@ -126,6 +147,9 @@ public class SecureSessionManagerInstrumentedTest {
         assertTrue(manager.isLoggedWithGoogle());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #logout_clearsProviderAndDisablesSilentGoogleSignIn()}.
+     */
     @Test
     public void logout_clearsProviderAndDisablesSilentGoogleSignIn() {
         manager.saveLoginWithProvider(

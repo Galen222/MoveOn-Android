@@ -6,11 +6,15 @@ import com.google.gson.JsonObject;
 
 import org.junit.Test;
 
+import com.proyecto.moveon.data.local.entity.ActividadEntity;
 /**
  * Tests del payload JSON de sincronización de actividad con métricas extendidas.
  */
 public class ActividadCreatePayloadTest {
 
+    /**
+     * Verifica el escenario cubierto por {@link #toJson_includesAllRequiredFields()}.
+     */
     @Test
     public void toJson_includesAllRequiredFields() {
         ActividadCreatePayload payload = new ActividadCreatePayload(
@@ -58,6 +62,9 @@ public class ActividadCreatePayloadTest {
         assertEquals("2025-03-19T10:00:00Z", json.get("fecha_ruta").getAsString());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #toJson_nullRouteFields_sendJsonNull()}.
+     */
     @Test
     public void toJson_nullRouteFields_sendJsonNull() {
         ActividadCreatePayload payload = new ActividadCreatePayload(
@@ -88,6 +95,9 @@ public class ActividadCreatePayloadTest {
         assertTrue(json.get("ruta_mapa_url").isJsonNull());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #toJson_usesCurrentFieldNames()}.
+     */
     @Test
     public void toJson_usesCurrentFieldNames() {
         ActividadCreatePayload payload = new ActividadCreatePayload(
@@ -132,6 +142,9 @@ public class ActividadCreatePayloadTest {
         assertFalse(json.has("duracion"));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #toJson_zeroValues_areValid()}.
+     */
     @Test
     public void toJson_zeroValues_areValid() {
         ActividadCreatePayload payload = new ActividadCreatePayload(
@@ -166,5 +179,237 @@ public class ActividadCreatePayloadTest {
         assertEquals(0, json.get("ritmo_maximo").getAsInt());
         assertEquals(0, json.get("velocidad_max_x100").getAsInt());
         assertTrue(json.get("ruta_mapa_url").isJsonNull());
+    }
+    /**
+     * Verifica que el constructor serializa todos los campos de tracking con nombres snake_case.
+     */
+    @Test
+    public void toJson_serializesAllFields() {
+        ActividadCreatePayload payload = new ActividadCreatePayload(
+                "local-1",
+                "carrera",
+                5_000,
+                1_800,
+                1_700,
+                80,
+                20,
+                350,
+                340,
+                360,
+                300,
+                1_000,
+                1_400,
+                2,
+                1,
+                3,
+                "poly",
+                "map.png",
+                "2026-04-25T10:00:00Z"
+        );
+
+        JsonObject json = payload.toJson();
+
+        assertEquals("local-1", json.get("client_local_id").getAsString());
+        assertEquals("carrera", json.get("tipo").getAsString());
+        assertEquals(5_000, json.get("distancia").getAsInt());
+        assertEquals(1_800, json.get("duracion_total").getAsInt());
+        assertEquals(1_700, json.get("duracion_movimiento").getAsInt());
+        assertEquals(80, json.get("duracion_parado").getAsInt());
+        assertEquals(20, json.get("duracion_pausa_manual").getAsInt());
+        assertEquals(350, json.get("calorias_quemadas").getAsInt());
+        assertEquals(340, json.get("ritmo_medio_movimiento").getAsInt());
+        assertEquals(360, json.get("ritmo_medio_total").getAsInt());
+        assertEquals(300, json.get("ritmo_maximo").getAsInt());
+        assertEquals(1_000, json.get("velocidad_media_x100").getAsInt());
+        assertEquals(1_400, json.get("velocidad_max_x100").getAsInt());
+        assertEquals(2, json.get("auto_pausas").getAsInt());
+        assertEquals(1, json.get("pausas_manuales").getAsInt());
+        assertEquals(3, json.get("alertas_velocidad").getAsInt());
+        assertEquals("poly", json.get("ruta_polilinea").getAsString());
+        assertEquals("map.png", json.get("ruta_mapa_url").getAsString());
+        assertEquals("2026-04-25T10:00:00Z", json.get("fecha_ruta").getAsString());
+    }
+
+    /**
+     * Verifica que la ruta y el mapa nulos se serializan explícitamente como JsonNull.
+     */
+    @Test
+    public void toJson_serializesNullableRouteFieldsAsJsonNull() {
+        ActividadCreatePayload payload = new ActividadCreatePayload(
+                "local-2",
+                "caminata",
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                null,
+                null,
+                "2026-04-25T10:00:00Z"
+        );
+
+        JsonObject json = payload.toJson();
+
+        assertTrue(json.get("ruta_polilinea").isJsonNull());
+        assertTrue(json.get("ruta_mapa_url").isJsonNull());
+    }
+
+    /**
+     * Verifica que una entidad local se convierte a payload remoto sin perder métricas.
+     */
+    @Test
+    public void fromEntity_copiesEntityFields() {
+        ActividadEntity entity = new ActividadEntity();
+        entity.localId = "local-3";
+        entity.tipo = "carrera";
+        entity.distancia = 100;
+        entity.duracionTotal = 200;
+        entity.duracionMovimiento = 180;
+        entity.duracionParado = 15;
+        entity.duracionPausaManual = 5;
+        entity.caloriasQuemadas = 30;
+        entity.ritmoMedioMovimiento = 400;
+        entity.ritmoMedioTotal = 420;
+        entity.ritmoMaximo = 350;
+        entity.velocidadMediaKmhX100 = 900;
+        entity.velocidadMaxKmhX100 = 1_200;
+        entity.autoPausas = 1;
+        entity.pausasManuales = 2;
+        entity.alertasVelocidad = 3;
+        entity.rutaPolilinea = "poly";
+        entity.rutaMapaUrl = "map.png";
+        entity.fechaRuta = "2026-04-25T10:00:00Z";
+
+        JsonObject json = ActividadCreatePayload.fromEntity(entity).toJson();
+
+        assertEquals("local-3", json.get("client_local_id").getAsString());
+        assertEquals("carrera", json.get("tipo").getAsString());
+        assertEquals(100, json.get("distancia").getAsInt());
+        assertEquals(200, json.get("duracion_total").getAsInt());
+        assertEquals("poly", json.get("ruta_polilinea").getAsString());
+        assertEquals("map.png", json.get("ruta_mapa_url").getAsString());
+        assertEquals("2026-04-25T10:00:00Z", json.get("fecha_ruta").getAsString());
+    }
+    /**
+     * Verifica que el payload serializa todos los campos enriquecidos con nombres snake_case.
+     */
+    @Test
+    public void toJson_serializesEveryEnrichedTrackingField() {
+        ActividadCreatePayload payload = new ActividadCreatePayload(
+                "local-1",
+                "carrera",
+                5000,
+                1800,
+                1700,
+                80,
+                20,
+                350,
+                340,
+                360,
+                300,
+                1000,
+                1500,
+                1,
+                2,
+                3,
+                "poly",
+                "map.png",
+                "2026-04-25T10:00:00Z"
+        );
+
+        JsonObject json = payload.toJson();
+
+        assertEquals("local-1", json.get("client_local_id").getAsString());
+        assertEquals("carrera", json.get("tipo").getAsString());
+        assertEquals(5000, json.get("distancia").getAsInt());
+        assertEquals(1800, json.get("duracion_total").getAsInt());
+        assertEquals(1700, json.get("duracion_movimiento").getAsInt());
+        assertEquals(80, json.get("duracion_parado").getAsInt());
+        assertEquals(20, json.get("duracion_pausa_manual").getAsInt());
+        assertEquals(350, json.get("calorias_quemadas").getAsInt());
+        assertEquals(340, json.get("ritmo_medio_movimiento").getAsInt());
+        assertEquals(360, json.get("ritmo_medio_total").getAsInt());
+        assertEquals(300, json.get("ritmo_maximo").getAsInt());
+        assertEquals(1000, json.get("velocidad_media_x100").getAsInt());
+        assertEquals(1500, json.get("velocidad_max_x100").getAsInt());
+        assertEquals(1, json.get("auto_pausas").getAsInt());
+        assertEquals(2, json.get("pausas_manuales").getAsInt());
+        assertEquals(3, json.get("alertas_velocidad").getAsInt());
+        assertEquals("poly", json.get("ruta_polilinea").getAsString());
+        assertEquals("map.png", json.get("ruta_mapa_url").getAsString());
+        assertEquals("2026-04-25T10:00:00Z", json.get("fecha_ruta").getAsString());
+    }
+
+    /**
+     * Verifica que los campos opcionales de ruta se escriben como nulos JSON explícitos.
+     */
+    @Test
+    public void toJson_withNullRouteFields_writesJsonNulls() {
+        JsonObject json = new ActividadCreatePayload(
+                "local-1", "carrera", 1, 2, 3, 4, 5,
+                6, 7, 8, 9, 10, 11, 12, 13, 14,
+                null, null, "2026-04-25T10:00:00Z"
+        ).toJson();
+
+        assertTrue(json.get("ruta_polilinea").isJsonNull());
+        assertTrue(json.get("ruta_mapa_url").isJsonNull());
+    }
+
+    /**
+     * Verifica que {@link ActividadCreatePayload#fromEntity(ActividadEntity)} copia todos los campos persistidos.
+     */
+    @Test
+    public void fromEntity_copiesAllEntityFieldsToPayloadJson() {
+        ActividadEntity entity = new ActividadEntity();
+        entity.localId = "local-entity";
+        entity.tipo = "caminata";
+        entity.distancia = 2500;
+        entity.duracionTotal = 900;
+        entity.duracionMovimiento = 850;
+        entity.duracionParado = 40;
+        entity.duracionPausaManual = 10;
+        entity.caloriasQuemadas = 120;
+        entity.ritmoMedioMovimiento = 400;
+        entity.ritmoMedioTotal = 430;
+        entity.ritmoMaximo = 350;
+        entity.velocidadMediaKmhX100 = 800;
+        entity.velocidadMaxKmhX100 = 1000;
+        entity.autoPausas = 1;
+        entity.pausasManuales = 0;
+        entity.alertasVelocidad = 2;
+        entity.rutaPolilinea = "entity-poly";
+        entity.rutaMapaUrl = "entity-map";
+        entity.fechaRuta = "2026-04-25T12:00:00Z";
+
+        JsonObject json = ActividadCreatePayload.fromEntity(entity).toJson();
+
+        assertEquals("local-entity", json.get("client_local_id").getAsString());
+        assertEquals("caminata", json.get("tipo").getAsString());
+        assertEquals(2500, json.get("distancia").getAsInt());
+        assertEquals(900, json.get("duracion_total").getAsInt());
+        assertEquals(850, json.get("duracion_movimiento").getAsInt());
+        assertEquals(40, json.get("duracion_parado").getAsInt());
+        assertEquals(10, json.get("duracion_pausa_manual").getAsInt());
+        assertEquals(120, json.get("calorias_quemadas").getAsInt());
+        assertEquals(400, json.get("ritmo_medio_movimiento").getAsInt());
+        assertEquals(430, json.get("ritmo_medio_total").getAsInt());
+        assertEquals(350, json.get("ritmo_maximo").getAsInt());
+        assertEquals(800, json.get("velocidad_media_x100").getAsInt());
+        assertEquals(1000, json.get("velocidad_max_x100").getAsInt());
+        assertEquals(1, json.get("auto_pausas").getAsInt());
+        assertEquals(0, json.get("pausas_manuales").getAsInt());
+        assertEquals(2, json.get("alertas_velocidad").getAsInt());
+        assertEquals("entity-poly", json.get("ruta_polilinea").getAsString());
+        assertEquals("entity-map", json.get("ruta_mapa_url").getAsString());
+        assertEquals("2026-04-25T12:00:00Z", json.get("fecha_ruta").getAsString());
     }
 }

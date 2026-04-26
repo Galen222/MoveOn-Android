@@ -44,6 +44,9 @@ public class GlobalProfileNotifierTest {
         resetSingleton();
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #getInstance_returnsSameInstance()}.
+     */
     @Test
     public void getInstance_returnsSameInstance() {
         GlobalProfileNotifier a = GlobalProfileNotifier.getInstance();
@@ -52,11 +55,17 @@ public class GlobalProfileNotifierTest {
         assertSame(a, b);
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #getMessageEvent_isNotNull()}.
+     */
     @Test
     public void getMessageEvent_isNotNull() {
         assertNotNull(GlobalProfileNotifier.getInstance().getMessageEvent());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #notifySuccess_emitsSuccessMessage()}.
+     */
     @Test
     public void notifySuccess_emitsSuccessMessage() {
         GlobalProfileNotifier notifier = GlobalProfileNotifier.getInstance();
@@ -83,6 +92,9 @@ public class GlobalProfileNotifierTest {
         }
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #notifyError_withAction_emitsErrorMessageAndPreservesAction()}.
+     */
     @Test
     public void notifyError_withAction_emitsErrorMessageAndPreservesAction() {
         GlobalProfileNotifier notifier = GlobalProfileNotifier.getInstance();
@@ -116,6 +128,9 @@ public class GlobalProfileNotifierTest {
         }
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #notifyMessage_withinDebounce_emitsOnlyOnce()}.
+     */
     @Test
     public void notifyMessage_withinDebounce_emitsOnlyOnce() {
         GlobalProfileNotifier notifier = GlobalProfileNotifier.getInstance();
@@ -141,6 +156,9 @@ public class GlobalProfileNotifierTest {
         }
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #notifyMessage_afterResettingClock_emitsAgain()}.
+     */
     @Test
     public void notifyMessage_afterResettingClock_emitsAgain() throws Exception {
         GlobalProfileNotifier notifier = GlobalProfileNotifier.getInstance();

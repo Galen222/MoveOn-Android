@@ -14,13 +14,13 @@ public class GuardarActividadRequestDtoTest {
 
     private final Gson gson = new Gson();
 
-    @Test
     /**
      * Verifica que el constructor copia cada parámetro al campo
      * correspondiente. Es un test regresivo: un refactor accidental que
      * cambiase el orden de asignación rompería el DTO que el backend
      * recibe y esta prueba lo captura.
      */
+    @Test
     public void constructor_setsAllFields() {
         GuardarActividadRequestDto dto = new GuardarActividadRequestDto(
                 "Correr",
@@ -61,12 +61,12 @@ public class GuardarActividadRequestDtoTest {
         assertEquals("2025-03-19T10:00:00Z", dto.fechaRuta);
     }
 
-    @Test
     /**
      * Documenta que {@code rutaPolilinea == null} es un caso válido
      * (actividades sin GPS o con permisos denegados). El DTO debe aceptarlo
      * sin lanzar excepción y preservarlo en el campo.
      */
+    @Test
     public void constructor_nullPolyline_isAllowed() {
         GuardarActividadRequestDto dto = new GuardarActividadRequestDto(
                 "Caminar",
@@ -91,6 +91,9 @@ public class GuardarActividadRequestDtoTest {
         assertNull(dto.rutaPolilinea);
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #serialization_usesCurrentSerializedNames()}.
+     */
     @Test
     public void serialization_usesCurrentSerializedNames() {
         GuardarActividadRequestDto dto = new GuardarActividadRequestDto(
@@ -109,7 +112,7 @@ public class GuardarActividadRequestDtoTest {
                 1,
                 1,
                 2,
-                null,
+                "polyline_encoded",
                 "2025-01-01T00:00:00Z"
         );
 
@@ -145,6 +148,9 @@ public class GuardarActividadRequestDtoTest {
         assertFalse(obj.has("fechaRuta"));
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #serialization_valuesAreCorrect()}.
+     */
     @Test
     public void serialization_valuesAreCorrect() {
         GuardarActividadRequestDto dto = new GuardarActividadRequestDto(

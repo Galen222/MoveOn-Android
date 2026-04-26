@@ -355,7 +355,6 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
     public void onSocialFlowCanceled() {
         showGoogleLoading(false, false, null, 0, 0);
         setLoading(false);
-        TopSnackbar.warning(binding.getRoot(), getString(R.string.social_auth_canceled));
     }
 
     /**

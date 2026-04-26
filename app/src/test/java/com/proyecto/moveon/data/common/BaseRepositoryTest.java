@@ -17,6 +17,9 @@ import retrofit2.Response;
  */
 public class BaseRepositoryTest {
 
+    /**
+     * Verifica el escenario cubierto por {@link #enqueueTracked_removesCallOnResponse()}.
+     */
     @Test
     public void enqueueTracked_removesCallOnResponse() {
         InspectableRepository repo = new InspectableRepository();
@@ -29,6 +32,9 @@ public class BaseRepositoryTest {
         assertEquals(0, repo.trackedCount());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #enqueueTracked_removesCallOnFailure()}.
+     */
     @Test
     public void enqueueTracked_removesCallOnFailure() {
         InspectableRepository repo = new InspectableRepository();
@@ -41,6 +47,9 @@ public class BaseRepositoryTest {
         assertEquals(0, repo.trackedCount());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #cancelAll_cancelsTrackedCalls()}.
+     */
     @Test
     public void cancelAll_cancelsTrackedCalls() {
         InspectableRepository repo = new InspectableRepository();

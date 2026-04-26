@@ -44,6 +44,9 @@ public class GlobalStatsNotifierTest {
         resetSingleton();
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #getInstance_returnsSameInstance()}.
+     */
     @Test
     public void getInstance_returnsSameInstance() {
         GlobalStatsNotifier a = GlobalStatsNotifier.getInstance();
@@ -52,11 +55,17 @@ public class GlobalStatsNotifierTest {
         assertSame(a, b);
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #getMessageEvent_isNotNull()}.
+     */
     @Test
     public void getMessageEvent_isNotNull() {
         assertNotNull(GlobalStatsNotifier.getInstance().getMessageEvent());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #notifyWarning_emitsWarningMessage()}.
+     */
     @Test
     public void notifyWarning_emitsWarningMessage() {
         GlobalStatsNotifier notifier = GlobalStatsNotifier.getInstance();
@@ -83,6 +92,9 @@ public class GlobalStatsNotifierTest {
         }
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #notifyError_withAction_emitsErrorMessageAndPreservesAction()}.
+     */
     @Test
     public void notifyError_withAction_emitsErrorMessageAndPreservesAction() {
         GlobalStatsNotifier notifier = GlobalStatsNotifier.getInstance();
@@ -115,6 +127,9 @@ public class GlobalStatsNotifierTest {
         }
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #notifyMessage_withinDebounce_emitsOnlyOnce()}.
+     */
     @Test
     public void notifyMessage_withinDebounce_emitsOnlyOnce() {
         GlobalStatsNotifier notifier = GlobalStatsNotifier.getInstance();
@@ -141,6 +156,9 @@ public class GlobalStatsNotifierTest {
         }
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #notifyMessage_afterResettingClock_emitsAgain()}.
+     */
     @Test
     public void notifyMessage_afterResettingClock_emitsAgain() throws Exception {
         GlobalStatsNotifier notifier = GlobalStatsNotifier.getInstance();

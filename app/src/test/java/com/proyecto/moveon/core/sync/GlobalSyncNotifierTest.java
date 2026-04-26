@@ -50,6 +50,9 @@ public class GlobalSyncNotifierTest {
         resetSingleton();
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #getInstance_returnsSameInstance()}.
+     */
     @Test
     public void getInstance_returnsSameInstance() {
         GlobalSyncNotifier a = GlobalSyncNotifier.getInstance();
@@ -58,11 +61,17 @@ public class GlobalSyncNotifierTest {
         assertSame(a, b);
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #getMessageEvent_isNotNull()}.
+     */
     @Test
     public void getMessageEvent_isNotNull() {
         assertNotNull(GlobalSyncNotifier.getInstance().getMessageEvent());
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #notifySyncCompleted_emitsExpectedSuccessMessage()}.
+     */
     @Test
     public void notifySyncCompleted_emitsExpectedSuccessMessage() {
         GlobalSyncNotifier notifier = GlobalSyncNotifier.getInstance();
@@ -89,6 +98,9 @@ public class GlobalSyncNotifierTest {
         }
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #notifySyncCompleted_withinDebounce_emitsOnlyOnce()}.
+     */
     @Test
     public void notifySyncCompleted_withinDebounce_emitsOnlyOnce() {
         GlobalSyncNotifier notifier = GlobalSyncNotifier.getInstance();
@@ -115,6 +127,9 @@ public class GlobalSyncNotifierTest {
         }
     }
 
+    /**
+     * Verifica el escenario cubierto por {@link #notifySyncCompleted_afterResettingClock_emitsAgain()}.
+     */
     @Test
     public void notifySyncCompleted_afterResettingClock_emitsAgain() throws Exception {
         GlobalSyncNotifier notifier = GlobalSyncNotifier.getInstance();
