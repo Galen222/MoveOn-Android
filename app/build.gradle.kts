@@ -368,11 +368,11 @@ dependencies {
     // Robolectric 4.14.x ya soporta hasta SDK 35; el proyecto usa
     // compileSdk/targetSdk = 36 pero tests JVM ejecutarán con sdk=35
     // (configurado en src/test/resources/robolectric.properties).
-    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("org.robolectric:robolectric:4.16.1")
     // androidx.test:core publica ApplicationProvider, que es la API
     // recomendada para obtener el Context de la aplicación en tests
     // basados en Robolectric.
-    testImplementation("androidx.test:core:1.6.1")
+    testImplementation("androidx.test:core:1.7.0")
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }

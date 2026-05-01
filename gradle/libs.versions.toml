@@ -23,7 +23,7 @@ workRuntime = "2.11.1"
 coreTesting = "2.2.0"
 
 [libraries]
-android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version = "4.1.1" }
+android-maps-utils = { module = "com.google.maps.android:android-maps-utils", version = "4.3.0" }
 credentials = { module = "androidx.credentials:credentials", version = "1.6.0" }
 credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version = "1.6.0" }
 glide = { module = "com.github.bumptech.glide:glide", version = "5.0.7" }
