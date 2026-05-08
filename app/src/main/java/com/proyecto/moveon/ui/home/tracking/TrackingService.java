@@ -134,6 +134,18 @@ public final class TrackingService extends Service implements SensorEventListene
      */
     private static final int GPS_CONFIRM_STEPS_TO_WALKING = 4;
 
+    /**
+     * Muestras GPS válidas mínimas antes de usar la velocidad para cambiar andar/correr.
+     *
+     * <p>Evita que un pico aislado de GPS active “correr” al inicio o con deriva de señal.</p>
+     */
+    private static final int GPS_ACTIVITY_MIN_SPEED_SAMPLES = 3;
+
+    /**
+     * Magnitud esperada del acelerómetro cuando el teléfono está quieto, expresada en g.
+     */
+    private static final float ACCEL_RESTING_GRAVITY_G = 1.0f;
+
     private static final float ACCEL_ALPHA = 0.2f;
     private static final float MIN_ACCEL_CHANGE = 0.05f;
 
@@ -385,7 +397,7 @@ public final class TrackingService extends Service implements SensorEventListene
     private int gpsRunningConfirmCount = 0;
     private int gpsWalkingConfirmCount = 0;
 
-    private float accelFilteredMag = SensorManager.GRAVITY_EARTH;
+    private float accelFilteredMag = ACCEL_RESTING_GRAVITY_G;
 
     private final LocationCallback locationCallback = new LocationCallback() {
         @Override
@@ -1234,17 +1246,18 @@ public final class TrackingService extends Service implements SensorEventListene
                                          @NonNull TrackingState.ActivityType newType,
                                          @NonNull String source,
                                          @NonNull String reason) {
-        Log.d(
-                TAG,
-                "activityType " + previousType + " -> " + newType
-                        + " source=" + source
-                        + " reason=" + reason
-                        + " sensorRun=" + runningConfirmCount
-                        + " sensorWalk=" + walkingConfirmCount
-                        + " gpsRun=" + gpsRunningConfirmCount
-                        + " gpsWalk=" + gpsWalkingConfirmCount
-                        + " avgSpeedMs=" + String.format(Locale.US, "%.2f", getAverageRecentMovingSpeedMs())
-        );
+        String detail = previousType + "->" + newType
+                + " source=" + source
+                + " reason=" + reason
+                + " sensorRun=" + runningConfirmCount
+                + " sensorWalk=" + walkingConfirmCount
+                + " gpsRun=" + gpsRunningConfirmCount
+                + " gpsWalk=" + gpsWalkingConfirmCount
+                + " gpsSamples=" + recentMovingSpeeds.size()
+                + " avgSpeedMs=" + String.format(Locale.US, "%.2f", getAverageRecentMovingSpeedMs());
+
+        Log.d(TAG, "activityType " + detail);
+        logDiagnosticEvent("ACTIVITY_TYPE_CHANGE", detail);
     }
 
     private void enterAutoPause(
@@ -1388,11 +1401,13 @@ public final class TrackingService extends Service implements SensorEventListene
             return;
         }
 
+        if (recentMovingSpeeds.size() < GPS_ACTIVITY_MIN_SPEED_SAMPLES) {
+            return;
+        }
+
         double averageRecentSpeedMs = getAverageRecentMovingSpeedMs();
-        boolean strongRunning = speedMs >= GPS_STRONG_RUNNING_SPEED_THRESHOLD_MS
-                || averageRecentSpeedMs >= GPS_STRONG_RUNNING_SPEED_THRESHOLD_MS;
-        boolean runningLike = speedMs >= GPS_RUNNING_SPEED_THRESHOLD_MS
-                || averageRecentSpeedMs >= GPS_RUNNING_SPEED_THRESHOLD_MS;
+        boolean strongRunning = averageRecentSpeedMs >= GPS_STRONG_RUNNING_SPEED_THRESHOLD_MS;
+        boolean runningLike = averageRecentSpeedMs >= GPS_RUNNING_SPEED_THRESHOLD_MS;
         boolean walkingLike = speedMs <= GPS_WALKING_SPEED_THRESHOLD_MS
                 && averageRecentSpeedMs > 0.0
                 && averageRecentSpeedMs <= GPS_WALKING_SPEED_THRESHOLD_MS;
@@ -1994,7 +2009,7 @@ public final class TrackingService extends Service implements SensorEventListene
         walkingConfirmCount = 0;
         gpsRunningConfirmCount = 0;
         gpsWalkingConfirmCount = 0;
-        accelFilteredMag = SensorManager.GRAVITY_EARTH;
+        accelFilteredMag = ACCEL_RESTING_GRAVITY_G;
         activityType = TrackingState.ActivityType.WALKING;
     }
 
