@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="Base.Theme.MoveOn" parent="Theme.Material3.Dark.NoActionBar">
+    <style name="Base.Theme.MoveOn" parent="Theme.Material3.Light.NoActionBar">
         <item name="fontFamily">@font/space_grotesk</item>
+        <item name="android:fontFamily">@font/space_grotesk</item>
+        <item name="android:textColorPrimary">@color/textPrimary</item>
+        <item name="android:textColorSecondary">@color/textSecondary</item>
+        <item name="android:textColorTertiary">@color/textTertiary</item>
         <!-- =========================
              BRAND / PRIMARY (Material3)
              ========================= -->
@@ -57,8 +61,8 @@
              ========================= -->
         <item name="android:statusBarColor">@color/darkBackground</item>
         <item name="android:navigationBarColor">@color/darkBackground</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
 
         <!-- Widgets -->

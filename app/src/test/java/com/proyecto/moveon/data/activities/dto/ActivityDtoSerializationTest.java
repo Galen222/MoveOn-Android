@@ -187,7 +187,7 @@ public class ActivityDtoSerializationTest {
         dto.walkingClassifiedSeconds = 500;
         dto.serviceRestartCount = 1;
         dto.currentStatus = "FINISHED";
-        dto.appVersion = "1.0.4";
+        dto.appVersion = "1.0.5";
         dto.osVersion = "Android";
         dto.manufacturer = "Google";
         dto.model = "Pixel";

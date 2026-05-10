@@ -3,6 +3,10 @@
 
     <style name="Base.Theme.MoveOn" parent="Theme.Material3.Dark.NoActionBar">
         <item name="fontFamily">@font/space_grotesk</item>
+        <item name="android:fontFamily">@font/space_grotesk</item>
+        <item name="android:textColorPrimary">@color/textPrimary</item>
+        <item name="android:textColorSecondary">@color/textSecondary</item>
+        <item name="android:textColorTertiary">@color/textTertiary</item>
         <!-- =========================
              BRAND / PRIMARY (Material3)
              ========================= -->
