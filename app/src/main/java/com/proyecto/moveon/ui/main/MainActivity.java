@@ -6,11 +6,17 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
+import androidx.core.graphics.Insets;
+
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.core.view.DisplayCutoutCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -116,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
 
         ThemeManager.applySavedTheme(this);
         super.onCreate(savedInstanceState);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
@@ -127,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        applyMainContentSystemBarInsets();
 
         if (pendingUiTransitionSplash) {
             AppSettingsManager.clearUiTransitionSplashRequest(this);
@@ -249,6 +257,51 @@ public class MainActivity extends AppCompatActivity {
         }
 
         handleLaunchIntent(getIntent());
+    }
+
+
+    /**
+     * Ajusta solo la zona superior del contenedor principal para que el banner
+     * offline no quede debajo de la barra de estado ni del recorte de pantalla.
+     *
+     * <p>No se aplica el inset inferior al contenedor porque eso empuja la
+     * BottomNavigationView hacia arriba y deja un hueco visible sobre los botones
+     * de navegación del sistema en HyperOS.</p>
+     */
+    private void applyMainContentSystemBarInsets() {
+        final View root = binding.getRoot();
+        final View content = binding.mainContentContainer;
+
+        final int initialLeft = content.getPaddingLeft();
+        final int initialTop = content.getPaddingTop();
+        final int initialRight = content.getPaddingRight();
+        final int initialBottom = content.getPaddingBottom();
+
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, windowInsets) -> {
+            Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
+            DisplayCutoutCompat cutout = windowInsets.getDisplayCutout();
+
+            int safeLeft = systemBars.left;
+            int safeTop = systemBars.top;
+            int safeRight = systemBars.right;
+
+            if (cutout != null) {
+                safeLeft = Math.max(safeLeft, cutout.getSafeInsetLeft());
+                safeTop = Math.max(safeTop, cutout.getSafeInsetTop());
+                safeRight = Math.max(safeRight, cutout.getSafeInsetRight());
+            }
+
+            content.setPadding(
+                    initialLeft + safeLeft,
+                    initialTop + safeTop,
+                    initialRight + safeRight,
+                    initialBottom
+            );
+
+            return windowInsets;
+        });
+
+        ViewCompat.requestApplyInsets(root);
     }
 
     /**
