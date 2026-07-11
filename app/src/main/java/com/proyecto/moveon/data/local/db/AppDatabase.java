@@ -21,7 +21,7 @@ import com.proyecto.moveon.data.local.entity.UserPrefsEntity;
 /**
  * Base de datos local Room.
  *
- * <p>Versión 7: añade persistencia local del ritmo máximo de actividad.
+ * <p>Versión 8: añade el contador opcional de pasos de cada actividad.
  * La migración es explícita para no perder historiales locales al actualizar.</p>
  */
 @Database(
@@ -31,7 +31,7 @@ import com.proyecto.moveon.data.local.entity.UserPrefsEntity;
                 ActividadEntity.class,
                 UserPrefsEntity.class
         },
-        version = 7,
+        version = 8,
         exportSchema = true
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -173,6 +173,17 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    static final Migration MIGRATION_7_8 = new Migration(7, 8) {
+        /**
+         * Añade pasos como nullable: las actividades antiguas y los móviles sin sensor
+         * conservan un valor desconocido en vez de mostrarse falsamente como cero pasos.
+         */
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE `actividades_locales` ADD COLUMN `pasos` INTEGER");
+        }
+    };
+
     /**
      * Devuelve la instancia singleton de la base de datos local.
      *
@@ -188,7 +199,12 @@ public abstract class AppDatabase extends RoomDatabase {
                                     AppDatabase.class,
                                     "moveon_local.db"
                             )
-                            .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                            .addMigrations(
+                                    MIGRATION_4_5,
+                                    MIGRATION_5_6,
+                                    MIGRATION_6_7,
+                                    MIGRATION_7_8
+                            )
                             .fallbackToDestructiveMigration(true)
                             .build();
                 }

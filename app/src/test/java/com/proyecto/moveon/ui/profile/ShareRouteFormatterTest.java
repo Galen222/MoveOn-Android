@@ -7,6 +7,10 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.proyecto.moveon.data.activities.ActivitySyncState;
+import com.proyecto.moveon.domain.activity.ActividadItem;
+import com.proyecto.moveon.testutil.MemoryContext;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 
@@ -67,5 +71,21 @@ public class ShareRouteFormatterTest {
     @Test
     public void buildShareText_nullContextFailsFast() {
         assertThrows(NullPointerException.class, () -> ShareRouteFormatter.buildShareText(null, null));
+    }
+
+    @Test
+    public void resolveShareAveragePaceSeconds_rebuildsMissingTotalOnlyForShareFlow() {
+        ActividadItem item = new ActividadItem(
+                "local-share", 1, "Correr",
+                5_000, 1_800, 1_700, 100, 0,
+                350, 4_321, 315, 0, 280, 1_000, 1_500,
+                0, 0, 0, "polyline", null,
+                "2026-04-25T10:00:00Z", ActivitySyncState.SYNCED, null
+        );
+
+        assertEquals(
+                360,
+                ShareRouteFormatter.resolveShareAveragePaceSeconds(new MemoryContext(), item)
+        );
     }
 }

@@ -176,9 +176,13 @@
     <string name="tracking_label_stopped_time">PARADO</string>
     <string name="tracking_label_distance">DISTANCIA</string>
     <string name="tracking_label_cal">CAL</string>
+    <string name="tracking_default_steps">0</string>
+    <string name="tracking_label_steps">PASOS</string>
 
     <!-- Formatos de métricas -->
     <string name="tracking_calories_format">%1$d kcal</string>
+    <string name="tracking_steps_format">%1$d</string>
+    <string name="tracking_steps_unavailable">N/D</string>
     <string name="tracking_distance_m_format">%1$d m</string>
     <string name="tracking_distance_km_format">%1$.2f km</string>
 
@@ -297,6 +301,7 @@
     <string name="stats_pending_badge">Pendiente de sync</string>
     <string name="stats_desc_delete">Eliminar actividad</string>
     <string name="stats_item_label_calories">Calorías</string>
+    <string name="stats_item_label_steps">Pasos</string>
     <string name="stats_item_label_pace">Ritmo medio</string>
     <string name="stats_item_label_moving">En movimiento</string>
     <string name="stats_item_label_stopped">Parado</string>
@@ -536,6 +541,7 @@
     <string name="error_distancia_invalida">La distancia debe estar entre 1 y 300 000 metros</string>
     <string name="error_duracion_invalida">La duración debe estar entre 1 y 86 400 segundos</string>
     <string name="error_calorias_invalidas">Las calorías deben estar entre 1 y 10 000</string>
+    <string name="error_pasos_invalidos">Los pasos deben estar entre 0 y 500 000</string>
     <string name="error_polilinea_invalida">La ruta polilínea no es válida</string>
     <string name="error_fecha_futura">La fecha de la actividad no puede estar en el futuro</string>
     <string name="error_formato_fecha_invalido">El formato de fecha no es válido</string>
@@ -700,11 +706,13 @@
     <string name="share_routes_metric_average_pace">Ritmo medio</string>
     <string name="share_routes_metric_max_pace">Ritmo máximo</string>
     <string name="share_routes_metric_calories">Calorías</string>
+    <string name="share_routes_metric_steps">Pasos</string>
     <string name="share_routes_metric_paces">Ritmos</string>
     <string name="share_routes_generated_with">Generado con MoveOn</string>
     <string name="share_routes_generated_with_short">Hecho con MoveOn</string>
     <string name="share_routes_kcal_value">%1$d kcal</string>
     <string name="share_routes_pace_empty">N/D</string>
+    <string name="share_routes_steps_empty">N/D</string>
     <string name="share_routes_item_summary">%1$s · %2$s · %3$s</string>
     <string name="share_routes_item_secondary">%1$s · %2$s</string>
     <string name="share_routes_polyline_available">Ruta disponible</string>

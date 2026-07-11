@@ -171,6 +171,17 @@ public class ActivityRepositoryValidationTest {
         assertValidationFailure(req);
     }
 
+    @Test
+    public void validateRequest_negativeSteps_returnsValidationError() throws Exception {
+        GuardarActividadRequestDto req = builder().pasos(-1).build();
+        assertValidationFailure(req);
+    }
+
+    @Test
+    public void validateRequest_nullSteps_acceptsDeviceWithoutSensor() throws Exception {
+        assertNull(invokeValidate(builder().pasos(null).build()));
+    }
+
     /**
      * Verifica que ritmo medio movimiento 0 cae en la rama correspondiente.
      */
@@ -394,6 +405,7 @@ public class ActivityRepositoryValidationTest {
         int duracionParado = 100;
         int duracionPausaManual = 0;
         int caloriasQuemadas = 350;
+        Integer pasos = 4_321;
         int ritmoMedioMovimiento = 360;
         int ritmoMedioTotal = 380;
         int ritmoMaximo = 320;
@@ -414,6 +426,7 @@ public class ActivityRepositoryValidationTest {
         Builder duracionParado(int v) { this.duracionParado = v; return this; }
         Builder duracionPausaManual(int v) { this.duracionPausaManual = v; return this; }
         Builder caloriasQuemadas(int v) { this.caloriasQuemadas = v; return this; }
+        Builder pasos(Integer v) { this.pasos = v; return this; }
         Builder ritmoMedioMovimiento(int v) { this.ritmoMedioMovimiento = v; return this; }
         Builder ritmoMedioTotal(int v) { this.ritmoMedioTotal = v; return this; }
         Builder ritmoMaximo(int v) { this.ritmoMaximo = v; return this; }
@@ -428,7 +441,7 @@ public class ActivityRepositoryValidationTest {
         GuardarActividadRequestDto build() {
             return new GuardarActividadRequestDto(
                     tipo, distancia, duracionTotal, duracionMovimiento, duracionParado,
-                    duracionPausaManual, caloriasQuemadas, ritmoMedioMovimiento,
+                    duracionPausaManual, caloriasQuemadas, pasos, ritmoMedioMovimiento,
                     ritmoMedioTotal, ritmoMaximo, velocidadMediaKmhX100,
                     velocidadMaxKmhX100, autoPausas, pausasManuales, alertasVelocidad,
                     rutaPolilinea, fechaRuta

@@ -19,6 +19,7 @@ public final class ActividadItem {
     public final int duracionParadoSegundos;
     public final int duracionPausaManualSegundos;
     public final int caloriasQuemadas;
+    @Nullable public final Integer pasos;
     public final int ritmoMedioMovimientoSegKm;
     public final int ritmoMedioTotalSegKm;
     public final int ritmoMaximoSegKm;
@@ -50,6 +51,7 @@ public final class ActividadItem {
      * @param duracionParadoSegundos segundos parado sin pausar manualmente.
      * @param duracionPausaManualSegundos segundos en pausa manual del usuario.
      * @param caloriasQuemadas calorías quemadas estimadas.
+     * @param pasos pasos detectados, o {@code null} si el móvil no podía medirlos.
      * @param ritmoMedioMovimientoSegKm ritmo medio en movimiento en segundos por kilómetro.
      * @param ritmoMedioTotalSegKm ritmo medio total en segundos por kilómetro.
      * @param ritmoMaximoSegKm mejor ritmo sostenido válido en segundos por kilómetro.
@@ -74,6 +76,7 @@ public final class ActividadItem {
             int duracionParadoSegundos,
             int duracionPausaManualSegundos,
             int caloriasQuemadas,
+            @Nullable Integer pasos,
             int ritmoMedioMovimientoSegKm,
             int ritmoMedioTotalSegKm,
             int ritmoMaximoSegKm,
@@ -96,6 +99,7 @@ public final class ActividadItem {
         this.duracionParadoSegundos = duracionParadoSegundos;
         this.duracionPausaManualSegundos = duracionPausaManualSegundos;
         this.caloriasQuemadas = caloriasQuemadas;
+        this.pasos = pasos;
         this.ritmoMedioMovimientoSegKm = ritmoMedioMovimientoSegKm;
         this.ritmoMedioTotalSegKm = ritmoMedioTotalSegKm;
         this.ritmoMaximoSegKm = ritmoMaximoSegKm;

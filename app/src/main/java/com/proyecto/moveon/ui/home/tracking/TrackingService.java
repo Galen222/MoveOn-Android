@@ -329,6 +329,7 @@ public final class TrackingService extends Service implements SensorEventListene
     private int distanceMeters = 0;
     private int calories = 0;
     private double caloriesAccumulator = 0.0;
+    private int steps = 0;
     private double userWeightKg = 70.0;
     private int highSpeedCount = 0;
     private int consecutiveStationarySamples = 0;
@@ -383,6 +384,9 @@ public final class TrackingService extends Service implements SensorEventListene
     private FusedLocationProviderClient fusedLocationClient;
     private SensorManager sensorManager;
     @Nullable private Sensor accelerometer;
+    @Nullable private Sensor stepDetector;
+    @Nullable private Sensor stepCounter;
+    private float lastStepCounterValue = -1f;
     private int accelRunSamples = 0;
     private int accelTotalSamples = 0;
     private int runningConfirmCount = 0;
@@ -426,6 +430,8 @@ public final class TrackingService extends Service implements SensorEventListene
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         if (sensorManager != null) {
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+            stepDetector = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+            stepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         }
         createNotificationChannel();
         logDiagnosticEvent("SERVICE_CREATED", null);
@@ -1291,8 +1297,17 @@ public final class TrackingService extends Service implements SensorEventListene
      * Registra el listener del acelerómetro cuando el dispositivo dispone del sensor y el servicio está operativo.
      */
     private void startAccelerometer() {
-        if (sensorManager != null && accelerometer != null) {
+        if (sensorManager == null) {
+            return;
+        }
+        if (accelerometer != null) {
             sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        }
+        lastStepCounterValue = -1f;
+        if (stepDetector != null) {
+            sensorManager.registerListener(this, stepDetector, SensorManager.SENSOR_DELAY_NORMAL);
+        } else if (stepCounter != null) {
+            sensorManager.registerListener(this, stepCounter, SensorManager.SENSOR_DELAY_NORMAL);
         }
     }
 
@@ -1312,6 +1327,30 @@ public final class TrackingService extends Service implements SensorEventListene
      * @param event evento del sensor recibido por Android.
      */
     public void onSensorChanged(@NonNull SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
+            if (currentStatus == TrackingState.Status.RUNNING
+                    || currentStatus == TrackingState.Status.AUTO_PAUSED) {
+                steps++;
+                lastMotionEvidenceRealtimeMs = SystemClock.elapsedRealtime();
+                publishState();
+            }
+            return;
+        }
+        if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
+            float currentValue = event.values[0];
+            if (lastStepCounterValue >= 0f
+                    && (currentStatus == TrackingState.Status.RUNNING
+                    || currentStatus == TrackingState.Status.AUTO_PAUSED)) {
+                int delta = Math.max(0, Math.round(currentValue - lastStepCounterValue));
+                if (delta > 0) {
+                    steps += delta;
+                    lastMotionEvidenceRealtimeMs = SystemClock.elapsedRealtime();
+                    publishState();
+                }
+            }
+            lastStepCounterValue = currentValue;
+            return;
+        }
         if (event.sensor.getType() != Sensor.TYPE_ACCELEROMETER) return;
         if (currentStatus != TrackingState.Status.RUNNING
                 && currentStatus != TrackingState.Status.AUTO_PAUSED) return;
@@ -1721,6 +1760,8 @@ public final class TrackingService extends Service implements SensorEventListene
                 .distanceMeters(distanceMeters)
                 .preciseDistanceMeters(preciseDistanceMeters)
                 .calories(calories)
+                .steps(steps)
+                .stepSensorAvailable(stepDetector != null || stepCounter != null)
                 .pace(calculateInstantPace())
                 .averageMovingPace(calculateAverageMovingPace())
                 .averageElapsedPace(calculateAverageElapsedPace())
@@ -1811,6 +1852,7 @@ public final class TrackingService extends Service implements SensorEventListene
         snapshot.preciseDistanceMeters = preciseDistanceMeters;
         snapshot.calories = calories;
         snapshot.caloriesAccumulator = caloriesAccumulator;
+        snapshot.steps = steps;
         snapshot.maxSpeedKmhX100 = maxSpeedKmhX100;
         snapshot.autoPauseCount = autoPauseCount;
         snapshot.manualPauseCount = manualPauseCount;
@@ -1871,6 +1913,7 @@ public final class TrackingService extends Service implements SensorEventListene
         preciseDistanceMeters = snapshot.preciseDistanceMeters;
         calories = snapshot.calories;
         caloriesAccumulator = snapshot.caloriesAccumulator;
+        steps = snapshot.steps;
         maxSpeedKmhX100 = snapshot.maxSpeedKmhX100;
         autoPauseCount = snapshot.autoPauseCount;
         manualPauseCount = snapshot.manualPauseCount;
@@ -1970,6 +2013,8 @@ public final class TrackingService extends Service implements SensorEventListene
         distanceMeters = 0;
         calories = 0;
         caloriesAccumulator = 0.0;
+        steps = 0;
+        lastStepCounterValue = -1f;
         highSpeedCount = 0;
         consecutiveStationarySamples = 0;
         consecutiveMovingSamples = 0;
@@ -2775,4 +2820,3 @@ private void openAppForStopConfirmation() {
         return String.format(Locale.US, "%02d:%02d", minutes, secs);
     }
 }
-

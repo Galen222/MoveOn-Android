@@ -25,6 +25,7 @@ public class LocalEntitiesTest {
         entity.duracionParado = 80;
         entity.duracionPausaManual = 20;
         entity.caloriasQuemadas = 70;
+        entity.pasos = 1_234;
         entity.ritmoMedioMovimiento = 360;
         entity.ritmoMedioTotal = 400;
         entity.ritmoMaximo = 300;
@@ -45,6 +46,7 @@ public class LocalEntitiesTest {
         assertEquals("account", entity.accountKey);
         assertEquals(Integer.valueOf(7), entity.remoteId);
         assertEquals(1_000, entity.distancia);
+        assertEquals(Integer.valueOf(1_234), entity.pasos);
         assertEquals(20L, entity.updatedAtMs);
     }
 

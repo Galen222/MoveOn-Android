@@ -20,6 +20,7 @@ public final class ActividadCreatePayload {
     private final int duracionParado;
     private final int duracionPausaManual;
     private final int caloriasQuemadas;
+    @Nullable private final Integer pasos;
     private final int ritmoMedioMovimiento;
     private final int ritmoMedioTotal;
     private final int ritmoMaximo;
@@ -46,6 +47,7 @@ public final class ActividadCreatePayload {
      * @param duracionParado segundos parado sin pausar manualmente.
      * @param duracionPausaManual segundos en pausa manual.
      * @param caloriasQuemadas calorías quemadas estimadas.
+     * @param pasos pasos detectados o {@code null} si el sensor no estaba disponible.
      * @param ritmoMedioMovimiento ritmo medio en movimiento en segundos por kilómetro.
      * @param ritmoMedioTotal ritmo medio total en segundos por kilómetro.
      * @param ritmoMaximo mejor ritmo sostenido en segundos por kilómetro.
@@ -67,6 +69,7 @@ public final class ActividadCreatePayload {
             int duracionParado,
             int duracionPausaManual,
             int caloriasQuemadas,
+            @Nullable Integer pasos,
             int ritmoMedioMovimiento,
             int ritmoMedioTotal,
             int ritmoMaximo,
@@ -86,6 +89,7 @@ public final class ActividadCreatePayload {
         this.duracionParado = duracionParado;
         this.duracionPausaManual = duracionPausaManual;
         this.caloriasQuemadas = caloriasQuemadas;
+        this.pasos = pasos;
         this.ritmoMedioMovimiento = ritmoMedioMovimiento;
         this.ritmoMedioTotal = ritmoMedioTotal;
         this.ritmoMaximo = ritmoMaximo;
@@ -117,6 +121,8 @@ public final class ActividadCreatePayload {
         json.addProperty("duracion_parado", duracionParado);
         json.addProperty("duracion_pausa_manual", duracionPausaManual);
         json.addProperty("calorias_quemadas", caloriasQuemadas);
+        if (pasos == null) json.add("pasos", JsonNull.INSTANCE);
+        else json.addProperty("pasos", pasos);
         json.addProperty("ritmo_medio_movimiento", ritmoMedioMovimiento);
         json.addProperty("ritmo_medio_total", ritmoMedioTotal);
         json.addProperty("ritmo_maximo", ritmoMaximo);
@@ -155,6 +161,7 @@ public final class ActividadCreatePayload {
                 entity.duracionParado,
                 entity.duracionPausaManual,
                 entity.caloriasQuemadas,
+                entity.pasos,
                 entity.ritmoMedioMovimiento,
                 entity.ritmoMedioTotal,
                 entity.ritmoMaximo,

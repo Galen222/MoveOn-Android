@@ -74,6 +74,7 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
                     if (oldItem.ritmoMedioMovimientoSegKm != newItem.ritmoMedioMovimientoSegKm) return false;
                     if (oldItem.ritmoMedioTotalSegKm != newItem.ritmoMedioTotalSegKm) return false;
                     if (oldItem.caloriasQuemadas != newItem.caloriasQuemadas) return false;
+                    if (!java.util.Objects.equals(oldItem.pasos, newItem.pasos)) return false;
 
                     if (oldItem.rutaPolilinea == null && newItem.rutaPolilinea == null) return true;
                     if (oldItem.rutaPolilinea == null || newItem.rutaPolilinea == null) return false;

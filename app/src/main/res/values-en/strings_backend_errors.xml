@@ -17,6 +17,9 @@
     <string name="backend_error_calories_must_be_integer">Calories must be an integer</string>
     <string name="backend_error_calories_must_be_positive">Calories must be greater than 0</string>
     <string name="backend_error_calories_out_of_range">Calories look invalid (maximum 10,000)</string>
+    <string name="backend_error_steps_must_be_integer">Steps must be an integer</string>
+    <string name="backend_error_steps_negative">Steps cannot be negative</string>
+    <string name="backend_error_steps_out_of_range">The step count looks invalid (maximum 500,000)</string>
     <string name="backend_error_cloudinary_invalid_url">Cloudinary did not return a valid URL</string>
     <string name="backend_error_code_empty">The code cannot be empty</string>
     <string name="backend_error_code_expired">The code has expired</string>

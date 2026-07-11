@@ -3,10 +3,12 @@ package com.proyecto.moveon.ui.profile;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
+import com.proyecto.moveon.core.settings.PaceDisplayUtils;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 
 import java.time.LocalDate;
@@ -15,6 +17,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.FormatStyle;
+import java.text.NumberFormat;
 import java.util.Locale;
 
 /**
@@ -146,6 +149,37 @@ public final class ShareRouteFormatter {
     }
 
     /**
+     * Resuelve el ritmo medio exclusivamente para la tarjeta de compartir.
+     *
+     * <p>Primero respeta el dato persistido y la preferencia del usuario. Si la actividad
+     * llega sin ritmo total —el caso que provocaba N/D en la tarjeta— lo reconstruye con
+     * la duración y la distancia de esa actividad sin cambiar el cálculo de otras pantallas.</p>
+     */
+    public static int resolveShareAveragePaceSeconds(
+            @NonNull Context context,
+            @NonNull ActividadItem item
+    ) {
+        int storedPace = PaceDisplayUtils.getPreferredAveragePaceSeconds(context, item);
+        if (storedPace > 0) {
+            return storedPace;
+        }
+
+        int durationSeconds = PaceDisplayUtils.shouldUseMovingPace(context)
+                && item.duracionMovimientoSegundos > 0
+                ? item.duracionMovimientoSegundos
+                : item.duracionSegundos;
+        if (durationSeconds <= 0 || item.distanciaMetros <= 0) {
+            return 0;
+        }
+
+        double paceSeconds = (durationSeconds * 1000.0) / item.distanciaMetros;
+        if (!Double.isFinite(paceSeconds) || paceSeconds <= 0.0 || paceSeconds > 3600.0) {
+            return 0;
+        }
+        return (int) Math.round(paceSeconds);
+    }
+
+    /**
      * Formatea el ritmo como min/km incluyendo explícitamente la unidad final.
      *
      * @param context contexto usado para resolver el placeholder cuando no hay ritmo disponible.
@@ -159,6 +193,18 @@ public final class ShareRouteFormatter {
             return pace;
         }
         return pace + "/km";
+    }
+
+    /**
+     * Formatea el contador de pasos para historial y tarjeta compartida.
+     */
+    @NonNull
+    public static String formatSteps(@NonNull Context context, @Nullable Integer steps) {
+        if (steps == null) {
+            return context.getString(R.string.share_routes_steps_empty);
+        }
+        return NumberFormat.getIntegerInstance(AppLanguageManager.getActiveLocale(context))
+                .format(Math.max(0, steps));
     }
 
     /**

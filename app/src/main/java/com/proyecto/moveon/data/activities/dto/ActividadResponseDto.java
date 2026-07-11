@@ -42,6 +42,10 @@ public final class ActividadResponseDto {
     @SerializedName("calorias_quemadas")
     public int caloriasQuemadas;
 
+    @SerializedName("pasos")
+    @Nullable
+    public Integer pasos;
+
     @SerializedName("ritmo_medio_movimiento")
     public int ritmoMedioMovimiento;
 

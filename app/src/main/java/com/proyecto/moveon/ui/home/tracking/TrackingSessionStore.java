@@ -93,6 +93,7 @@ public final class TrackingSessionStore {
         public double preciseDistanceMeters;
         public int calories;
         public double caloriesAccumulator;
+        public int steps;
         public int maxSpeedKmhX100;
         public int autoPauseCount;
         public int manualPauseCount;
@@ -116,4 +117,3 @@ public final class TrackingSessionStore {
         public List<TrackingState.DiagnosticEvent> diagnosticEvents = new ArrayList<>();
     }
 }
-

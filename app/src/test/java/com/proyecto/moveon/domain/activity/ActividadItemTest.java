@@ -26,6 +26,7 @@ public class ActividadItemTest {
                 150,
                 50,
                 120,
+                2_000,
                 400,
                 450,
                 300,
@@ -50,6 +51,7 @@ public class ActividadItemTest {
         assertEquals(150, item.duracionParadoSegundos);
         assertEquals(50, item.duracionPausaManualSegundos);
         assertEquals(120, item.caloriasQuemadas);
+        assertEquals(Integer.valueOf(2_000), item.pasos);
         assertEquals(400, item.ritmoMedioMovimientoSegKm);
         assertEquals(450, item.ritmoMedioTotalSegKm);
         assertEquals(300, item.ritmoMaximoSegKm);
@@ -93,7 +95,7 @@ public class ActividadItemTest {
         return new ActividadItem(
                 "local", null, "carrera",
                 100, 60, 50, 10, 0,
-                5, 300, 320, 280, 700, 800,
+                5, null, 300, 320, 280, 700, 800,
                 0, 0, 0, null, null,
                 "2026-04-25T10:00:00+00:00",
                 syncState,

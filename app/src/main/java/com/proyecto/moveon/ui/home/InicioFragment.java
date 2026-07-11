@@ -721,6 +721,11 @@ public class InicioFragment extends Fragment
         binding.tvStoppedTime.setText(formatElapsed(state.getStoppedSeconds()));
         binding.tvDistance.setText(formatDistance(state.getDistanceMeters()));
         binding.tvCalories.setText(getString(R.string.tracking_calories_format, state.getCalories()));
+        binding.tvSteps.setText(
+                state.isStepSensorAvailable()
+                        ? getString(R.string.tracking_steps_format, state.getSteps())
+                        : getString(R.string.tracking_steps_unavailable)
+        );
         binding.tvPace.setText(
                 state.getPace() != null ? state.getPace() : getString(R.string.tracking_default_pace)
         );

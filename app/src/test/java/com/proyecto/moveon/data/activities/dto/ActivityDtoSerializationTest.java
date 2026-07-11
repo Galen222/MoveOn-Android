@@ -30,6 +30,7 @@ public class ActivityDtoSerializationTest {
                 + "\"duracion_parado\":80,"
                 + "\"duracion_pausa_manual\":20,"
                 + "\"calorias_quemadas\":350,"
+                + "\"pasos\":4321,"
                 + "\"ritmo_medio_movimiento\":340,"
                 + "\"ritmo_medio_total\":360,"
                 + "\"ritmo_maximo\":300,"
@@ -54,6 +55,7 @@ public class ActivityDtoSerializationTest {
         assertEquals(80, dto.duracionParado);
         assertEquals(20, dto.duracionPausaManual);
         assertEquals(350, dto.caloriasQuemadas);
+        assertEquals(Integer.valueOf(4321), dto.pasos);
         assertEquals(340, dto.ritmoMedioMovimiento);
         assertEquals(360, dto.ritmoMedioTotal);
         assertEquals(300, dto.ritmoMaximo);
@@ -187,7 +189,7 @@ public class ActivityDtoSerializationTest {
         dto.walkingClassifiedSeconds = 500;
         dto.serviceRestartCount = 1;
         dto.currentStatus = "FINISHED";
-        dto.appVersion = "1.0.5a";
+        dto.appVersion = "1.0.6";
         dto.osVersion = "Android";
         dto.manufacturer = "Google";
         dto.model = "Pixel";

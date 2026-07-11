@@ -275,6 +275,7 @@ public class StatsCalculatorTest {
                 60,
                 0,
                 calories,
+                null,
                 300,
                 330,
                 250,

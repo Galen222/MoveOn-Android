@@ -313,6 +313,7 @@ public final class TrackingViewModel extends AndroidViewModel {
                 duracionParado,
                 safeToInt(state.getManualPausedSeconds()),
                 calorias,
+                state.isStepSensorAvailable() ? state.getSteps() : null,
                 averageMovingPace,
                 averageElapsedPace,
                 maxPace,

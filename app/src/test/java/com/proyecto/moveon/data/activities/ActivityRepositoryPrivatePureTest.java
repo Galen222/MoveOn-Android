@@ -53,6 +53,7 @@ public class ActivityRepositoryPrivatePureTest {
         assertEquals(80, item.duracionParadoSegundos);
         assertEquals(20, item.duracionPausaManualSegundos);
         assertEquals(350, item.caloriasQuemadas);
+        assertEquals(Integer.valueOf(4_321), item.pasos);
         assertEquals(340, item.ritmoMedioMovimientoSegKm);
         assertEquals(360, item.ritmoMedioTotalSegKm);
         assertEquals(300, item.ritmoMaximoSegKm);
@@ -185,6 +186,7 @@ public class ActivityRepositoryPrivatePureTest {
         entity.duracionParado = 80;
         entity.duracionPausaManual = 20;
         entity.caloriasQuemadas = 350;
+        entity.pasos = 4_321;
         entity.ritmoMedioMovimiento = 340;
         entity.ritmoMedioTotal = 360;
         entity.ritmoMaximo = 300;
@@ -231,6 +233,7 @@ public class ActivityRepositoryPrivatePureTest {
                 duracionParado,
                 duracionPausaManual,
                 caloriasQuemadas,
+                null,
                 ritmoMedioMovimiento,
                 ritmoMedioTotal,
                 ritmoMaximo,

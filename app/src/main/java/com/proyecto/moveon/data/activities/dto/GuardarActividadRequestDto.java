@@ -38,6 +38,10 @@ public final class GuardarActividadRequestDto {
     @SerializedName("calorias_quemadas")
     public final int caloriasQuemadas;
 
+    @SerializedName("pasos")
+    @Nullable
+    public final Integer pasos;
+
     @SerializedName("ritmo_medio_movimiento")
     public final int ritmoMedioMovimiento;
 
@@ -88,6 +92,7 @@ public final class GuardarActividadRequestDto {
      * @param duracionParado segundos con el usuario parado pero sin pausar manualmente.
      * @param duracionPausaManual segundos que el usuario pausó manualmente.
      * @param caloriasQuemadas calorías quemadas estimadas por el dispositivo.
+     * @param pasos pasos detectados, o {@code null} si el dispositivo no tiene sensor compatible.
      * @param ritmoMedioMovimiento ritmo medio en movimiento en segundos por kilómetro.
      * @param ritmoMedioTotal ritmo medio total (incluye paradas) en segundos por kilómetro.
      * @param ritmoMaximo mejor ritmo sostenido válido en segundos por kilómetro.
@@ -107,6 +112,7 @@ public final class GuardarActividadRequestDto {
             int duracionParado,
             int duracionPausaManual,
             int caloriasQuemadas,
+            @Nullable Integer pasos,
             int ritmoMedioMovimiento,
             int ritmoMedioTotal,
             int ritmoMaximo,
@@ -124,6 +130,7 @@ public final class GuardarActividadRequestDto {
         this.duracionParado = duracionParado;
         this.duracionPausaManual = duracionPausaManual;
         this.caloriasQuemadas = caloriasQuemadas;
+        this.pasos = pasos;
         this.ritmoMedioMovimiento = ritmoMedioMovimiento;
         this.ritmoMedioTotal = ritmoMedioTotal;
         this.ritmoMaximo = ritmoMaximo;

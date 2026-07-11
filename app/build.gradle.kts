@@ -4,6 +4,7 @@ import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.api.tasks.testing.Test
 import org.gradle.external.javadoc.StandardJavadocDocletOptions
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.testing.jacoco.tasks.JacocoReport
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
 
@@ -120,6 +121,12 @@ val debugActivities = localProp("DEBUG_ACTIVITIES", "false").trim().equals("true
 
 android {
     namespace = "com.proyecto.moveon"
+
+    // El proyecto no contiene fuentes Kotlin. AGP 9 activa Kotlin integrado por defecto
+    // y, al heredar targetCompatibility=25, crea tareas Kotlin con un jvmTarget que el
+    // compilador incluido todavía no admite. Desactivarlo evita esas tareas y mantiene
+    // toda la compilación real del módulo en Java 25.
+    enableKotlin = false
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -131,7 +138,7 @@ android {
         minSdk = 29
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0.5a"
+        versionName = "1.0.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -178,8 +185,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
     }
 
     // Deja los esquemas accesibles para futuros tests de migración con Room.
@@ -196,6 +203,12 @@ android {
             isReturnDefaultValues = true
             isIncludeAndroidResources = true
         }
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
@@ -355,6 +368,7 @@ dependencies {
     implementation(libs.android.maps.utils)
 
     // Autenticación con Google
+    //noinspection LoginCredentials
     implementation(libs.credentials)
     implementation(libs.credentials.play.services.auth)
     implementation(libs.googleid)
@@ -364,15 +378,15 @@ dependencies {
     // MockWebServer para tests JVM puros que verifican la capa de red real
     // (OkHttp + Retrofit) sin emulador y sin tocar el backend.
     // Misma línea que okhttp 5.x para mantener la compatibilidad de cliente.
-    testImplementation("com.squareup.okhttp3:mockwebserver:5.3.2")
+    testImplementation(libs.mockwebserver)
     // Robolectric 4.14.x ya soporta hasta SDK 35; el proyecto usa
     // compileSdk/targetSdk = 36 pero tests JVM ejecutarán con sdk=35
     // (configurado en src/test/resources/robolectric.properties).
-    testImplementation("org.robolectric:robolectric:4.16.1")
+    testImplementation(libs.robolectric)
     // androidx.test:core publica ApplicationProvider, que es la API
     // recomendada para obtener el Context de la aplicación en tests
     // basados en Robolectric.
-    testImplementation("androidx.test:core:1.7.0")
+    testImplementation(libs.core)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }

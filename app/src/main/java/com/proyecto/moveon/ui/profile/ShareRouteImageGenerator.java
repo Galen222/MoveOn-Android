@@ -14,7 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
 import com.proyecto.moveon.R;
-import com.proyecto.moveon.core.settings.PaceDisplayUtils;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 import com.proyecto.moveon.utils.StringUtils;
 
@@ -210,15 +209,16 @@ public final class ShareRouteImageGenerator {
         float dividerY = dp(context, 1292);
         canvas.drawLine(dp(context, 58), dividerY, width - dp(context, 58), dividerY, dividerPaint);
 
-        // Tarjetas secundarias compactas: 3 bloques en una sola fila.
+        // Tarjetas secundarias compactas: calorías, pasos y los dos ritmos.
         float cardTop = dp(context, 1338);
         float cardGap = dp(context, 18);
         float horizontalPadding = dp(context, 58);
-        float cardWidth = (width - horizontalPadding - horizontalPadding - (cardGap * 2f)) / 3f;
+        float cardWidth = (width - horizontalPadding - horizontalPadding - (cardGap * 3f)) / 4f;
         float cardHeight = dp(context, 250);
         float firstCardX = horizontalPadding;
         float secondCardX = firstCardX + cardWidth + cardGap;
         float thirdCardX = secondCardX + cardWidth + cardGap;
+        float fourthCardX = thirdCardX + cardWidth + cardGap;
 
         drawMetricCard(canvas,
                 new RectF(firstCardX, cardTop, firstCardX + cardWidth, cardTop + cardHeight),
@@ -228,15 +228,21 @@ public final class ShareRouteImageGenerator {
 
         drawMetricCard(canvas,
                 new RectF(secondCardX, cardTop, secondCardX + cardWidth, cardTop + cardHeight),
-                context.getString(R.string.share_routes_metric_average_pace).toUpperCase(Locale.getDefault()),
-                ShareRouteFormatter.formatPaceWithUnit(
-                        context,
-                        PaceDisplayUtils.getPreferredAveragePaceSeconds(context, item)
-                ),
+                context.getString(R.string.share_routes_metric_steps).toUpperCase(Locale.getDefault()),
+                ShareRouteFormatter.formatSteps(context, item.pasos),
                 metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint, context);
 
         drawMetricCard(canvas,
                 new RectF(thirdCardX, cardTop, thirdCardX + cardWidth, cardTop + cardHeight),
+                context.getString(R.string.share_routes_metric_average_pace).toUpperCase(Locale.getDefault()),
+                ShareRouteFormatter.formatPaceWithUnit(
+                        context,
+                        ShareRouteFormatter.resolveShareAveragePaceSeconds(context, item)
+                ),
+                metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint, context);
+
+        drawMetricCard(canvas,
+                new RectF(fourthCardX, cardTop, fourthCardX + cardWidth, cardTop + cardHeight),
                 context.getString(R.string.share_routes_metric_max_pace).toUpperCase(Locale.getDefault()),
                 ShareRouteFormatter.formatPaceWithUnit(context, item.ritmoMaximoSegKm),
                 metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint, context);

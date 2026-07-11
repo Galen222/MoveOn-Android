@@ -213,9 +213,11 @@
 
                     <TextView
                         android:id="@+id/tv_calories"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:text="@string/tracking_default_calories"
+                        android:textAlignment="center"
                         android:textColor="@color/textPrimary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -302,29 +304,64 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:gravity="center_horizontal"
-                android:orientation="vertical">
+                android:baselineAligned="false"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tv_pause_summary"
-                    android:layout_width="match_parent"
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
-                    android:text="@string/tracking_pause_summary_placeholder"
-                    android:textAlignment="center"
-                    android:textColor="@color/textTertiary"
-                    android:textSize="12sp" />
+                    android:layout_weight="1"
+                    android:gravity="start"
+                    android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/tv_speed_alerts_count"
-                    android:layout_width="match_parent"
+                    <TextView
+                        android:id="@+id/tv_steps"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="start"
+                        android:text="@string/tracking_default_steps"
+                        android:textAlignment="viewStart"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/tracking_label_steps"
+                        android:textColor="@color/textSecondary"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:gravity="center_horizontal"
-                    android:text="@string/tracking_speed_alert_counter_placeholder"
-                    android:textAlignment="center"
-                    android:textColor="@color/textTertiary"
-                    android:textSize="12sp" />
+                    android:layout_weight="3"
+                    android:gravity="end"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_pause_summary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:text="@string/tracking_pause_summary_placeholder"
+                        android:textAlignment="viewEnd"
+                        android:textColor="@color/textTertiary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tv_speed_alerts_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:gravity="end"
+                        android:text="@string/tracking_speed_alert_counter_placeholder"
+                        android:textAlignment="viewEnd"
+                        android:textColor="@color/textTertiary"
+                        android:textSize="12sp" />
+                </LinearLayout>
             </LinearLayout>
 
             <LinearLayout

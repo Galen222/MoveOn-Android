@@ -76,6 +76,7 @@ public class ActivitySyncManagerFlowTest {
         assertEquals(12, saved.duracionParado);
         assertEquals(10, saved.duracionPausaManual);
         assertEquals(321, saved.caloriasQuemadas);
+        assertEquals(Integer.valueOf(4_321), saved.pasos);
         assertEquals(345, saved.ritmoMedioMovimiento);
         assertEquals(360, saved.ritmoMedioTotal);
         assertEquals(330, saved.ritmoMaximo);
@@ -288,6 +289,7 @@ public class ActivitySyncManagerFlowTest {
         entity.duracionParado = 5;
         entity.duracionPausaManual = 5;
         entity.caloriasQuemadas = 20;
+        entity.pasos = null;
         entity.ritmoMedioMovimiento = 400;
         entity.ritmoMedioTotal = 420;
         entity.ritmoMaximo = 350;
@@ -321,6 +323,7 @@ public class ActivitySyncManagerFlowTest {
         dto.duracionParado = 12;
         dto.duracionPausaManual = 10;
         dto.caloriasQuemadas = 321;
+        dto.pasos = 4_321;
         dto.ritmoMedioMovimiento = 345;
         dto.ritmoMedioTotal = 360;
         dto.ritmoMaximo = 330;

@@ -136,6 +136,7 @@ public final class ActivityRepository {
             entity.duracionParado = request.duracionParado;
             entity.duracionPausaManual = request.duracionPausaManual;
             entity.caloriasQuemadas = request.caloriasQuemadas;
+            entity.pasos = request.pasos;
             entity.ritmoMedioMovimiento = request.ritmoMedioMovimiento;
             entity.ritmoMedioTotal = request.ritmoMedioTotal;
             entity.ritmoMaximo = request.ritmoMaximo;
@@ -164,6 +165,7 @@ public final class ActivityRepository {
             dto.duracionParado = entity.duracionParado;
             dto.duracionPausaManual = entity.duracionPausaManual;
             dto.caloriasQuemadas = entity.caloriasQuemadas;
+            dto.pasos = entity.pasos;
             dto.ritmoMedioMovimiento = entity.ritmoMedioMovimiento;
             dto.ritmoMedioTotal = entity.ritmoMedioTotal;
             dto.ritmoMaximo = entity.ritmoMaximo;
@@ -369,6 +371,7 @@ public final class ActivityRepository {
                 entity.duracionParado,
                 entity.duracionPausaManual,
                 entity.caloriasQuemadas,
+                entity.pasos,
                 entity.ritmoMedioMovimiento,
                 entity.ritmoMedioTotal,
                 entity.ritmoMaximo,
@@ -424,6 +427,10 @@ public final class ActivityRepository {
         if (request.caloriasQuemadas <= 0 || request.caloriasQuemadas > 10000) {
             return ApiError.typed(ApiErrorType.VALIDATION,
                     AppLanguageManager.getString(appContext, R.string.error_calorias_invalidas));
+        }
+        if (request.pasos != null && (request.pasos < 0 || request.pasos > 500000)) {
+            return ApiError.typed(ApiErrorType.VALIDATION,
+                    AppLanguageManager.getString(appContext, R.string.error_pasos_invalidos));
         }
         if (request.ritmoMedioMovimiento <= 0 || request.ritmoMedioMovimiento > 3600) {
             return ApiError.typed(ApiErrorType.VALIDATION,

@@ -16,6 +16,7 @@ import com.proyecto.moveon.core.i18n.ProfileValueLocalizer;
 import com.proyecto.moveon.core.settings.PaceDisplayUtils;
 import com.proyecto.moveon.databinding.ItemActividadBinding;
 import com.proyecto.moveon.domain.activity.ActividadItem;
+import com.proyecto.moveon.ui.profile.ShareRouteFormatter;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -97,6 +98,7 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
                             && a.ritmoMedioTotalSegKm == b.ritmoMedioTotalSegKm
                             && a.ritmoMaximoSegKm == b.ritmoMaximoSegKm
                             && a.caloriasQuemadas == b.caloriasQuemadas
+                            && java.util.Objects.equals(a.pasos, b.pasos)
                             && a.fechaRutaIso.equals(b.fechaRutaIso)
                             && safeEquals(a.rutaPolilinea, b.rutaPolilinea);
                 }
@@ -211,6 +213,7 @@ public class ActividadAdapter extends ListAdapter<ActividadItem, ActividadAdapte
             binding.tvActivityCalories.setText(
                     context.getString(R.string.stats_format_kcal, item.caloriasQuemadas)
             );
+            binding.tvActivitySteps.setText(ShareRouteFormatter.formatSteps(context, item.pasos));
 
             // La unidad "/km" se compone siempre en el valor visible del ritmo.
             binding.tvActivityPace.setText(

@@ -106,6 +106,7 @@ public class PaceDisplayUtilsTest {
                 100,
                 0,
                 350,
+                null,
                 movingPace,
                 totalPace,
                 300,

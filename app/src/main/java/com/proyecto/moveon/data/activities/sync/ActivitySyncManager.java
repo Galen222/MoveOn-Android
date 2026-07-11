@@ -180,6 +180,7 @@ public final class ActivitySyncManager {
         entity.duracionParado        = dto.duracionParado;
         entity.duracionPausaManual   = dto.duracionPausaManual;
         entity.caloriasQuemadas      = dto.caloriasQuemadas;
+        entity.pasos                  = dto.pasos;
         entity.ritmoMedioMovimiento  = dto.ritmoMedioMovimiento;
         entity.ritmoMedioTotal       = dto.ritmoMedioTotal;
         entity.ritmoMaximo           = dto.ritmoMaximo;

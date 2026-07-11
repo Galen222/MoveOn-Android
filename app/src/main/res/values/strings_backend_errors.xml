@@ -17,6 +17,9 @@
     <string name="backend_error_calories_must_be_integer">Las calorías deben ser un número entero</string>
     <string name="backend_error_calories_must_be_positive">Las calorías deben ser mayor a 0</string>
     <string name="backend_error_calories_out_of_range">Las calorías parecen incorrectas (máximo 10.000)</string>
+    <string name="backend_error_steps_must_be_integer">Los pasos deben ser un número entero</string>
+    <string name="backend_error_steps_negative">Los pasos no pueden ser negativos</string>
+    <string name="backend_error_steps_out_of_range">El número de pasos parece incorrecto (máximo 500.000)</string>
     <string name="backend_error_cloudinary_invalid_url">Cloudinary no devolvió URL válida</string>
     <string name="backend_error_code_empty">El código no puede estar vacío</string>
     <string name="backend_error_code_expired">El código ha expirado</string>

@@ -29,6 +29,8 @@ public class TrackingStateTest {
         assertEquals(0L, state.getElapsedSeconds());
         assertEquals(0, state.getDistanceMeters());
         assertEquals(0, state.getCalories());
+        assertEquals(0, state.getSteps());
+        assertFalse(state.isStepSensorAvailable());
         assertNull(state.getPace());
         assertTrue(state.getRoutePoints().isEmpty());
         assertNull(state.getEncodedPolyline());
@@ -111,6 +113,8 @@ public class TrackingStateTest {
                 .distanceMeters(1500)
                 .preciseDistanceMeters(1500.4)
                 .calories(120)
+                .steps(2048)
+                .stepSensorAvailable(true)
                 .pace("5:30")
                 .routePoints(points)
                 .encodedPolyline("abc123")
@@ -125,6 +129,8 @@ public class TrackingStateTest {
         assertEquals(25L, state.getAutoPausedSeconds());
         assertEquals(340L, state.getEffectiveElapsedSeconds());
         assertEquals(120, state.getCalories());
+        assertEquals(2048, state.getSteps());
+        assertTrue(state.isStepSensorAvailable());
         assertEquals("5:30", state.getPace());
         assertEquals(2, state.getRoutePoints().size());
         assertEquals("abc123", state.getEncodedPolyline());
@@ -145,6 +151,8 @@ public class TrackingStateTest {
                 .distanceMeters(500)
                 .preciseDistanceMeters(500.8)
                 .calories(40)
+                .steps(850)
+                .stepSensorAvailable(true)
                 .pace("6:00")
                 .build();
 
@@ -157,6 +165,8 @@ public class TrackingStateTest {
         assertEquals(original.getPreciseDistanceMeters(), copy.getPreciseDistanceMeters(), 0.0001);
         assertEquals(original.getAutoPausedSeconds(), copy.getAutoPausedSeconds());
         assertEquals(original.getCalories(), copy.getCalories());
+        assertEquals(original.getSteps(), copy.getSteps());
+        assertEquals(original.isStepSensorAvailable(), copy.isStepSensorAvailable());
         assertEquals(original.getPace(), copy.getPace());
     }
 

@@ -62,6 +62,8 @@ public final class TrackingState {
     private final int distanceMeters;
     private final double preciseDistanceMeters;
     private final int calories;
+    private final int steps;
+    private final boolean stepSensorAvailable;
     @Nullable private final String pace;
     @Nullable private final String averageMovingPace;
     @Nullable private final String averageElapsedPace;
@@ -95,6 +97,8 @@ public final class TrackingState {
             int distanceMeters,
             double preciseDistanceMeters,
             int calories,
+            int steps,
+            boolean stepSensorAvailable,
             @Nullable String pace,
             @Nullable String averageMovingPace,
             @Nullable String averageElapsedPace,
@@ -126,6 +130,8 @@ public final class TrackingState {
         this.distanceMeters = distanceMeters;
         this.preciseDistanceMeters = preciseDistanceMeters;
         this.calories = calories;
+        this.steps = steps;
+        this.stepSensorAvailable = stepSensorAvailable;
         this.pace = pace;
         this.averageMovingPace = averageMovingPace;
         this.averageElapsedPace = averageElapsedPace;
@@ -230,6 +236,16 @@ public final class TrackingState {
      * @return gasto calórico aproximado asociado a la sesión actual.
      */
     public int getCalories() { return calories; }
+    /**
+     * Devuelve los pasos detectados por el móvil durante la sesión activa.
+     *
+     * @return número de pasos acumulados mientras el tracking estaba en ejecución.
+     */
+    public int getSteps() { return steps; }
+    /**
+     * Indica si el dispositivo puede medir pasos con un sensor dedicado.
+     */
+    public boolean isStepSensorAvailable() { return stepSensorAvailable; }
     /**
      * Devuelve el ritmo instantáneo o principal calculado para la sesión.
      *
@@ -422,6 +438,8 @@ public final class TrackingState {
         private int distanceMeters = 0;
         private double preciseDistanceMeters = 0.0;
         private int calories = 0;
+        private int steps = 0;
+        private boolean stepSensorAvailable = false;
         @Nullable private String pace = null;
         @Nullable private String averageMovingPace = null;
         @Nullable private String averageElapsedPace = null;
@@ -464,6 +482,8 @@ public final class TrackingState {
             distanceMeters = source.distanceMeters;
             preciseDistanceMeters = source.preciseDistanceMeters;
             calories = source.calories;
+            steps = source.steps;
+            stepSensorAvailable = source.stepSensorAvailable;
             pace = source.pace;
             averageMovingPace = source.averageMovingPace;
             averageElapsedPace = source.averageElapsedPace;
@@ -530,6 +550,14 @@ public final class TrackingState {
          * Fija la estimación de calorías del snapshot.
          */
         public Builder calories(int value) { this.calories = value; return this; }
+        /**
+         * Fija el contador de pasos detectados durante la sesión.
+         */
+        public Builder steps(int value) { this.steps = Math.max(0, value); return this; }
+        /**
+         * Informa si el teléfono dispone del detector de pasos usado por la sesión.
+         */
+        public Builder stepSensorAvailable(boolean value) { this.stepSensorAvailable = value; return this; }
         /**
          * Fija el ritmo principal calculado para la sesión.
          */
@@ -628,6 +656,8 @@ public final class TrackingState {
                     distanceMeters,
                     preciseDistanceMeters,
                     calories,
+                    steps,
+                    stepSensorAvailable,
                     pace,
                     averageMovingPace,
                     averageElapsedPace,

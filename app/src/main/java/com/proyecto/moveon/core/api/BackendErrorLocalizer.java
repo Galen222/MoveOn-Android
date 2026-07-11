@@ -102,6 +102,9 @@ public final class BackendErrorLocalizer {
         ids.put("calories_must_be_integer", R.string.backend_error_calories_must_be_integer);
         ids.put("calories_must_be_positive", R.string.backend_error_calories_must_be_positive);
         ids.put("calories_out_of_range", R.string.backend_error_calories_out_of_range);
+        ids.put("steps_must_be_integer", R.string.backend_error_steps_must_be_integer);
+        ids.put("steps_negative", R.string.backend_error_steps_negative);
+        ids.put("steps_out_of_range", R.string.backend_error_steps_out_of_range);
         ids.put("cloudinary_invalid_url", R.string.backend_error_cloudinary_invalid_url);
         ids.put("code_empty", R.string.backend_error_code_empty);
         ids.put("code_expired", R.string.backend_error_code_expired);

@@ -26,6 +26,7 @@ public class ActividadCreatePayloadTest {
                 240,
                 60,
                 350,
+                4_321,
                 330,
                 360,
                 280,
@@ -49,6 +50,7 @@ public class ActividadCreatePayloadTest {
         assertEquals(240, json.get("duracion_parado").getAsInt());
         assertEquals(60, json.get("duracion_pausa_manual").getAsInt());
         assertEquals(350, json.get("calorias_quemadas").getAsInt());
+        assertEquals(4_321, json.get("pasos").getAsInt());
         assertEquals(330, json.get("ritmo_medio_movimiento").getAsInt());
         assertEquals(360, json.get("ritmo_medio_total").getAsInt());
         assertEquals(280, json.get("ritmo_maximo").getAsInt());
@@ -76,6 +78,7 @@ public class ActividadCreatePayloadTest {
                 50,
                 30,
                 50,
+                null,
                 720,
                 900,
                 420,
@@ -93,6 +96,7 @@ public class ActividadCreatePayloadTest {
 
         assertTrue(json.get("ruta_polilinea").isJsonNull());
         assertTrue(json.get("ruta_mapa_url").isJsonNull());
+        assertTrue(json.get("pasos").isJsonNull());
     }
 
     /**
@@ -109,6 +113,7 @@ public class ActividadCreatePayloadTest {
                 90,
                 30,
                 200,
+                2_345,
                 300,
                 360,
                 1000,
@@ -129,6 +134,7 @@ public class ActividadCreatePayloadTest {
         assertTrue(json.has("duracion_movimiento"));
         assertTrue(json.has("duracion_parado"));
         assertTrue(json.has("duracion_pausa_manual"));
+        assertTrue(json.has("pasos"));
         assertTrue(json.has("ritmo_medio_movimiento"));
         assertTrue(json.has("ritmo_medio_total"));
         assertTrue(json.has("ritmo_maximo"));
@@ -164,6 +170,7 @@ public class ActividadCreatePayloadTest {
                 0,
                 0,
                 0,
+                0,
                 null,
                 null,
                 "2025-03-19T00:00:00Z"
@@ -176,6 +183,7 @@ public class ActividadCreatePayloadTest {
         assertEquals(0, json.get("duracion_parado").getAsInt());
         assertEquals(0, json.get("duracion_pausa_manual").getAsInt());
         assertEquals(0, json.get("calorias_quemadas").getAsInt());
+        assertEquals(0, json.get("pasos").getAsInt());
         assertEquals(0, json.get("ritmo_maximo").getAsInt());
         assertEquals(0, json.get("velocidad_max_x100").getAsInt());
         assertTrue(json.get("ruta_mapa_url").isJsonNull());
@@ -194,6 +202,7 @@ public class ActividadCreatePayloadTest {
                 80,
                 20,
                 350,
+                4_321,
                 340,
                 360,
                 300,
@@ -217,6 +226,7 @@ public class ActividadCreatePayloadTest {
         assertEquals(80, json.get("duracion_parado").getAsInt());
         assertEquals(20, json.get("duracion_pausa_manual").getAsInt());
         assertEquals(350, json.get("calorias_quemadas").getAsInt());
+        assertEquals(4_321, json.get("pasos").getAsInt());
         assertEquals(340, json.get("ritmo_medio_movimiento").getAsInt());
         assertEquals(360, json.get("ritmo_medio_total").getAsInt());
         assertEquals(300, json.get("ritmo_maximo").getAsInt());
@@ -244,6 +254,7 @@ public class ActividadCreatePayloadTest {
                 4,
                 5,
                 6,
+                null,
                 7,
                 8,
                 9,
@@ -261,6 +272,7 @@ public class ActividadCreatePayloadTest {
 
         assertTrue(json.get("ruta_polilinea").isJsonNull());
         assertTrue(json.get("ruta_mapa_url").isJsonNull());
+        assertTrue(json.get("pasos").isJsonNull());
     }
 
     /**
@@ -277,6 +289,7 @@ public class ActividadCreatePayloadTest {
         entity.duracionParado = 15;
         entity.duracionPausaManual = 5;
         entity.caloriasQuemadas = 30;
+        entity.pasos = 2_345;
         entity.ritmoMedioMovimiento = 400;
         entity.ritmoMedioTotal = 420;
         entity.ritmoMaximo = 350;
@@ -295,6 +308,7 @@ public class ActividadCreatePayloadTest {
         assertEquals("carrera", json.get("tipo").getAsString());
         assertEquals(100, json.get("distancia").getAsInt());
         assertEquals(200, json.get("duracion_total").getAsInt());
+        assertEquals(2_345, json.get("pasos").getAsInt());
         assertEquals("poly", json.get("ruta_polilinea").getAsString());
         assertEquals("map.png", json.get("ruta_mapa_url").getAsString());
         assertEquals("2026-04-25T10:00:00Z", json.get("fecha_ruta").getAsString());
@@ -313,6 +327,7 @@ public class ActividadCreatePayloadTest {
                 80,
                 20,
                 350,
+                4_321,
                 340,
                 360,
                 300,
@@ -336,6 +351,7 @@ public class ActividadCreatePayloadTest {
         assertEquals(80, json.get("duracion_parado").getAsInt());
         assertEquals(20, json.get("duracion_pausa_manual").getAsInt());
         assertEquals(350, json.get("calorias_quemadas").getAsInt());
+        assertEquals(4_321, json.get("pasos").getAsInt());
         assertEquals(340, json.get("ritmo_medio_movimiento").getAsInt());
         assertEquals(360, json.get("ritmo_medio_total").getAsInt());
         assertEquals(300, json.get("ritmo_maximo").getAsInt());
@@ -356,7 +372,7 @@ public class ActividadCreatePayloadTest {
     public void toJson_withNullRouteFields_writesJsonNulls() {
         JsonObject json = new ActividadCreatePayload(
                 "local-1", "carrera", 1, 2, 3, 4, 5,
-                6, 7, 8, 9, 10, 11, 12, 13, 14,
+                6, null, 7, 8, 9, 10, 11, 12, 13, 14,
                 null, null, "2026-04-25T10:00:00Z"
         ).toJson();
 
@@ -378,6 +394,7 @@ public class ActividadCreatePayloadTest {
         entity.duracionParado = 40;
         entity.duracionPausaManual = 10;
         entity.caloriasQuemadas = 120;
+        entity.pasos = 3_210;
         entity.ritmoMedioMovimiento = 400;
         entity.ritmoMedioTotal = 430;
         entity.ritmoMaximo = 350;
@@ -400,6 +417,7 @@ public class ActividadCreatePayloadTest {
         assertEquals(40, json.get("duracion_parado").getAsInt());
         assertEquals(10, json.get("duracion_pausa_manual").getAsInt());
         assertEquals(120, json.get("calorias_quemadas").getAsInt());
+        assertEquals(3_210, json.get("pasos").getAsInt());
         assertEquals(400, json.get("ritmo_medio_movimiento").getAsInt());
         assertEquals(430, json.get("ritmo_medio_total").getAsInt());
         assertEquals(350, json.get("ritmo_maximo").getAsInt());

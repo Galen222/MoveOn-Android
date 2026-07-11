@@ -30,6 +30,7 @@ public class GuardarActividadRequestDtoTest {
                 240,
                 60,
                 350,
+                4_321,
                 330,
                 360,
                 280,
@@ -49,6 +50,7 @@ public class GuardarActividadRequestDtoTest {
         assertEquals(240, dto.duracionParado);
         assertEquals(60, dto.duracionPausaManual);
         assertEquals(350, dto.caloriasQuemadas);
+        assertEquals(Integer.valueOf(4_321), dto.pasos);
         assertEquals(330, dto.ritmoMedioMovimiento);
         assertEquals(360, dto.ritmoMedioTotal);
         assertEquals(280, dto.ritmoMaximo);
@@ -76,6 +78,7 @@ public class GuardarActividadRequestDtoTest {
                 50,
                 30,
                 50,
+                null,
                 720,
                 900,
                 420,
@@ -104,6 +107,7 @@ public class GuardarActividadRequestDtoTest {
                 90,
                 30,
                 200,
+                2_345,
                 300,
                 360,
                 480,
@@ -126,6 +130,7 @@ public class GuardarActividadRequestDtoTest {
         assertTrue(obj.has("duracion_parado"));
         assertTrue(obj.has("duracion_pausa_manual"));
         assertTrue(obj.has("calorias_quemadas"));
+        assertTrue(obj.has("pasos"));
         assertTrue(obj.has("ritmo_medio_movimiento"));
         assertTrue(obj.has("ritmo_medio_total"));
         assertTrue(obj.has("ritmo_maximo"));
@@ -161,6 +166,7 @@ public class GuardarActividadRequestDtoTest {
                 150,
                 50,
                 100,
+                3_210,
                 480,
                 520,
                 640,
@@ -183,6 +189,7 @@ public class GuardarActividadRequestDtoTest {
         assertEquals(150, obj.get("duracion_parado").getAsInt());
         assertEquals(50, obj.get("duracion_pausa_manual").getAsInt());
         assertEquals(100, obj.get("calorias_quemadas").getAsInt());
+        assertEquals(3_210, obj.get("pasos").getAsInt());
         assertEquals(480, obj.get("ritmo_medio_movimiento").getAsInt());
         assertEquals(520, obj.get("ritmo_medio_total").getAsInt());
         assertEquals(640, obj.get("ritmo_maximo").getAsInt());

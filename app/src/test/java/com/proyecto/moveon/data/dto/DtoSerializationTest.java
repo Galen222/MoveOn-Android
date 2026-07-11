@@ -38,6 +38,7 @@ public class DtoSerializationTest {
                 + "\"duracion_parado\":80,"
                 + "\"duracion_pausa_manual\":20,"
                 + "\"calorias_quemadas\":350,"
+                + "\"pasos\":4321,"
                 + "\"ritmo_medio_movimiento\":340,"
                 + "\"ritmo_medio_total\":360,"
                 + "\"ritmo_maximo\":300,"
@@ -62,6 +63,7 @@ public class DtoSerializationTest {
         assertEquals(80, dto.duracionParado);
         assertEquals(20, dto.duracionPausaManual);
         assertEquals(350, dto.caloriasQuemadas);
+        assertEquals(Integer.valueOf(4321), dto.pasos);
         assertEquals(340, dto.ritmoMedioMovimiento);
         assertEquals(360, dto.ritmoMedioTotal);
         assertEquals(300, dto.ritmoMaximo);
@@ -129,6 +131,7 @@ public class DtoSerializationTest {
         dto.duracionParado = 100;
         dto.duracionPausaManual = 100;
         dto.caloriasQuemadas = 700;
+        dto.pasos = 8_765;
         dto.ritmoMedioMovimiento = 280;
         dto.ritmoMedioTotal = 300;
         dto.ritmoMaximo = 240;
@@ -152,6 +155,7 @@ public class DtoSerializationTest {
         assertEquals(100, copy.duracionParado);
         assertEquals(100, copy.duracionPausaManual);
         assertEquals(700, copy.caloriasQuemadas);
+        assertEquals(Integer.valueOf(8_765), copy.pasos);
         assertEquals(280, copy.ritmoMedioMovimiento);
         assertEquals(300, copy.ritmoMedioTotal);
         assertEquals(240, copy.ritmoMaximo);

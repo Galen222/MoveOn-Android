@@ -52,6 +52,10 @@ public class ActividadEntity {
     @ColumnInfo(name = "calorias_quemadas")
     public int caloriasQuemadas;
 
+    @Nullable
+    @ColumnInfo(name = "pasos")
+    public Integer pasos;
+
     @ColumnInfo(name = "ritmo_medio_movimiento")
     public int ritmoMedioMovimiento;
 

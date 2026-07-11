@@ -23,6 +23,7 @@ import com.proyecto.moveon.core.settings.PaceDisplayUtils;
 import com.proyecto.moveon.databinding.ItemActividadBinding;
 import com.proyecto.moveon.domain.activity.ActividadItem;
 import com.proyecto.moveon.domain.activity.StatsResumen;
+import com.proyecto.moveon.ui.profile.ShareRouteFormatter;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -438,6 +439,7 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         binding.tvActivityCalories.setText(
                 context.getString(R.string.stats_format_kcal, item.caloriasQuemadas)
         );
+        binding.tvActivitySteps.setText(ShareRouteFormatter.formatSteps(context, item.pasos));
         // Este detalle expandido del historial usa un binder propio dentro del
         // bottom sheet, distinto del adapter principal. Aquí se compone también "/km".
         binding.tvActivityPace.setText(
