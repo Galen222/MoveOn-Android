@@ -127,18 +127,14 @@ android {
     // compilador incluido todavía no admite. Desactivarlo evita esas tareas y mantiene
     // toda la compilación real del módulo en Java 25.
     enableKotlin = false
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.proyecto.moveon"
         minSdk = 29
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.5a"
+        versionCode = 3
+        versionName = "1.0.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -164,7 +160,6 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
-            isShrinkResources = false
             enableUnitTestCoverage = true
             enableAndroidTestCoverage = true
         }
@@ -367,8 +362,7 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.android.maps.utils)
 
-    // Autenticación con Google
-    //noinspection LoginCredentials
+    // Autenticación con Google.
     implementation(libs.credentials)
     implementation(libs.credentials.play.services.auth)
     implementation(libs.googleid)

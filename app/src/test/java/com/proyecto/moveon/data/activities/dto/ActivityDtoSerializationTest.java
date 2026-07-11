@@ -138,8 +138,8 @@ public class ActivityDtoSerializationTest {
         ActividadesPageDto dto = gson.fromJson(raw, ActividadesPageDto.class);
 
         assertEquals(1, dto.items.size());
-        assertEquals(1, dto.items.get(0).id);
-        assertEquals("carrera", dto.items.get(0).tipo);
+        assertEquals(1, dto.items.getFirst().id);
+        assertEquals("carrera", dto.items.getFirst().tipo);
         assertEquals(50, dto.total);
         assertEquals(10, dto.skip);
         assertEquals(20, dto.limit);
@@ -189,11 +189,11 @@ public class ActivityDtoSerializationTest {
         dto.walkingClassifiedSeconds = 500;
         dto.serviceRestartCount = 1;
         dto.currentStatus = "FINISHED";
-        dto.appVersion = "1.0.5a";
+        dto.appVersion = "1.0.7";
         dto.osVersion = "Android";
         dto.manufacturer = "Google";
         dto.model = "Pixel";
-        dto.deviceInfo = Collections.<String, Object>singletonMap("sdk", 36);
+        dto.deviceInfo = Collections.singletonMap("sdk", 37);
 
         ActivityDiagnosticsRequestDto.EventItem event = new ActivityDiagnosticsRequestDto.EventItem();
         event.at = "2026-04-25T10:15:00Z";
@@ -209,6 +209,6 @@ public class ActivityDtoSerializationTest {
         assertEquals(5000, json.get("distance_meters").getAsInt());
         assertEquals(1, json.getAsJsonArray("event_log").size());
         assertEquals("AUTO_PAUSE", json.getAsJsonArray("event_log").get(0).getAsJsonObject().get("tipo").getAsString());
-        assertEquals(36.0, json.getAsJsonObject("device_info").get("sdk").getAsDouble(), 0.0001);
+        assertEquals(37.0, json.getAsJsonObject("device_info").get("sdk").getAsDouble(), 0.0001);
     }
 }

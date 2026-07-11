@@ -3,7 +3,6 @@ package com.proyecto.moveon.data.remote.retrofit;
 import static org.junit.Assert.*;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.proyecto.moveon.BuildConfig;
 import com.proyecto.moveon.data.session.dto.AppSessionResponseDto;
@@ -11,12 +10,9 @@ import com.proyecto.moveon.data.session.dto.AppSessionResponseDto;
 import org.junit.After;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.concurrent.TimeUnit;
+import java.lang.reflect.Proxy;
 
-import okhttp3.Call;
-import okhttp3.Connection;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.Protocol;
@@ -53,11 +49,11 @@ public class AppSessionInterceptorTest {
                 .url("https://example.com/protected")
                 .build());
 
-        Response response = interceptor.intercept(chain);
-
-        assertEquals(200, response.code());
-        assertEquals(1, chain.proceedCalls);
-        assertNull(chain.lastRequest.header("x-app-session"));
+        try (Response response = interceptor.intercept(chain.asChain())) {
+            assertEquals(200, response.code());
+            assertEquals(1, chain.proceedCalls);
+            assertNull(chain.lastRequest.header("x-app-session"));
+        }
     }
 
     /**
@@ -70,10 +66,10 @@ public class AppSessionInterceptorTest {
                 .url(BuildConfig.BASE_URL + "handshake/")
                 .build());
 
-        interceptor.intercept(chain);
-
-        assertEquals(1, chain.proceedCalls);
-        assertNull(chain.lastRequest.header("x-app-session"));
+        try (Response ignored = interceptor.intercept(chain.asChain())) {
+            assertEquals(1, chain.proceedCalls);
+            assertNull(chain.lastRequest.header("x-app-session"));
+        }
     }
 
     /**
@@ -88,10 +84,10 @@ public class AppSessionInterceptorTest {
                 .url(BuildConfig.BASE_URL + "perfil/informacion")
                 .build());
 
-        interceptor.intercept(chain);
-
-        assertEquals(1, chain.proceedCalls);
-        assertEquals("cached-app-session", chain.lastRequest.header("x-app-session"));
+        try (Response ignored = interceptor.intercept(chain.asChain())) {
+            assertEquals(1, chain.proceedCalls);
+            assertEquals("cached-app-session", chain.lastRequest.header("x-app-session"));
+        }
     }
 
     /**
@@ -99,7 +95,7 @@ public class AppSessionInterceptorTest {
      */
     @Test
     public void intercept_expiredAppSessionInvalidatesAndRetriesOnce() throws Exception {
-        installSuccessfulHandshake("fresh-app-session");
+        installSuccessfulHandshake();
         setStatic("cachedSession", "expired-app-session");
         setStatic("lastFetchTime", 0L);
         AppSessionInterceptor interceptor = new AppSessionInterceptor();
@@ -109,16 +105,16 @@ public class AppSessionInterceptorTest {
         chain.firstResponseCode = 403;
         chain.firstExpiredHeader = true;
 
-        interceptor.intercept(chain);
-
-        assertEquals(2, chain.proceedCalls);
-        assertEquals("expired-app-session", chain.requests[0].header("x-app-session"));
-        assertEquals("fresh-app-session", chain.requests[1].header("x-app-session"));
+        try (Response ignored = interceptor.intercept(chain.asChain())) {
+            assertEquals(2, chain.proceedCalls);
+            assertEquals("expired-app-session", chain.requests[0].header("x-app-session"));
+            assertEquals("fresh-app-session", chain.requests[1].header("x-app-session"));
+        }
     }
 
-    private static void installSuccessfulHandshake(String token) throws Exception {
+    private static void installSuccessfulHandshake() throws Exception {
         AppSessionResponseDto dto = new AppSessionResponseDto();
-        dto.appSession = token;
+        dto.appSession = "fresh-app-session";
         setStatic("handshakeApi", new FakeHandshakeApi(retrofit2.Response.success(dto)));
     }
 
@@ -150,7 +146,8 @@ public class AppSessionInterceptorTest {
         }
 
         @Override
-        public retrofit2.Response<AppSessionResponseDto> execute() throws IOException {
+        @NonNull
+        public retrofit2.Response<AppSessionResponseDto> execute() {
             return response;
         }
 
@@ -175,24 +172,28 @@ public class AppSessionInterceptorTest {
         }
 
         @Override
+        @NonNull
         public retrofit2.Call<AppSessionResponseDto> clone() {
             return new FakeCall(response);
         }
 
         @Override
+        @NonNull
         public Request request() {
             return new Request.Builder().url("http://localhost/handshake").build();
         }
 
         @Override
+        @NonNull
         public Timeout timeout() {
             return Timeout.NONE;
         }
     }
 
-    private static final class RecordingChain implements Interceptor.Chain {
+    private static final class RecordingChain {
         private final Request original;
         private final Request[] requests = new Request[4];
+        private final Interceptor.Chain chain;
         private Request lastRequest;
         private int proceedCalls;
         private int firstResponseCode = 200;
@@ -200,17 +201,27 @@ public class AppSessionInterceptorTest {
 
         RecordingChain(Request original) {
             this.original = original;
+            this.chain = (Interceptor.Chain) Proxy.newProxyInstance(
+                    Interceptor.Chain.class.getClassLoader(),
+                    new Class<?>[]{Interceptor.Chain.class},
+                    (proxy, method, args) -> switch (method.getName()) {
+                        case "request" -> this.original;
+                        case "proceed" -> proceed((Request) args[0]);
+                        case "toString" -> "RecordingChain";
+                        case "hashCode" -> System.identityHashCode(proxy);
+                        case "equals" -> proxy == args[0];
+                        default -> throw new UnsupportedOperationException(
+                                "Método no usado por AppSessionInterceptorTest: " + method.getName()
+                        );
+                    }
+            );
         }
 
-        @NonNull
-        @Override
-        public Request request() {
-            return original;
+        Interceptor.Chain asChain() {
+            return chain;
         }
 
-        @NonNull
-        @Override
-        public Response proceed(@NonNull Request request) {
+        private Response proceed(@NonNull Request request) {
             lastRequest = request;
             requests[proceedCalls] = request;
             proceedCalls++;
@@ -224,51 +235,6 @@ public class AppSessionInterceptorTest {
                 builder.header("x-app-session-expired", "1");
             }
             return builder.build();
-        }
-
-        @Nullable
-        @Override
-        public Connection connection() {
-            return null;
-        }
-
-        @NonNull
-        @Override
-        public Call call() {
-            throw new UnsupportedOperationException("No se usa en estos tests");
-        }
-
-        @Override
-        public int connectTimeoutMillis() {
-            return 0;
-        }
-
-        @NonNull
-        @Override
-        public Interceptor.Chain withConnectTimeout(int timeout, @NonNull TimeUnit unit) {
-            return this;
-        }
-
-        @Override
-        public int readTimeoutMillis() {
-            return 0;
-        }
-
-        @NonNull
-        @Override
-        public Interceptor.Chain withReadTimeout(int timeout, @NonNull TimeUnit unit) {
-            return this;
-        }
-
-        @Override
-        public int writeTimeoutMillis() {
-            return 0;
-        }
-
-        @NonNull
-        @Override
-        public Interceptor.Chain withWriteTimeout(int timeout, @NonNull TimeUnit unit) {
-            return this;
         }
     }
 }
