@@ -235,9 +235,11 @@
     <string name="tracking_status_auto_pause">Auto-pausado por parada</string>
     <string name="tracking_status_suspicious_speed">Pausado por velocidad sospechosa</string>
     <string name="tracking_status_finished">Actividad finalizada</string>
-    <string name="tracking_pause_summary_format">Auto-pausas: %1$d · Pausas manuales: %2$d</string>
-    <string name="tracking_pause_summary_placeholder">Auto-pausas: 0 · Pausas manuales: 0</string>
-    <string name="tracking_speed_alert_counter_format">Alertas velocidad: %1$d</string>
+    <string name="tracking_auto_pause_counter_format">Auto-pausas: %1$d</string>
+    <string name="tracking_auto_pause_counter_placeholder">Auto-pausas: 0</string>
+    <string name="tracking_manual_pause_counter_format">Pausas manuales: %1$d</string>
+    <string name="tracking_manual_pause_counter_placeholder">Pausas manuales: 0</string>
+        <string name="tracking_speed_alert_counter_format">Alertas velocidad: %1$d</string>
     <string name="tracking_speed_alert_counter_placeholder">Alertas velocidad: 0</string>
 
 

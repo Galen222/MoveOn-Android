@@ -436,6 +436,13 @@ public final class TrackingService extends Service implements SensorEventListene
         createNotificationChannel();
         logDiagnosticEvent("SERVICE_CREATED", null);
         restoreSessionIfPossible();
+
+        // Si no había una sesión activa que restaurar, publica igualmente el
+        // estado IDLE con la disponibilidad real del sensor de pasos. De este
+        // modo la UI no conserva el valor provisional del arranque.
+        if (currentStatus == TrackingState.Status.IDLE) {
+            publishState();
+        }
     }
 
     @Override

@@ -406,9 +406,11 @@
     <string name="tracking_label_stopped_time">STOPPED</string>
 
     <string name="tracking_notification_auto_paused_format">Auto-paused · %1$s · %2$s</string>
-    <string name="tracking_pause_summary_format">Auto-pauses: %1$d · Manual pauses: %2$d</string>
-    <string name="tracking_pause_summary_placeholder">Auto-pauses: 0 · Manual pauses: 0</string>
-    <string name="tracking_speed_alert_counter_format">Speed alerts: %1$d</string>
+    <string name="tracking_auto_pause_counter_format">Auto-pauses: %1$d</string>
+    <string name="tracking_auto_pause_counter_placeholder">Auto-pauses: 0</string>
+    <string name="tracking_manual_pause_counter_format">Manual pauses: %1$d</string>
+    <string name="tracking_manual_pause_counter_placeholder">Manual pauses: 0</string>
+        <string name="tracking_speed_alert_counter_format">Speed alerts: %1$d</string>
     <string name="tracking_speed_alert_counter_placeholder">Speed alerts: 0</string>
 
     <string name="tracking_stationary_sheet_title">It looks like you have stopped</string>

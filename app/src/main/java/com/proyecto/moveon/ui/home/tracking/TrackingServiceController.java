@@ -3,6 +3,8 @@ package com.proyecto.moveon.ui.home.tracking;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.os.IBinder;
 
 import androidx.annotation.NonNull;
@@ -20,8 +22,7 @@ import androidx.lifecycle.MediatorLiveData;
 public final class TrackingServiceController {
 
     private final Context appContext;
-    private final MediatorLiveData<TrackingState> trackingState =
-            new MediatorLiveData<>(TrackingState.idle());
+    private final MediatorLiveData<TrackingState> trackingState;
     private final MediatorLiveData<TrackingAlert> trackingAlert = new MediatorLiveData<>();
 
     @Nullable private TrackingService service;
@@ -94,7 +95,30 @@ public final class TrackingServiceController {
      */
     public TrackingServiceController(@NonNull Context context) {
         appContext = context.getApplicationContext();
+        trackingState = new MediatorLiveData<>(createInitialTrackingState(appContext));
         bindTrackingService();
+    }
+
+    /**
+     * Construye el estado inicial consultando el hardware antes de que termine
+     * el enlace asíncrono con {@link TrackingService}.
+     *
+     * <p>Así Inicio muestra {@code 0} desde el primer render cuando existe un
+     * detector o contador de pasos, y reserva {@code N/D} para dispositivos
+     * que realmente no ofrecen ninguno de los dos sensores.</p>
+     */
+    @NonNull
+    private static TrackingState createInitialTrackingState(@NonNull Context context) {
+        SensorManager sensorManager =
+                (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        boolean stepSensorAvailable = sensorManager != null
+                && (sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR) != null
+                || sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null);
+
+        return TrackingState.idle()
+                .toBuilder()
+                .stepSensorAvailable(stepSensorAvailable)
+                .build();
     }
 
     /**
@@ -167,7 +191,7 @@ public final class TrackingServiceController {
         if (service != null) {
             service.resetTracking();
         } else {
-            trackingState.setValue(TrackingState.idle());
+            trackingState.setValue(createInitialTrackingState(appContext));
         }
     }
 

@@ -741,12 +741,11 @@ public class InicioFragment extends Fragment
         binding.tvMaxPaceSummary.setText(
                 getString(R.string.tracking_max_pace_inline_format, maxPaceText)
         );
-        binding.tvPauseSummary.setText(
-                getString(
-                        R.string.tracking_pause_summary_format,
-                        state.getAutoPauseCount(),
-                        state.getManualPauseCount()
-                )
+        binding.tvAutoPauseCount.setText(
+                getString(R.string.tracking_auto_pause_counter_format, state.getAutoPauseCount())
+        );
+        binding.tvManualPauseCount.setText(
+                getString(R.string.tracking_manual_pause_counter_format, state.getManualPauseCount())
         );
         binding.tvSpeedAlertsCount.setText(
                 getString(
