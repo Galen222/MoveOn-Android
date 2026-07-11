@@ -26,7 +26,6 @@ public final class SocialRegisterConflictResolver {
         // Utility class
     }
 
-    @NonNull
     /**
      * Traduce un código de error devuelto por el backend durante el flujo
      * de completar registro por Google a una acción concreta de la UI.
@@ -39,6 +38,7 @@ public final class SocialRegisterConflictResolver {
      * @param isGoogleCompletionFlow {@code true} cuando estamos en el paso de completar registro tras Google.
      * @return acción concreta a ejecutar: avisar de usuario en uso, de email ya registrado, o manejo genérico.
      */
+    @NonNull
     public static Resolution resolve(@Nullable String errorCode, boolean isGoogleCompletionFlow) {
         if (!isGoogleCompletionFlow || errorCode == null) {
             return Resolution.NO_SPECIAL_HANDLING;

@@ -670,24 +670,24 @@ public final class SessionRefreshCoordinator {
             this.sessionManager = sessionManager;
         }
 
-        @Override
         /**
          * Reenvía al almacenamiento seguro la comprobación de caducidad próxima del access token.
          *
          * @param leewaySeconds margen de seguridad en segundos usado para considerar el token como "a punto de expirar".
          * @return {@code true} si conviene refrescar antes de seguir usando el token actual.
          */
+        @Override
         public boolean isAccessTokenExpiringWithinSeconds(long leewaySeconds) {
             return sessionManager.isAccessTokenExpiringWithinSeconds(leewaySeconds);
         }
 
-        @NonNull
-        @Override
         /**
          * Obtiene un snapshot consistente de la sesión actual desde {@link SecureSessionManager}.
          *
          * @return sesión almacenada adaptada al formato ligero que usa el coordinador.
          */
+        @NonNull
+        @Override
         public StoredSession getStoredSession() {
             SecureSessionManager.SessionSnapshot snapshot = sessionManager.getSessionSnapshot();
             return new StoredSession(
@@ -704,10 +704,10 @@ public final class SessionRefreshCoordinator {
             sessionManager.saveLoginSync(username, accessToken, refreshToken);
         }
 
-        @Override
         /**
          * Elimina la sesión persistida cuando el refresh concluye que ya no es recuperable.
          */
+        @Override
         public void logout() {
             sessionManager.logout();
         }
@@ -726,8 +726,6 @@ public final class SessionRefreshCoordinator {
             this.appContext = appContext.getApplicationContext();
         }
 
-        @NonNull
-        @Override
         /**
          * Ejecuta la llamada real a {@code /token/refresh} y traduce la respuesta Retrofit al resultado interno del coordinador.
          *
@@ -735,6 +733,8 @@ public final class SessionRefreshCoordinator {
          * @return resultado crudo del backend con éxito o metadatos de error ya clasificados.
          * @throws IOException si el transporte HTTP falla antes de obtener respuesta.
          */
+        @NonNull
+        @Override
         public BackendRefreshResult refresh(@NonNull String refreshToken) throws IOException {
             Response<LoginResponseDto> refreshResp = RetrofitProvider.authApi(appContext)
                     .refresh(new RefreshRequestDto(refreshToken))

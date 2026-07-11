@@ -24,16 +24,16 @@ public class ActividadEntity {
 
     @PrimaryKey
     @NonNull
-    public String localId;
+    public String localId = "";
 
     @NonNull
-    public String accountKey;
+    public String accountKey = "";
 
     @Nullable
     public Integer remoteId;
 
     @NonNull
-    public String tipo;
+    public String tipo = "";
 
     public int distancia;
 
@@ -91,11 +91,11 @@ public class ActividadEntity {
 
     @NonNull
     @ColumnInfo(name = "fecha_ruta")
-    public String fechaRuta;
+    public String fechaRuta = "";
 
     @NonNull
     @ColumnInfo(name = "sync_state")
-    public String syncState;
+    public String syncState = "";
 
     @Nullable
     @ColumnInfo(name = "last_error")

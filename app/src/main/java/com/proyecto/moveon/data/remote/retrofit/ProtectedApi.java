@@ -17,7 +17,6 @@ import retrofit2.http.Url;
  */
 public interface ProtectedApi {
 
-    @GET
     /**
      * GET genérico a cualquier endpoint protegido. Usa {@code JsonElement}
      * como tipo de retorno para permitir a los repositorios parsear a su
@@ -26,9 +25,9 @@ public interface ProtectedApi {
      * @param url URL relativa al endpoint protegido.
      * @return llamada Retrofit con el JSON devuelto por el backend.
      */
+    @GET
     Call<JsonElement> get(@Url String url);
 
-    @POST
     /**
      * POST genérico con cuerpo JSON. Pensado para endpoints protegidos
      * que crean recursos o lanzan acciones (login no, que es público).
@@ -37,9 +36,9 @@ public interface ProtectedApi {
      * @param body cuerpo JSON a enviar.
      * @return llamada Retrofit con la respuesta JSON del backend.
      */
+    @POST
     Call<JsonElement> post(@Url String url, @Body JsonElement body);
 
-    @PATCH
     /**
      * PATCH genérico usado por los repositorios offline-first para enviar
      * solo los campos modificados del recurso (perfil, preferencias, etc.).
@@ -48,9 +47,9 @@ public interface ProtectedApi {
      * @param body JSON con los campos a actualizar.
      * @return llamada Retrofit con la respuesta del backend.
      */
+    @PATCH
     Call<JsonElement> patch(@Url String url, @Body JsonElement body);
 
-    @DELETE
     /**
      * DELETE genérico para endpoints protegidos (p. ej. borrar una
      * actividad). Se mantiene devolviendo {@code JsonElement} por
@@ -59,10 +58,9 @@ public interface ProtectedApi {
      * @param url URL relativa al endpoint.
      * @return llamada Retrofit con la respuesta del backend.
      */
+    @DELETE
     Call<JsonElement> delete(@Url String url);
 
-    @Multipart
-    @POST
     /**
      * POST multipart para subir ficheros (p. ej. foto de perfil). Se define
      * por separado de {@link #post} porque Retrofit exige anotación
@@ -72,5 +70,7 @@ public interface ProtectedApi {
      * @param file parte multipart con el fichero y sus metadatos.
      * @return llamada Retrofit con la respuesta del backend tras la subida.
      */
+    @Multipart
+    @POST
     Call<JsonElement> postMultipart(@Url String url, @Part MultipartBody.Part file);
 }

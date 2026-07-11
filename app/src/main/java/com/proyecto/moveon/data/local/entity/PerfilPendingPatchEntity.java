@@ -12,13 +12,13 @@ public class PerfilPendingPatchEntity {
 
     @PrimaryKey
     @NonNull
-    public String operationId;
+    public String operationId = "";
 
     @NonNull
-    public String accountKey;
+    public String accountKey = "";
 
     @NonNull
-    public String payloadJson;
+    public String payloadJson = "";
 
     public long createdAtMs;
     public int attempts;
@@ -27,5 +27,5 @@ public class PerfilPendingPatchEntity {
     public String lastError;
 
     @NonNull
-    public String state;
+    public String state = "";
 }

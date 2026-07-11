@@ -687,10 +687,7 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                 .toLowerCase(Locale.ROOT)
                 .trim();
         if (normalized.length() < 5) {
-            normalized = (normalized + "moveon");
-        }
-        if (normalized.length() < 5) {
-            normalized = "moveon";
+            normalized += "moveon";
         }
         return normalized;
     }

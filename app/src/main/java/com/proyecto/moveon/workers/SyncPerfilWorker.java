@@ -35,8 +35,6 @@ public class SyncPerfilWorker extends Worker {
         super(context, params);
     }
 
-    @NonNull
-    @Override
     /**
      * Sincroniza los cambios locales del perfil con el backend. Si aún no
      * hay sesión ({@code accountKey == null}) termina con
@@ -48,6 +46,8 @@ public class SyncPerfilWorker extends Worker {
      *
      * @return {@link Result#success()} al terminar, o {@link Result#retry()} si la subida falla y merece un reintento.
      */
+    @NonNull
+    @Override
     public Result doWork() {
         String accountKey = SecureSessionManager
                 .getInstance(getApplicationContext())

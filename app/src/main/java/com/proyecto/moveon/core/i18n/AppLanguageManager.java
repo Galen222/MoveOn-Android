@@ -246,9 +246,9 @@ public final class AppLanguageManager {
     }
 
     /**
-     * Recupera la locale principal del sistema con un fallback defensivo a {@link Locale#ENGLISH}.
+     * Recupera la locale principal del sistema.
      *
-     * @return locale principal del sistema o un fallback seguro.
+     * @return locale principal configurada en el sistema.
      */
     @NonNull
     private static Locale getSystemLocale() {
@@ -260,7 +260,6 @@ public final class AppLanguageManager {
             if (locale != null) return locale;
         }
 
-        Locale fallback = Locale.getDefault();
-        return fallback != null ? fallback : Locale.ENGLISH;
+        return Locale.getDefault();
     }
 }

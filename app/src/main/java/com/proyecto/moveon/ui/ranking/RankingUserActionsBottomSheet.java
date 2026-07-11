@@ -118,7 +118,7 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
      * @param savedInstanceState estado previo del fragment.
      * @return raíz de la vista del sheet.
      */
-    @Nullable
+    @NonNull
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,

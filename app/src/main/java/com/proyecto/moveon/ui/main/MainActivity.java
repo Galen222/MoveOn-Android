@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
      * @param newBase contexto original.
      */
     @Override
-    protected void attachBaseContext(Context newBase) {
+    protected void attachBaseContext(@NonNull Context newBase) {
         super.attachBaseContext(AppLanguageManager.wrapContext(newBase));
     }
 
@@ -336,7 +336,7 @@ public class MainActivity extends AppCompatActivity {
      * @param intent intent entrante.
      */
     @Override
-    protected void onNewIntent(Intent intent) {
+    protected void onNewIntent(@NonNull Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
         handleLaunchIntent(intent);

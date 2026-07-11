@@ -159,7 +159,6 @@ public final class StatsResumen {
     // Factory: estado vacío con defaults
     // -------------------------------------------------------------------------
 
-    @NonNull
     /**
      * Devuelve un resumen vacío pero con los objetivos del usuario ya
      * aplicados. Se usa como estado inicial antes de tener datos locales o
@@ -170,6 +169,7 @@ public final class StatsResumen {
      * @param monthlyGoalMeters objetivo mensual del usuario en metros.
      * @return resumen con todos los totales a cero y los objetivos indicados.
      */
+    @NonNull
     public static StatsResumen empty(long weeklyGoalMeters, long monthlyGoalMeters) {
         return new StatsResumen(
                 0L, 0L, 0L,

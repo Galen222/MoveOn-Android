@@ -167,7 +167,7 @@ public final class TrackingViewModel extends AndroidViewModel {
         TrackingState current = trackingState.getValue();
         trackingController.stopTracking();
 
-        if (!canSaveTracking(current)) {
+        if (current == null || !canSaveTracking(current)) {
             trackingController.resetTracking();
             return;
         }

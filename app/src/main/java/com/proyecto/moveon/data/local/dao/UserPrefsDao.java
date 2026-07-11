@@ -18,7 +18,6 @@ import com.proyecto.moveon.data.local.entity.UserPrefsEntity;
 @Dao
 public interface UserPrefsDao {
 
-    @Query("SELECT * FROM user_prefs WHERE accountKey = :accountKey LIMIT 1")
     /**
      * Observable reactivo de la fila de preferencias del usuario indicado.
      * La UI lo suscribe para recalcular progreso y objetivos sin tener
@@ -27,9 +26,9 @@ public interface UserPrefsDao {
      * @param accountKey clave de la cuenta cuyas preferencias se observan.
      * @return LiveData que emite la fila actual cada vez que cambia.
      */
+    @Query("SELECT * FROM user_prefs WHERE accountKey = :accountKey LIMIT 1")
     LiveData<UserPrefsEntity> observe(@androidx.annotation.NonNull String accountKey);
 
-    @Query("SELECT * FROM user_prefs WHERE accountKey = :accountKey LIMIT 1")
     /**
      * Lectura síncrona usada desde hilos de I/O (workers, repositorios).
      * Devuelve {@code null} si aún no hay preferencias guardadas para la
@@ -38,9 +37,9 @@ public interface UserPrefsDao {
      * @param accountKey clave de la cuenta a consultar.
      * @return fila existente o {@code null} si no hay preferencias persistidas todavía.
      */
+    @Query("SELECT * FROM user_prefs WHERE accountKey = :accountKey LIMIT 1")
     UserPrefsEntity getNow(@androidx.annotation.NonNull String accountKey);
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
     /**
      * Inserta o reemplaza la fila de preferencias: hay como mucho una por
      * cuenta, así que la estrategia {@link OnConflictStrategy#REPLACE}
@@ -48,5 +47,6 @@ public interface UserPrefsDao {
      *
      * @param prefs entidad con el estado que debe quedar persistido.
      */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     void upsert(@androidx.annotation.NonNull UserPrefsEntity prefs);
 }

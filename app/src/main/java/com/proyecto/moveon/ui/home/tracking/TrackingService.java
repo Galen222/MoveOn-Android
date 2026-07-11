@@ -264,12 +264,12 @@ public final class TrackingService extends Service implements SensorEventListene
      * Binder local para exponer el propio servicio al controlador.
      */
     public final class LocalBinder extends Binder {
-        @NonNull
         /**
          * Devuelve la instancia viva del servicio enlazado para que el controlador pueda invocar su API pública.
          *
          * @return servicio de tracking actualmente expuesto por este binder local.
          */
+        @NonNull
         public TrackingService getService() {
             return TrackingService.this;
         }
@@ -277,22 +277,22 @@ public final class TrackingService extends Service implements SensorEventListene
 
     private final IBinder binder = new LocalBinder();
 
-    @NonNull
     /**
      * Expone el flujo observable con el snapshot completo del tracking.
      *
      * @return {@link LiveData} que publica estados construidos por {@link #publishState()}.
      */
+    @NonNull
     public LiveData<TrackingState> getStateLiveData() {
         return stateLiveData;
     }
 
-    @NonNull
     /**
      * Expone los avisos transitorios asociados a auto-pausas y detección de velocidad sospechosa.
      *
      * @return {@link LiveData} con alertas consumibles por la UI de tracking.
      */
+    @NonNull
     public LiveData<TrackingAlert> getTrackingAlertLiveData() {
         return trackingAlertLiveData;
     }
@@ -399,12 +399,12 @@ public final class TrackingService extends Service implements SensorEventListene
     private float accelFilteredMag = ACCEL_RESTING_GRAVITY_G;
 
     private final LocationCallback locationCallback = new LocationCallback() {
-        @Override
         /**
          * Recibe el último lote de localizaciones del proveedor fused y filtra rápidamente lecturas nulas o demasiado imprecisas.
          *
          * @param result paquete de localizaciones entregado por Google Play Services.
          */
+        @Override
         public void onLocationResult(@NonNull LocationResult result) {
             Location location = result.getLastLocation();
             if (location == null) return;
@@ -413,10 +413,10 @@ public final class TrackingService extends Service implements SensorEventListene
         }
     };
 
-    @Override
     /**
      * Inicializa dependencias del servicio, canal de notificación y posible restauración de sesión persistida.
      */
+    @Override
     public void onCreate() {
         super.onCreate();
         sessionStore = new TrackingSessionStore(getApplicationContext());
@@ -440,7 +440,6 @@ public final class TrackingService extends Service implements SensorEventListene
         }
     }
 
-    @Override
     /**
      * Atiende acciones disparadas desde la notificación y asegura que el servicio siga en foreground.
      *
@@ -449,6 +448,7 @@ public final class TrackingService extends Service implements SensorEventListene
      * @param startId identificador de esta petición de arranque.
      * @return {@link #START_STICKY} para permitir recreación del servicio si el proceso muere.
      */
+    @Override
     public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
         String action = intent != null ? intent.getAction() : null;
 
@@ -480,22 +480,22 @@ public final class TrackingService extends Service implements SensorEventListene
         return START_STICKY;
     }
 
-    @NonNull
-    @Override
     /**
      * Devuelve el binder local que permite a la capa UI interactuar con el servicio ya creado.
      *
      * @param intent intent de enlace recibido por Android.
      * @return binder local con acceso a {@link TrackingService}.
      */
+    @NonNull
+    @Override
     public IBinder onBind(@NonNull Intent intent) {
         return binder;
     }
 
-    @Override
     /**
      * Persiste el último snapshot, detiene sensores y libera el scheduler antes de destruir el servicio.
      */
+    @Override
     public void onDestroy() {
         serviceDestroyedAtEpochMs = System.currentTimeMillis();
         logDiagnosticEvent("SERVICE_DESTROYED", null);
@@ -662,12 +662,12 @@ public final class TrackingService extends Service implements SensorEventListene
         stopSelf();
     }
 
-    @SuppressWarnings("MissingPermission")
     /**
      * Activa las actualizaciones de localización con la configuración de frecuencia y distancia mínima del tracking.
      *
      * <p>Se anota con {@code MissingPermission} porque la comprobación de permisos ocurre fuera, en la capa que controla el servicio.</p>
      */
+    @SuppressWarnings("MissingPermission")
     private void startLocationUpdates() {
         LocationRequest request = new LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY,
@@ -1316,12 +1316,12 @@ public final class TrackingService extends Service implements SensorEventListene
         }
     }
 
-    @Override
     /**
      * Procesa muestras del acelerómetro, extrae evidencia reciente de movimiento y alimenta el clasificador andar/correr.
      *
      * @param event evento del sensor recibido por Android.
      */
+    @Override
     public void onSensorChanged(@NonNull SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
             if (currentStatus == TrackingState.Status.RUNNING
@@ -1485,13 +1485,13 @@ public final class TrackingService extends Service implements SensorEventListene
         }
     }
 
-    @Override
     /**
      * Callback obligatorio de {@link SensorEventListener} que aquí se ignora porque la clasificación no depende del nivel de precisión reportado.
      *
      * @param sensor sensor cuyo nivel de precisión ha cambiado.
      * @param accuracy nuevo nivel de precisión comunicado por el sistema.
      */
+    @Override
     public void onAccuracyChanged(@NonNull Sensor sensor, int accuracy) {
         // Sin uso.
     }
@@ -1981,14 +1981,13 @@ public final class TrackingService extends Service implements SensorEventListene
         stopAccelerometer();
     }
 
-    @NonNull
-    @Nullable
     /**
      * Convierte una {@link Location} opcional al tipo ligero {@link LatLng} usado por el estado público.
      *
      * @param location localización Android que se quiere exponer.
      * @return coordenada equivalente o {@code null} si no hay posición disponible.
      */
+    @Nullable
     private LatLng locationToLatLng(@Nullable Location location) {
         if (location == null) {
             return null;
@@ -2584,12 +2583,12 @@ private void openAppForStopConfirmation() {
     );
 }
 
-    @NonNull
     /**
      * Construye el título principal de la notificación según el estado y el tipo de actividad detectado.
      *
      * @return título localizado mostrado en la cabecera de la notificación.
      */
+    @NonNull
     private String buildNotificationTitle() {
         switch (currentStatus) {
             case RUNNING:
@@ -2613,12 +2612,12 @@ private void openAppForStopConfirmation() {
         }
     }
 
-    @NonNull
     /**
      * Genera la línea compacta secundaria de la notificación combinando distancia, ritmo o texto de estado.
      *
      * @return resumen breve apto para la vista compacta.
      */
+    @NonNull
     private String buildNotificationCompactText() {
         String distanceText = formatNotificationDistance();
         String instantPace = calculateInstantPace();
@@ -2648,12 +2647,12 @@ private void openAppForStopConfirmation() {
         }
     }
 
-    @NonNull
     /**
      * Resume en una sola frase el estado relevante de la sesión para el subtítulo de la notificación expandida.
      *
      * @return texto corto localizado acorde al estado actual.
      */
+    @NonNull
     private String buildNotificationSummaryText() {
         switch (currentStatus) {
             case RUNNING:
@@ -2679,12 +2678,12 @@ private void openAppForStopConfirmation() {
         }
     }
 
-    @NonNull
     /**
      * Devuelve la variante textual específica para el título de la notificación según el tipo de actividad.
      *
      * @return texto corto localizado para interpolar en el título.
      */
+    @NonNull
     private String buildNotificationActivityTitleLabel() {
         if (activityType == TrackingState.ActivityType.RUNNING_ACTIVITY) {
             return tr(R.string.mo_tracking_notification_activity_run);
@@ -2692,12 +2691,12 @@ private void openAppForStopConfirmation() {
         return tr(R.string.mo_tracking_notification_activity_walk);
     }
 
-    @NonNull
     /**
      * Formatea la distancia acumulada usando metros o kilómetros según la magnitud actual.
      *
      * @return distancia localizada lista para la notificación.
      */
+    @NonNull
     private String formatNotificationDistance() {
         if (distanceMeters >= 1000) {
             return tr(R.string.tracking_distance_km_format, distanceMeters / 1000.0f);
@@ -2745,13 +2744,13 @@ private void openAppForStopConfirmation() {
         return notificationTextContext().getString(resId, args);
     }
 
-    @NonNull
     /**
      * Convierte una duración en segundos al formato legible usado por la UI y la notificación.
      *
      * @param seconds duración total a formatear.
      * @return cadena en formato {@code mm:ss} o {@code h:mm:ss}.
      */
+    @NonNull
     private String formatElapsed(long seconds) {
         long hours = seconds / 3600L;
         long minutes = (seconds % 3600L) / 60L;

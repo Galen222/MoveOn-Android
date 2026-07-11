@@ -48,13 +48,13 @@ public final class TrackingSessionStore {
         prefs.edit().putString(KEY_SNAPSHOT_JSON, gson.toJson(snapshot)).apply();
     }
 
-    @Nullable
     /**
      * Recupera el último snapshot guardado o {@code null} si no hay ninguno
      * (primera ejecución, o el usuario cerró la actividad previamente).
      *
      * @return snapshot deserializado o {@code null} si no había estado persistido.
      */
+    @Nullable
     public Snapshot restore() {
         String json = prefs.getString(KEY_SNAPSHOT_JSON, null);
         if (json == null || json.trim().isEmpty()) {

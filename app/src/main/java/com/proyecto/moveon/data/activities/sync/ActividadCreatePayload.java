@@ -103,7 +103,6 @@ public final class ActividadCreatePayload {
         this.fechaRutaIso = fechaRutaIso;
     }
 
-    @NonNull
     /**
      * Serializa el payload al JSON que espera el backend, con los nombres
      * en {@code snake_case}. Se hace a mano en vez de con Gson para
@@ -111,6 +110,7 @@ public final class ActividadCreatePayload {
      *
      * @return objeto JSON listo para adjuntar como cuerpo de la petición HTTP.
      */
+    @NonNull
     public JsonObject toJson() {
         JsonObject json = new JsonObject();
         json.addProperty("client_local_id", clientLocalId);
@@ -142,7 +142,6 @@ public final class ActividadCreatePayload {
         return json;
     }
 
-    @NonNull
     /**
      * Convierte una fila de Room en un payload de creación remoto. Se usa
      * al drenar la cola de actividades pendientes: el Worker lee cada
@@ -151,6 +150,7 @@ public final class ActividadCreatePayload {
      * @param entity fila local de la base de datos con el estado actual de la actividad.
      * @return payload equivalente listo para serializar y enviar al endpoint de creación.
      */
+    @NonNull
     public static ActividadCreatePayload fromEntity(@NonNull ActividadEntity entity) {
         return new ActividadCreatePayload(
                 entity.localId,

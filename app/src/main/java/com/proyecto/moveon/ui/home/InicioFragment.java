@@ -197,22 +197,22 @@ public class InicioFragment extends Fragment
         }
     }
 
-    @SuppressWarnings("MissingPermission")
     /**
      * Activa la capa de ubicación del mapa únicamente cuando el permiso sigue
      * concedido en tiempo de ejecución.
      */
+    @SuppressWarnings("MissingPermission")
     private void enableMapMyLocation() {
         if (googleMap != null && TrackingRequirementsManager.hasLocationPermission(requireContext())) {
             googleMap.setMyLocationEnabled(true);
         }
     }
 
-    @SuppressWarnings("MissingPermission")
     /**
      * Intenta recentrar la cámara sobre la última ubicación conocida del usuario
      * y usa una posición por defecto cuando todavía no hay fix disponible.
      */
+    @SuppressWarnings("MissingPermission")
     private void moveCameraToCurrentLocation() {
         if (googleMap == null
                 || !TrackingRequirementsManager.hasLocationPermission(requireContext())) {

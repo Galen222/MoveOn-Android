@@ -64,11 +64,8 @@ public final class AppSessionProvider {
                             .writeTimeout(5, TimeUnit.SECONDS)
                             .build();
 
-                    String baseUrl = BuildConfig.BASE_URL;
-                    if (!baseUrl.endsWith("/")) baseUrl += "/";
-
                     Retrofit retrofit = new Retrofit.Builder()
-                            .baseUrl(baseUrl)
+                            .baseUrl(BuildConfig.BASE_URL)
                             .client(cleanClient)
                             .addConverterFactory(GsonConverterFactory.create())
                             .build();

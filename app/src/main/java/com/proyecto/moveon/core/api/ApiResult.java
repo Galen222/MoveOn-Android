@@ -34,7 +34,6 @@ public final class ApiResult<T> {
      */
     public boolean isSuccess() { return error == null; }
 
-    @NonNull
     /**
      * Construye un resultado de éxito con el payload recibido.
      *
@@ -42,11 +41,11 @@ public final class ApiResult<T> {
      * @param data payload no nulo devuelto al llamador.
      * @return resultado de éxito envolviendo {@code data}.
      */
+    @NonNull
     public static <T> ApiResult<T> success(@NonNull T data) {
         return new ApiResult<>(data, null);
     }
 
-    @NonNull
     /**
      * Variante para operaciones que completan sin payload (p. ej. DELETE
      * o PATCH fire-and-forget). Evita introducir {@code Void} a mano y
@@ -54,11 +53,11 @@ public final class ApiResult<T> {
      *
      * @return resultado de éxito sin dato.
      */
+    @NonNull
     public static ApiResult<Void> successVoid() {
         return new ApiResult<>(null, null);
     }
 
-    @NonNull
     /**
      * Construye un resultado de fallo con el {@link ApiError} producido.
      *
@@ -66,6 +65,7 @@ public final class ApiResult<T> {
      * @param error error que impidió completar la operación.
      * @return resultado de fallo sin {@code data}.
      */
+    @NonNull
     public static <T> ApiResult<T> failure(@NonNull ApiError error) {
         return new ApiResult<>(null, error);
     }

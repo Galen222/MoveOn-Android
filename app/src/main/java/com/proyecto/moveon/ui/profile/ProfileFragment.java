@@ -664,13 +664,13 @@ public class ProfileFragment extends Fragment {
 
     // ── Utilidades ────────────────────────────────────────────────────────────
 
-    @NonNull
     /**
      * Convierte una fecha ISO del perfil al formato medio del idioma activo.
      * 
      * @param fecha fecha original en formato ISO.
      * @return fecha localizada, o el valor original si no puede parsearse.
      */
+    @NonNull
     private String formatFecha(@NonNull String fecha) {
         try {
             Locale locale = AppLanguageManager.getActiveLocale(requireContext());
@@ -682,7 +682,6 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    @NonNull
     /**
      * Añade un parámetro de versión a la URL remota de la foto para invalidar
      * caché tras una actualización de imagen.
@@ -691,12 +690,12 @@ public class ProfileFragment extends Fragment {
      * @param version versión de foto asociada al perfil.
      * @return URL final con query param de versión.
      */
+    @NonNull
     private String appendPhotoVersion(@NonNull String baseUrl, int version) {
         String separator = baseUrl.contains("?") ? "&" : "?";
         return baseUrl + separator + "v=" + version;
     }
 
-    @NonNull
     /**
      * Extrae un mensaje usable desde un resultado de validación devolviendo un
      * fallback genérico cuando el validador no aporta texto.
@@ -704,12 +703,12 @@ public class ProfileFragment extends Fragment {
      * @param result resultado de validación emitido por {@link AppInputValidator}.
      * @return mensaje apto para feedback al usuario.
      */
+    @NonNull
     private String validationError(@NonNull AppInputValidator.ValidationResult<?> result) {
         String msg = result.getErrorMessage();
         return msg != null ? msg : getString(R.string.vm_error_generico);
     }
 
-    @Nullable
     /**
      * Copia a caché local el contenido seleccionado desde el picker para poder
      * tratarlo como archivo subible por el repositorio.
@@ -717,6 +716,7 @@ public class ProfileFragment extends Fragment {
      * @param uri uri elegida por el usuario en el picker del sistema.
      * @return archivo temporal listo para subida, o {@code null} si falla la lectura.
      */
+    @Nullable
     private File uriToFile(@NonNull Uri uri) {
         try {
             InputStream inputStream =

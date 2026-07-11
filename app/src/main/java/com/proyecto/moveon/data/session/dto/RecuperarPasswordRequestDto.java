@@ -35,7 +35,6 @@ public final class RecuperarPasswordRequestDto {
         this.locale = normalizeLocale(locale);
     }
 
-    @NonNull
     /**
      * Reduce el locale recibido a uno de los dos únicos valores que el
      * backend acepta para elegir la plantilla del email de recuperación.
@@ -43,6 +42,7 @@ public final class RecuperarPasswordRequestDto {
      * @param raw locale tal y como llega de {@link java.util.Locale} o de la configuración de la app.
      * @return {@code "es"} si el locale es español; {@code "en"} en cualquier otro caso.
      */
+    @NonNull
     private static String normalizeLocale(@NonNull String raw) {
         String normalized = raw.trim().toLowerCase(Locale.ROOT);
         return "es".equals(normalized) ? "es" : "en";

@@ -380,8 +380,7 @@ public final class SocialAuthManager {
         if (!StringUtils.hasText(clientId)) {
             return "<missing>";
         }
-        int len = clientId.length();
-        return len <= 12 ? clientId : clientId.substring(len - 12);
+        return clientId.substring(Math.max(0, clientId.length() - 12));
     }
 
     /**

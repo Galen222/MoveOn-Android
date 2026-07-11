@@ -23,7 +23,6 @@ public class LegalTextBottomSheet extends BaseExpandedBottomSheetDialogFragment 
 
     @Nullable private BottomSheetLegalTextBinding binding;
 
-    @NonNull
     /**
      * Factoría que crea el sheet con los argumentos ya empaquetados en un
      * {@link Bundle}. Usar esta vía en vez de pasar los datos al constructor
@@ -34,6 +33,7 @@ public class LegalTextBottomSheet extends BaseExpandedBottomSheetDialogFragment 
      * @param content cuerpo legal a mostrar (términos, privacidad…).
      * @return instancia lista para mostrar con {@code show(FragmentManager, tag)}.
      */
+    @NonNull
     public static LegalTextBottomSheet newInstance(@NonNull String title, @NonNull String content) {
         LegalTextBottomSheet fragment = new LegalTextBottomSheet();
         Bundle args = new Bundle();
@@ -43,8 +43,6 @@ public class LegalTextBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return fragment;
     }
 
-    @Nullable
-    @Override
     /**
      * Infla el layout del sheet y guarda el ViewBinding; la referencia se
      * libera en {@link #onDestroyView()}.
@@ -54,6 +52,8 @@ public class LegalTextBottomSheet extends BaseExpandedBottomSheetDialogFragment 
      * @param savedInstanceState estado guardado o {@code null}.
      * @return la raíz de la vista inflada.
      */
+    @Nullable
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
@@ -61,7 +61,6 @@ public class LegalTextBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         return binding.getRoot();
     }
 
-    @Override
     /**
      * Vuelca los argumentos del {@link Bundle} a los TextView del sheet.
      * Si no hay argumentos o el binding no está disponible (situación
@@ -71,6 +70,7 @@ public class LegalTextBottomSheet extends BaseExpandedBottomSheetDialogFragment 
      * @param view vista raíz creada por {@link #onCreateView}.
      * @param savedInstanceState estado guardado o {@code null}.
      */
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
@@ -86,11 +86,11 @@ public class LegalTextBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         b.btnCloseLegal.setOnClickListener(v -> dismissAllowingStateLoss());
     }
 
-    @Override
     /**
      * Libera el ViewBinding para evitar fugas de la jerarquía de vistas
      * mientras el fragment sigue vivo (por ejemplo durante una rotación).
      */
+    @Override
     public void onDestroyView() {
         binding = null;
         super.onDestroyView();

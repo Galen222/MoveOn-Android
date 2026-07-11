@@ -106,7 +106,7 @@ public final class TrackingAlertBottomSheet extends BaseExpandedBottomSheetDialo
         this.listener = listener;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
@@ -124,45 +124,50 @@ public final class TrackingAlertBottomSheet extends BaseExpandedBottomSheetDialo
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        BottomSheetTrackingAlertBinding b = binding;
+        if (b == null) {
+            throw new IllegalStateException("Tracking alert binding is not available");
+        }
+
         Bundle args = requireArguments();
         setCancelable(args.getBoolean(ARG_CANCELABLE, true));
 
         TrackingAlert.Type type = TrackingAlert.Type.valueOf(args.getString(ARG_TYPE));
-        binding.tvTitle.setText(args.getString(ARG_TITLE));
-        binding.tvMessage.setText(args.getString(ARG_MESSAGE));
-        binding.btnPrimary.setText(args.getString(ARG_PRIMARY));
-        binding.btnSecondary.setText(args.getString(ARG_SECONDARY));
+        b.tvTitle.setText(args.getString(ARG_TITLE));
+        b.tvMessage.setText(args.getString(ARG_MESSAGE));
+        b.btnPrimary.setText(args.getString(ARG_PRIMARY));
+        b.btnSecondary.setText(args.getString(ARG_SECONDARY));
 
         String tertiaryLabel = args.getString(ARG_TERTIARY);
         if (StringUtils.hasText(tertiaryLabel)) {
-            binding.btnTertiary.setVisibility(View.VISIBLE);
-            binding.btnTertiary.setText(tertiaryLabel);
+            b.btnTertiary.setVisibility(View.VISIBLE);
+            b.btnTertiary.setText(tertiaryLabel);
         } else {
-            binding.btnTertiary.setVisibility(View.GONE);
+            b.btnTertiary.setVisibility(View.GONE);
         }
 
         if (type == TrackingAlert.Type.STATIONARY_AUTO_PAUSE) {
-            styleOutlinedActionButton(binding.btnSecondary);
-            if (binding.btnTertiary.getVisibility() == View.VISIBLE) {
-                styleOutlinedActionButton(binding.btnTertiary);
+            styleOutlinedActionButton(b.btnSecondary);
+            if (b.btnTertiary.getVisibility() == View.VISIBLE) {
+                styleOutlinedActionButton(b.btnTertiary);
             }
         }
 
-        binding.btnPrimary.setOnClickListener(v -> {
+        b.btnPrimary.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onPrimaryAction(type);
             }
             dismissAllowingStateLoss();
         });
 
-        binding.btnSecondary.setOnClickListener(v -> {
+        b.btnSecondary.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onSecondaryAction(type);
             }
             dismissAllowingStateLoss();
         });
 
-        binding.btnTertiary.setOnClickListener(v -> {
+        b.btnTertiary.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onTertiaryAction(type);
             }

@@ -34,8 +34,6 @@ public class SyncActividadesWorker extends Worker {
         super(context, params);
     }
 
-    @NonNull
-    @Override
     /**
      * Sincroniza las actividades pendientes de subir. Si no hay sesión
      * ({@code accountKey == null}) devuelve {@link Result#success()} para
@@ -47,6 +45,8 @@ public class SyncActividadesWorker extends Worker {
      *
      * @return {@link Result#success()} al terminar, o {@link Result#retry()} si la sincronización falla por red y procede reintentar.
      */
+    @NonNull
+    @Override
     public Result doWork() {
         String accountKey = SecureSessionManager
                 .getInstance(getApplicationContext())

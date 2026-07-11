@@ -33,13 +33,13 @@ public final class TrackingAlert {
         this.type = type;
     }
 
-    @NonNull
     /**
      * Devuelve el tipo concreto de la alerta para que la UI decida el
      * texto, el icono y la severidad a mostrar.
      *
      * @return tipo de alerta con el que se construyó esta instancia.
      */
+    @NonNull
     public Type getType() {
         return type;
     }

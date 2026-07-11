@@ -28,18 +28,21 @@ import java.util.regex.Pattern;
 
 /**
  * Validador único de inputs del cliente.
- *
- * Incluye:
- * - Validación funcional alineada con backend para username, email, password, fecha, altura y peso.
- * - Moderación de texto replicando la lógica del backend:
- *   - mismos tokens reservados de username
- *   - misma normalización/leetspeak
- *   - mismo split para nombre real
- *   - mismos diccionarios externos es.txt / en.txt
- *
- * Para que la moderación sea idéntica a backend, debes colocar los diccionarios en:
- * app/src/main/assets/data/profanity/ldnoobwv2/es.txt
- * app/src/main/assets/data/profanity/ldnoobwv2/en.txt
+ * <p>Incluye:</p>
+ * <ul>
+ *   <li>Validación funcional alineada con backend para username, email, password, fecha, altura y peso.</li>
+ *   <li>Moderación de texto replicando la lógica del backend:
+ *     <ul>
+ *       <li>mismos tokens reservados de username;</li>
+ *       <li>misma normalización/leetspeak;</li>
+ *       <li>mismo split para nombre real;</li>
+ *       <li>mismos diccionarios externos es.txt / en.txt.</li>
+ *     </ul>
+ *   </li>
+ * </ul>
+ * <p>Para que la moderación sea idéntica a backend, los diccionarios deben estar en
+ * {@code app/src/main/assets/data/profanity/ldnoobwv2/es.txt} y
+ * {@code app/src/main/assets/data/profanity/ldnoobwv2/en.txt}.</p>
  */
 public final class AppInputValidator {
 
@@ -703,8 +706,9 @@ public final class AppInputValidator {
         if (cached != null) return cached;
 
         synchronized (AppInputValidator.class) {
-            if (cachedDictionary != null) {
-                return cachedDictionary;
+            cached = cachedDictionary;
+            if (cached != null) {
+                return cached;
             }
 
             AssetManager assetManager = context.getApplicationContext().getAssets();
@@ -765,8 +769,9 @@ public final class AppInputValidator {
                 }
             }
 
-            cachedDictionary = new DictionaryCache(singleTerms, phraseTerms, usernameTerms);
-            return cachedDictionary;
+            DictionaryCache loaded = new DictionaryCache(singleTerms, phraseTerms, usernameTerms);
+            cachedDictionary = loaded;
+            return loaded;
         }
     }
 

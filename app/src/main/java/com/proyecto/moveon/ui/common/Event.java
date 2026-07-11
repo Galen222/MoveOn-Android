@@ -21,7 +21,6 @@ public final class Event<T> {
         this.content = content;
     }
 
-    @Nullable
     /**
      * Devuelve el contenido sólo la primera vez que se llama y lo marca
      * como consumido. Las siguientes llamadas ven {@code null}, evitando
@@ -29,6 +28,7 @@ public final class Event<T> {
      *
      * @return el contenido la primera vez, {@code null} después.
      */
+    @Nullable
     public T getContentIfNotHandled() {
         if (handled) return null;
         handled = true;

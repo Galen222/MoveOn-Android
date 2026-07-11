@@ -549,16 +549,27 @@ public final class ApiErrorParser {
      * @return categoría de {@link ApiErrorType} que mejor representa el fallo.
      */
     private static ApiErrorType mapHttpToType(int code) {
-        if (code == 401) return ApiErrorType.UNAUTHORIZED;
-        if (code == 403) return ApiErrorType.FORBIDDEN;
-        if (code == 404) return ApiErrorType.NOT_FOUND;
-        if (code == 408) return ApiErrorType.TIMEOUT;
-        if (code == 409) return ApiErrorType.CONFLICT;
-        if (code == 413) return ApiErrorType.PAYLOAD_TOO_LARGE;
-        if (code == 429) return ApiErrorType.RATE_LIMIT;
-        if (code == 400 || code == 422) return ApiErrorType.VALIDATION;
-        if (code >= 500) return ApiErrorType.SERVER;
-        return ApiErrorType.UNKNOWN;
+        switch (code) {
+            case 400:
+            case 422:
+                return ApiErrorType.VALIDATION;
+            case 401:
+                return ApiErrorType.UNAUTHORIZED;
+            case 403:
+                return ApiErrorType.FORBIDDEN;
+            case 404:
+                return ApiErrorType.NOT_FOUND;
+            case 408:
+                return ApiErrorType.TIMEOUT;
+            case 409:
+                return ApiErrorType.CONFLICT;
+            case 413:
+                return ApiErrorType.PAYLOAD_TOO_LARGE;
+            case 429:
+                return ApiErrorType.RATE_LIMIT;
+            default:
+                return code >= 500 ? ApiErrorType.SERVER : ApiErrorType.UNKNOWN;
+        }
     }
 
     private static final class DetailParseResult {

@@ -61,7 +61,7 @@ public final class ProfileTrackingHelper {
      * Recalcula y pinta el estado visible de todos los requisitos necesarios para el tracking.
      */
     public void updateTrackingRequirementsUi() {
-        if (binding == null || !fragment.isAdded()) return;
+        if (!fragment.isAdded()) return;
 
         bindTrackingRequirementRow(
                 binding.tvTrackingLocationStatus,

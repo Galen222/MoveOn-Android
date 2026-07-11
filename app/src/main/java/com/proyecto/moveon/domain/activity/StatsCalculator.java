@@ -219,7 +219,6 @@ public final class StatsCalculator {
 
     // ── Privados ──────────────────────────────────────────────────────────────
 
-    @NonNull
     /**
      * Construye la lista de bloques mensuales que pintará el histórico de
      * estadísticas. Para cada mes agrega los totales y subdelega el
@@ -229,6 +228,7 @@ public final class StatsCalculator {
      * @param porMes mapa precalculado {@code "yyyy-MM" -> [distancia, calorias, duracion]} con los totales por mes.
      * @return lista de bloques mensuales ordenados del más reciente al más antiguo; lista vacía si no hay datos.
      */
+    @NonNull
     private static List<StatsResumen.MonthBlock> buildMonthBlocks(
             @NonNull List<ActividadItem> items,
             @NonNull Map<String, long[]> porMes) {
@@ -266,7 +266,6 @@ public final class StatsCalculator {
         return result;
     }
 
-    @NonNull
     /**
      * Desglosa un mes concreto en sus semanas ISO (lunes a domingo) y
      * calcula los totales de cada semana a partir del mapa por fecha.
@@ -278,6 +277,7 @@ public final class StatsCalculator {
      * @param porFecha mapa {@code fecha -> [distancia, calorias, duracion]} precalculado.
      * @return lista de semanas del mes con sus totales, en orden cronológico.
      */
+    @NonNull
     private static List<StatsResumen.WeekBlock> buildWeekBlocks(
             int year, int month,
             @NonNull Map<LocalDate, long[]> porFecha) {
@@ -321,7 +321,6 @@ public final class StatsCalculator {
         return blocks;
     }
 
-    @Nullable
     /**
      * Intenta parsear una fecha ISO-8601 del backend a {@link LocalDate}
      * en la zona horaria del dispositivo. Si el formato no es válido
@@ -331,6 +330,7 @@ public final class StatsCalculator {
      * @param fechaIso cadena con la fecha/hora en ISO-8601.
      * @return fecha local correspondiente o {@code null} si no se pudo parsear.
      */
+    @Nullable
     private static LocalDate parseFecha(@NonNull String fechaIso) {
         try {
             return OffsetDateTime.parse(fechaIso)

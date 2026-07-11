@@ -19,8 +19,6 @@ public class LicensesBottomSheet extends BaseExpandedBottomSheetDialogFragment {
 
     @Nullable private BottomSheetLicensesBinding binding;
 
-    @Nullable
-    @Override
     /**
      * Infla el layout del sheet de licencias de terceros y guarda el
      * ViewBinding para liberarlo en {@link #onDestroyView()}.
@@ -30,6 +28,8 @@ public class LicensesBottomSheet extends BaseExpandedBottomSheetDialogFragment {
      * @param savedInstanceState estado guardado o {@code null}.
      * @return la raíz de la vista inflada.
      */
+    @Nullable
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
@@ -37,7 +37,6 @@ public class LicensesBottomSheet extends BaseExpandedBottomSheetDialogFragment {
         return binding.getRoot();
     }
 
-    @Override
     /**
      * Fija el texto de las licencias (hardcodeado como recurso
      * {@code R.string.profile_about_contenido_licencia}) y enlaza el botón
@@ -47,6 +46,7 @@ public class LicensesBottomSheet extends BaseExpandedBottomSheetDialogFragment {
      * @param view vista raíz creada por {@link #onCreateView}.
      * @param savedInstanceState estado guardado o {@code null}.
      */
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if (binding == null) return;
@@ -55,11 +55,11 @@ public class LicensesBottomSheet extends BaseExpandedBottomSheetDialogFragment {
         binding.btnCloseLicenses.setOnClickListener(v -> dismissAllowingStateLoss());
     }
 
-    @Override
     /**
      * Libera el ViewBinding para evitar fugas cuando el fragment sobreviva
      * a la vista (rotación, cambio de configuración).
      */
+    @Override
     public void onDestroyView() {
         binding = null;
         super.onDestroyView();
