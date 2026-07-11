@@ -1,7 +1,6 @@
 package com.proyecto.moveon.ui.ranking;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.InsetDrawable;
 import android.os.Bundle;
@@ -432,7 +431,7 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
         drawable.setStroke(dpToPx(1), strokeColor);
 
         button.setBackground(new InsetDrawable(drawable, 0));
-        button.setBackgroundTintList((ColorStateList) null);
+        button.setBackgroundTintList(null);
         button.setTextColor(textColor);
         button.setAllCaps(false);
     }
@@ -458,7 +457,7 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
         drawable.setStroke(dpToPx(1), strokeColor);
 
         button.setBackground(new InsetDrawable(drawable, 0));
-        button.setBackgroundTintList((ColorStateList) null);
+        button.setBackgroundTintList(null);
         button.setTextColor(textColor);
         button.setAllCaps(false);
     }

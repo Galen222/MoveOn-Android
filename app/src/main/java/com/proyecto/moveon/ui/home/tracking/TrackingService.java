@@ -2607,9 +2607,6 @@ private void openAppForStopConfirmation() {
                 }
                 return tr(R.string.mo_tracking_notification_title_auto_pause);
 
-            case FINISHED:
-                return tr(R.string.mo_tracking_notification_title);
-
             case IDLE:
             default:
                 return tr(R.string.mo_tracking_notification_title);

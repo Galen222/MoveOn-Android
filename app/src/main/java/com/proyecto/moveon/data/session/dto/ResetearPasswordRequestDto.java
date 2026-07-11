@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName;
  * DTO utilizado para enviar la solicitud de resetear password.
  */
 @Keep
+@SuppressWarnings("unused") // Campos leídos por Gson al serializar el body de Retrofit.
 public final class ResetearPasswordRequestDto {
 
     @SerializedName("email")

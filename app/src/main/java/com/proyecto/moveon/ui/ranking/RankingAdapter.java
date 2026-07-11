@@ -214,7 +214,7 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
         return photoUrl + (photoUrl.contains("?") ? "&" : "?") + "v=" + photoVersion;
     }
 
-    static final class ViewHolder extends RecyclerView.ViewHolder {
+    public static final class ViewHolder extends RecyclerView.ViewHolder {
 
         private final TextView tvPosicion;
         private final ImageView ivFoto;

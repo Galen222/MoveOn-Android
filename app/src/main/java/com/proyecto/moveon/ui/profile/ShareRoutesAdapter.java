@@ -123,7 +123,7 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
         holder.bind(getItem(position));
     }
 
-    final class RouteViewHolder extends RecyclerView.ViewHolder {
+    public final class RouteViewHolder extends RecyclerView.ViewHolder {
         private final TextView tvTitle;
         private final TextView tvDate;
         private final TextView tvSummary;

@@ -20,7 +20,6 @@ import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
-import com.proyecto.moveon.data.activities.dto.ActividadResponseDto;
 import com.proyecto.moveon.data.activities.dto.ActivityDiagnosticsRequestDto;
 import com.proyecto.moveon.data.activities.dto.BorrarActividadResponseDto;
 import com.proyecto.moveon.data.activities.dto.GuardarActividadRequestDto;

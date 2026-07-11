@@ -96,19 +96,6 @@ public final class TopSnackbar {
     }
 
     /**
-     * Muestra un snackbar superior de advertencia con offset adicional.
-     *
-     * @param root vista raíz usada como ancla.
-     * @param msg texto a mostrar.
-     * @param extraTopOffsetPx desplazamiento extra en píxeles.
-     */
-    public static void warning(@NonNull View root,
-                               @NonNull CharSequence msg,
-                               int extraTopOffsetPx) {
-        show(root, msg, Type.WARNING, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
-    }
-
-    /**
      * Muestra un snackbar superior de error sin acción adicional.
      *
      * @param root vista raíz usada como ancla.

@@ -327,7 +327,6 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     TopSnackbar.error(binding.getRoot(), message.message);
                 }
-                return;
         }
     }
 

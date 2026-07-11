@@ -99,16 +99,13 @@ public final class SessionRefreshCoordinator {
         @Nullable private final String username;
         @Nullable private final String accessToken;
         @Nullable private final String refreshToken;
-        @Nullable private final String userId;
 
         public StoredSession(@Nullable String username,
                              @Nullable String accessToken,
-                             @Nullable String refreshToken,
-                             @Nullable String userId) {
+                             @Nullable String refreshToken) {
             this.username = username;
             this.accessToken = accessToken;
             this.refreshToken = refreshToken;
-            this.userId = userId;
         }
 
         /**
@@ -129,13 +126,6 @@ public final class SessionRefreshCoordinator {
          * @return refresh token contenido en el snapshot o {@code null} si no está disponible.
          */
         @Nullable public String getRefreshToken() { return refreshToken; }
-        /**
-         * Devuelve el identificador interno del usuario asociado a la sesión.
-         *
-         * @return identificador de usuario asociado al refresh o {@code null} si no pudo conservarse.
-         */
-        @Nullable public String getUserId() { return userId; }
-
         /**
          * Indica si al snapshot le falta un refresh token con el que intentar la renovación.
          *
@@ -703,8 +693,7 @@ public final class SessionRefreshCoordinator {
             return new StoredSession(
                     snapshot.getUsername(),
                     snapshot.getAccessToken(),
-                    snapshot.getRefreshToken(),
-                    snapshot.getUserId()
+                    snapshot.getRefreshToken()
             );
         }
 

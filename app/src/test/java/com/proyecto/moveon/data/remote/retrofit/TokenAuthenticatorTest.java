@@ -219,7 +219,7 @@ public class TokenAuthenticatorTest {
         @NonNull
         @Override
         public SessionRefreshCoordinator.StoredSession getStoredSession() {
-            return new SessionRefreshCoordinator.StoredSession(username, accessToken, refreshToken, "7");
+            return new SessionRefreshCoordinator.StoredSession(username, accessToken, refreshToken);
         }
 
         @Override

@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName;
  * DTO utilizado para enviar la solicitud de refresh.
  */
 @Keep
+@SuppressWarnings("unused") // Campos leídos por Gson al serializar el body de Retrofit.
 public final class RefreshRequestDto {
     @SerializedName("refresh_token") public final String refreshToken;
 

@@ -128,7 +128,6 @@ public final class ApiError {
      */
     @Nullable
     public String firstFieldMessage(@NonNull String... keys) {
-        if (keys.length == 0) return null;
         for (String k : keys) {
             if (k == null) continue;
             List<String> msgs = fieldErrors.get(k);

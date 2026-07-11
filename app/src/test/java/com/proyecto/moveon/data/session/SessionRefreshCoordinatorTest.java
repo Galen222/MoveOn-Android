@@ -20,9 +20,9 @@ public class SessionRefreshCoordinatorTest {
      */
     @Test
     public void storedSession_isRefreshTokenMissing_detectsBlankToken() {
-        assertFalse(new SessionRefreshCoordinator.StoredSession("u", "a", "refresh", "1").isRefreshTokenMissing());
-        assertTrue(new SessionRefreshCoordinator.StoredSession("u", "a", "   ", "1").isRefreshTokenMissing());
-        assertTrue(new SessionRefreshCoordinator.StoredSession("u", "a", null, "1").isRefreshTokenMissing());
+        assertFalse(new SessionRefreshCoordinator.StoredSession("u", "a", "refresh").isRefreshTokenMissing());
+        assertTrue(new SessionRefreshCoordinator.StoredSession("u", "a", "   ").isRefreshTokenMissing());
+        assertTrue(new SessionRefreshCoordinator.StoredSession("u", "a", null).isRefreshTokenMissing());
     }
 
     /**
@@ -88,7 +88,7 @@ public class SessionRefreshCoordinatorTest {
      */
     @Test
     public void shouldRefreshProactively_delegatesToStoreWithConfiguredWindow() {
-        FakeSessionStore store = new FakeSessionStore("alice", "access", "refresh", "7");
+        FakeSessionStore store = new FakeSessionStore("alice", "access", "refresh");
         store.expiring = true;
 
         SessionRefreshCoordinator coordinator = SessionRefreshCoordinator.createForTests(
@@ -105,7 +105,7 @@ public class SessionRefreshCoordinatorTest {
      */
     @Test
     public void refreshBlocking_whenNotForcedAndNotExpiring_skipsWithoutCallingBackend() {
-        FakeSessionStore store = new FakeSessionStore("alice", "access", "refresh", "7");
+        FakeSessionStore store = new FakeSessionStore("alice", "access", "refresh");
         CountingBackend backend = new CountingBackend(
                 SessionRefreshCoordinator.BackendRefreshResult.success("unused", "unused", "alice")
         );
@@ -123,7 +123,7 @@ public class SessionRefreshCoordinatorTest {
      */
     @Test
     public void refreshBlocking_whenForcedWithoutRefreshToken_logsOutAndReturnsUnauthorized() {
-        FakeSessionStore store = new FakeSessionStore("alice", "access", null, "7");
+        FakeSessionStore store = new FakeSessionStore("alice", "access", null);
         CountingBackend backend = new CountingBackend(
                 SessionRefreshCoordinator.BackendRefreshResult.success("unused", "unused", "alice")
         );
@@ -142,7 +142,7 @@ public class SessionRefreshCoordinatorTest {
      */
     @Test
     public void refreshBlocking_successPersistsTokensAndKeepsStoredUsernameWhenBackendOmitsIt() {
-        FakeSessionStore store = new FakeSessionStore("alice", "old-a", "old-r", "7");
+        FakeSessionStore store = new FakeSessionStore("alice", "old-a", "old-r");
         CountingBackend backend = new CountingBackend(
                 SessionRefreshCoordinator.BackendRefreshResult.success("new-a", "new-r", null)
         );
@@ -164,7 +164,7 @@ public class SessionRefreshCoordinatorTest {
      */
     @Test
     public void refreshBlocking_successWithBlankTokens_logsOutAsUnauthorized() {
-        FakeSessionStore store = new FakeSessionStore("alice", "old-a", "old-r", "7");
+        FakeSessionStore store = new FakeSessionStore("alice", "old-a", "old-r");
         CountingBackend backend = new CountingBackend(
                 SessionRefreshCoordinator.BackendRefreshResult.success("   ", "new-r", "alice")
         );
@@ -182,7 +182,7 @@ public class SessionRefreshCoordinatorTest {
      */
     @Test
     public void refreshBlocking_unauthorizedBackendResponse_logsOut() {
-        FakeSessionStore store = new FakeSessionStore("alice", "old-a", "old-r", "7");
+        FakeSessionStore store = new FakeSessionStore("alice", "old-a", "old-r");
         CountingBackend backend = new CountingBackend(
                 SessionRefreshCoordinator.BackendRefreshResult.failure(403, null, "reuse", "reutilizado")
         );
@@ -202,7 +202,7 @@ public class SessionRefreshCoordinatorTest {
      */
     @Test
     public void refreshBlocking_retryableBackendResponse_returnsTransientErrorWithoutLogout() {
-        FakeSessionStore store = new FakeSessionStore("alice", "old-a", "old-r", "7");
+        FakeSessionStore store = new FakeSessionStore("alice", "old-a", "old-r");
         CountingBackend backend = new CountingBackend(
                 SessionRefreshCoordinator.BackendRefreshResult.failure(503, "15", "maintenance", "caído")
         );
@@ -222,7 +222,7 @@ public class SessionRefreshCoordinatorTest {
      */
     @Test
     public void refreshBlocking_ioException_returnsTransientError() {
-        FakeSessionStore store = new FakeSessionStore("alice", "old-a", "old-r", "7");
+        FakeSessionStore store = new FakeSessionStore("alice", "old-a", "old-r");
         SessionRefreshCoordinator coordinator = SessionRefreshCoordinator.createForTests(
                 store,
                 refreshToken -> { throw new IOException("timeout"); }
@@ -241,7 +241,7 @@ public class SessionRefreshCoordinatorTest {
      */
     @Test
     public void refreshBlocking_withStaleAuthorizationHeader_reusesStoredNewTokens() {
-        FakeSessionStore store = new FakeSessionStore("alice", "new-a", "new-r", "7");
+        FakeSessionStore store = new FakeSessionStore("alice", "new-a", "new-r");
         CountingBackend backend = new CountingBackend(
                 SessionRefreshCoordinator.BackendRefreshResult.success("unused", "unused", "alice")
         );
@@ -260,7 +260,7 @@ public class SessionRefreshCoordinatorTest {
      */
     @Test
     public void refreshBlocking_withCurrentAuthorizationHeader_executesBackendRefresh() {
-        FakeSessionStore store = new FakeSessionStore("alice", "old-a", "old-r", "7");
+        FakeSessionStore store = new FakeSessionStore("alice", "old-a", "old-r");
         CountingBackend backend = new CountingBackend(
                 SessionRefreshCoordinator.BackendRefreshResult.success("new-a", "new-r", "alice")
         );
@@ -280,19 +280,16 @@ public class SessionRefreshCoordinatorTest {
         @Nullable String username;
         @Nullable String accessToken;
         @Nullable String refreshToken;
-        @Nullable String userId;
         boolean expiring;
         boolean loggedOut;
         long lastLeewaySeconds = -1L;
 
         private FakeSessionStore(@Nullable String username,
                                  @Nullable String accessToken,
-                                 @Nullable String refreshToken,
-                                 @Nullable String userId) {
+                                 @Nullable String refreshToken) {
             this.username = username;
             this.accessToken = accessToken;
             this.refreshToken = refreshToken;
-            this.userId = userId;
         }
 
         @Override
@@ -304,7 +301,7 @@ public class SessionRefreshCoordinatorTest {
         @NonNull
         @Override
         public SessionRefreshCoordinator.StoredSession getStoredSession() {
-            return new SessionRefreshCoordinator.StoredSession(username, accessToken, refreshToken, userId);
+            return new SessionRefreshCoordinator.StoredSession(username, accessToken, refreshToken);
         }
 
         @Override
@@ -322,7 +319,6 @@ public class SessionRefreshCoordinatorTest {
             username = null;
             accessToken = null;
             refreshToken = null;
-            userId = null;
         }
     }
 
