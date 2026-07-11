@@ -96,7 +96,6 @@ public final class TrackingViewModel extends AndroidViewModel {
         trackingController.getTrackingAlert().removeObserver(alertObserver);
         trackingController.release();
         repository.cancelAll();
-        super.onCleared();
     }
 
     /**

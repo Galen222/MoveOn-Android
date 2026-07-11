@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="backend_error_access_token_invalid_or_expired">Token de acceso inválido o expirado</string>
     <string name="backend_error_account_terms_acceptance_required">Debes aceptar los términos para crear un usuario</string>
     <string name="backend_error_activity_date_in_future">La fecha de la actividad no puede ser en el futuro</string>
@@ -27,7 +27,7 @@
     <string name="backend_error_code_must_be_numeric">El código debe contener solo números</string>
     <string name="backend_error_code_required">El código es obligatorio</string>
     <string name="backend_error_conflict">Conflicto en la solicitud</string>
-    <string name="backend_error_content_validation_unavailable">No se pudo validar el contenido en este momento</string>
+    <string name="backend_error_content_validation_unavailable" tools:ignore="Typos">No se pudo validar el contenido en este momento</string>
     <string name="backend_error_cors_origins_invalid_format">CORS_ORIGINS debe ser una lista o un string separado por comas</string>
     <string name="backend_error_distance_must_be_integer">La distancia debe ser un número entero</string>
     <string name="backend_error_distance_must_be_positive">La distancia debe ser mayor a 0</string>

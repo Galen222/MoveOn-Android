@@ -163,6 +163,7 @@ public class ZoomableImageView extends AppCompatImageView {
      *
      * @return el resultado de {@link AppCompatImageView#performClick()}.
      */
+    @SuppressWarnings("EmptyMethod")
     @Override
     public boolean performClick() {
         return super.performClick();

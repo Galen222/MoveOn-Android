@@ -366,6 +366,5 @@ public class AuthViewModel extends AndroidViewModel {
     @Override
     protected void onCleared() {
         authRepository.cancelAll();
-        super.onCleared();
     }
 }

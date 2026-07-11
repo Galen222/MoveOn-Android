@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <issue id="IconLocation">
+        <ignore path="src/main/res/drawable/moveon.png" />
+        <ignore path="src/main/res/drawable/moveonico.png" />
+    </issue>
+
+    <issue id="TooManyViews">
+        <ignore path="src/main/res/layout/fragment_profile.xml" />
+    </issue>
+
+    <issue id="UseCompoundDrawables">
+        <ignore path="src/main/res/layout/bottom_sheet_delete_account.xml" />
+        <ignore path="src/main/res/layout/bottom_sheet_tracking_alert.xml" />
+    </issue>
+
+    <issue id="Overdraw">
+        <ignore path="src/main/res/layout/activity_forgot_password.xml" />
+        <ignore path="src/main/res/layout/bottom_sheet_about_app.xml" />
+        <ignore path="src/main/res/layout/bottom_sheet_historial.xml" />
+        <ignore path="src/main/res/layout/bottom_sheet_legal_text.xml" />
+        <ignore path="src/main/res/layout/bottom_sheet_licenses.xml" />
+        <ignore path="src/main/res/layout/bottom_sheet_share_route_preview.xml" />
+        <ignore path="src/main/res/layout/bottom_sheet_todas_actividades.xml" />
+        <ignore path="src/main/res/layout/bottom_sheet_tracking_alert.xml" />
+        <ignore path="src/main/res/layout/dialog_report_ranking_user.xml" />
+        <ignore path="src/main/res/layout/dialog_route_image_fullscreen.xml" />
+        <ignore path="src/main/res/layout/fragment_inicio.xml" />
+        <ignore path="src/main/res/layout/fragment_profile.xml" />
+        <ignore path="src/main/res/layout/fragment_ranking.xml" />
+        <ignore path="src/main/res/layout/fragment_stats.xml" />
+        <ignore path="src/main/res/layout/item_profile_field.xml" />
+    </issue>
+</lint>

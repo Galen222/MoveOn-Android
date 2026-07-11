@@ -58,14 +58,13 @@ public final class TrackingRequirementsManager {
     }
 
     /**
-     * Indica si el permiso de reconocimiento de actividad está concedido o no aplica por versión de Android.
+     * Indica si el permiso de reconocimiento de actividad está concedido.
      *
      * @param context contexto usado para consultar el permiso runtime.
-     * @return {@code true} cuando el permiso está concedido o la versión del sistema no lo requiere.
+     * @return {@code true} cuando el permiso está concedido.
      */
     public static boolean hasActivityRecognitionPermission(@NonNull Context context) {
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
-                || ContextCompat.checkSelfPermission(context, Manifest.permission.ACTIVITY_RECOGNITION)
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.ACTIVITY_RECOGNITION)
                 == PackageManager.PERMISSION_GRANTED;
     }
 
@@ -96,16 +95,7 @@ public final class TrackingRequirementsManager {
                 (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         if (locationManager == null) return false;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            return locationManager.isLocationEnabled();
-        }
-
-        try {
-            return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-                    || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        } catch (Exception ignored) {
-            return false;
-        }
+        return locationManager.isLocationEnabled();
     }
 
     /**
@@ -191,7 +181,6 @@ public final class TrackingRequirementsManager {
     public static boolean isActivityRecognitionPermissionBlocked(@NonNull Fragment fragment) {
         Context context = fragment.requireContext();
         if (hasActivityRecognitionPermission(context)) return false;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false;
         if (!AppSettingsManager.wasTrackingActivityPermissionRequested(context)) return false;
         return !fragment.shouldShowRequestPermissionRationale(Manifest.permission.ACTIVITY_RECOGNITION);
     }
@@ -287,9 +276,7 @@ public final class TrackingRequirementsManager {
                     permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
                     break;
                 case ACTIVITY_RECOGNITION:
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        permissions.add(Manifest.permission.ACTIVITY_RECOGNITION);
-                    }
+                    permissions.add(Manifest.permission.ACTIVITY_RECOGNITION);
                     break;
                 case NOTIFICATIONS:
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -326,8 +313,7 @@ public final class TrackingRequirementsManager {
                 };
 
             case ACTIVITY_RECOGNITION:
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
-                        || hasActivityRecognitionPermission(context)
+                if (hasActivityRecognitionPermission(context)
                         || isActivityRecognitionPermissionBlocked(fragment)) {
                     return new String[0];
                 }

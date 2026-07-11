@@ -9,9 +9,9 @@
     <string name="inicio_walking">Walking</string>
     <string name="inicio_running">Running</string>
     <string name="tracking_label_pace">PACE</string>
-    <string name="tracking_default_pace">--\'--\"</string>
+    <string name="tracking_default_pace">—\'—\"</string>
     <string name="tracking_max_pace_inline_format">MAX %1$s</string>
-    <string name="tracking_default_max_pace_inline">MAX --\'--\"</string>
+    <string name="tracking_default_max_pace_inline">MAX —\'—\"</string>
     <string name="inicio_desc_add">Add</string>
     <string name="inicio_desc_map">Map</string>
     <string name="inicio_desc_location">Current location</string>
@@ -107,7 +107,7 @@
     <string name="tracking_label_cal">CAL</string>
     <string name="tracking_default_steps">0</string>
     <string name="tracking_label_steps">STEPS</string>
-    <string name="tracking_calories_format">%1$d kcal</string>
+    <string name="tracking_calories_format" tools:ignore="PluralsCandidate">%1$d kcal</string>
     <string name="tracking_steps_format">%1$d</string>
     <string name="tracking_steps_unavailable">N/A</string>
     <string name="tracking_distance_m_format">%1$d m</string>
@@ -164,8 +164,11 @@
     <string name="stats_format_km">%.2f km</string>
     <string name="stats_format_time_hm">%1$dh %2$dm</string>
     <string name="stats_format_time_m">%1$d min</string>
-    <string name="stats_format_streak">%1$d days</string>
-    <string name="stats_format_kcal">%1$d kcal</string>
+    <plurals name="stats_format_streak">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <string name="stats_format_kcal" tools:ignore="PluralsCandidate">%1$d kcal</string>
     <string name="stats_goal_remaining_format">%1$s left to reach your goal</string>
     <string name="stats_weekly_goal_done">Weekly goal completed!</string>
     <string name="stats_empty_title">No activity yet</string>
@@ -192,7 +195,7 @@
     <string name="stats_format_kcal_k">%.1fk kcal</string>
     <string name="stats_format_kcal_m">%.1fM kcal</string>
     <string name="stats_label_activities">Activities</string>
-    <string name="stats_format_kcal_total">%1$d kcal</string>
+    <string name="stats_format_kcal_total" tools:ignore="PluralsCandidate">%1$d kcal</string>
     <string name="stats_format_activities">%1$d</string>
     <string name="stats_historial_title">History</string>
     <string name="stats_historial_empty">No recorded activity</string>
@@ -213,7 +216,7 @@
     <string name="stats_section_calendar">Weekly</string>
     <string name="stats_calendar_week_range">%1$d–%2$d %3$s</string>
     <string name="stats_calendar_btn_more">See more months</string>
-    <string name="stats_calendar_distance_kcal">%1$s · %2$d kcal</string>
+    <string name="stats_calendar_distance_kcal" tools:ignore="PluralsCandidate">%1$s · %2$d kcal</string>
     <string name="stats_dialog_weekly_goal_title">Weekly goal</string>
     <string name="stats_dialog_monthly_goal_title">Monthly goal</string>
     <string name="stats_goal_chevron_desc">Change goal</string>
@@ -226,8 +229,14 @@
     <string name="profile_default_username">User</string>
     <string name="profile_default_email">No email available</string>
     <string name="profile_not_indicated">Not specified</string>
-    <string name="profile_points_format">%1$d points</string>
-    <string name="profile_puntos_formato">%1$d points</string>
+    <plurals name="profile_points_format">
+        <item quantity="one">%1$d point</item>
+        <item quantity="other">%1$d points</item>
+    </plurals>
+    <plurals name="profile_puntos_formato">
+        <item quantity="one">%1$d point</item>
+        <item quantity="other">%1$d points</item>
+    </plurals>
     <string name="profile_label_fullname">Full name</string>
     <string name="profile_label_email">Email</string>
     <string name="profile_label_birthdate">Birth date</string>
@@ -427,7 +436,7 @@
     <string name="tracking_status_finished">Activity finished</string>
 
     <string name="stats_activity_duration_breakdown">Moving %1$s · Total %2$s</string>
-    <string name="stats_activity_kcal_and_pace">%1$d kcal · %2$s/km</string>
+    <string name="stats_activity_kcal_and_pace" tools:ignore="PluralsCandidate">%1$d kcal · %2$s/km</string>
 
     <string name="error_tracking_moving_duration_invalid">Moving time is not valid</string>
     <string name="error_tracking_stopped_duration_invalid">Stopped time is not valid</string>
@@ -494,7 +503,7 @@
     <string name="ranking_report_observaciones_section_title">Observations</string>
     <string name="ranking_report_error_reason_required">Select at least one option</string>
     <string name="ranking_report_error_observaciones_too_long">Observations cannot exceed 500 characters</string>
-    <string name="ranking_report_sending">Sending...</string>
+    <string name="ranking_report_sending">Sending…</string>
     <string name="ranking_report_success">Report sent correctly</string>
     <string name="ranking_report_error_generic">Could not send the report. Please try again.</string>
 
@@ -524,7 +533,7 @@
     <string name="share_routes_metric_paces">Paces</string>
     <string name="share_routes_generated_with">Generated with MoveOn</string>
     <string name="share_routes_generated_with_short">Made with MoveOn</string>
-    <string name="share_routes_kcal_value">%1$d kcal</string>
+    <string name="share_routes_kcal_value" tools:ignore="PluralsCandidate">%1$d kcal</string>
     <string name="share_routes_pace_empty">N/A</string>
     <string name="share_routes_steps_empty">N/A</string>
     <string name="share_routes_item_summary">%1$s · %2$s · %3$s</string>

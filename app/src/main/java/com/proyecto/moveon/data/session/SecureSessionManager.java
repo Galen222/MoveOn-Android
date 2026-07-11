@@ -1,5 +1,6 @@
 package com.proyecto.moveon.data.session;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.security.keystore.KeyGenParameterSpec;
@@ -417,6 +418,7 @@ public final class SecureSessionManager {
      * <p>Además de borrar usuario/tokens/provider, desactiva el silent sign-in de Google
      * para que el siguiente arranque no vuelva a intentar un reingreso automático por inercia.</p>
      */
+    @SuppressLint("ApplySharedPref")
     public void logout() {
         synchronized (sessionLock) {
             // En logout sí queremos garantía dura: una vez retornamos no deben quedar
@@ -438,6 +440,7 @@ public final class SecureSessionManager {
     /**
      * Elimina únicamente el access token persistido manteniendo el resto de la sesión intacta.
      */
+    @SuppressLint("ApplySharedPref")
     public void clearAccessTokenOnly() {
         synchronized (sessionLock) {
             // Igual que en logout: el caller espera que el access desaparezca en el acto.
@@ -680,6 +683,7 @@ public final class SecureSessionManager {
      * Limpia el provider persistido y desactiva el silent sign-in de Google con persistencia
      * síncrona para que el cambio quede aplicado antes de abandonar la pantalla o el proceso actual.
      */
+    @SuppressLint("ApplySharedPref")
     private void clearSocialAuthStateLocked() {
         SharedPreferences.Editor editor = appContext
                 .getSharedPreferences(AppSettingsManager.PREFS, Context.MODE_PRIVATE)
@@ -695,6 +699,7 @@ public final class SecureSessionManager {
     /**
      * Ejecuta la persistencia del editor eligiendo entre {@code commit()} y {@code apply()} según la criticidad del flujo.
      */
+    @SuppressLint("ApplySharedPref")
     private void persistEditor(@NonNull SharedPreferences.Editor editor,
                                boolean persistSynchronously,
                                @NonNull String failureMessage) {

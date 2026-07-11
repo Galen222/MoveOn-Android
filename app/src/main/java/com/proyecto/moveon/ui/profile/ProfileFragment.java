@@ -240,7 +240,10 @@ public class ProfileFragment extends Fragment {
 
         binding.tvUserName.setText(perfil.nombreUsuario);
         binding.tvUserPoints.setText(
-                getString(R.string.profile_puntos_formato, perfil.totalPuntos));
+                getResources().getQuantityString(
+                        R.plurals.profile_puntos_formato,
+                        perfil.totalPuntos,
+                        perfil.totalPuntos));
 
         binding.tvFullName.setText(
                 StringUtils.hasText(perfil.nombreReal) ? perfil.nombreReal : notIndicated);

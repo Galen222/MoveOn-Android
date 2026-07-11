@@ -127,6 +127,9 @@ android {
     // compilador incluido todavía no admite. Desactivarlo evita esas tareas y mantiene
     // toda la compilación real del módulo en Java 25.
     enableKotlin = false
+
+    // Android 17 (API 37) sigue en beta. Se mantiene API 36 hasta completar
+    // las pruebas de compatibilidad y los cambios de comportamiento de target 37.
     compileSdk = 36
 
     defaultConfig {
@@ -177,6 +180,15 @@ android {
     buildFeatures {
         buildConfig = true
         viewBinding = true
+    }
+
+    // La app permite cambiar el idioma en ejecución. El bundle debe incluir
+    // todos los recursos de idioma para que AppCompat pueda aplicarlos localmente.
+    bundle {
+        language {
+            @Suppress("UnstableApiUsage")
+            enableSplit = false
+        }
     }
 
     compileOptions {

@@ -271,7 +271,6 @@ public class StatsViewModel extends AndroidViewModel {
         if (actividadesSource != null) statsState.removeSource(actividadesSource);
         if (prefsSource != null) statsState.removeSource(prefsSource);
         actividadRepository.cancelAll();
-        super.onCleared();
     }
 }
 

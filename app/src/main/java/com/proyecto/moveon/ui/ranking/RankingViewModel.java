@@ -134,6 +134,5 @@ public final class RankingViewModel extends AndroidViewModel {
      */
     protected void onCleared() {
         repository.cancelAll();
-        super.onCleared();
     }
 }

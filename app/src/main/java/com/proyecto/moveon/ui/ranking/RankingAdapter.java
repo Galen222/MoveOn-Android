@@ -77,18 +77,23 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
     /**
      * Sustituye completamente el contenido actual por una nueva lista.
      *
-     * <p>Se hace de forma síncrona con {@link #notifyDataSetChanged()} porque el tamaño del
-     * ranking es muy pequeño y aquí prima la ausencia total de flicker sobre la animación
-     * incremental.</p>
+     * <p>La sustitución es síncrona y usa eventos de rango precisos. El RecyclerView del
+     * ranking no tiene animador, por lo que el cambio sigue siendo inmediato y sin flicker,
+     * pero evita invalidar filas ajenas al rango realmente sustituido.</p>
      *
      * @param newItems nuevo snapshot de ranking o {@code null} para vaciar la lista.
      */
     public void setItems(@Nullable List<RankingItemDto> newItems) {
-        items.clear();
+        int previousSize = items.size();
+        if (previousSize > 0) {
+            items.clear();
+            notifyItemRangeRemoved(0, previousSize);
+        }
+
         if (newItems != null && !newItems.isEmpty()) {
             items.addAll(newItems);
+            notifyItemRangeInserted(0, items.size());
         }
-        notifyDataSetChanged();
     }
 
     /**
@@ -101,8 +106,9 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
         if (items.isEmpty()) {
             return;
         }
+        int previousSize = items.size();
         items.clear();
-        notifyDataSetChanged();
+        notifyItemRangeRemoved(0, previousSize);
     }
 
     /**

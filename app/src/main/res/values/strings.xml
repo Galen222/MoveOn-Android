@@ -26,9 +26,9 @@
     <string name="inicio_running">Corriendo</string>
     <string name="tracking_label_pace">RITMO</string>
     <string name="tracking_label_average_pace">RITMO MEDIO</string>
-    <string name="tracking_default_pace">--\'--\"</string>
+    <string name="tracking_default_pace">—\'—\"</string>
     <string name="tracking_max_pace_inline_format">MÁX %1$s</string>
-    <string name="tracking_default_max_pace_inline">MÁX --\'--\"</string>
+    <string name="tracking_default_max_pace_inline">MÁX —\'—\"</string>
 
     <!-- ContentDescriptions -->
     <string name="inicio_desc_add">Añadir</string>
@@ -180,7 +180,7 @@
     <string name="tracking_label_steps">PASOS</string>
 
     <!-- Formatos de métricas -->
-    <string name="tracking_calories_format">%1$d kcal</string>
+    <string name="tracking_calories_format" tools:ignore="PluralsCandidate">%1$d kcal</string>
     <string name="tracking_steps_format">%1$d</string>
     <string name="tracking_steps_unavailable">N/D</string>
     <string name="tracking_distance_m_format">%1$d m</string>
@@ -284,8 +284,11 @@
     <string name="stats_format_km">%.2f km</string>
     <string name="stats_format_time_hm">%1$dh %2$dm</string>
     <string name="stats_format_time_m">%1$d min</string>
-    <string name="stats_format_streak">%1$d días</string>
-    <string name="stats_format_kcal">%1$d kcal</string>
+    <plurals name="stats_format_streak">
+        <item quantity="one">%1$d día</item>
+        <item quantity="other">%1$d días</item>
+    </plurals>
+    <string name="stats_format_kcal" tools:ignore="PluralsCandidate">%1$d kcal</string>
     <string name="stats_format_kcal_k">%.1fk kcal</string>
     <string name="stats_format_kcal_m">%.1fM kcal</string>
 
@@ -336,7 +339,7 @@
     <string name="stats_section_totals">Total</string>
     <string name="stats_label_calories">Calorías</string>
     <string name="stats_label_activities">Actividades</string>
-    <string name="stats_format_kcal_total">%1$d kcal</string>
+    <string name="stats_format_kcal_total" tools:ignore="PluralsCandidate">%1$d kcal</string>
     <string name="stats_format_activities">%1$d</string>
     <string name="stats_historial_title">Historial</string>
     <string name="stats_historial_empty">Sin actividad registrada</string>
@@ -346,7 +349,7 @@
     <string name="stats_historial_tiempo_kcal">%1$s  ·  %2$s</string>
     <string name="stats_historial_show_more">Mostrar más</string>
     <string name="stats_activity_duration_breakdown">Mov. %1$s · Total %2$s</string>
-    <string name="stats_activity_kcal_and_pace">%1$d kcal · %2$s/km</string>
+    <string name="stats_activity_kcal_and_pace" tools:ignore="PluralsCandidate">%1$d kcal · %2$s/km</string>
     <string name="stats_item_label_max_pace">Ritmo máximo</string>
     <string name="stats_item_label_total">Total</string>
 
@@ -357,7 +360,7 @@
     <string name="stats_section_calendar">Semanal</string>
     <string name="stats_calendar_week_range">%1$d–%2$d %3$s</string>
     <string name="stats_calendar_btn_more">Ver más meses</string>
-    <string name="stats_calendar_distance_kcal">%1$s · %2$d kcal</string>
+    <string name="stats_calendar_distance_kcal" tools:ignore="PluralsCandidate">%1$s · %2$d kcal</string>
 
     <!-- Diálogo cambió de objetivo -->
     <string name="stats_dialog_weekly_goal_title">Objetivo semanal</string>
@@ -377,8 +380,14 @@
     <string name="profile_default_username">Usuario</string>
     <string name="profile_default_email">Sin correo disponible</string>
     <string name="profile_not_indicated">No indicada</string>
-    <string name="profile_points_format">%1$d puntos</string>
-    <string name="profile_puntos_formato">%1$d puntos</string>
+    <plurals name="profile_points_format">
+        <item quantity="one">%1$d punto</item>
+        <item quantity="other">%1$d puntos</item>
+    </plurals>
+    <plurals name="profile_puntos_formato">
+        <item quantity="one">%1$d punto</item>
+        <item quantity="other">%1$d puntos</item>
+    </plurals>
 
     <!-- Labels campos -->
     <string name="profile_label_fullname">Nombre completo</string>
@@ -679,7 +688,7 @@
     <string name="ranking_report_observaciones_section_title">Observaciones</string>
     <string name="ranking_report_error_reason_required">Debes marcar al menos una opción</string>
     <string name="ranking_report_error_observaciones_too_long">Las observaciones no pueden superar los 500 caracteres</string>
-    <string name="ranking_report_sending">Enviando...</string>
+    <string name="ranking_report_sending">Enviando…</string>
     <string name="ranking_report_success">Reporte enviado correctamente</string>
     <string name="ranking_report_error_generic">No se ha podido enviar el reporte. Inténtalo de nuevo.</string>
 
@@ -712,7 +721,7 @@
     <string name="share_routes_metric_paces">Ritmos</string>
     <string name="share_routes_generated_with">Generado con MoveOn</string>
     <string name="share_routes_generated_with_short">Hecho con MoveOn</string>
-    <string name="share_routes_kcal_value">%1$d kcal</string>
+    <string name="share_routes_kcal_value" tools:ignore="PluralsCandidate">%1$d kcal</string>
     <string name="share_routes_pace_empty">N/D</string>
     <string name="share_routes_steps_empty">N/D</string>
     <string name="share_routes_item_summary">%1$s · %2$s · %3$s</string>

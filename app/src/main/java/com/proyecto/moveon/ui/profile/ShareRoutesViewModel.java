@@ -122,7 +122,6 @@ public class ShareRoutesViewModel extends AndroidViewModel {
      */
     @Override
     protected void onCleared() {
-        super.onCleared();
         // Cada consumer usa su propia instancia del repositorio; por eso se cancela aquí.
         activityRepository.cancelAll();
     }

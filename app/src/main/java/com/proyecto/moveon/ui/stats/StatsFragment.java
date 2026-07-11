@@ -760,6 +760,7 @@ public class StatsFragment extends Fragment {
      */
     @NonNull
     private String formatStreak(int streakDays) {
-        return getString(R.string.stats_format_streak, streakDays);
+        return getResources().getQuantityString(
+                R.plurals.stats_format_streak, streakDays, streakDays);
     }
 }

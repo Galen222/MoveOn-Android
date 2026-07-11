@@ -4,7 +4,6 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.os.Build;
 import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
@@ -189,19 +188,9 @@ public final class ConnectivityObserver {
 
         networkCallback = callback;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            // API correcta para seguir la red efectiva de la app.
-            cm.registerDefaultNetworkCallback(callback);
-        } else {
-            // Fallback defensivo para APIs antiguas, aunque en ese caso el
-            // comportamiento puede ser menos preciso que con la red por defecto.
-            cm.registerNetworkCallback(
-                    new android.net.NetworkRequest.Builder()
-                            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                            .build(),
-                    callback
-            );
-        }
+        // minSdk 29: registerDefaultNetworkCallback está disponible en todos
+        // los dispositivos compatibles con la aplicación.
+        cm.registerDefaultNetworkCallback(callback);
     }
 
     /**

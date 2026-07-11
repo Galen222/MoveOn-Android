@@ -324,7 +324,6 @@ public class ProfileViewModel extends AndroidViewModel {
             perfilState.removeSource(perfilSource);
         }
         perfilRepository.cancelOngoing();
-        super.onCleared();
     }
 }
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
 
     <style name="Base.Theme.MoveOn" parent="Theme.Material3.Light.NoActionBar">
         <item name="fontFamily">@font/space_grotesk</item>
@@ -62,7 +62,7 @@
         <item name="android:statusBarColor">@color/darkBackground</item>
         <item name="android:navigationBarColor">@color/darkBackground</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
 
         <!-- Widgets -->
