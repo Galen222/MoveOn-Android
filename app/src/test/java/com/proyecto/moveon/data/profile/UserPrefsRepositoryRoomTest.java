@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.room.Room;
 import androidx.test.core.app.ApplicationProvider;
 
@@ -19,8 +20,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
@@ -31,10 +30,9 @@ import java.util.concurrent.TimeUnit;
  * Tests de {@link UserPrefsRepository} con Room en memoria y remoto fake.
  *
  * <p>Es una clase rentable para cobertura porque en el informe base estaba al
- * 0 %, pero su lógica principal se puede ejercitar sin backend real: se fuerza
- * el singleton de {@link AppDatabase} a una base en memoria, se inyecta un
- * {@link ExecutorService} síncrono y se sustituye el remoto por un doble que
- * sólo captura el PATCH.</p>
+ * 0 %, pero su lógica principal se puede ejercitar sin backend real: se inyecta
+ * una base Room en memoria, un {@link ExecutorService} síncrono y un remoto
+ * doble que sólo captura el PATCH.</p>
  */
 @RunWith(RobolectricTestRunner.class)
 public class UserPrefsRepositoryRoomTest {
@@ -44,29 +42,29 @@ public class UserPrefsRepositoryRoomTest {
     private UserPrefsRepository repository;
 
     /**
-     * Prepara una base Room en memoria y construye el repositorio real para
-     * cubrir también su constructor público.
+     * Prepara una base Room en memoria y construye el repositorio con
+     * dependencias deterministas para que las escrituras terminen en el test.
      */
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         Context context = ApplicationProvider.getApplicationContext();
         db = Room.inMemoryDatabaseBuilder(context, AppDatabase.class)
                 .allowMainThreadQueries()
                 .build();
-        setDatabaseSingleton(db);
 
-        repository = new UserPrefsRepository(context);
-        remote = allocate(RecordingRemote.class);
-        setField(repository, "remote", remote);
-        setField(repository, "io", new DirectExecutorService());
+        remote = new RecordingRemote(context);
+        repository = new UserPrefsRepository(
+                db,
+                remote,
+                new DirectExecutorService()
+        );
     }
 
     /**
-     * Cierra la base y limpia el singleton para no contaminar otros tests.
+     * Cierra la base en memoria después de cada prueba.
      */
     @After
-    public void tearDown() throws Exception {
-        setDatabaseSingleton(null);
+    public void tearDown() {
         if (db != null) {
             db.close();
         }
@@ -145,37 +143,16 @@ public class UserPrefsRepositoryRoomTest {
         assertEquals(0, remote.patchCalls);
     }
 
-    private static void setDatabaseSingleton(AppDatabase value) throws Exception {
-        Field instance = AppDatabase.class.getDeclaredField("INSTANCE");
-        instance.setAccessible(true);
-        instance.set(null, value);
-    }
-
-    private static void setField(Object target, String fieldName, Object value) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(target, value);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
-        Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
-        field.setAccessible(true);
-        Object unsafe = field.get(null);
-        Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) method.invoke(unsafe, type);
-    }
-
     private static final class RecordingRemote extends PerfilRemoteDataSource {
         int patchCalls;
         JsonObject lastBody;
 
-        private RecordingRemote() {
-            super(ApplicationProvider.getApplicationContext());
+        private RecordingRemote(@NonNull Context context) {
+            super(context);
         }
 
         @Override
-        public void patchPerfil(JsonObject body, Callback<String> callback) {
+        public void patchPerfil(@NonNull JsonObject body, @NonNull Callback<String> callback) {
             patchCalls++;
             lastBody = body.deepCopy();
             callback.onResult(ApiResult.success("OK"));

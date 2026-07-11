@@ -232,6 +232,10 @@ configurations.matching {
 }
 
 tasks.withType<Test>().configureEach {
+    // Robolectric carga su runtime nativo con System.load(). Java 25 exige
+    // autorizar explícitamente ese acceso para evitar el warning de JEP 472.
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+
     extensions.configure<JacocoTaskExtension> {
         isIncludeNoLocationClasses = true
         excludes = listOf(

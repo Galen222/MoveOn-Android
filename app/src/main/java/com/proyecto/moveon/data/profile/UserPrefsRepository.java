@@ -28,7 +28,7 @@ public class UserPrefsRepository {
 
     private final AppDatabase db;
     private final PerfilRemoteDataSource remote;
-    private final ExecutorService io = MoveOnExecutors.io();
+    private final ExecutorService io;
 
     /**
      * Inicializa el repositorio a partir del contexto de aplicación:
@@ -39,8 +39,26 @@ public class UserPrefsRepository {
      */
     public UserPrefsRepository(@NonNull Context context) {
         Context appContext = context.getApplicationContext();
-        this.db     = AppDatabase.getInstance(appContext);
+        this.db = AppDatabase.getInstance(appContext);
         this.remote = new PerfilRemoteDataSource(appContext);
+        this.io = MoveOnExecutors.io();
+    }
+
+    /**
+     * Constructor con dependencias explícitas para pruebas del repositorio.
+     * Evita modificar campos {@code final} mediante reflexión y permite usar
+     * un ejecutor síncrono con una base Room en memoria.
+     *
+     * @param db base de datos que debe usar el repositorio.
+     * @param remote fuente remota para los PATCH de objetivos.
+     * @param io ejecutor donde se realizan las operaciones de Room.
+     */
+    UserPrefsRepository(@NonNull AppDatabase db,
+                        @NonNull PerfilRemoteDataSource remote,
+                        @NonNull ExecutorService io) {
+        this.db = db;
+        this.remote = remote;
+        this.io = io;
     }
 
     /**
@@ -75,7 +93,7 @@ public class UserPrefsRepository {
 
             JsonObject body = new JsonObject();
             body.addProperty("objetivo_semanal_metros", meters);
-            remote.patchPerfil(body, result -> { /* best-effort */ });
+            remote.patchPerfil(body, ignoredResult -> { /* best-effort */ });
         });
     }
 
@@ -99,7 +117,7 @@ public class UserPrefsRepository {
 
             JsonObject body = new JsonObject();
             body.addProperty("objetivo_mensual_metros", meters);
-            remote.patchPerfil(body, result -> { /* best-effort */ });
+            remote.patchPerfil(body, ignoredResult -> { /* best-effort */ });
         });
     }
 
@@ -123,7 +141,6 @@ public class UserPrefsRepository {
         });
     }
 
-    @NonNull
     /**
      * Devuelve la fila de preferencias de la cuenta si existe; si no,
      * construye una nueva en memoria con los objetivos por defecto.
@@ -134,6 +151,7 @@ public class UserPrefsRepository {
      * @param accountKey clave derivada de la cuenta cuyas preferencias se cargan.
      * @return la entidad existente o una con los objetivos por defecto (sin guardar todavía).
      */
+    @NonNull
     private UserPrefsEntity getOrCreate(@NonNull String accountKey) {
         UserPrefsEntity prefs = db.userPrefsDao().getNow(accountKey);
         if (prefs != null) return prefs;
