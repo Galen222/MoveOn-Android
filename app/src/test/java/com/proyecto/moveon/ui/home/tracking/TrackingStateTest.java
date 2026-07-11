@@ -32,6 +32,7 @@ public class TrackingStateTest {
         assertEquals(0, state.getSteps());
         assertFalse(state.isStepSensorAvailable());
         assertNull(state.getPace());
+        assertEquals(0, state.getMaxPaceSecondsPerKm());
         assertTrue(state.getRoutePoints().isEmpty());
         assertNull(state.getEncodedPolyline());
     }
@@ -264,6 +265,7 @@ public class TrackingStateTest {
                 .averageMovingPace("5:00")
                 .averageElapsedPace("6:00")
                 .maxPace("4:30")
+                .maxPaceSecondsPerKm(270)
                 .maxSpeedKmhX100(1_600)
                 .autoPauseCount(2)
                 .manualPauseCount(3)
@@ -289,6 +291,7 @@ public class TrackingStateTest {
         assertEquals("5:00", state.getAverageMovingPace());
         assertEquals("6:00", state.getAverageElapsedPace());
         assertEquals("4:30", state.getMaxPace());
+        assertEquals(270, state.getMaxPaceSecondsPerKm());
         assertEquals(1_600, state.getMaxSpeedKmhX100());
         assertEquals(2, state.getAutoPauseCount());
         assertEquals(3, state.getManualPauseCount());

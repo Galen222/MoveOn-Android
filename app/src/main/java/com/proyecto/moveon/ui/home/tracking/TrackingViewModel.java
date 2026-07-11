@@ -299,7 +299,7 @@ public final class TrackingViewModel extends AndroidViewModel {
 
         int averageMovingPace = calculatePaceSecondsPerKm(state.getMovingSeconds(), state.getPreciseDistanceMeters());
         int averageElapsedPace = calculatePaceSecondsPerKm(state.getEffectiveElapsedSeconds(), state.getPreciseDistanceMeters());
-        int maxPace = parsePaceTextToSecondsPerKm(state.getMaxPace());
+        int maxPace = state.getMaxPaceSecondsPerKm();
         int averageSpeedKmhX100 = calculateAverageSpeedKmhX100(
                 state.getDistanceMeters(),
                 state.getMovingSeconds()
@@ -353,31 +353,6 @@ public final class TrackingViewModel extends AndroidViewModel {
             return 0;
         }
         return (int) Math.round((seconds * 1000.0) / distanceMeters);
-    }
-
-
-    /**
-     * Convierte el texto de ritmo mostrado por la UI al entero que espera el histórico local.
-     *
-     * @param paceText ritmo formateado con el patrón {@code m'ss"}.
-     * @return ritmo en segundos por kilómetro, o {@code 0} si el formato no es reconocible.
-     */
-    private int parsePaceTextToSecondsPerKm(@Nullable String paceText) {
-        if (paceText == null || paceText.trim().isEmpty()) {
-            return 0;
-        }
-
-        java.util.regex.Matcher matcher = java.util.regex.Pattern
-                .compile("(\\d+)'(\\d{2})\\\"")
-                .matcher(paceText.trim());
-
-        if (!matcher.matches()) {
-            return 0;
-        }
-
-        int minutes = Integer.parseInt(matcher.group(1));
-        int seconds = Integer.parseInt(matcher.group(2));
-        return (minutes * 60) + seconds;
     }
 
 
@@ -460,7 +435,7 @@ public final class TrackingViewModel extends AndroidViewModel {
         request.distanceMeters = state.getDistanceMeters();
         request.averagePaceTotal = calculatePaceSecondsPerKm(state.getEffectiveElapsedSeconds(), state.getPreciseDistanceMeters());
         request.averagePaceMoving = calculatePaceSecondsPerKm(state.getMovingSeconds(), state.getPreciseDistanceMeters());
-        request.maxPace = parsePaceTextToSecondsPerKm(state.getMaxPace());
+        request.maxPace = state.getMaxPaceSecondsPerKm();
         request.autoPauses = state.getAutoPauseCount();
         request.manualPauses = state.getManualPauseCount();
         request.speedAlerts = state.getSuspiciousSpeedEventCount();

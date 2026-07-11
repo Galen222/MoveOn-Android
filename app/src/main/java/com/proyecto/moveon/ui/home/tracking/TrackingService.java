@@ -798,7 +798,7 @@ public final class TrackingService extends Service implements SensorEventListene
             consecutiveStationarySamples = 0;
             trackSpeedWindow(location, resolvedSpeedMs);
             updateMaxSpeed(resolvedSpeedMs);
-            updateMaxPaceFromRecentWindow(nowRealtime);
+            updateMaxPaceFromRecentWindow();
 
             // Fallback: si la velocidad GPS encaja claramente con carrera o con andar,
             // se usa para reforzar el tipo de actividad aunque el acelerómetro sea pobre.
@@ -1190,22 +1190,16 @@ public final class TrackingService extends Service implements SensorEventListene
      * reciente para acercarse más al comportamiento de un reloj deportivo y evitar falsos
      * máximos por ruido o saltos aislados.</p>
      */
-    private void updateMaxPaceFromRecentWindow(long nowRealtime) {
+    private void updateMaxPaceFromRecentWindow() {
         if (currentStatus != TrackingState.Status.RUNNING) {
-            return;
-        }
-        if (activityType != TrackingState.ActivityType.RUNNING_ACTIVITY) {
             return;
         }
         if (recentMovingSpeeds.size() < MAX_PACE_MIN_SAMPLE_COUNT) {
             return;
         }
-        if (nowRealtime < activityTypeDowngradeGraceDeadlineRealtimeMs) {
-            return;
-        }
 
         double averageSpeedMs = getAverageRecentMovingSpeedMs();
-        if (averageSpeedMs < GPS_RUNNING_SPEED_THRESHOLD_MS) {
+        if (averageSpeedMs < MOVING_SPEED_THRESHOLD_MS) {
             return;
         }
 
@@ -1696,6 +1690,16 @@ public final class TrackingService extends Service implements SensorEventListene
     }
 
     /**
+     * Devuelve el mejor ritmo en formato numérico para persistencia y sincronización.
+     */
+    private int calculateMaxPaceSecondsPerKm() {
+        if (!Double.isFinite(maxPaceSecondsPerKm)) {
+            return 0;
+        }
+        return (int) Math.round(maxPaceSecondsPerKm);
+    }
+
+    /**
      * Convierte tiempo total y distancia total en ritmo por kilómetro.
      *
      * <p>Se recibe la distancia en double para aprovechar todo el detalle acumulado y
@@ -1773,6 +1777,7 @@ public final class TrackingService extends Service implements SensorEventListene
                 .averageMovingPace(calculateAverageMovingPace())
                 .averageElapsedPace(calculateAverageElapsedPace())
                 .maxPace(calculateMaxPace())
+                .maxPaceSecondsPerKm(calculateMaxPaceSecondsPerKm())
                 .maxSpeedKmhX100(maxSpeedKmhX100)
                 .autoPauseCount(autoPauseCount)
                 .manualPauseCount(manualPauseCount)
@@ -1860,6 +1865,7 @@ public final class TrackingService extends Service implements SensorEventListene
         snapshot.calories = calories;
         snapshot.caloriesAccumulator = caloriesAccumulator;
         snapshot.steps = steps;
+        snapshot.maxPaceSecondsPerKm = calculateMaxPaceSecondsPerKm();
         snapshot.maxSpeedKmhX100 = maxSpeedKmhX100;
         snapshot.autoPauseCount = autoPauseCount;
         snapshot.manualPauseCount = manualPauseCount;
@@ -1921,6 +1927,9 @@ public final class TrackingService extends Service implements SensorEventListene
         calories = snapshot.calories;
         caloriesAccumulator = snapshot.caloriesAccumulator;
         steps = snapshot.steps;
+        maxPaceSecondsPerKm = snapshot.maxPaceSecondsPerKm > 0
+                ? snapshot.maxPaceSecondsPerKm
+                : Double.POSITIVE_INFINITY;
         maxSpeedKmhX100 = snapshot.maxSpeedKmhX100;
         autoPauseCount = snapshot.autoPauseCount;
         manualPauseCount = snapshot.manualPauseCount;

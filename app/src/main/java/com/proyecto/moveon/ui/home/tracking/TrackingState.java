@@ -68,6 +68,7 @@ public final class TrackingState {
     @Nullable private final String averageMovingPace;
     @Nullable private final String averageElapsedPace;
     @Nullable private final String maxPace;
+    private final int maxPaceSecondsPerKm;
     private final int maxSpeedKmhX100;
     private final int autoPauseCount;
     private final int manualPauseCount;
@@ -103,6 +104,7 @@ public final class TrackingState {
             @Nullable String averageMovingPace,
             @Nullable String averageElapsedPace,
             @Nullable String maxPace,
+            int maxPaceSecondsPerKm,
             int maxSpeedKmhX100,
             int autoPauseCount,
             int manualPauseCount,
@@ -136,6 +138,7 @@ public final class TrackingState {
         this.averageMovingPace = averageMovingPace;
         this.averageElapsedPace = averageElapsedPace;
         this.maxPace = maxPace;
+        this.maxPaceSecondsPerKm = maxPaceSecondsPerKm;
         this.maxSpeedKmhX100 = maxSpeedKmhX100;
         this.autoPauseCount = autoPauseCount;
         this.manualPauseCount = manualPauseCount;
@@ -270,6 +273,12 @@ public final class TrackingState {
      * @return mejor ritmo registrado o {@code null} cuando todavía no existe un máximo válido.
      */
     @Nullable public String getMaxPace() { return maxPace; }
+    /**
+     * Devuelve el mejor ritmo como valor numérico listo para persistencia.
+     *
+     * @return segundos por kilómetro, o {@code 0} si todavía no hay una muestra válida.
+     */
+    public int getMaxPaceSecondsPerKm() { return maxPaceSecondsPerKm; }
     /**
      * Devuelve la velocidad máxima en km/h multiplicada por 100 para evitar pérdidas al persistirla.
      *
@@ -444,6 +453,7 @@ public final class TrackingState {
         @Nullable private String averageMovingPace = null;
         @Nullable private String averageElapsedPace = null;
         @Nullable private String maxPace = null;
+        private int maxPaceSecondsPerKm = 0;
         private int maxSpeedKmhX100 = 0;
         private int autoPauseCount = 0;
         private int manualPauseCount = 0;
@@ -488,6 +498,7 @@ public final class TrackingState {
             averageMovingPace = source.averageMovingPace;
             averageElapsedPace = source.averageElapsedPace;
             maxPace = source.maxPace;
+            maxPaceSecondsPerKm = source.maxPaceSecondsPerKm;
             maxSpeedKmhX100 = source.maxSpeedKmhX100;
             autoPauseCount = source.autoPauseCount;
             manualPauseCount = source.manualPauseCount;
@@ -574,6 +585,10 @@ public final class TrackingState {
          * Fija el mejor ritmo máximo alcanzado.
          */
         public Builder maxPace(@Nullable String value) { this.maxPace = value; return this; }
+        /**
+         * Fija el mejor ritmo en segundos por kilómetro para guardarlo sin volver a parsear texto de UI.
+         */
+        public Builder maxPaceSecondsPerKm(int value) { this.maxPaceSecondsPerKm = Math.max(0, value); return this; }
         /**
          * Fija la velocidad máxima expresada en km/h x100.
          */
@@ -662,6 +677,7 @@ public final class TrackingState {
                     averageMovingPace,
                     averageElapsedPace,
                     maxPace,
+                    maxPaceSecondsPerKm,
                     maxSpeedKmhX100,
                     autoPauseCount,
                     manualPauseCount,

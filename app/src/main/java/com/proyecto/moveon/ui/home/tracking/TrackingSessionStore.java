@@ -94,6 +94,7 @@ public final class TrackingSessionStore {
         public int calories;
         public double caloriesAccumulator;
         public int steps;
+        public int maxPaceSecondsPerKm;
         public int maxSpeedKmhX100;
         public int autoPauseCount;
         public int manualPauseCount;
