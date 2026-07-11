@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName;
  */
 @Keep
 public final class RefreshRequestDto {
-    @SerializedName("refresh_token") public String refreshToken;
+    @SerializedName("refresh_token") public final String refreshToken;
 
     /**
      * Construye el cuerpo del endpoint de refresh para obtener un nuevo

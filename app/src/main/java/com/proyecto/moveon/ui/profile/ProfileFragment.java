@@ -32,7 +32,6 @@ import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.core.validation.AppInputValidator;
 import com.proyecto.moveon.data.profile.PerfilRepository;
 import com.proyecto.moveon.data.profile.sync.ProfilePatchPayload;
-import com.proyecto.moveon.data.session.SecureSessionManager;
 import com.proyecto.moveon.databinding.FragmentProfileBinding;
 import com.proyecto.moveon.domain.profile.PerfilUsuario;
 import com.proyecto.moveon.ui.auth.LoginActivity;
@@ -66,7 +65,6 @@ public class ProfileFragment extends Fragment {
 
     private ProfileDialogHelper dialogHelper;
     private ProfileTrackingHelper trackingHelper;
-    private SecureSessionManager secureSessionManager;
 
     @Nullable private DeleteAccountBottomSheet deleteAccountSheet;
 
@@ -122,7 +120,6 @@ public class ProfileFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentProfileBinding.inflate(inflater, container, false);
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
-        secureSessionManager = SecureSessionManager.getInstance(requireContext());
 
         dialogHelper = new ProfileDialogHelper(
                 this, viewModel, () -> perfilActual, this::showErrorFeedback);
@@ -182,7 +179,6 @@ public class ProfileFragment extends Fragment {
         binding = null;
         dialogHelper = null;
         trackingHelper = null;
-        secureSessionManager = null;
         deleteAccountSheet = null;
     }
 

@@ -2,6 +2,9 @@ package com.proyecto.moveon.data.remote.retrofit;
 
 import android.os.SystemClock;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.proyecto.moveon.BuildConfig;
 import com.proyecto.moveon.data.session.dto.AppSessionResponseDto;
 import com.proyecto.moveon.utils.StringUtils;
@@ -170,21 +173,30 @@ public final class AppSessionProvider {
             }
         }
 
-        // Extrae el body solo en debug y garantiza el cierre automático del recurso.
-        String errorSnippet = "";
-        try (ResponseBody errorBody = response.errorBody()) {
-            if (errorBody != null && BuildConfig.DEBUG) {
-                String fullError = errorBody.string();
-                // Recortamos a 200 caracteres para no saturar los logs si el servidor devuelve un HTML gigante.
-                errorSnippet = " - Detalles: "
-                        + (fullError.length() > 200
-                        ? fullError.substring(0, 200) + "..."
-                        : fullError);
-            }
-        } catch (Exception ignored) {
-            // El cuerpo de error es solo informativo; el código HTTP sigue siendo suficiente.
-        }
+        throw new Exception(
+                "Error Handshake: HTTP " + response.code() + readErrorSnippet(response.errorBody())
+        );
+    }
 
-        throw new Exception("Error Handshake: HTTP " + response.code() + errorSnippet);
+    /**
+     * Lee una porción acotada del cuerpo de error en builds de depuración.
+     * El cuerpo se cierra siempre, aunque no se añada al mensaje final.
+     */
+    @NonNull
+    private static String readErrorSnippet(@Nullable ResponseBody errorBody) {
+        try (ResponseBody body = errorBody) {
+            if (body == null || !BuildConfig.DEBUG) {
+                return "";
+            }
+
+            String fullError = body.string();
+            String details = fullError.length() > 200
+                    ? fullError.substring(0, 200) + "..."
+                    : fullError;
+            return " - Detalles: " + details;
+        } catch (Exception ignored) {
+            // El cuerpo es solo informativo; el código HTTP sigue siendo suficiente.
+            return "";
+        }
     }
 }

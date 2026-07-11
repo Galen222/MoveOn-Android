@@ -43,16 +43,10 @@ import java.util.List;
  */
 public class StatsViewModel extends AndroidViewModel {
 
-    /** Número máximo de actividades visibles en la pantalla de estadísticas. */
-    private static final int PREVIEW_LIMIT = 5;
-
     // ── LiveData expuesto ─────────────────────────────────────────────────────
 
     /** Estado principal: loading / success(StatsResumen) / error. */
     private final MediatorLiveData<UiState<StatsResumen>> statsState = new MediatorLiveData<>();
-
-    /** Lista reactiva de actividades para el historial reciente. */
-    private final MediatorLiveData<List<ActividadItem>> actividades = new MediatorLiveData<>();
 
     /** Lista completa de actividades (para el bottom sheet "Ver todas"). */
     private final MediatorLiveData<List<ActividadItem>> allActividades = new MediatorLiveData<>();
@@ -107,15 +101,6 @@ public class StatsViewModel extends AndroidViewModel {
         return statsState;
     }
 
-    /**
-     * Expone la lista reducida usada como vista previa del historial reciente.
-     *
-     * @return {@link LiveData} con un máximo de {@value #PREVIEW_LIMIT} actividades visibles.
-     */
-    @NonNull
-    public LiveData<List<ActividadItem>> getActividades() {
-        return actividades;
-    }
 
     /**
      * Expone el historial completo para componentes como {@link TodasActividadesBottomSheet}.
@@ -217,7 +202,6 @@ public class StatsViewModel extends AndroidViewModel {
      */
     private void attachSources() {
         if (accountKey == null) {
-            actividades.setValue(Collections.emptyList());
             allActividades.setValue(Collections.emptyList());
             statsState.setValue(UiState.success(
                     StatsResumen.empty(
@@ -230,10 +214,6 @@ public class StatsViewModel extends AndroidViewModel {
         statsState.addSource(actividadesSource, items -> {
             lastItems = items != null ? items : Collections.emptyList();
             allActividades.setValue(lastItems);
-            actividades.setValue(
-                    lastItems.size() > PREVIEW_LIMIT
-                            ? lastItems.subList(0, PREVIEW_LIMIT)
-                            : lastItems);
             recalcular();
         });
 

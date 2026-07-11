@@ -40,34 +40,11 @@ import java.util.List;
  */
 public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragment {
 
-    public static final String TAG = "share_routes_sheet";
-
     private BottomSheetShareRoutesBinding binding;
     private ShareRoutesAdapter adapter;
     private ShareRoutesViewModel viewModel;
     private boolean isSharingInProgress;
 
-    /**
-     * Factoría canónica para crear el sheet de rutas a compartir. Mantiene
-     * la instanciación en un único punto y facilita añadir argumentos sin
-     * cambiar a los llamadores.
-     *
-     * @return instancia nueva lista para mostrar.
-     */
-    @NonNull
-    public static ShareRoutesBottomSheet newInstance() {
-        return new ShareRoutesBottomSheet();
-    }
-
-    /**
-     * Infla el layout del sheet y guarda el ViewBinding; la referencia se
-     * libera en {@link #onDestroyView()}.
-     *
-     * @param inflater inflator proporcionado por el sistema.
-     * @param container contenedor padre al que se adjuntará la vista.
-     * @param savedInstanceState estado guardado o {@code null}.
-     * @return la raíz de la vista inflada.
-     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -159,7 +136,7 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
                 // reenvuelto al idioma activo. Así la tarjeta compartida y su
                 // copy adjunto salen en el idioma elegido por el usuario.
                 Uri uri = ShareRouteImageGenerator.generateShareImage(localizedContext, item);
-                String shareText = ShareRouteFormatter.buildShareText(localizedContext, item);
+                String shareText = ShareRouteFormatter.buildShareText(localizedContext);
 
                 FragmentActivity activity = getActivity();
                 if (activity == null) {

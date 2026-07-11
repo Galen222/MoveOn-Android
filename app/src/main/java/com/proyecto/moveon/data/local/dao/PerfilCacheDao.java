@@ -5,7 +5,6 @@ import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
-import androidx.room.Update;
 
 import com.proyecto.moveon.data.local.entity.PerfilCacheEntity;
 
@@ -15,7 +14,6 @@ import com.proyecto.moveon.data.local.entity.PerfilCacheEntity;
  * - observe(...)
  * - getNow(...)
  * - upsert(...)
- * - update(...)
  * - deleteByAccount(...)
  */
 @Dao
@@ -52,16 +50,6 @@ public interface PerfilCacheDao {
      * @param entity entidad con el estado que debe quedar persistido.
      */
     void upsert(PerfilCacheEntity entity);
-
-    @Update
-    /**
-     * Actualiza una fila existente sin crearla si no existe. Se usa cuando
-     * solo se quieren cambiar algunos campos (p. ej. metadatos de foto)
-     * y sabemos con certeza que la fila ya estaba en Room.
-     *
-     * @param entity entidad con los campos actualizados.
-     */
-    void update(PerfilCacheEntity entity);
 
     @Query("DELETE FROM perfil_cache WHERE accountKey = :accountKey")
     /**

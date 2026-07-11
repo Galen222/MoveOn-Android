@@ -17,21 +17,7 @@ import com.proyecto.moveon.ui.common.BaseExpandedBottomSheetDialogFragment;
  */
 public class LicensesBottomSheet extends BaseExpandedBottomSheetDialogFragment {
 
-    public static final String TAG = "licenses_sheet";
-
     @Nullable private BottomSheetLicensesBinding binding;
-
-    @NonNull
-    /**
-     * Factoría canónica para crear el sheet de licencias. Mantiene la
-     * instanciación en un único punto y permite añadir argumentos en el
-     * futuro sin cambiar a los llamadores.
-     *
-     * @return instancia nueva lista para mostrar.
-     */
-    public static LicensesBottomSheet newInstance() {
-        return new LicensesBottomSheet();
-    }
 
     @Nullable
     @Override

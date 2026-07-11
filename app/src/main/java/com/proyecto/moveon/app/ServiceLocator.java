@@ -3,7 +3,6 @@ package com.proyecto.moveon.app;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.VisibleForTesting;
 
 import com.proyecto.moveon.data.activities.ActivityRepository;
 import com.proyecto.moveon.data.profile.PerfilRepository;
@@ -59,18 +58,6 @@ public class ServiceLocator {
             }
         }
         return instance;
-    }
-
-    /**
-     * Permite sustituir el localizador global por una implementación de pruebas.
-     *
-     * @param testLocator instancia preparada para el escenario de test.
-     */
-    @VisibleForTesting
-    public static void swap(@NonNull ServiceLocator testLocator) {
-        synchronized (ServiceLocator.class) {
-            instance = testLocator;
-        }
     }
 
     /**

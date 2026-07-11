@@ -9,8 +9,8 @@ import com.google.gson.annotations.SerializedName;
 @Keep
 public final class SocialAuthRequestDto {
 
-    @SerializedName("provider") public String provider;
-    @SerializedName("token") public String token;
+    @SerializedName("provider") public final String provider;
+    @SerializedName("token") public final String token;
 
     /**
      * Construye el cuerpo de login social, donde el backend valida el

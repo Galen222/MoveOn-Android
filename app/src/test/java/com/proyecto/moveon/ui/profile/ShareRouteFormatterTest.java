@@ -70,7 +70,7 @@ public class ShareRouteFormatterTest {
      */
     @Test
     public void buildShareText_nullContextFailsFast() {
-        assertThrows(NullPointerException.class, () -> ShareRouteFormatter.buildShareText(null, null));
+        assertThrows(NullPointerException.class, () -> ShareRouteFormatter.buildShareText(null));
     }
 
     @Test

@@ -168,7 +168,6 @@ public class PerfilSyncManagerReflectionTest {
         assertNull(invoke(manager, "readNullableString", new Class<?>[]{com.google.gson.JsonElement.class}, object.get("nullValue")));
         assertTrue(manager.isRetryable(ApiError.typed(ApiErrorType.NETWORK, "red")));
         assertFalse(manager.isRetryable(ApiError.typed(ApiErrorType.VALIDATION, 422, "invalid")));
-        assertEquals(Boolean.TRUE, invoke(manager, "shouldApplyPatchOptimistically", new Class<?>[]{JsonObject.class}, new JsonObject()));
     }
 
     /**

@@ -96,102 +96,102 @@ public final class ShareRouteImageGenerator {
 
         Paint pageShadowPaint = fillPaint(Color.parseColor("#E3E6EB"));
         Paint pageCardPaint = fillPaint(Color.WHITE);
-        Paint pageBorderPaint = strokePaint(context, Color.parseColor("#E5E7EB"), 1f);
-        Paint brandPaint = textPaint(context, Color.parseColor("#111111"), 82f, true);
-        Paint sectionTitlePaint = textPaint(context, Color.parseColor("#111111"), 60f, true);
-        Paint darkChipTextPaint = textPaint(context, Color.WHITE, 34f, true);
-        Paint greenChipTextPaint = textPaint(context, Color.parseColor("#111111"), 34f, true);
-        Paint legendPaint = textPaint(context, Color.parseColor("#4B5563"), 28f, true);
-        Paint metricHeroLabelPaint = textPaint(context, Color.parseColor("#6B7280"), 30f, true);
-        Paint metricHeroValuePaint = textPaint(context, Color.parseColor("#111111"), 112f, true);
-        Paint metricHeroUnitPaint = textPaint(context, Color.parseColor("#374151"), 42f, true);
-        Paint metricCardLabelPaint = textPaint(context, Color.parseColor("#6B7280"), 28f, true);
-        Paint metricCardValuePaint = textPaint(context, Color.parseColor("#111111"), 68f, true);
+        Paint pageBorderPaint = strokePaint(Color.parseColor("#E5E7EB"), 1f);
+        Paint brandPaint = textPaint(Color.parseColor("#111111"), 82f);
+        Paint sectionTitlePaint = textPaint(Color.parseColor("#111111"), 60f);
+        Paint darkChipTextPaint = textPaint(Color.WHITE, 34f);
+        Paint greenChipTextPaint = textPaint(Color.parseColor("#111111"), 34f);
+        Paint legendPaint = textPaint(Color.parseColor("#4B5563"), 28f);
+        Paint metricHeroLabelPaint = textPaint(Color.parseColor("#6B7280"), 30f);
+        Paint metricHeroValuePaint = textPaint(Color.parseColor("#111111"), 112f);
+        Paint metricHeroUnitPaint = textPaint(Color.parseColor("#374151"), 42f);
+        Paint metricCardLabelPaint = textPaint(Color.parseColor("#6B7280"), 28f);
+        Paint metricCardValuePaint = textPaint(Color.parseColor("#111111"), 68f);
         Paint metricCardPaint = fillPaint(Color.parseColor("#FAFAFA"));
-        Paint metricCardBorderPaint = strokePaint(context, Color.parseColor("#E5E7EB"), 1f);
+        Paint metricCardBorderPaint = strokePaint(Color.parseColor("#E5E7EB"), 1f);
         Paint darkChipPaint = fillPaint(Color.parseColor("#111111"));
         Paint greenChipPaint = fillPaint(Color.parseColor("#3AB368"));
         Paint mapCardPaint = fillPaint(Color.parseColor("#F9FAFB"));
         Paint mapAreaPaint = fillPaint(Color.parseColor("#FCFCFD"));
-        Paint gridPaint = strokePaint(context, Color.parseColor("#E5E7EB"), 0.7f);
+        Paint gridPaint = strokePaint(Color.parseColor("#E5E7EB"), 0.7f);
         gridPaint.setAlpha(60);
-        Paint routeShadowPaint = strokePaint(context, Color.parseColor("#BFE7CF"), 26f);
-        Paint routePaint = strokePaint(context, Color.parseColor("#3AB368"), 18f);
+        Paint routeShadowPaint = strokePaint(Color.parseColor("#BFE7CF"), 26f);
+        Paint routePaint = strokePaint(Color.parseColor("#3AB368"), 18f);
         Paint startMarkerPaint = fillPaint(Color.parseColor("#0F172A"));
         Paint endMarkerPaint = fillPaint(Color.parseColor("#DC2626"));
-        Paint dividerPaint = strokePaint(context, Color.parseColor("#ECEFF3"), 1f);
+        Paint dividerPaint = strokePaint(Color.parseColor("#ECEFF3"), 1f);
 
         routeShadowPaint.setStrokeCap(Paint.Cap.ROUND);
         routeShadowPaint.setStrokeJoin(Paint.Join.ROUND);
-        routeShadowPaint.setPathEffect(new CornerPathEffect(dp(context, 14)));
+        routeShadowPaint.setPathEffect(new CornerPathEffect(dp(14)));
         routePaint.setStrokeCap(Paint.Cap.ROUND);
         routePaint.setStrokeJoin(Paint.Join.ROUND);
-        routePaint.setPathEffect(new CornerPathEffect(dp(context, 12)));
+        routePaint.setPathEffect(new CornerPathEffect(dp(12)));
 
         // Sombra suave de la tarjeta principal.
-        RectF shadowRect = new RectF(dp(context, 34), dp(context, 40), width - dp(context, 26), height - dp(context, 26));
-        canvas.drawRoundRect(shadowRect, dp(context, 30), dp(context, 30), pageShadowPaint);
+        RectF shadowRect = new RectF(dp(34), dp(40), width - dp(26), height - dp(26));
+        canvas.drawRoundRect(shadowRect, dp(30), dp(30), pageShadowPaint);
 
         // Tarjeta principal.
-        RectF pageRect = new RectF(dp(context, 24), dp(context, 24), width - dp(context, 24), height - dp(context, 34));
-        canvas.drawRoundRect(pageRect, dp(context, 30), dp(context, 30), pageCardPaint);
-        canvas.drawRoundRect(pageRect, dp(context, 30), dp(context, 30), pageBorderPaint);
+        RectF pageRect = new RectF(dp(24), dp(24), width - dp(24), height - dp(34));
+        canvas.drawRoundRect(pageRect, dp(30), dp(30), pageCardPaint);
+        canvas.drawRoundRect(pageRect, dp(30), dp(30), pageBorderPaint);
 
         // Marca principal.
-        canvas.drawText("MoveOn", dp(context, 58), dp(context, 114), brandPaint);
+        canvas.drawText("MoveOn", dp(58), dp(114), brandPaint);
 
         // Chips más deportivos y muy legibles.
-        float chipTop = dp(context, 150);
-        float chipLeft = dp(context, 58);
+        float chipTop = dp(150);
+        float chipLeft = dp(58);
         chipLeft += drawFilledChip(canvas, chipLeft, chipTop,
                 ShareRouteFormatter.displayType(context, item).toUpperCase(Locale.getDefault()),
-                darkChipPaint, darkChipTextPaint, context);
-        chipLeft += dp(context, 16);
+                darkChipPaint, darkChipTextPaint);
+        chipLeft += dp(16);
         drawFilledChip(canvas, chipLeft, chipTop,
                 ShareRouteFormatter.formatDate(context, item.fechaRutaIso),
-                greenChipPaint, greenChipTextPaint, context);
+                greenChipPaint, greenChipTextPaint);
 
         // Tarjeta grande del mapa.
-        RectF mapCard = new RectF(dp(context, 58), dp(context, 248), width - dp(context, 58), dp(context, 972));
-        canvas.drawRoundRect(mapCard, dp(context, 28), dp(context, 28), mapCardPaint);
-        canvas.drawRoundRect(mapCard, dp(context, 28), dp(context, 28), pageBorderPaint);
+        RectF mapCard = new RectF(dp(58), dp(248), width - dp(58), dp(972));
+        canvas.drawRoundRect(mapCard, dp(28), dp(28), mapCardPaint);
+        canvas.drawRoundRect(mapCard, dp(28), dp(28), pageBorderPaint);
 
-        canvas.drawText(context.getString(R.string.share_routes_image_map_title), mapCard.left + dp(context, 32), mapCard.top + dp(context, 64), sectionTitlePaint);
+        canvas.drawText(context.getString(R.string.share_routes_image_map_title), mapCard.left + dp(32), mapCard.top + dp(64), sectionTitlePaint);
 
         RectF legendArea = new RectF(
-                mapCard.left + dp(context, 32),
-                mapCard.top + dp(context, 84),
-                mapCard.right - dp(context, 32),
-                mapCard.top + dp(context, 144)
+                mapCard.left + dp(32),
+                mapCard.top + dp(84),
+                mapCard.right - dp(32),
+                mapCard.top + dp(144)
         );
         drawLegend(canvas, legendArea, startMarkerPaint, endMarkerPaint, legendPaint, context);
 
         RectF mapArea = new RectF(
-                mapCard.left + dp(context, 28),
-                mapCard.top + dp(context, 154),
-                mapCard.right - dp(context, 28),
-                mapCard.bottom - dp(context, 28)
+                mapCard.left + dp(28),
+                mapCard.top + dp(154),
+                mapCard.right - dp(28),
+                mapCard.bottom - dp(28)
         );
-        canvas.drawRoundRect(mapArea, dp(context, 22), dp(context, 22), mapAreaPaint);
-        drawMapGrid(canvas, mapArea, gridPaint, context);
-        drawRoute(canvas, mapArea, points, routeShadowPaint, routePaint, startMarkerPaint, endMarkerPaint, context);
+        canvas.drawRoundRect(mapArea, dp(22), dp(22), mapAreaPaint);
+        drawMapGrid(canvas, mapArea, gridPaint);
+        drawRoute(canvas, mapArea, points, routeShadowPaint, routePaint, startMarkerPaint, endMarkerPaint);
 
         // Resumen con un bloque hero protagonista, muy deportivo.
-        canvas.drawText(context.getString(R.string.share_routes_image_summary_title), dp(context, 58), dp(context, 1060), sectionTitlePaint);
+        canvas.drawText(context.getString(R.string.share_routes_image_summary_title), dp(58), dp(1060), sectionTitlePaint);
 
         // Distancia principal.
-        float heroTop = dp(context, 1110);
-        float heroLeft = dp(context, 58);
+        float heroTop = dp(1110);
+        float heroLeft = dp(58);
         canvas.drawText(context.getString(R.string.share_routes_metric_distance).toUpperCase(Locale.getDefault()), heroLeft, heroTop, metricHeroLabelPaint);
-        float distanceBaseline = heroTop + dp(context, 126);
+        float distanceBaseline = heroTop + dp(126);
         String distanceValue = ShareRouteFormatter.formatDistanceNumber(context, item.distanciaMetros);
         String distanceUnit = "km";
         canvas.drawText(distanceValue, heroLeft, distanceBaseline, metricHeroValuePaint);
         float distanceWidth = metricHeroValuePaint.measureText(distanceValue);
-        canvas.drawText(distanceUnit, heroLeft + distanceWidth + dp(context, 16), distanceBaseline - dp(context, 12), metricHeroUnitPaint);
+        canvas.drawText(distanceUnit, heroLeft + distanceWidth + dp(16), distanceBaseline - dp(12), metricHeroUnitPaint);
 
         // Duración principal a la derecha.
-        float durationLeft = width / 2f + dp(context, 36);
+        float durationLeft = width / 2f + dp(36);
         canvas.drawText(context.getString(R.string.share_routes_metric_duration).toUpperCase(Locale.getDefault()), durationLeft, heroTop, metricHeroLabelPaint);
         drawAdaptiveText(
                 canvas,
@@ -199,22 +199,20 @@ public final class ShareRouteImageGenerator {
                 durationLeft,
                 distanceBaseline,
                 metricHeroValuePaint,
-                dp(context, 430),
+                dp(430),
                 112f,
-                72f,
-                context
-        );
+                72f);
 
         // Línea divisoria suave entre héroe y métricas secundarias.
-        float dividerY = dp(context, 1292);
-        canvas.drawLine(dp(context, 58), dividerY, width - dp(context, 58), dividerY, dividerPaint);
+        float dividerY = dp(1292);
+        canvas.drawLine(dp(58), dividerY, width - dp(58), dividerY, dividerPaint);
 
         // Tarjetas secundarias compactas: calorías, pasos y los dos ritmos.
-        float cardTop = dp(context, 1338);
-        float cardGap = dp(context, 18);
-        float horizontalPadding = dp(context, 58);
+        float cardTop = dp(1338);
+        float cardGap = dp(18);
+        float horizontalPadding = dp(58);
         float cardWidth = (width - horizontalPadding - horizontalPadding - (cardGap * 3f)) / 4f;
-        float cardHeight = dp(context, 250);
+        float cardHeight = dp(250);
         float secondCardX = horizontalPadding + cardWidth + cardGap;
         float thirdCardX = secondCardX + cardWidth + cardGap;
         float fourthCardX = thirdCardX + cardWidth + cardGap;
@@ -223,13 +221,13 @@ public final class ShareRouteImageGenerator {
                 new RectF(horizontalPadding, cardTop, horizontalPadding + cardWidth, cardTop + cardHeight),
                 context.getString(R.string.share_routes_metric_calories).toUpperCase(Locale.getDefault()),
                 context.getString(R.string.share_routes_kcal_value, item.caloriasQuemadas),
-                metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint, context);
+                metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint);
 
         drawMetricCard(canvas,
                 new RectF(secondCardX, cardTop, secondCardX + cardWidth, cardTop + cardHeight),
                 context.getString(R.string.share_routes_metric_steps).toUpperCase(Locale.getDefault()),
                 ShareRouteFormatter.formatSteps(context, item.pasos),
-                metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint, context);
+                metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint);
 
         drawMetricCard(canvas,
                 new RectF(thirdCardX, cardTop, thirdCardX + cardWidth, cardTop + cardHeight),
@@ -238,13 +236,13 @@ public final class ShareRouteImageGenerator {
                         context,
                         ShareRouteFormatter.resolveShareAveragePaceSeconds(context, item)
                 ),
-                metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint, context);
+                metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint);
 
         drawMetricCard(canvas,
                 new RectF(fourthCardX, cardTop, fourthCardX + cardWidth, cardTop + cardHeight),
                 context.getString(R.string.share_routes_metric_max_pace).toUpperCase(Locale.getDefault()),
                 ShareRouteFormatter.formatPaceWithUnit(context, item.ritmoMaximoSegKm),
-                metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint, context);
+                metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint);
 
         return bitmap;
     }
@@ -260,7 +258,6 @@ public final class ShareRouteImageGenerator {
      * @param borderPaint paint del borde exterior.
      * @param labelPaint paint usado para la etiqueta.
      * @param valuePaint paint base del valor, que luego puede adaptarse al ancho.
-     * @param context contexto usado para convertir medidas de diseño.
      */
     private static void drawMetricCard(@NonNull Canvas canvas,
                                        @NonNull RectF rect,
@@ -269,22 +266,19 @@ public final class ShareRouteImageGenerator {
                                        @NonNull Paint fillPaint,
                                        @NonNull Paint borderPaint,
                                        @NonNull Paint labelPaint,
-                                       @NonNull Paint valuePaint,
-                                       @NonNull Context context) {
-        canvas.drawRoundRect(rect, dp(context, 24), dp(context, 24), fillPaint);
-        canvas.drawRoundRect(rect, dp(context, 24), dp(context, 24), borderPaint);
-        canvas.drawText(label, rect.left + dp(context, 26), rect.top + dp(context, 58), labelPaint);
+                                       @NonNull Paint valuePaint) {
+        canvas.drawRoundRect(rect, dp(24), dp(24), fillPaint);
+        canvas.drawRoundRect(rect, dp(24), dp(24), borderPaint);
+        canvas.drawText(label, rect.left + dp(26), rect.top + dp(58), labelPaint);
         drawAdaptiveText(
                 canvas,
                 value,
-                rect.left + dp(context, 26),
-                rect.top + dp(context, 160),
+                rect.left + dp(26),
+                rect.top + dp(160),
                 valuePaint,
-                rect.width() - dp(context, 52),
+                rect.width() - dp(52),
                 68f,
-                46f,
-                context
-        );
+                46f);
     }
 
     /**
@@ -296,7 +290,6 @@ public final class ShareRouteImageGenerator {
      * @param text texto mostrado dentro del chip.
      * @param fillPaint paint del fondo del chip.
      * @param textPaint paint del texto del chip.
-     * @param context contexto usado para convertir medidas de diseño.
      * @return ancho total ocupado por el chip dibujado.
      */
     private static float drawFilledChip(@NonNull Canvas canvas,
@@ -304,14 +297,13 @@ public final class ShareRouteImageGenerator {
                                         float top,
                                         @NonNull String text,
                                         @NonNull Paint fillPaint,
-                                        @NonNull Paint textPaint,
-                                        @NonNull Context context) {
-        float horizontalPadding = dp(context, 22);
-        float chipHeight = dp(context, 72);
+                                        @NonNull Paint textPaint) {
+        float horizontalPadding = dp(22);
+        float chipHeight = dp(72);
         float width = textPaint.measureText(text) + (horizontalPadding * 2f);
         RectF rect = new RectF(left, top, left + width, top + chipHeight);
-        canvas.drawRoundRect(rect, dp(context, 18), dp(context, 18), fillPaint);
-        canvas.drawText(text, rect.left + horizontalPadding, rect.centerY() + dp(context, 11), textPaint);
+        canvas.drawRoundRect(rect, dp(18), dp(18), fillPaint);
+        canvas.drawText(text, rect.left + horizontalPadding, rect.centerY() + dp(11), textPaint);
         return width;
     }
 
@@ -321,13 +313,11 @@ public final class ShareRouteImageGenerator {
      * @param canvas canvas de destino.
      * @param area rectángulo del mapa sobre el que debe recortarse la cuadrícula.
      * @param gridPaint paint usado para las líneas guía.
-     * @param context contexto usado para convertir medidas de diseño.
      */
     private static void drawMapGrid(@NonNull Canvas canvas,
                                     @NonNull RectF area,
-                                    @NonNull Paint gridPaint,
-                                    @NonNull Context context) {
-        float step = dp(context, 104);
+                                    @NonNull Paint gridPaint) {
+        float step = dp(104);
 
         canvas.save();
         canvas.clipRect(area);
@@ -348,7 +338,7 @@ public final class ShareRouteImageGenerator {
      * @param startPaint paint del marcador de inicio.
      * @param endPaint paint del marcador de fin.
      * @param textPaint paint usado para las etiquetas de texto.
-     * @param context contexto usado para recursos y medidas.
+     * @param context contexto usado para resolver las etiquetas localizadas.
      */
     private static void drawLegend(@NonNull Canvas canvas,
                                    @NonNull RectF area,
@@ -357,15 +347,15 @@ public final class ShareRouteImageGenerator {
                                    @NonNull Paint textPaint,
                                    @NonNull Context context) {
         float y = area.centerY();
-        float startX = area.left + dp(context, 18);
-        float endX = startX + dp(context, 210);
-        float radius = dp(context, 10);
+        float startX = area.left + dp(18);
+        float endX = startX + dp(210);
+        float radius = dp(10);
 
         canvas.drawCircle(startX, y, radius, startPaint);
-        canvas.drawText(context.getString(R.string.share_routes_legend_start).toUpperCase(Locale.getDefault()), startX + dp(context, 18), y + dp(context, 10), textPaint);
+        canvas.drawText(context.getString(R.string.share_routes_legend_start).toUpperCase(Locale.getDefault()), startX + dp(18), y + dp(10), textPaint);
 
         canvas.drawCircle(endX, y, radius, endPaint);
-        canvas.drawText(context.getString(R.string.share_routes_legend_end).toUpperCase(Locale.getDefault()), endX + dp(context, 18), y + dp(context, 10), textPaint);
+        canvas.drawText(context.getString(R.string.share_routes_legend_end).toUpperCase(Locale.getDefault()), endX + dp(18), y + dp(10), textPaint);
     }
 
     /**
@@ -381,7 +371,6 @@ public final class ShareRouteImageGenerator {
      * @param routePaint paint principal de la ruta.
      * @param startMarkerPaint paint del marcador de inicio.
      * @param endMarkerPaint paint del marcador de fin.
-     * @param context contexto usado para convertir medidas de diseño.
      */
     private static void drawRoute(@NonNull Canvas canvas,
                                   @NonNull RectF area,
@@ -389,8 +378,7 @@ public final class ShareRouteImageGenerator {
                                   @NonNull Paint routeShadowPaint,
                                   @NonNull Paint routePaint,
                                   @NonNull Paint startMarkerPaint,
-                                  @NonNull Paint endMarkerPaint,
-                                  @NonNull Context context) {
+                                  @NonNull Paint endMarkerPaint) {
         if (points.isEmpty()) return;
 
         double minLat = Double.MAX_VALUE;
@@ -419,8 +407,8 @@ public final class ShareRouteImageGenerator {
         double paddedLatSpan = paddedMaxLat - paddedMinLat;
         double paddedLngSpan = paddedMaxLng - paddedMinLng;
 
-        float innerPadding = dp(context, 30);
-        float markerRadius = dp(context, 15);
+        float innerPadding = dp(30);
+        float markerRadius = dp(15);
         float usableWidth = area.width() - ((innerPadding + markerRadius) * 2f);
         float usableHeight = area.height() - ((innerPadding + markerRadius) * 2f);
 
@@ -476,7 +464,6 @@ public final class ShareRouteImageGenerator {
      * @param maxWidth ancho máximo permitido antes de reducir tipografía.
      * @param startSp tamaño inicial probado.
      * @param minSp tamaño mínimo aceptable.
-     * @param context contexto usado para convertir tamaños tipográficos.
      */
     private static void drawAdaptiveText(@NonNull Canvas canvas,
                                          @NonNull String text,
@@ -485,15 +472,14 @@ public final class ShareRouteImageGenerator {
                                          @NonNull Paint basePaint,
                                          float maxWidth,
                                          float startSp,
-                                         float minSp,
-                                         @NonNull Context context) {
+                                         float minSp) {
         Paint paint = new Paint(basePaint);
         float size = startSp;
-        paint.setTextSize(sp(context, size));
+        paint.setTextSize(sp(size));
 
         while (paint.measureText(text) > maxWidth && size > minSp) {
             size -= 2f;
-            paint.setTextSize(sp(context, size));
+            paint.setTextSize(sp(size));
         }
 
         canvas.drawText(text, x, baseline, paint);
@@ -583,18 +569,16 @@ public final class ShareRouteImageGenerator {
     /**
      * Crea un {@link Paint} de texto reutilizable.
      *
-     * @param context contexto usado para convertir el tamaño tipográfico.
      * @param color color del texto.
      * @param sp tamaño base en unidades de diseño.
-     * @param bold {@code true} para aplicar falso negrita.
      * @return paint configurado para dibujar texto.
      */
     @NonNull
-    private static Paint textPaint(@NonNull Context context, int color, float sp, boolean bold) {
+    private static Paint textPaint(int color, float sp) {
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         paint.setColor(color);
-        paint.setTextSize(sp(context, sp));
-        paint.setFakeBoldText(bold);
+        paint.setTextSize(sp(sp));
+        paint.setFakeBoldText(true);
         return paint;
     }
 
@@ -615,16 +599,15 @@ public final class ShareRouteImageGenerator {
     /**
      * Crea un {@link Paint} de trazo.
      *
-     * @param context contexto usado para convertir el grosor de diseño.
      * @param color color del trazo.
      * @param dpWidth grosor base en unidades de diseño.
      * @return paint configurado en modo {@link Paint.Style#STROKE}.
      */
     @NonNull
-    private static Paint strokePaint(@NonNull Context context, int color, float dpWidth) {
+    private static Paint strokePaint(int color, float dpWidth) {
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(dp(context, dpWidth));
+        paint.setStrokeWidth(dp(dpWidth));
         paint.setColor(color);
         return paint;
     }
@@ -635,22 +618,20 @@ public final class ShareRouteImageGenerator {
      * <p>Esta imagen se dibuja sobre un canvas de tamaño fijo, así que aquí no usamos la densidad
      * real del dispositivo. De este modo evitamos que el contenido se salga del bitmap.</p>
      *
-     * @param context contexto actual; se mantiene por simetría con otros helpers aunque no se use.
      * @param value valor de diseño a trasladar al bitmap.
      * @return valor redondeado en píxeles del canvas fijo.
      */
-    private static int dp(@NonNull Context context, float value) {
+    private static int dp(float value) {
         return Math.round(value);
     }
 
     /**
      * Convierte unidades tipográficas de diseño a píxeles del bitmap.
      *
-     * @param context contexto actual; se mantiene por consistencia con el resto de helpers gráficos.
      * @param value tamaño tipográfico de diseño.
      * @return tamaño final en píxeles del bitmap.
      */
-    private static float sp(@NonNull Context context, float value) {
+    private static float sp(float value) {
         return value;
     }
 

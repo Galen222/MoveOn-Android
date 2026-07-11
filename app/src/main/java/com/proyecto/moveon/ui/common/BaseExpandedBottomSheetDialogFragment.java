@@ -89,18 +89,6 @@ public abstract class BaseExpandedBottomSheetDialogFragment extends BottomSheetD
         );
     }
 
-    /**
-     * Muestra un snackbar de aviso usando la ventana del propio bottom sheet.
-     *
-     * @param message texto a mostrar.
-     */
-    protected void showSheetWarningSnackbar(@NonNull CharSequence message) {
-        TopSnackbar.warning(
-                requireBottomSheetSnackbarAnchor(),
-                message,
-                getBottomSheetSnackbarExtraTopOffsetPx()
-        );
-    }
 
     /**
      * Muestra un snackbar de error usando la ventana del propio bottom sheet.

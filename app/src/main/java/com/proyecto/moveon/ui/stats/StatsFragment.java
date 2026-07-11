@@ -638,7 +638,7 @@ public class StatsFragment extends Fragment {
         MoveOnExecutors.executeIo(() -> {
             try {
                 Uri uri = ShareRouteImageGenerator.generateShareImage(localizedContext, item);
-                String shareText = ShareRouteFormatter.buildShareText(localizedContext, item);
+                String shareText = ShareRouteFormatter.buildShareText(localizedContext);
 
                 FragmentActivity activity = getActivity();
                 if (activity == null) {

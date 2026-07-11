@@ -31,8 +31,7 @@ import com.proyecto.moveon.data.local.entity.UserPrefsEntity;
                 ActividadEntity.class,
                 UserPrefsEntity.class
         },
-        version = 8,
-        exportSchema = true
+        version = 8
 )
 public abstract class AppDatabase extends RoomDatabase {
 

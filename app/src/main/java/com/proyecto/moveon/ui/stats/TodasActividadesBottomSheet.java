@@ -25,18 +25,6 @@ import com.proyecto.moveon.R;
  */
 public class TodasActividadesBottomSheet extends BottomSheetDialogFragment {
 
-    public static final String TAG = "todas_actividades_sheet";
-
-    /**
-     * Crea una nueva instancia del bottom sheet del historial completo.
-     *
-     * @return fragment listo para mostrarse desde {@link StatsFragment}.
-     */
-    @NonNull
-    public static TodasActividadesBottomSheet newInstance() {
-        return new TodasActividadesBottomSheet();
-    }
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,

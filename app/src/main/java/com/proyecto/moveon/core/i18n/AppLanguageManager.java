@@ -133,7 +133,7 @@ public final class AppLanguageManager {
         if (stored != null) {
             return stored;
         }
-        return resolveSystemFallbackLanguage(context);
+        return resolveSystemFallbackLanguage();
     }
 
 
@@ -236,12 +236,11 @@ public final class AppLanguageManager {
     /**
      * Calcula el idioma por defecto a partir del idioma del sistema limitándolo a los soportados por la app.
      *
-     * @param context contexto desde el que consultar la locale del sistema.
      * @return modo de idioma soportado por la app.
      */
     @NonNull
-    private static String resolveSystemFallbackLanguage(@NonNull Context context) {
-        Locale systemLocale = getSystemLocale(context);
+    private static String resolveSystemFallbackLanguage() {
+        Locale systemLocale = getSystemLocale();
         String language = systemLocale.getLanguage();
         return MODE_SPANISH.equalsIgnoreCase(language) ? MODE_SPANISH : MODE_ENGLISH;
     }
@@ -249,11 +248,10 @@ public final class AppLanguageManager {
     /**
      * Recupera la locale principal del sistema con un fallback defensivo a {@link Locale#ENGLISH}.
      *
-     * @param context contexto del componente solicitante.
      * @return locale principal del sistema o un fallback seguro.
      */
     @NonNull
-    private static Locale getSystemLocale(@NonNull Context context) {
+    private static Locale getSystemLocale() {
         Resources systemResources = Resources.getSystem();
         android.content.res.Configuration configuration = systemResources.getConfiguration();
 

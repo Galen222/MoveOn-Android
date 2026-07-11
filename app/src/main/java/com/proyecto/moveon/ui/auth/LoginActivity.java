@@ -36,7 +36,6 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
     private AuthViewModel viewModel;
     private SocialAuthManager socialAuthManager;
 
-    @Nullable private SocialGoogleAccount pendingGoogleAccount;
     private boolean pendingSilentGoogleLogin;
 
     /**
@@ -97,7 +96,6 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
         binding.btnGoogleLogin.setOnClickListener(v -> {
             clearErrors();
-            pendingGoogleAccount = null;
             pendingSilentGoogleLogin = false;
             setLoading(true);
             showGoogleLoading(
@@ -171,7 +169,6 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
         if (!"SOCIAL_ACCOUNT_NOT_REGISTERED".equals(error.getErrorCode())) {
             return false;
         }
-        pendingGoogleAccount = null;
         showGoogleLoading(false, silent, null, 0, 0);
         if (!silent) {
             TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_not_registered));
@@ -318,7 +315,6 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
      */
     @Override
     public void onGoogleAccountReady(@NonNull SocialGoogleAccount account, boolean silent) {
-        pendingGoogleAccount = account;
         pendingSilentGoogleLogin = silent;
         if (!silent) {
             setLoading(true);

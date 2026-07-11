@@ -20,7 +20,6 @@ import com.proyecto.moveon.R;
 import com.proyecto.moveon.data.ranking.dto.RankingItemDto;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -111,15 +110,6 @@ public final class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.Vi
         notifyItemRangeRemoved(0, previousSize);
     }
 
-    /**
-     * Devuelve una snapshot inmutable por si la UI necesitara inspeccionar el contenido actual.
-     *
-     * @return copia defensiva del ranking actualmente renderizado por el adapter.
-     */
-    @NonNull
-    public List<RankingItemDto> getItemsSnapshot() {
-        return Collections.unmodifiableList(new ArrayList<>(items));
-    }
 
     /**
      * Genera un identificador estable a partir del nombre de usuario para reducir recreaciones innecesarias.

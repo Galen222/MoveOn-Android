@@ -5,7 +5,6 @@ import android.content.Context;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.ui.auth.LoginActivity;
@@ -38,7 +37,6 @@ public final class SessionUiHelper {
      * @param message mensaje a mostrar en el Toast; si es vacío se usa el genérico de "sesión expirada".
      * @see OfflineSessionCleaner#clearSessionAndLocalDataAsync(Context)
      * @see NavigationUtils#goToActivityAndClearTask(Context, Class)
-     * @see #handleSessionExpired(Fragment, String)
      */
     public static void handleSessionExpired(@NonNull Activity activity, String message) {
         OfflineSessionCleaner.clearSessionAndLocalDataAsync(activity);
@@ -51,19 +49,4 @@ public final class SessionUiHelper {
         NavigationUtils.goToActivityAndClearTask(activity, LoginActivity.class);
     }
 
-    /**
-     * Variante por conveniencia para fragments: delega en la versión basada en
-     * {@link Activity} si el fragment sigue adjunto y no hace nada si ya se separó
-     * para no lanzar NPE.
-     *
-     * @param fragment fragment desde el que se dispara la transición.
-     * @param message mensaje a mostrar en el Toast o vacío para usar el genérico.
-     * @see Fragment#getActivity()
-     * @see #handleSessionExpired(Activity, String)
-     */
-    public static void handleSessionExpired(@NonNull Fragment fragment, String message) {
-        if (fragment.getActivity() != null) {
-            handleSessionExpired(fragment.getActivity(), message);
-        }
-    }
 }

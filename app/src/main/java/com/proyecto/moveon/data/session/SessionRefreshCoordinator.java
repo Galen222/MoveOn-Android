@@ -137,12 +137,12 @@ public final class SessionRefreshCoordinator {
         @Nullable public String getUserId() { return userId; }
 
         /**
-         * Indica si el snapshot conserva un refresh token con el que intentar la renovación.
+         * Indica si al snapshot le falta un refresh token con el que intentar la renovación.
          *
-         * @return {@code true} cuando el coordinador todavía dispone de un refresh token para reintentar.
+         * @return {@code true} cuando el coordinador no dispone de un refresh token para reintentar.
          */
-        public boolean hasRefreshToken() {
-            return StringUtils.hasText(refreshToken);
+        public boolean isRefreshTokenMissing() {
+            return !StringUtils.hasText(refreshToken);
         }
     }
 
@@ -488,7 +488,7 @@ public final class SessionRefreshCoordinator {
         }
 
         StoredSession snapshot = sessionStore.getStoredSession();
-        if (!snapshot.hasRefreshToken()) {
+        if (snapshot.isRefreshTokenMissing()) {
             sessionStore.logout();
             return RefreshOutcome.unauthorized(401, null, "No refresh token available");
         }
@@ -519,7 +519,7 @@ public final class SessionRefreshCoordinator {
         }
 
         StoredSession snapshot = sessionStore.getStoredSession();
-        if (!snapshot.hasRefreshToken()) {
+        if (snapshot.isRefreshTokenMissing()) {
             return RefreshOutcome.unauthorized(401, null, "No refresh token available");
         }
 

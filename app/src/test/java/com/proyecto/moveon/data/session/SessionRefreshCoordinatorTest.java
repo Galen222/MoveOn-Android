@@ -16,13 +16,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SessionRefreshCoordinatorTest {
 
     /**
-     * Verifica que {@link SessionRefreshCoordinator.StoredSession#hasRefreshToken()} exige contenido real.
+     * Verifica que {@link SessionRefreshCoordinator.StoredSession#isRefreshTokenMissing()} exige contenido real.
      */
     @Test
-    public void storedSession_hasRefreshToken_requiresNonBlankToken() {
-        assertTrue(new SessionRefreshCoordinator.StoredSession("u", "a", "refresh", "1").hasRefreshToken());
-        assertFalse(new SessionRefreshCoordinator.StoredSession("u", "a", "   ", "1").hasRefreshToken());
-        assertFalse(new SessionRefreshCoordinator.StoredSession("u", "a", null, "1").hasRefreshToken());
+    public void storedSession_isRefreshTokenMissing_detectsBlankToken() {
+        assertFalse(new SessionRefreshCoordinator.StoredSession("u", "a", "refresh", "1").isRefreshTokenMissing());
+        assertTrue(new SessionRefreshCoordinator.StoredSession("u", "a", "   ", "1").isRefreshTokenMissing());
+        assertTrue(new SessionRefreshCoordinator.StoredSession("u", "a", null, "1").isRefreshTokenMissing());
     }
 
     /**

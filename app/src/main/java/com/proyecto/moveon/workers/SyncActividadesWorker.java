@@ -19,7 +19,7 @@ import com.proyecto.moveon.data.session.SecureSessionManager;
  * <p>Usa {@link ServiceLocator} para obtener el repositorio en lugar
  * de instanciarlo con {@code new}. Así unifica la creación de dependencias
  * con el resto de la app (ViewModels, MoveOnApp) y permite sustituir
- * el ServiceLocator en tests instrumentados vía {@code ServiceLocator.swap()}.</p>
+ * el localizador de proceso.</p>
  */
 public class SyncActividadesWorker extends Worker {
 

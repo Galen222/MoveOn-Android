@@ -76,17 +76,6 @@ public final class TopSnackbar {
     }
 
     /**
-     * Muestra un snackbar superior de éxito usando un recurso de texto y un offset adicional.
-     *
-     * @param root vista raíz usada como ancla.
-     * @param msgRes recurso string a resolver.
-     * @param extraTopOffsetPx desplazamiento extra en píxeles.
-     */
-    public static void success(@NonNull View root, @StringRes int msgRes, int extraTopOffsetPx) {
-        show(root, root.getContext().getString(msgRes), Type.SUCCESS, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
-    }
-
-    /**
      * Muestra un snackbar superior de éxito con duración extendida.
      *
      * @param root vista raíz usada como ancla.
@@ -94,16 +83,6 @@ public final class TopSnackbar {
      */
     public static void successLong(@NonNull View root, @NonNull CharSequence msg) {
         show(root, msg, Type.SUCCESS, EXTENDED_DURATION_MS, null, null, 0);
-    }
-
-    /**
-     * Muestra un snackbar superior de éxito con duración extendida usando un recurso string.
-     *
-     * @param root vista raíz usada como ancla.
-     * @param msgRes recurso string a resolver.
-     */
-    public static void successLong(@NonNull View root, @StringRes int msgRes) {
-        show(root, root.getContext().getString(msgRes), Type.SUCCESS, EXTENDED_DURATION_MS, null, null, 0);
     }
 
     /**
@@ -127,27 +106,6 @@ public final class TopSnackbar {
                                @NonNull CharSequence msg,
                                int extraTopOffsetPx) {
         show(root, msg, Type.WARNING, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
-    }
-
-    /**
-     * Muestra un snackbar superior de advertencia usando un recurso string.
-     *
-     * @param root vista raíz usada como ancla.
-     * @param msgRes recurso string a resolver.
-     */
-    public static void warning(@NonNull View root, @StringRes int msgRes) {
-        show(root, root.getContext().getString(msgRes), Type.WARNING, Snackbar.LENGTH_LONG, null, null, 0);
-    }
-
-    /**
-     * Muestra un snackbar superior de advertencia usando un recurso string y un offset adicional.
-     *
-     * @param root vista raíz usada como ancla.
-     * @param msgRes recurso string a resolver.
-     * @param extraTopOffsetPx desplazamiento extra en píxeles.
-     */
-    public static void warning(@NonNull View root, @StringRes int msgRes, int extraTopOffsetPx) {
-        show(root, root.getContext().getString(msgRes), Type.WARNING, Snackbar.LENGTH_LONG, null, null, extraTopOffsetPx);
     }
 
     /**
@@ -184,23 +142,6 @@ public final class TopSnackbar {
     public static void error(@NonNull View root, @NonNull CharSequence msg,
                              @Nullable String actionLabel, @Nullable Runnable action) {
         show(root, msg, Type.ERROR, Snackbar.LENGTH_LONG, actionLabel, action, 0);
-    }
-
-    /**
-     * Muestra un snackbar superior de error con acción opcional y offset adicional.
-     *
-     * @param root vista raíz usada como ancla.
-     * @param msg texto a mostrar.
-     * @param actionLabel etiqueta del botón de acción o {@code null}.
-     * @param action acción a ejecutar cuando el usuario pulsa el botón.
-     * @param extraTopOffsetPx desplazamiento extra en píxeles.
-     */
-    public static void error(@NonNull View root,
-                             @NonNull CharSequence msg,
-                             @Nullable String actionLabel,
-                             @Nullable Runnable action,
-                             int extraTopOffsetPx) {
-        show(root, msg, Type.ERROR, Snackbar.LENGTH_LONG, actionLabel, action, extraTopOffsetPx);
     }
 
     // ── Lógica interna ───────────────────────────────────────────────────────

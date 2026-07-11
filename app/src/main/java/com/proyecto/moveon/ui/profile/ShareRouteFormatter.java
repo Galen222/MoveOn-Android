@@ -40,12 +40,10 @@ public final class ShareRouteFormatter {
      * Construye el texto resumen que acompaña a la imagen compartida.
      *
      * @param context contexto usado para resolver recursos localizados.
-     * @param item actividad compartida; se mantiene por coherencia con el resto de formateadores
-     *             aunque el copy actual sea fijo.
      * @return texto corto que acompaña la imagen en el flujo de compartir.
      */
     @NonNull
-    public static String buildShareText(@NonNull Context context, @NonNull ActividadItem item) {
+    public static String buildShareText(@NonNull Context context) {
         // Para el texto adjunto hemos simplificado el copy a una única frase fija,
         // tal como se pidió, sin concatenar métricas de la actividad.
         return context.getString(R.string.share_routes_share_text);

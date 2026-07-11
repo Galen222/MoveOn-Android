@@ -57,7 +57,6 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
     public static final String EXTRA_GOOGLE_DISPLAY_NAME = "extra_google_display_name";
     public static final String EXTRA_GOOGLE_AVATAR_URL = "extra_google_avatar_url";
     public static final String EXTRA_GOOGLE_EMAIL = "extra_google_email";
-    public static final String EXTRA_OPENED_FROM_LOGIN_SOCIAL = "extra_opened_from_login_social";
 
     private static final String EULA_VERSION = "1.0";
     private static final int MIN_AGE_YEARS = 18;
@@ -123,7 +122,7 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                 getIntent().getStringExtra(EXTRA_GOOGLE_DISPLAY_NAME),
                 getIntent().getStringExtra(EXTRA_GOOGLE_AVATAR_URL)
         );
-        applyPendingGoogleAccount(pendingGoogleAccount, true);
+        applyPendingGoogleAccount(pendingGoogleAccount);
         TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_complete_profile));
     }
 
@@ -214,7 +213,7 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
                 attemptRegister();
             }
         });
-        binding.btnGoogleRegister.setOnClickListener(v -> attemptSocialRegister(SocialAuthProvider.GOOGLE));
+        binding.btnGoogleRegister.setOnClickListener(v -> attemptGoogleRegister());
 
         binding.etUsuario.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus) return;
@@ -400,17 +399,11 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
     }
 
     /**
-     * Inicia el flujo de autenticación social y muestra la overlay específica
+     * Inicia el flujo de autenticación con Google y muestra la overlay específica
      * mientras se resuelve la cuenta externa.
-     * 
-     * @param provider identificador del proveedor solicitado.
      */
-    private void attemptSocialRegister(@NonNull String provider) {
+    private void attemptGoogleRegister() {
         clearErrors();
-        if (!SocialAuthProvider.GOOGLE.equals(provider)) {
-            TopSnackbar.error(binding.getRoot(), getString(R.string.social_google_generic_error));
-            return;
-        }
         setLoading(true);
         showGoogleLoading(true, false, pendingGoogleAccount,
                 R.string.social_google_loading_title,
@@ -430,7 +423,7 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
             TopSnackbar.error(binding.getRoot(), getString(R.string.social_google_generic_error));
             return;
         }
-        SocialRegisterInput input = buildSocialRegisterInput(SocialAuthProvider.GOOGLE, pendingGoogleAccount.idToken);
+        SocialRegisterInput input = buildGoogleRegisterInput(pendingGoogleAccount.idToken);
         if (input == null) {
             TopSnackbar.warning(binding.getRoot(), getString(R.string.social_google_complete_profile));
             return;
@@ -462,16 +455,15 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
      * Construye el payload final del registro social usando los datos locales y
      * el token del proveedor ya resuelto.
      *
-     * @param provider proveedor social con el que se autenticó el usuario.
      * @param token token de identidad emitido por el proveedor.
      * @return input listo para backend, o {@code null} si aún fallan validaciones locales.
      */
     @Nullable
-    private SocialRegisterInput buildSocialRegisterInput(@NonNull String provider, @NonNull String token) {
+    private SocialRegisterInput buildGoogleRegisterInput(@NonNull String token) {
         if (!validatePendingSocialFields()) return null;
         String fechaAceptacion = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC).format(Instant.now());
         return new SocialRegisterInput(
-                provider,
+                SocialAuthProvider.GOOGLE,
                 token,
                 StringUtils.textOf(binding.etUsuario.getText()),
                 StringUtils.textOf(binding.etFechaNacimiento.getText()),
@@ -483,15 +475,14 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
 
     /**
      * Vuelca en la UI la cuenta de Google recuperada, activa el modo social y
-     * propone un nombre de usuario inicial.
-     * 
+     * propone un nombre de usuario inicial con feedback visible.
+     *
      * @param account cuenta externa ya autenticada.
-     * @param announce {@code true} si debe mostrarse feedback visible al usuario.
      */
-    private void applyPendingGoogleAccount(@NonNull SocialGoogleAccount account, boolean announce) {
+    private void applyPendingGoogleAccount(@NonNull SocialGoogleAccount account) {
         pendingGoogleAccount = account;
         renderSocialMode(account, true);
-        suggestUsernameFromGoogle(account, announce);
+        suggestUsernameFromGoogle(account);
         showGoogleLoading(false, false, null, 0, 0);
         setLoading(false);
     }
@@ -647,20 +638,17 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
     /**
      * Genera y aplica una sugerencia de nombre de usuario basada en el perfil
      * de Google para reducir fricción durante el alta.
-     * 
+     *
      * @param account cuenta desde la que se toma el nombre visible.
-     * @param announce {@code true} si debe informarse al usuario del autocompletado.
      */
-    private void suggestUsernameFromGoogle(@Nullable SocialGoogleAccount account, boolean announce) {
+    private void suggestUsernameFromGoogle(@Nullable SocialGoogleAccount account) {
         if (account == null) return;
         String suggested = buildSuggestedUsername(account.displayName);
         binding.etUsuario.setText(suggested);
         binding.etUsuario.setSelection(suggested.length());
         binding.tilUsuario.setError(null);
         binding.tilUsuario.setHelperText(getString(R.string.social_google_username_helper));
-        if (announce) {
-            TopSnackbar.successLong(binding.getRoot(), getString(R.string.social_google_username_prefilled));
-        }
+        TopSnackbar.successLong(binding.getRoot(), getString(R.string.social_google_username_prefilled));
     }
 
     /**
@@ -825,7 +813,7 @@ public class RegisterActivity extends AppCompatActivity implements SocialAuthMan
      */
     @Override
     public void onGoogleAccountReady(@NonNull SocialGoogleAccount account, boolean silent) {
-        applyPendingGoogleAccount(account, true);
+        applyPendingGoogleAccount(account);
     }
 
     /**

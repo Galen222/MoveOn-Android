@@ -71,7 +71,7 @@ public final class RetrofitProvider {
      * interceptores y logger.
      *
      * <p>Usa doble-check locking para que varios hilos pidiendo a la vez no construyan más de un
-     * cliente y normaliza la URL con {@link #normalizeBaseUrl(String)} antes de crear Retrofit.</p>
+     * cliente y normaliza la URL con {@link #normalizeBaseUrl()} antes de crear Retrofit.</p>
      *
      * @param context contexto desde el que se resuelve el {@code applicationContext} para los interceptores.
      */
@@ -79,7 +79,7 @@ public final class RetrofitProvider {
         if (moveOnApi != null && protectedApi != null) return;
         synchronized (RetrofitProvider.class) {
             if (moveOnApi != null && protectedApi != null) return;
-            String baseUrl = normalizeBaseUrl(BuildConfig.BASE_URL);
+            String baseUrl = normalizeBaseUrl();
 
             // 1. Configuración del Logger
             HttpLoggingInterceptor log = null;
@@ -161,12 +161,11 @@ public final class RetrofitProvider {
      * las barras sobrantes y añade una al final. Sin esto Retrofit falla
      * con {@code baseUrl must end in /}.
      *
-     * @param raw base URL tal y como viene del BuildConfig.
      * @return URL normalizada con una única barra final.
      */
     @NonNull
-    private static String normalizeBaseUrl(@NonNull String raw) {
-        String trimmed = raw.trim();
+    private static String normalizeBaseUrl() {
+        String trimmed = BuildConfig.BASE_URL.trim();
         int end = trimmed.length();
         while (end > 0 && trimmed.charAt(end - 1) == '/') {
             end--;

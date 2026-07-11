@@ -9,13 +9,13 @@ import com.google.gson.annotations.SerializedName;
 @Keep
 public final class SocialRegisterRequestDto {
 
-    @SerializedName("provider") public String provider;
-    @SerializedName("token") public String token;
-    @SerializedName("nombre_usuario") public String nombreUsuario;
-    @SerializedName("fecha_nacimiento") public String fechaNacimiento;
-    @SerializedName("acepta_terminos") public boolean aceptaTerminos;
-    @SerializedName("fecha_aceptacion_terminos") public String fechaAceptacionTerminos;
-    @SerializedName("version_terminos") public String versionTerminos;
+    @SerializedName("provider") public final String provider;
+    @SerializedName("token") public final String token;
+    @SerializedName("nombre_usuario") public final String nombreUsuario;
+    @SerializedName("fecha_nacimiento") public final String fechaNacimiento;
+    @SerializedName("acepta_terminos") public final boolean aceptaTerminos;
+    @SerializedName("fecha_aceptacion_terminos") public final String fechaAceptacionTerminos;
+    @SerializedName("version_terminos") public final String versionTerminos;
 
     /**
      * Construye el cuerpo del registro social: combina la identidad validada

@@ -43,6 +43,8 @@ import com.proyecto.moveon.utils.StringUtils;
  */
 public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheetDialogFragment {
 
+    private static final int REPORT_BUTTON_ANCESTOR_LEVELS = 3;
+
     /** Tag público para mostrar el bottom sheet desde el fragment padre. */
     public static final String TAG = "ranking_user_actions_sheet";
 
@@ -387,8 +389,8 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
             parentPanel.setBackgroundColor(panelColor);
         }
 
-        clearButtonAncestorsBackground(dialog.getButton(AlertDialog.BUTTON_POSITIVE), panelColor, 3);
-        clearButtonAncestorsBackground(dialog.getButton(AlertDialog.BUTTON_NEGATIVE), panelColor, 3);
+        clearButtonAncestorsBackground(dialog.getButton(AlertDialog.BUTTON_POSITIVE), panelColor);
+        clearButtonAncestorsBackground(dialog.getButton(AlertDialog.BUTTON_NEGATIVE), panelColor);
     }
 
     /**
@@ -396,15 +398,14 @@ public final class RankingUserActionsBottomSheet extends BaseExpandedBottomSheet
      *
      * @param button botón desde el que empezar a recorrer la jerarquía.
      * @param color color a aplicar a los contenedores.
-     * @param maxLevels número máximo de ancestros a recorrer.
      */
-    private void clearButtonAncestorsBackground(@Nullable Button button, int color, int maxLevels) {
+    private void clearButtonAncestorsBackground(@Nullable Button button, int color) {
         if (button == null) return;
 
         ViewParent parent = button.getParent();
         int level = 0;
 
-        while (parent instanceof View && level < maxLevels) {
+        while (parent instanceof View && level < REPORT_BUTTON_ANCESTOR_LEVELS) {
             ((View) parent).setBackgroundColor(color);
             parent = parent.getParent();
             level++;

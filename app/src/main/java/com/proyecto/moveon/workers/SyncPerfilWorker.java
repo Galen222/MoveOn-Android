@@ -20,7 +20,7 @@ import com.proyecto.moveon.data.session.SecureSessionManager;
  * de instanciarlo con {@code new}. Así reutiliza el
  * {@code UserPrefsRepository} singleton, mantiene la construcción de
  * dependencias alineada con el resto de la app y permite sustituir el
- * locator en tests vía {@code ServiceLocator.swap()}.</p>
+ * localizador de proceso.</p>
  */
 public class SyncPerfilWorker extends Worker {
 

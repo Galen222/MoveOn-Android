@@ -41,8 +41,8 @@ public class SecureSessionManagerStateTest {
         assertEquals("42", snapshot.getUserId());
         assertEquals(SocialAuthProvider.GOOGLE, snapshot.getAuthProvider());
         assertTrue(snapshot.hasCompleteSession());
-        assertTrue(snapshot.hasRecoverableSession());
-        assertTrue(snapshot.hasRefreshToken());
+        assertFalse(snapshot.isSessionRecoveryUnavailable());
+        assertFalse(snapshot.isRefreshTokenMissing());
         assertEquals("uid_42", snapshot.getAccountKey());
     }
 
@@ -56,17 +56,17 @@ public class SecureSessionManagerStateTest {
         SecureSessionManager.SessionSnapshot empty = snapshot(null, " ", "", " ", null);
 
         assertFalse(accessOnly.hasCompleteSession());
-        assertTrue(accessOnly.hasRecoverableSession());
-        assertFalse(accessOnly.hasRefreshToken());
+        assertFalse(accessOnly.isSessionRecoveryUnavailable());
+        assertTrue(accessOnly.isRefreshTokenMissing());
         assertNull(accessOnly.getAccountKey());
 
         assertFalse(refreshOnly.hasCompleteSession());
-        assertTrue(refreshOnly.hasRecoverableSession());
-        assertTrue(refreshOnly.hasRefreshToken());
+        assertFalse(refreshOnly.isSessionRecoveryUnavailable());
+        assertFalse(refreshOnly.isRefreshTokenMissing());
 
         assertFalse(empty.hasCompleteSession());
-        assertFalse(empty.hasRecoverableSession());
-        assertFalse(empty.hasRefreshToken());
+        assertTrue(empty.isSessionRecoveryUnavailable());
+        assertTrue(empty.isRefreshTokenMissing());
         assertNull(empty.getAccountKey());
     }
 
@@ -115,27 +115,6 @@ public class SecureSessionManagerStateTest {
             assertTrue(expected.getCause() instanceof IllegalStateException);
             assertEquals("commit fallido", expected.getCause().getMessage());
         }
-    }
-
-    /**
-     * Verifica que putEncryptedOrRemove elimina ambas claves cuando el texto plano no tiene contenido útil.
-     */
-    @Test
-    public void putEncryptedOrRemove_removesCipherAndIvKeysForBlankPlainText() throws Exception {
-        SecureSessionManager manager = allocate(SecureSessionManager.class);
-        MemorySharedPreferences prefs = new MemorySharedPreferences();
-        SharedPreferences.Editor editor = prefs.edit()
-                .putString("ct", "cipher")
-                .putString("iv", "vector");
-        editor.commit();
-
-        editor = prefs.edit();
-        method("putEncryptedOrRemove", SharedPreferences.Editor.class, String.class, String.class, String.class)
-                .invoke(manager, editor, "ct", "iv", "   ");
-        editor.commit();
-
-        assertFalse(prefs.contains("ct"));
-        assertFalse(prefs.contains("iv"));
     }
 
     /**

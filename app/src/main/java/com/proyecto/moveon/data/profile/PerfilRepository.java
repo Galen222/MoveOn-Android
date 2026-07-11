@@ -22,7 +22,6 @@ import com.proyecto.moveon.core.api.ApiResult;
 import com.proyecto.moveon.core.concurrency.MoveOnExecutors;
 import com.proyecto.moveon.data.local.db.AppDatabase;
 import com.proyecto.moveon.data.local.entity.PerfilCacheEntity;
-import com.proyecto.moveon.data.profile.dto.ProfileInfoDto;
 import com.proyecto.moveon.data.profile.local.PerfilLocalDataSource;
 import com.proyecto.moveon.data.profile.remote.PerfilRemoteDataSource;
 import com.proyecto.moveon.data.profile.sync.PerfilSyncManager;
@@ -59,15 +58,6 @@ public class PerfilRepository {
     private final PerfilRemoteDataSource remote;
     private final PerfilSyncManager syncManager;
     private final ExecutorService io = MoveOnExecutors.io();
-
-    /**
-     * Crea el repositorio usando el repositorio de preferencias por defecto.
-     *
-     * @param context contexto desde el que resolver base de datos y servicios de perfil.
-     */
-    public PerfilRepository(@NonNull Context context) {
-        this(context, new UserPrefsRepository(context));
-    }
 
     /**
      * Crea el repositorio de perfil con sus dependencias explícitas.

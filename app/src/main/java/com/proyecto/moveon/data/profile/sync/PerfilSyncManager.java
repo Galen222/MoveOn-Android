@@ -187,14 +187,10 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
         op.state       = STATE_PENDING;
         local.enqueuePatch(op);
 
-        boolean applyOptimistically = shouldApplyPatchOptimistically(patchJson);
-
-        if (applyOptimistically) {
-            PerfilCacheEntity current = getOrCreateCache(accountKey);
-            applyPatchToCache(current, patchJson);
-            current.dirty = true;
-            local.saveCache(current);
-        }
+        PerfilCacheEntity current = getOrCreateCache(accountKey);
+        applyPatchToCache(current, patchJson);
+        current.dirty = true;
+        local.saveCache(current);
 
         ApiResult<String> result = remote.patchPerfilBlocking(patchJson);
         if (result.isSuccess()) {
@@ -205,9 +201,6 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
             } else {
                 PerfilCacheEntity updated = local.getCacheNow(accountKey);
                 if (updated != null) {
-                    if (!applyOptimistically) {
-                        applyPatchToCache(updated, patchJson);
-                    }
                     updated.dirty = hasPendingTextChanges(accountKey)
                             || photoHelper.hasPendingPhoto(updated);
                     updated.lastSyncedAtMs = System.currentTimeMillis();
@@ -499,18 +492,6 @@ public final class PerfilSyncManager implements PhotoSyncHelper.SyncManagerBridg
     // Patch helpers
     // ══════════════════════════════════════════════════════════════════════════
 
-    /**
-     * Indica si el patch debe reflejarse de forma optimista en la caché local.
-     *
-     * <p>Actualmente todos los patches se aplican de forma optimista para que la UI responda
-     * de inmediato y la sincronización posterior solo tenga que confirmar o revertir el resultado remoto.</p>
-     *
-     * @param patch patch cuya política de aplicación local se evalúa.
-     * @return {@code true} cuando debe actualizarse la caché antes de confirmar con backend.
-     */
-    private boolean shouldApplyPatchOptimistically(@NonNull JsonObject patch) {
-        return true;
-    }
 
     /**
      * Aplica sobre la caché local solo los campos presentes en un patch JSON.

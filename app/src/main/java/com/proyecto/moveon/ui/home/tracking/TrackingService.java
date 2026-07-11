@@ -6,13 +6,10 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
-import android.os.Build;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Binder;
@@ -40,14 +37,12 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.maps.android.PolyUtil;
-import com.proyecto.moveon.BuildConfig;
 import com.proyecto.moveon.R;
 import com.proyecto.moveon.core.i18n.AppLanguageManager;
 import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.ui.main.MainActivity;
 
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -802,7 +797,7 @@ public final class TrackingService extends Service implements SensorEventListene
 
             // Fallback: si la velocidad GPS encaja claramente con carrera o con andar,
             // se usa para reforzar el tipo de actividad aunque el acelerómetro sea pobre.
-            updateActivityTypeFromGps(resolvedSpeedMs, true);
+            updateActivityTypeFromGps(resolvedSpeedMs);
 
             if (currentStatus == TrackingState.Status.AUTO_PAUSED
                     && currentPauseReason != TrackingState.PauseReason.SUSPICIOUS_SPEED
@@ -1436,8 +1431,8 @@ public final class TrackingService extends Service implements SensorEventListene
      * <p>Solo actúa cuando la muestra ya fue considerada movimiento real. De este modo
      * no degradamos la clasificación por deriva GPS en parado.</p>
      */
-    private void updateActivityTypeFromGps(float speedMs, boolean movingSample) {
-        if (!movingSample || speedMs <= 0f) {
+    private void updateActivityTypeFromGps(float speedMs) {
+        if (speedMs <= 0f) {
             return;
         }
 
@@ -2658,59 +2653,6 @@ private void openAppForStopConfirmation() {
 
     @NonNull
     /**
-     * Construye un resumen multilínea con tiempo, distancia, movimiento, ritmo y calorías para la vista expandida clásica.
-     *
-     * @return texto expandido listo para mostrarse en notificaciones que usen contenido textual.
-     */
-    private String buildNotificationExpandedText() {
-        String elapsedLine = tr(
-                R.string.mo_tracking_notification_line_elapsed,
-                formatElapsed(elapsedSeconds)
-        );
-        String distanceLine = tr(
-                R.string.mo_tracking_notification_line_distance,
-                formatNotificationDistance()
-        );
-        String movingStoppedLine = tr(
-                R.string.mo_tracking_notification_line_moving_stopped,
-                formatElapsed(movingSeconds),
-                formatElapsed(stoppedSeconds)
-        );
-
-        String averagePace = calculatePreferredAveragePace();
-        String paceText = (averagePace != null ? averagePace : tr(R.string.tracking_default_pace)) + "/km";
-        String caloriesText = tr(R.string.tracking_calories_format, calories);
-        String paceCaloriesLine = tr(
-                R.string.mo_tracking_notification_line_pace_calories,
-                paceText,
-                caloriesText
-        );
-
-        StringBuilder expanded = new StringBuilder();
-
-        if (currentStatus == TrackingState.Status.AUTO_PAUSED) {
-            if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                expanded.append(tr(R.string.mo_tracking_notification_review_required)).append('\n');
-            } else {
-                expanded.append(tr(R.string.mo_tracking_notification_waiting_for_movement)).append('\n');
-            }
-        } else if (currentStatus == TrackingState.Status.PAUSED) {
-            expanded.append(tr(R.string.tracking_status_manual_pause)).append('\n');
-        }
-
-        expanded.append(elapsedLine)
-                .append('\n')
-                .append(distanceLine)
-                .append('\n')
-                .append(movingStoppedLine)
-                .append('\n')
-                .append(paceCaloriesLine);
-
-        return expanded.toString();
-    }
-
-    @NonNull
-    /**
      * Resume en una sola frase el estado relevante de la sesión para el subtítulo de la notificación expandida.
      *
      * @return texto corto localizado acorde al estado actual.
@@ -2738,19 +2680,6 @@ private void openAppForStopConfirmation() {
             default:
                 return tr(R.string.mo_tracking_notification_title);
         }
-    }
-
-    @NonNull
-    /**
-     * Devuelve la etiqueta de actividad usada por la UI cuando necesita distinguir entre caminar y correr.
-     *
-     * @return texto localizado de la actividad actual.
-     */
-    private String buildNotificationActivityLabel() {
-        if (activityType == TrackingState.ActivityType.RUNNING_ACTIVITY) {
-            return tr(R.string.inicio_running);
-        }
-        return tr(R.string.inicio_walking);
     }
 
     @NonNull

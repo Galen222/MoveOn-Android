@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName;
  */
 @Keep
 public final class LogoutRequestDto {
-    @SerializedName("refresh_token") public String refreshToken;
+    @SerializedName("refresh_token") public final String refreshToken;
 
     /**
      * Construye el cuerpo del logout. El backend revoca el refresh token

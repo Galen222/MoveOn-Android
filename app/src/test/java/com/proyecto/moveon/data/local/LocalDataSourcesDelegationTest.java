@@ -252,7 +252,6 @@ public class LocalDataSourcesDelegationTest {
         final MutableLiveData<PerfilCacheEntity> liveData = new MutableLiveData<>();
         PerfilCacheEntity cache;
         PerfilCacheEntity upserted;
-        PerfilCacheEntity updated;
         String lastObserveAccountKey;
         String lastGetAccountKey;
         String deletedAccountKey;
@@ -273,11 +272,6 @@ public class LocalDataSourcesDelegationTest {
         @Override
         public void upsert(PerfilCacheEntity entity) {
             upserted = entity;
-        }
-
-        @Override
-        public void update(PerfilCacheEntity entity) {
-            updated = entity;
         }
 
         @Override

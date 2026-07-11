@@ -153,21 +153,21 @@ public final class SecureSessionManager {
         }
 
         /**
-         * Indica si hay material mínimo para intentar una recuperación de sesión en segundo plano.
+         * Indica si falta todo el material necesario para intentar una recuperación de sesión en segundo plano.
          *
-         * @return {@code true} cuando existe al menos uno de los tokens necesarios para intentar recuperar sesión.
+         * @return {@code true} cuando no existe ningún token con el que intentar recuperar sesión.
          */
-        public boolean hasRecoverableSession() {
-            return StringUtils.hasText(accessToken) || StringUtils.hasText(refreshToken);
+        public boolean isSessionRecoveryUnavailable() {
+            return !StringUtils.hasText(accessToken) && !StringUtils.hasText(refreshToken);
         }
 
         /**
-         * Comprueba si la sesión almacenada conserva refresh token.
+         * Comprueba si la sesión almacenada carece de refresh token.
          *
-         * @return {@code true} cuando el snapshot aún mantiene un refresh token utilizable.
+         * @return {@code true} cuando el snapshot no contiene un refresh token utilizable.
          */
-        public boolean hasRefreshToken() {
-            return StringUtils.hasText(refreshToken);
+        public boolean isRefreshTokenMissing() {
+            return !StringUtils.hasText(refreshToken);
         }
 
         /**
@@ -238,18 +238,6 @@ public final class SecureSessionManager {
     }
 
     /**
-     * Variante síncrona de {@link #saveLoginWithProvider(String, String, String, String)}.
-     */
-    public void saveLoginSyncWithProvider(@Nullable String username,
-                                          @Nullable String accessToken,
-                                          @Nullable String refreshToken,
-                                          @Nullable String authProvider) {
-        synchronized (sessionLock) {
-            saveLoginLocked(username, accessToken, refreshToken, true, authProvider, true);
-        }
-    }
-
-    /**
      * Actualiza access/refresh preservando el usuario actual.
      *
      * <p>Persistencia asíncrona. Para el camino de refresh de red, preferir
@@ -289,7 +277,7 @@ public final class SecureSessionManager {
      */
     public boolean isSessionRecoveryUnavailable() {
         synchronized (sessionLock) {
-            return !readSessionSnapshotLocked().hasRecoverableSession();
+            return readSessionSnapshotLocked().isSessionRecoveryUnavailable();
         }
     }
 
@@ -298,7 +286,7 @@ public final class SecureSessionManager {
      */
     public boolean isRefreshTokenMissing() {
         synchronized (sessionLock) {
-            return !readSessionSnapshotLocked().hasRefreshToken();
+            return readSessionSnapshotLocked().isRefreshTokenMissing();
         }
     }
 
@@ -617,20 +605,6 @@ public final class SecureSessionManager {
         }
     }
 
-
-    /**
-     * Cifra y guarda un valor o elimina sus claves persistidas cuando el texto plano llega vacío.
-     */
-    private void putEncryptedOrRemove(@NonNull SharedPreferences.Editor editor,
-                                      @NonNull String ctKey,
-                                      @NonNull String ivKey,
-                                      @Nullable String plainText) throws Exception {
-        if (StringUtils.hasText(plainText)) {
-            putEncrypted(editor, ctKey, ivKey, plainText.trim());
-            return;
-        }
-        editor.remove(ctKey).remove(ivKey);
-    }
 
     /**
      * Cifra el texto indicado y escribe en el editor tanto el ciphertext como su IV asociado.

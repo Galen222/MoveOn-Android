@@ -62,21 +62,23 @@ public final class AppInputValidator {
     private static final Pattern MULTISPACE_RE = Pattern.compile("\\s+");
     private static final Pattern REAL_NAME_TOKEN_SPLIT_RE = Pattern.compile("[^a-z]+");
 
-    private static final Set<String> HIGH_RISK_RESERVED_TOKENS = unmodifiableSet(
-            "admin",
-            "administrator",
-            "administrador",
-            "support",
-            "soporte",
-            "moderator",
-            "moderador",
-            "staff",
-            "official",
-            "oficial",
-            "root",
-            "owner",
-            "system",
-            "sistema"
+    private static final Set<String> HIGH_RISK_RESERVED_TOKENS = Collections.unmodifiableSet(
+            new LinkedHashSet<>(Arrays.asList(
+                    "admin",
+                    "administrator",
+                    "administrador",
+                    "support",
+                    "soporte",
+                    "moderator",
+                    "moderador",
+                    "staff",
+                    "official",
+                    "oficial",
+                    "root",
+                    "owner",
+                    "system",
+                    "sistema"
+            ))
     );
 
     @Nullable
@@ -171,8 +173,8 @@ public final class AppInputValidator {
             super(message, cause);
         }
 
-        DictionaryLoadException(@NonNull String message) {
-            super(message);
+        DictionaryLoadException() {
+            super("No hay idiomas configurados para moderación");
         }
     }
 
@@ -725,7 +727,7 @@ public final class AppInputValidator {
 
             String[] languages = parseCsv(TEXT_MODERATION_DICTIONARY_LANGS);
             if (languages.length == 0) {
-                throw new DictionaryLoadException("No hay idiomas configurados para moderación");
+                throw new DictionaryLoadException();
             }
 
             for (String lang : languages) {
@@ -920,16 +922,6 @@ public final class AppInputValidator {
         return false;
     }
 
-    /**
-     * Construye un {@link Set} inmutable preservando el orden de inserción.
-     *
-     * @param values elementos a incluir.
-     * @return conjunto inmutable con los valores suministrados.
-     */
-    @NonNull
-    private static Set<String> unmodifiableSet(@NonNull String... values) {
-        return Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(values)));
-    }
 
     /**
      * Resuelve el mensaje final de validación a partir del código de backend y un recurso de fallback.

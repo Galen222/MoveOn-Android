@@ -33,7 +33,7 @@ public final class MoveOnExecutors {
     // Un pool fijo evita que una llamada de red bloqueante monopolice
     // todas las operaciones de IO encoladas detrás.
     private static final ExecutorService IO = Executors.newFixedThreadPool(
-            3, new NamedThreadFactory("moveon-io")
+            3, new NamedThreadFactory()
     );
 
     /**
@@ -66,12 +66,8 @@ public final class MoveOnExecutors {
     }
 
     private static final class NamedThreadFactory implements ThreadFactory {
-        private final String prefix;
         private final AtomicInteger counter = new AtomicInteger(1);
 
-        private NamedThreadFactory(@NonNull String prefix) {
-            this.prefix = prefix;
-        }
 
         /**
          * Crea un hilo con el prefijo configurado y un contador incremental
@@ -84,7 +80,7 @@ public final class MoveOnExecutors {
          */
         @Override
         public Thread newThread(@NonNull Runnable runnable) {
-            Thread thread = new Thread(runnable, prefix + "-" + counter.getAndIncrement());
+            Thread thread = new Thread(runnable, "moveon-io-" + counter.getAndIncrement());
             thread.setPriority(Thread.NORM_PRIORITY);
             return thread;
         }

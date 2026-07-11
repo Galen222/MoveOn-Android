@@ -8,8 +8,8 @@ import com.google.gson.annotations.SerializedName;
  */
 @Keep
 public final class LoginRequestDto {
-    @SerializedName("identificador") public String identificador;
-    @SerializedName("password") public String password;
+    @SerializedName("identificador") public final String identificador;
+    @SerializedName("password") public final String password;
 
     /**
      * Construye el cuerpo de la petición de login.
