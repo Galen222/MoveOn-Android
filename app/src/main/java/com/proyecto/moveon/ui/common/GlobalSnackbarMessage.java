@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
  * <p>Se transporta dentro de un {@link Event} desde un fragmento hasta
  * {@code MainActivity}, que es quien finalmente decide cómo pintarlo sobre la ventana activa.</p>
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class GlobalSnackbarMessage {
 
     /** Tipo visual del snackbar. */

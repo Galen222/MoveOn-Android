@@ -18,6 +18,7 @@ import java.util.Map;
 /**
  * Clase responsable de localizar los códigos de error devueltos por el backend.
  */
+@SuppressWarnings("Java9CollectionFactory")
 public final class BackendErrorLocalizer {
 
     private static final Map<String, Integer> ERROR_RESOURCE_IDS = createErrorResourceIds();

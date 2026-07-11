@@ -812,14 +812,12 @@ public final class TrackingService extends Service implements SensorEventListene
                         location,
                         acceptedDeltaMeters,
                         acceptedDeltaTimeMs,
-                        resolvedSpeedMs,
-                        movingSample
+                        resolvedSpeedMs
                 );
 
                 boolean accumulableDistanceSample = isDistanceAccumulableSample(
                         location,
-                        sanitizedAcceptedDeltaMeters,
-                        movingSample
+                        sanitizedAcceptedDeltaMeters
                 );
                 if (accumulableDistanceSample) {
                     consecutiveDistanceAccumulationSamples++;
@@ -827,7 +825,7 @@ public final class TrackingService extends Service implements SensorEventListene
                     consecutiveDistanceAccumulationSamples = 0;
                 }
 
-                if (shouldAccumulateDistance(location, sanitizedAcceptedDeltaMeters, movingSample)) {
+                if (shouldAccumulateDistance(location, sanitizedAcceptedDeltaMeters)) {
                     // Se suma la distancia desde el último punto aceptado, no desde el último
                     // observado. Así evitamos "evaporar" metros en saltos pequeños consecutivos.
                     //
@@ -875,7 +873,7 @@ public final class TrackingService extends Service implements SensorEventListene
             return;
         }
 
-        LatLng lastPoint = routePoints.get(routePoints.size() - 1);
+        LatLng lastPoint = routePoints.listIterator(routePoints.size()).previous();
         if (lastPoint.latitude != point.latitude || lastPoint.longitude != point.longitude) {
             routePoints.add(point);
         }
@@ -920,9 +918,8 @@ public final class TrackingService extends Service implements SensorEventListene
             @NonNull Location location,
             float acceptedDeltaMeters,
             long acceptedDeltaTimeMs,
-            float speedMs,
-            boolean movingSample) {
-        if (!movingSample || acceptedDeltaMeters <= 0f) {
+            float speedMs) {
+        if (acceptedDeltaMeters <= 0f) {
             return 0f;
         }
 
@@ -1068,9 +1065,8 @@ public final class TrackingService extends Service implements SensorEventListene
      */
     private boolean shouldAccumulateDistance(
             @NonNull Location location,
-            float acceptedDeltaMeters,
-            boolean movingSample) {
-        return isDistanceAccumulableSample(location, acceptedDeltaMeters, movingSample)
+            float acceptedDeltaMeters) {
+        return isDistanceAccumulableSample(location, acceptedDeltaMeters)
                 && consecutiveDistanceAccumulationSamples >= DISTANCE_ACCUMULATION_CONFIRMATION_SAMPLES;
     }
 
@@ -1083,10 +1079,8 @@ public final class TrackingService extends Service implements SensorEventListene
      */
     private boolean isDistanceAccumulableSample(
             @NonNull Location location,
-            float acceptedDeltaMeters,
-            boolean movingSample) {
-        return movingSample
-                && location.getAccuracy() <= MAX_VALID_ACCURACY_FOR_DISTANCE_ACCUMULATION_M
+            float acceptedDeltaMeters) {
+        return location.getAccuracy() <= MAX_VALID_ACCURACY_FOR_DISTANCE_ACCUMULATION_M
                 && acceptedDeltaMeters >= getDistanceAccumulationThreshold(location);
     }
 
@@ -1397,29 +1391,26 @@ public final class TrackingService extends Service implements SensorEventListene
         if (mostlyRunning) {
             runningConfirmCount++;
             walkingConfirmCount = 0;
-        } else {
-            walkingConfirmCount++;
-            runningConfirmCount = 0;
-        }
-
-        if (runningConfirmCount >= SENSOR_CONFIRM_STEPS_TO_RUNNING
-                && activityType != TrackingState.ActivityType.RUNNING_ACTIVITY) {
-            applyActivityType(
-                    TrackingState.ActivityType.RUNNING_ACTIVITY,
-                    "accelerometer",
-                    "mostlyRunning=" + mostlyRunning
-            );
+            if (runningConfirmCount >= SENSOR_CONFIRM_STEPS_TO_RUNNING
+                    && activityType != TrackingState.ActivityType.RUNNING_ACTIVITY) {
+                applyActivityType(
+                        TrackingState.ActivityType.RUNNING_ACTIVITY,
+                        "accelerometer",
+                        "mostlyRunning=true"
+                );
+            }
             return;
         }
 
-        if (!mostlyRunning
-                && walkingConfirmCount >= SENSOR_CONFIRM_STEPS_TO_WALKING
+        walkingConfirmCount++;
+        runningConfirmCount = 0;
+        if (walkingConfirmCount >= SENSOR_CONFIRM_STEPS_TO_WALKING
                 && activityType == TrackingState.ActivityType.RUNNING_ACTIVITY
                 && canDowngradeActivityTypeToWalking()) {
             applyActivityType(
                     TrackingState.ActivityType.WALKING,
                     "accelerometer",
-                    "mostlyRunning=" + mostlyRunning
+                    "mostlyRunning=false"
             );
         }
     }
@@ -1826,7 +1817,11 @@ public final class TrackingService extends Service implements SensorEventListene
     private void logDiagnosticEvent(@NonNull String type, @Nullable String detail) {
         diagnosticEvents.add(new TrackingState.DiagnosticEvent(System.currentTimeMillis(), type, detail));
         if (diagnosticEvents.size() > 200) {
-            diagnosticEvents.remove(0);
+            java.util.Iterator<TrackingState.DiagnosticEvent> iterator = diagnosticEvents.iterator();
+            if (iterator.hasNext()) {
+                iterator.next();
+                iterator.remove();
+            }
         }
     }
 
@@ -1954,7 +1949,9 @@ public final class TrackingService extends Service implements SensorEventListene
             routePoints.clear();
             routePoints.addAll(PolyUtil.decode(snapshot.encodedPolyline));
             if (!routePoints.isEmpty()) {
-                lastAcceptedLocation = latLngToLocation(routePoints.get(routePoints.size() - 1));
+                lastAcceptedLocation = latLngToLocation(
+                        routePoints.listIterator(routePoints.size()).previous()
+                );
             }
         }
 
@@ -2302,24 +2299,14 @@ public final class TrackingService extends Service implements SensorEventListene
      */
     @NonNull
     private String buildStatusPillText() {
-    switch (currentStatus) {
-        case RUNNING:
-            return tr(R.string.mo_tracking_notification_status_live_badge);
-
-        case PAUSED:
-            return tr(R.string.mo_tracking_notification_status_paused_badge);
-
-        case AUTO_PAUSED:
-            if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                return tr(R.string.mo_tracking_notification_status_review_badge);
-            }
-            return tr(R.string.mo_tracking_notification_status_waiting_badge);
-
-        case FINISHED:
-        case IDLE:
-        default:
-            return tr(R.string.mo_tracking_notification_title);
-    }
+    return switch (currentStatus) {
+        case RUNNING -> tr(R.string.mo_tracking_notification_status_live_badge);
+        case PAUSED -> tr(R.string.mo_tracking_notification_status_paused_badge);
+        case AUTO_PAUSED -> currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED
+                ? tr(R.string.mo_tracking_notification_status_review_badge)
+                : tr(R.string.mo_tracking_notification_status_waiting_badge);
+        case FINISHED, IDLE -> tr(R.string.mo_tracking_notification_title);
+    };
 }
 
     /**
@@ -2328,21 +2315,12 @@ public final class TrackingService extends Service implements SensorEventListene
      * @return drawable de fondo a aplicar sobre la píldora remota.
      */
     private int resolveStatusPillBackground() {
-    switch (currentStatus) {
-        case RUNNING:
-            return R.drawable.bg_tracking_notification_status_live;
-
-        case PAUSED:
-            return R.drawable.bg_tracking_notification_status_paused;
-
-        case AUTO_PAUSED:
-            return R.drawable.bg_tracking_notification_status_alert;
-
-        case FINISHED:
-        case IDLE:
-        default:
-            return R.drawable.bg_tracking_notification_status_neutral;
-    }
+    return switch (currentStatus) {
+        case RUNNING -> R.drawable.bg_tracking_notification_status_live;
+        case PAUSED -> R.drawable.bg_tracking_notification_status_paused;
+        case AUTO_PAUSED -> R.drawable.bg_tracking_notification_status_alert;
+        case FINISHED, IDLE -> R.drawable.bg_tracking_notification_status_neutral;
+    };
 }
 
     /**
@@ -2389,7 +2367,7 @@ public final class TrackingService extends Service implements SensorEventListene
         int secondaryTextId
 ) {
     switch (currentStatus) {
-        case RUNNING:
+        case RUNNING -> {
             bindNotificationButton(
                     views,
                     primaryContainerId,
@@ -2408,9 +2386,8 @@ public final class TrackingService extends Service implements SensorEventListene
                     tr(R.string.mo_tracking_notification_action_finish),
                     buildStopConfirmationPendingIntent(11)
             );
-            break;
-
-        case PAUSED:
+        }
+        case PAUSED -> {
             bindNotificationButton(
                     views,
                     primaryContainerId,
@@ -2429,9 +2406,8 @@ public final class TrackingService extends Service implements SensorEventListene
                     tr(R.string.mo_tracking_notification_action_finish),
                     buildStopConfirmationPendingIntent(13)
             );
-            break;
-
-        case AUTO_PAUSED:
+        }
+        case AUTO_PAUSED -> {
             if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
                 bindNotificationButton(
                         views,
@@ -2463,11 +2439,8 @@ public final class TrackingService extends Service implements SensorEventListene
                     tr(R.string.mo_tracking_notification_action_finish),
                     buildStopConfirmationPendingIntent(16)
             );
-            break;
-
-        case FINISHED:
-        case IDLE:
-        default:
+        }
+        case FINISHED, IDLE -> {
             bindNotificationButton(
                     views,
                     primaryContainerId,
@@ -2486,7 +2459,7 @@ public final class TrackingService extends Service implements SensorEventListene
                     tr(R.string.mo_tracking_notification_action_finish),
                     buildStopConfirmationPendingIntent(18)
             );
-            break;
+        }
     }
 }
 
@@ -2590,26 +2563,17 @@ private void openAppForStopConfirmation() {
      */
     @NonNull
     private String buildNotificationTitle() {
-        switch (currentStatus) {
-            case RUNNING:
-                return tr(
-                        R.string.mo_tracking_notification_title_running,
-                        buildNotificationActivityTitleLabel()
-                );
-
-            case PAUSED:
-                return tr(R.string.mo_tracking_notification_title_manual_pause);
-
-            case AUTO_PAUSED:
-                if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                    return tr(R.string.mo_tracking_notification_title_suspicious_speed);
-                }
-                return tr(R.string.mo_tracking_notification_title_auto_pause);
-
-            case IDLE:
-            default:
-                return tr(R.string.mo_tracking_notification_title);
-        }
+        return switch (currentStatus) {
+            case RUNNING -> tr(
+                    R.string.mo_tracking_notification_title_running,
+                    buildNotificationActivityTitleLabel()
+            );
+            case PAUSED -> tr(R.string.mo_tracking_notification_title_manual_pause);
+            case AUTO_PAUSED -> currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED
+                    ? tr(R.string.mo_tracking_notification_title_suspicious_speed)
+                    : tr(R.string.mo_tracking_notification_title_auto_pause);
+            case FINISHED, IDLE -> tr(R.string.mo_tracking_notification_title);
+        };
     }
 
     /**
@@ -2622,29 +2586,17 @@ private void openAppForStopConfirmation() {
         String distanceText = formatNotificationDistance();
         String instantPace = calculateInstantPace();
 
-        switch (currentStatus) {
-            case RUNNING:
-                if (instantPace != null) {
-                    return distanceText + " · " + instantPace + "/km";
-                }
-                return distanceText + " · " + tr(R.string.mo_tracking_notification_status_live_short);
-
-            case PAUSED:
-                return distanceText + " · " + tr(R.string.mo_tracking_notification_status_paused_short);
-
-            case AUTO_PAUSED:
-                if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                    return distanceText + " · "
-                            + tr(R.string.mo_tracking_notification_status_review_short);
-                }
-                return distanceText + " · "
-                        + tr(R.string.mo_tracking_notification_status_waiting_short);
-
-            case FINISHED:
-            case IDLE:
-            default:
-                return formatElapsed(elapsedSeconds) + " · " + distanceText;
-        }
+        return switch (currentStatus) {
+            case RUNNING -> instantPace != null
+                    ? distanceText + " · " + instantPace + "/km"
+                    : distanceText + " · " + tr(R.string.mo_tracking_notification_status_live_short);
+            case PAUSED ->
+                    distanceText + " · " + tr(R.string.mo_tracking_notification_status_paused_short);
+            case AUTO_PAUSED -> currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED
+                    ? distanceText + " · " + tr(R.string.mo_tracking_notification_status_review_short)
+                    : distanceText + " · " + tr(R.string.mo_tracking_notification_status_waiting_short);
+            case FINISHED, IDLE -> formatElapsed(elapsedSeconds) + " · " + distanceText;
+        };
     }
 
     /**
@@ -2654,28 +2606,18 @@ private void openAppForStopConfirmation() {
      */
     @NonNull
     private String buildNotificationSummaryText() {
-        switch (currentStatus) {
-            case RUNNING:
-                return tr(
-                        R.string.mo_tracking_notification_summary_running,
-                        formatElapsed(movingSeconds),
-                        formatElapsed(stoppedSeconds)
-                );
-
-            case PAUSED:
-                return tr(R.string.mo_tracking_notification_status_paused_short);
-
-            case AUTO_PAUSED:
-                if (currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                    return tr(R.string.mo_tracking_notification_status_review_short);
-                }
-                return tr(R.string.mo_tracking_notification_status_waiting_short);
-
-            case FINISHED:
-            case IDLE:
-            default:
-                return tr(R.string.mo_tracking_notification_title);
-        }
+        return switch (currentStatus) {
+            case RUNNING -> tr(
+                    R.string.mo_tracking_notification_summary_running,
+                    formatElapsed(movingSeconds),
+                    formatElapsed(stoppedSeconds)
+            );
+            case PAUSED -> tr(R.string.mo_tracking_notification_status_paused_short);
+            case AUTO_PAUSED -> currentPauseReason == TrackingState.PauseReason.SUSPICIOUS_SPEED
+                    ? tr(R.string.mo_tracking_notification_status_review_short)
+                    : tr(R.string.mo_tracking_notification_status_waiting_short);
+            case FINISHED, IDLE -> tr(R.string.mo_tracking_notification_title);
+        };
     }
 
     /**

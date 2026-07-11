@@ -44,13 +44,10 @@ public final class SocialRegisterConflictResolver {
             return Resolution.NO_SPECIAL_HANDLING;
         }
 
-        switch (errorCode) {
-            case "USERNAME_ALREADY_IN_USE":
-                return Resolution.SHOW_USERNAME_TAKEN;
-            case "EMAIL_ALREADY_IN_USE":
-                return Resolution.SHOW_EMAIL_ALREADY_REGISTERED;
-            default:
-                return Resolution.NO_SPECIAL_HANDLING;
-        }
+        return switch (errorCode) {
+            case "USERNAME_ALREADY_IN_USE" -> Resolution.SHOW_USERNAME_TAKEN;
+            case "EMAIL_ALREADY_IN_USE" -> Resolution.SHOW_EMAIL_ALREADY_REGISTERED;
+            default -> Resolution.NO_SPECIAL_HANDLING;
+        };
     }
 }

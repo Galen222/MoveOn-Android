@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName;
  * DTO utilizado para enviar la solicitud de login.
  */
 @Keep
+@SuppressWarnings("ClassCanBeRecord")
 public final class LoginRequestDto {
     @SerializedName("identificador") public final String identificador;
     @SerializedName("password") public final String password;

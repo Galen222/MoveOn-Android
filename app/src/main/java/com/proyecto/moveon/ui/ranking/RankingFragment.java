@@ -129,11 +129,9 @@ public final class RankingFragment extends BottomSheetDialogFragment {
      * Fuerza que el bottom sheet se abra expandido y sin estado colapsado intermedio.
      */
     private void setupBottomSheetExpanded() {
-        if (!(getDialog() instanceof BottomSheetDialog)) {
+        if (!(getDialog() instanceof BottomSheetDialog dialog)) {
             return;
         }
-
-        BottomSheetDialog dialog = (BottomSheetDialog) getDialog();
         dialog.setOnShowListener(d -> {
             View bottomSheet = ((BottomSheetDialog) d)
                     .findViewById(com.google.android.material.R.id.design_bottom_sheet);
@@ -173,7 +171,7 @@ public final class RankingFragment extends BottomSheetDialogFragment {
             return;
         }
 
-        b.chipEspana.setOnClickListener(v -> {
+        b.chipEspana.setOnClickListener(_ -> {
             if (isLoading()) {
                 return;
             }
@@ -187,7 +185,7 @@ public final class RankingFragment extends BottomSheetDialogFragment {
             viewModel.cargarRanking(null);
         });
 
-        b.chipProvincia.setOnClickListener(v -> {
+        b.chipProvincia.setOnClickListener(_ -> {
             if (isLoading()) {
                 return;
             }
@@ -204,7 +202,7 @@ public final class RankingFragment extends BottomSheetDialogFragment {
             return;
         }
 
-        b.btnRankingRetry.setOnClickListener(v -> {
+        b.btnRankingRetry.setOnClickListener(_ -> {
             if (isLoading()) {
                 return;
             }
@@ -223,7 +221,7 @@ public final class RankingFragment extends BottomSheetDialogFragment {
             return;
         }
 
-        b.btnRankingClose.setOnClickListener(v -> dismiss());
+        b.btnRankingClose.setOnClickListener(_ -> dismiss());
     }
 
     /**

@@ -198,7 +198,7 @@ public class AuthViewModel extends AndroidViewModel {
      */
     public void registerWithSocial(SocialRegisterInput input) {
         registerState.setValue(UiState.loading());
-        authRepository.registerSocial(input, result -> handleSocialRegisterResult(result));
+        authRepository.registerSocial(input, this::handleSocialRegisterResult);
     }
 
     /**

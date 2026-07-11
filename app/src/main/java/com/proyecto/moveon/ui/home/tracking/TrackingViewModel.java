@@ -287,7 +287,12 @@ public final class TrackingViewModel extends AndroidViewModel {
         String fechaRuta = OffsetDateTime.now(ZoneOffset.UTC)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
-        int calorias = Math.max(1, Math.min(state.getCalories(), 10000));
+        int calorias = state.getCalories();
+        if (calorias < 1) {
+            calorias = 1;
+        } else if (calorias > 10000) {
+            calorias = 10000;
+        }
 
         // duracion_total y duracion_movimiento son los valores reales del servicio.
         // duracion_parado se deriva de la diferencia para garantizar que la suma

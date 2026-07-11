@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName;
  * DTO utilizado para enviar la solicitud de register.
  */
 @Keep
+@SuppressWarnings("ClassCanBeRecord")
 public final class RegisterRequestDto {
 
     @SerializedName("nombre_usuario")

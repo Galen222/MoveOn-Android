@@ -31,6 +31,7 @@ import java.util.Locale;
  * actividad. Así evitamos depender de un {@code GoogleMap} visible en pantalla, snapshots del mapa
  * o estados raros del ciclo de vida.</p>
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class ShareRouteImageGenerator {
 
     /**

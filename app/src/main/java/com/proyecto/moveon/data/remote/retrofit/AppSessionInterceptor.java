@@ -53,9 +53,10 @@ public final class AppSessionInterceptor implements Interceptor {
         // Obtenemos el último segmento REAL (ignorando la barra final '/' si la hubiera
         String lastSegment = "";
         if (!segments.isEmpty()) {
-            lastSegment = segments.get(segments.size() - 1);
-            if (lastSegment.isEmpty() && segments.size() > 1) {
-                lastSegment = segments.get(segments.size() - 2);
+            java.util.ListIterator<String> iterator = segments.listIterator(segments.size());
+            lastSegment = iterator.previous();
+            if (lastSegment.isEmpty() && iterator.hasPrevious()) {
+                lastSegment = iterator.previous();
             }
         }
 

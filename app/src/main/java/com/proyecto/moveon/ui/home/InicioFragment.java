@@ -91,7 +91,7 @@ public class InicioFragment extends Fragment
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(
                     new ActivityResultContracts.RequestMultiplePermissions(),
-                    permissions -> onPermissionsRequestCompleted());
+                    _ -> onPermissionsRequestCompleted());
 
     /**
      * Infla la vista principal del tracking y devuelve la raíz asociada al binding.
@@ -293,9 +293,9 @@ public class InicioFragment extends Fragment
      * stop y reset.
      */
     private void setupClickListeners() {
-        binding.btnPlay.setOnClickListener(v -> onPlayClicked());
-        binding.btnStop.setOnClickListener(v -> onStopClicked());
-        binding.btnReset.setOnClickListener(v -> onResetClicked());
+        binding.btnPlay.setOnClickListener(_ -> onPlayClicked());
+        binding.btnStop.setOnClickListener(_ -> onStopClicked());
+        binding.btnReset.setOnClickListener(_ -> onResetClicked());
     }
 
     /**
@@ -354,10 +354,10 @@ public class InicioFragment extends Fragment
                 .setTitle(R.string.tracking_dialog_stop_title)
                 .setMessage(dialogMessage)
                 .setPositiveButton(R.string.tracking_dialog_stop_confirm,
-                        (d, w) -> viewModel.stopAndSave())
+                        (_, _) -> viewModel.stopAndSave())
                 .setNeutralButton(R.string.tracking_dialog_stop_cancel,
-                        (d, w) -> maybeRestoreTrackingAlertAfterStopCancel())
-                .setNegativeButton(R.string.tracking_dialog_reset_confirm, (d, w) -> {
+                        (_, _) -> maybeRestoreTrackingAlertAfterStopCancel())
+                .setNegativeButton(R.string.tracking_dialog_reset_confirm, (_, _) -> {
                     viewModel.resetTracking();
                     clearMapRoute();
                     dismissTrackingSheetIfShowing();
@@ -366,7 +366,7 @@ public class InicioFragment extends Fragment
                 })
                 .create();
 
-        stopDialog.setOnShowListener(dialog -> {
+        stopDialog.setOnShowListener(_ -> {
             if (stopDialog == null) {
                 return;
             }
@@ -379,7 +379,7 @@ public class InicioFragment extends Fragment
             saveButton.setEnabled(canSave);
             saveButton.setAlpha(canSave ? 1.0f : 0.5f);
         });
-        stopDialog.setOnDismissListener(dialog -> stopDialog = null);
+        stopDialog.setOnDismissListener(_ -> stopDialog = null);
         stopDialog.show();
     }
 
@@ -415,7 +415,7 @@ public class InicioFragment extends Fragment
             new AlertDialog.Builder(requireContext())
                     .setTitle(R.string.tracking_dialog_new_activity_title)
                     .setMessage(R.string.tracking_dialog_new_activity_message)
-                    .setPositiveButton(R.string.tracking_dialog_new_activity_confirm, (d, w) -> {
+                    .setPositiveButton(R.string.tracking_dialog_new_activity_confirm, (_, _) -> {
                         viewModel.resetTracking();
                         clearMapRoute();
                         dismissTrackingSheetIfShowing();
@@ -430,7 +430,7 @@ public class InicioFragment extends Fragment
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.tracking_dialog_reset_title)
                 .setMessage(R.string.tracking_dialog_reset_message)
-                .setPositiveButton(R.string.tracking_dialog_reset_confirm, (d, w) -> {
+                .setPositiveButton(R.string.tracking_dialog_reset_confirm, (_, _) -> {
                     viewModel.resetTracking();
                     clearMapRoute();
                     dismissTrackingSheetIfShowing();
@@ -608,26 +608,22 @@ public class InicioFragment extends Fragment
      */
     private void updateControlButtons(@NonNull TrackingState state) {
         switch (state.getStatus()) {
-            case IDLE:
-            case FINISHED:
+            case IDLE, FINISHED -> {
                 applyPlayButtonState(R.drawable.play_icon, true, 1f);
                 binding.btnStop.setVisibility(View.INVISIBLE);
                 binding.btnReset.setVisibility(View.INVISIBLE);
-                break;
-
-            case RUNNING:
+            }
+            case RUNNING -> {
                 applyPlayButtonState(R.drawable.pause_icon, true, 1f);
                 binding.btnStop.setVisibility(View.VISIBLE);
                 binding.btnReset.setVisibility(View.INVISIBLE);
-                break;
-
-            case PAUSED:
+            }
+            case PAUSED -> {
                 applyPlayButtonState(R.drawable.play_icon, true, 1f);
                 binding.btnStop.setVisibility(View.VISIBLE);
                 binding.btnReset.setVisibility(View.VISIBLE);
-                break;
-
-            case AUTO_PAUSED:
+            }
+            case AUTO_PAUSED -> {
                 if (state.getPauseReason() == TrackingState.PauseReason.STATIONARY) {
                     // Mantiene coherencia visual: sigue siendo una sesión activa,
                     // pero temporalmente detenida y pendiente de reactivación
@@ -640,7 +636,7 @@ public class InicioFragment extends Fragment
                 }
                 binding.btnStop.setVisibility(View.VISIBLE);
                 binding.btnReset.setVisibility(View.VISIBLE);
-                break;
+            }
         }
     }
 
@@ -664,35 +660,32 @@ public class InicioFragment extends Fragment
      * @param state estado actual del tracking.
      */
     private void updateStatusText(@NonNull TrackingState state) {
-        int messageRes;
-        switch (state.getStatus()) {
-            case RUNNING:
-                messageRes = R.string.tracking_status_running;
+        int messageRes = switch (state.getStatus()) {
+            case RUNNING -> {
                 applyStatusPillStyle(R.drawable.pill_tracking_auto_paused, R.color.greenPrimary);
-                break;
-            case PAUSED:
-                messageRes = R.string.tracking_status_manual_pause;
+                yield R.string.tracking_status_running;
+            }
+            case PAUSED -> {
                 applyStatusPillStyle(R.drawable.pill_tracking_auto_paused, R.color.greenPrimary);
-                break;
-            case AUTO_PAUSED:
+                yield R.string.tracking_status_manual_pause;
+            }
+            case AUTO_PAUSED -> {
                 if (state.getPauseReason() == TrackingState.PauseReason.SUSPICIOUS_SPEED) {
-                    messageRes = R.string.tracking_status_suspicious_speed;
                     applyStatusPillStyle(R.drawable.pill_inactive, R.color.textSecondary);
-                } else {
-                    messageRes = R.string.tracking_status_auto_pause;
-                    applyStatusPillStyle(R.drawable.pill_tracking_auto_paused, R.color.greenPrimary);
+                    yield R.string.tracking_status_suspicious_speed;
                 }
-                break;
-            case FINISHED:
-                messageRes = R.string.tracking_status_finished;
+                applyStatusPillStyle(R.drawable.pill_tracking_auto_paused, R.color.greenPrimary);
+                yield R.string.tracking_status_auto_pause;
+            }
+            case FINISHED -> {
                 applyStatusPillStyle(R.drawable.pill_inactive, R.color.textSecondary);
-                break;
-            case IDLE:
-            default:
-                messageRes = R.string.tracking_status_idle;
+                yield R.string.tracking_status_finished;
+            }
+            case IDLE -> {
                 applyStatusPillStyle(R.drawable.pill_inactive, R.color.textSecondary);
-                break;
-        }
+                yield R.string.tracking_status_idle;
+            }
+        };
         binding.tvTrackingStatus.setText(messageRes);
     }
 
@@ -777,9 +770,10 @@ public class InicioFragment extends Fragment
             routePolyline.setPoints(points);
         }
 
-        LatLng cameraTarget = currentLocation != null
-                ? currentLocation
-                : (points.isEmpty() ? null : points.get(points.size() - 1));
+        LatLng cameraTarget = currentLocation;
+        if (cameraTarget == null && !points.isEmpty()) {
+            cameraTarget = points.listIterator(points.size()).previous();
+        }
         updateMapCamera(cameraTarget);
     }
 
@@ -1050,7 +1044,7 @@ public class InicioFragment extends Fragment
                         buildRequirementsBulletList(requirements)))
                 .setPositiveButton(R.string.common_accept, null)
                 .setNegativeButton(R.string.tracking_requirements_go_settings,
-                        (dialog, which) -> openBestSettingsForRequirements(requirements))
+                        (_, _) -> openBestSettingsForRequirements(requirements))
                 .show();
     }
 
@@ -1064,7 +1058,7 @@ public class InicioFragment extends Fragment
                 .setMessage(R.string.tracking_device_location_disabled_message)
                 .setPositiveButton(R.string.common_accept, null)
                 .setNegativeButton(R.string.tracking_requirements_go_settings,
-                        (dialog, which) -> openLocationSettings())
+                        (_, _) -> openLocationSettings())
                 .show();
     }
 
@@ -1094,17 +1088,12 @@ public class InicioFragment extends Fragment
      */
     @NonNull
     private String getRequirementLabel(@NonNull TrackingRequirementsManager.Requirement requirement) {
-        switch (requirement) {
-            case LOCATION:
-                return getString(R.string.tracking_requirement_location_name);
-            case ACTIVITY_RECOGNITION:
-                return getString(R.string.tracking_requirement_activity_name);
-            case NOTIFICATIONS:
-                return getString(R.string.tracking_requirement_notifications_name);
-            case GPS:
-            default:
-                return getString(R.string.tracking_requirement_device_location_name);
-        }
+        return switch (requirement) {
+            case LOCATION -> getString(R.string.tracking_requirement_location_name);
+            case ACTIVITY_RECOGNITION -> getString(R.string.tracking_requirement_activity_name);
+            case NOTIFICATIONS -> getString(R.string.tracking_requirement_notifications_name);
+            case GPS -> getString(R.string.tracking_requirement_device_location_name);
+        };
     }
 
     /**
@@ -1113,10 +1102,11 @@ public class InicioFragment extends Fragment
      * 
      * @param requirements requisitos pendientes o bloqueados.
      */
+    @SuppressWarnings("SequencedCollectionMethodCanBeUsed")
     private void openBestSettingsForRequirements(
             @NonNull List<TrackingRequirementsManager.Requirement> requirements) {
         if (requirements.size() == 1
-                && requirements.get(0) == TrackingRequirementsManager.Requirement.NOTIFICATIONS) {
+                && requirements.iterator().next() == TrackingRequirementsManager.Requirement.NOTIFICATIONS) {
             openNotificationSettings();
             return;
         }

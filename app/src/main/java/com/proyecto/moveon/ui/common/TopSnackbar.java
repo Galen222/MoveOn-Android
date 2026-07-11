@@ -183,20 +183,17 @@ public final class TopSnackbar {
         int topGravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
         int resolvedTopMargin = BASE_TOP_MARGIN_PX + Math.max(0, extraTopOffsetPx);
 
-        if (rawParams instanceof CoordinatorLayout.LayoutParams) {
-            CoordinatorLayout.LayoutParams clp = (CoordinatorLayout.LayoutParams) rawParams;
+        if (rawParams instanceof CoordinatorLayout.LayoutParams clp) {
             clp.gravity = topGravity;
             clp.topMargin = resolvedTopMargin;
             clp.leftMargin = BASE_HORIZONTAL_MARGIN_PX;
             clp.rightMargin = BASE_HORIZONTAL_MARGIN_PX;
-        } else if (rawParams instanceof FrameLayout.LayoutParams) {
-            FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) rawParams;
+        } else if (rawParams instanceof FrameLayout.LayoutParams flp) {
             flp.gravity = topGravity;
             flp.topMargin = resolvedTopMargin;
             flp.leftMargin = BASE_HORIZONTAL_MARGIN_PX;
             flp.rightMargin = BASE_HORIZONTAL_MARGIN_PX;
-        } else if (rawParams instanceof ViewGroup.MarginLayoutParams) {
-            ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) rawParams;
+        } else if (rawParams instanceof ViewGroup.MarginLayoutParams mlp) {
             mlp.topMargin = resolvedTopMargin;
             mlp.leftMargin = BASE_HORIZONTAL_MARGIN_PX;
             mlp.rightMargin = BASE_HORIZONTAL_MARGIN_PX;
@@ -229,7 +226,7 @@ public final class TopSnackbar {
         // ── Botón de acción (retry, etc.) ──
         if (actionLabel != null && action != null) {
             snackbar.setActionTextColor(resolvedText);
-            snackbar.setAction(actionLabel, v -> action.run());
+            snackbar.setAction(actionLabel, _ -> action.run());
         }
 
         snackbar.setAnimationMode(Snackbar.ANIMATION_MODE_FADE);

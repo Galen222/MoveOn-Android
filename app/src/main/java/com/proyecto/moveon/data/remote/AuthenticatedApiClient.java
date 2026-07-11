@@ -264,7 +264,7 @@ public final class AuthenticatedApiClient extends BaseRepository {
     private <T> void enqueueCall(Call<JsonElement> call,
                                  Mapper<JsonElement, T> mapper,
                                  Callback<T> callback) {
-        enqueueTracked(call, new retrofit2.Callback<JsonElement>() {
+        enqueueTracked(call, new retrofit2.Callback<>() {
             /**
              * Procesa la respuesta HTTP exitosa o fallida y la convierte al contrato homogéneo de {@link ApiResult}.
              *

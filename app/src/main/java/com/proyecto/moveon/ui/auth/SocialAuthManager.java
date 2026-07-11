@@ -228,12 +228,10 @@ public final class SocialAuthManager {
      */
     private void handleGoogleCredential(@NonNull GetCredentialResponse result, boolean silent) {
         Credential credential = result.getCredential();
-        if (!(credential instanceof CustomCredential)) {
+        if (!(credential instanceof CustomCredential customCredential)) {
             listener.onSocialFlowError(activity.getString(R.string.social_google_generic_error), silent);
             return;
         }
-
-        CustomCredential customCredential = (CustomCredential) credential;
         if (!GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(customCredential.getType())) {
             listener.onSocialFlowError(activity.getString(R.string.social_google_generic_error), silent);
             return;

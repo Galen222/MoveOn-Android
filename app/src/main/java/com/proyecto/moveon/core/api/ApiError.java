@@ -16,6 +16,7 @@ import java.util.Map;
  * <p>Agrupa tipo, código HTTP, mensaje visible, código funcional y errores por campo
  * dentro de un objeto inmutable fácil de propagar entre capas.</p>
  */
+@SuppressWarnings({"ClassCanBeRecord", "Java9CollectionFactory", "SequencedCollectionMethodCanBeUsed"})
 public final class ApiError {
 
     @NonNull private final ApiErrorType type;
@@ -132,7 +133,7 @@ public final class ApiError {
             if (k == null) continue;
             List<String> msgs = fieldErrors.get(k);
             if (msgs != null && !msgs.isEmpty()) {
-                String v = msgs.get(0);
+                String v = msgs.iterator().next();
                 if (v != null && !v.trim().isEmpty()) return v;
             }
         }

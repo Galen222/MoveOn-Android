@@ -2,6 +2,7 @@ package com.proyecto.moveon.domain.auth;
 /**
  * Clase responsable de register input.
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class RegisterInput {
 
     public final String  nombreUsuario;

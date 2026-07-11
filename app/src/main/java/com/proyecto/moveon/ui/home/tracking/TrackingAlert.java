@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
  * indica que la sesión está corriendo o auto-pausada; esta clase indica
  * que además la interfaz debe enseñar un panel inferior contextual.</p>
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class TrackingAlert {
 
     /**

@@ -42,6 +42,7 @@ import javax.crypto.spec.GCMParameterSpec;
  * <p>La rotación de la clave del Keystore se controla con una versión explícita en el alias.
  * Cuando cambie, hay que migrar o limpiar los datos cifrados persistidos con la versión anterior.</p>
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class SecureSessionManager {
 
     private static final String PREF_NAME = "user_prefs_secure";

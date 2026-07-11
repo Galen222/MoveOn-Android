@@ -44,6 +44,7 @@ import java.util.regex.Pattern;
  * {@code app/src/main/assets/data/profanity/ldnoobwv2/es.txt} y
  * {@code app/src/main/assets/data/profanity/ldnoobwv2/en.txt}.</p>
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class AppInputValidator {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");

@@ -22,7 +22,6 @@ import com.proyecto.moveon.ui.common.BaseExpandedBottomSheetDialogFragment;
 import com.proyecto.moveon.ui.common.UiState;
 import com.proyecto.moveon.utils.StringUtils;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -163,17 +162,6 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
                     setSharingInProgress(false);
                     if (binding == null) return;
                     showSheetErrorSnackbar(getString(R.string.share_routes_error_no_polyline));
-                });
-            } catch (IOException e) {
-                FragmentActivity activity = getActivity();
-                if (activity == null) {
-                    isSharingInProgress = false;
-                    return;
-                }
-                activity.runOnUiThread(() -> {
-                    setSharingInProgress(false);
-                    if (binding == null) return;
-                    showSheetErrorSnackbar(getString(R.string.share_routes_error_generating_image));
                 });
             } catch (Exception e) {
                 FragmentActivity activity = getActivity();

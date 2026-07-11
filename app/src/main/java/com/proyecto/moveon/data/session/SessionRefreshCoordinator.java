@@ -36,6 +36,7 @@ import retrofit2.Response;
  * se siguen usando ambos, pero internamente se adaptan a interfaces pequeñas para poder
  * montar tests de concurrencia reales y baratos.</p>
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class SessionRefreshCoordinator {
 
     private static final long PROACTIVE_REFRESH_WINDOW_SECONDS = 90L;
@@ -650,8 +651,6 @@ public final class SessionRefreshCoordinator {
             return RefreshOutcome.unauthorized(code,
                     refreshResp.getErrorCode(),
                     refreshResp.getBackendMessage());
-        } catch (IOException ioException) {
-            return RefreshOutcome.transientError(0, null, null, ioException.getMessage());
         } catch (Exception e) {
             return RefreshOutcome.transientError(0, null, null, e.getMessage());
         }
@@ -765,8 +764,8 @@ public final class SessionRefreshCoordinator {
                 return new ParsedRefreshError(retryAfter, null, null);
             }
 
-            try {
-                String raw = errorBody.string();
+            try (ResponseBody body = errorBody) {
+                String raw = body.string();
                 if (!StringUtils.hasText(raw)) {
                     return new ParsedRefreshError(retryAfter, null, null);
                 }
@@ -794,8 +793,6 @@ public final class SessionRefreshCoordinator {
                 return new ParsedRefreshError(retryAfter, errorCode, message);
             } catch (Exception ignored) {
                 return new ParsedRefreshError(retryAfter, null, null);
-            } finally {
-                errorBody.close();
             }
         }
 

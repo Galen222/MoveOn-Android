@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 /**
  * Clase responsable de social google account.
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class SocialGoogleAccount {
     @NonNull public final String idToken;
     @Nullable public final String email;

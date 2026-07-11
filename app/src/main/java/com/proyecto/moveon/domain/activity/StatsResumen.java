@@ -12,6 +12,7 @@ import java.util.List;
  * Semanas: siempre lunes–domingo (ISO 8601).
  * Racha: días consecutivos hacia atrás desde hoy inclusive. 0 si hoy no hay actividad.
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class StatsResumen {
 
     // -------------------------------------------------------------------------

@@ -14,6 +14,7 @@ import com.google.gson.annotations.SerializedName;
  * offline consistente.</p>
  */
 @Keep
+@SuppressWarnings("ClassCanBeRecord")
 public final class GuardarActividadRequestDto {
 
     @SerializedName("tipo")

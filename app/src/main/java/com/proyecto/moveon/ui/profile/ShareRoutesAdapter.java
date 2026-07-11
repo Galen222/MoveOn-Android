@@ -39,7 +39,7 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
     }
 
     private static final DiffUtil.ItemCallback<ActividadItem> DIFF_CALLBACK =
-            new DiffUtil.ItemCallback<ActividadItem>() {
+            new DiffUtil.ItemCallback<>() {
                 /**
                  * Identifica una fila como "la misma" cuando comparten {@code localId}.
                  * Se usa el id local porque está disponible siempre (incluso antes de
@@ -173,7 +173,7 @@ public class ShareRoutesAdapter extends ListAdapter<ActividadItem, ShareRoutesAd
                             : context.getString(R.string.share_routes_polyline_missing)
             ));
 
-            itemView.setOnClickListener(v -> listener.onRouteClick(item));
+            itemView.setOnClickListener(_ -> listener.onRouteClick(item));
         }
     }
 }

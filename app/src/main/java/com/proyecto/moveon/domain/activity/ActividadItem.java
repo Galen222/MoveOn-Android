@@ -8,6 +8,7 @@ import com.proyecto.moveon.data.activities.ActivitySyncState;
 /**
  * Modelo de dominio de actividad usado por la UI y los cálculos agregados.
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class ActividadItem {
 
     @NonNull public final String localId;

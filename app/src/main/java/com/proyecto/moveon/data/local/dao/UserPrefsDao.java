@@ -16,6 +16,7 @@ import com.proyecto.moveon.data.local.entity.UserPrefsEntity;
  * - upsert: inserta o reemplaza la fila completa (INSERT OR REPLACE).
  */
 @Dao
+@SuppressWarnings("NullableProblems")
 public interface UserPrefsDao {
 
     /**

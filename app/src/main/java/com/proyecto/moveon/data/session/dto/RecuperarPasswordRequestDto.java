@@ -10,6 +10,7 @@ import java.util.Locale;
  * DTO utilizado para enviar la solicitud de recuperar password.
  */
 @Keep
+@SuppressWarnings("ClassCanBeRecord")
 public final class RecuperarPasswordRequestDto {
 
     @SerializedName("email")

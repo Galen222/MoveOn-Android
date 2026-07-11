@@ -130,7 +130,6 @@ public final class ApiErrorParser {
             } catch (Exception e) {
                 type = ApiErrorType.PARSE;
                 visibleMessage = context.getString(R.string.api_error_respuesta_invalida);
-                visibleErrorCode = null;
                 fieldErrors.clear();
             }
         }
@@ -152,40 +151,32 @@ public final class ApiErrorParser {
             return ApiError.typed(ApiErrorType.CANCELED, context.getString(R.string.api_error_cancelado));
         }
 
-        if (t instanceof com.proyecto.moveon.data.remote.retrofit.TokenAuthenticator.RefreshFailedException) {
-            com.proyecto.moveon.data.remote.retrofit.TokenAuthenticator.RefreshFailedException ex =
-                    (com.proyecto.moveon.data.remote.retrofit.TokenAuthenticator.RefreshFailedException) t;
+        return switch (t) {
+            case com.proyecto.moveon.data.remote.retrofit.TokenAuthenticator.RefreshFailedException ex -> {
+                int code = ex.getCode();
+                String retryAfter = ex.getRetryAfter();
+                String backendErrorCode = ex.getErrorCode();
+                String backendMessage = ex.getBackendMessage();
 
-            int c = ex.getCode();
-            String retryAfter = ex.getRetryAfter();
-            String backendErrorCode = ex.getErrorCode();
-            String backendMessage = ex.getBackendMessage();
+                ApiErrorType type = switch (code) {
+                    case 429 -> ApiErrorType.RATE_LIMIT;
+                    case 400, 422 -> ApiErrorType.UNKNOWN;
+                    default -> code >= 500 ? ApiErrorType.SERVER : ApiErrorType.UNKNOWN;
+                };
 
-            ApiErrorType type;
-            if (c == 429) {
-                type = ApiErrorType.RATE_LIMIT;
-            } else if (c == 400 || c == 422) {
-                type = ApiErrorType.UNKNOWN;
-            } else {
-                type = c >= 500 ? ApiErrorType.SERVER : ApiErrorType.UNKNOWN;
+                String message = resolveDisplayMessage(
+                        context, backendErrorCode, backendMessage, retryAfter, code);
+                if (!StringUtils.hasText(message)) {
+                    message = defaultHttpMessage(context, type, code, retryAfter);
+                }
+                yield ApiError.typed(type, code, message, backendErrorCode);
             }
-
-            String msg = resolveDisplayMessage(context, backendErrorCode, backendMessage, retryAfter, c);
-            if (!StringUtils.hasText(msg)) {
-                msg = defaultHttpMessage(context, type, c, retryAfter);
-            }
-            return ApiError.typed(type, c, msg, backendErrorCode);
-        }
-
-        if (t instanceof SocketTimeoutException) {
-            return ApiError.typed(ApiErrorType.TIMEOUT, context.getString(R.string.api_error_timeout));
-        }
-
-        if (t instanceof IOException) {
-            return ApiError.typed(ApiErrorType.NETWORK, context.getString(R.string.api_error_conexion));
-        }
-
-        return ApiError.local(context.getString(R.string.api_error_inesperado));
+            case SocketTimeoutException _ ->
+                    ApiError.typed(ApiErrorType.TIMEOUT, context.getString(R.string.api_error_timeout));
+            case IOException _ ->
+                    ApiError.typed(ApiErrorType.NETWORK, context.getString(R.string.api_error_conexion));
+            default -> ApiError.local(context.getString(R.string.api_error_inesperado));
+        };
     }
 
     /**
@@ -400,27 +391,19 @@ public final class ApiErrorParser {
     private static String localizedHttpFallback(@NonNull Context context,
                                                 int httpCode,
                                                 @Nullable String retryAfter) {
-        switch (httpCode) {
-            case 401:
-                return context.getString(R.string.api_error_unauthorized);
-            case 403:
-                return context.getString(R.string.api_error_forbidden);
-            case 404:
-                return context.getString(R.string.api_error_not_found);
-            case 409:
-                return context.getString(R.string.api_error_conflict);
-            case 413:
-                return context.getString(R.string.api_error_payload_too_large);
-            case 429:
-                return StringUtils.hasText(retryAfter)
-                        ? context.getString(R.string.api_error_rate_limit_retry, retryAfter)
-                        : context.getString(R.string.api_error_rate_limit);
-            default:
-                if (httpCode >= 500) {
-                    return context.getString(R.string.api_error_server);
-                }
-                return null;
-        }
+        return switch (httpCode) {
+            case 401 -> context.getString(R.string.api_error_unauthorized);
+            case 403 -> context.getString(R.string.api_error_forbidden);
+            case 404 -> context.getString(R.string.api_error_not_found);
+            case 409 -> context.getString(R.string.api_error_conflict);
+            case 413 -> context.getString(R.string.api_error_payload_too_large);
+            case 429 -> StringUtils.hasText(retryAfter)
+                    ? context.getString(R.string.api_error_rate_limit_retry, retryAfter)
+                    : context.getString(R.string.api_error_rate_limit);
+            default -> httpCode >= 500
+                    ? context.getString(R.string.api_error_server)
+                    : null;
+        };
     }
 
     /**
@@ -549,27 +532,17 @@ public final class ApiErrorParser {
      * @return categoría de {@link ApiErrorType} que mejor representa el fallo.
      */
     private static ApiErrorType mapHttpToType(int code) {
-        switch (code) {
-            case 400:
-            case 422:
-                return ApiErrorType.VALIDATION;
-            case 401:
-                return ApiErrorType.UNAUTHORIZED;
-            case 403:
-                return ApiErrorType.FORBIDDEN;
-            case 404:
-                return ApiErrorType.NOT_FOUND;
-            case 408:
-                return ApiErrorType.TIMEOUT;
-            case 409:
-                return ApiErrorType.CONFLICT;
-            case 413:
-                return ApiErrorType.PAYLOAD_TOO_LARGE;
-            case 429:
-                return ApiErrorType.RATE_LIMIT;
-            default:
-                return code >= 500 ? ApiErrorType.SERVER : ApiErrorType.UNKNOWN;
-        }
+        return switch (code) {
+            case 400, 422 -> ApiErrorType.VALIDATION;
+            case 401 -> ApiErrorType.UNAUTHORIZED;
+            case 403 -> ApiErrorType.FORBIDDEN;
+            case 404 -> ApiErrorType.NOT_FOUND;
+            case 408 -> ApiErrorType.TIMEOUT;
+            case 409 -> ApiErrorType.CONFLICT;
+            case 413 -> ApiErrorType.PAYLOAD_TOO_LARGE;
+            case 429 -> ApiErrorType.RATE_LIMIT;
+            default -> code >= 500 ? ApiErrorType.SERVER : ApiErrorType.UNKNOWN;
+        };
     }
 
     private static final class DetailParseResult {

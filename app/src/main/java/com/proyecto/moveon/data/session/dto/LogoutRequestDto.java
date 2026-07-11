@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName;
  * DTO utilizado para enviar la solicitud de logout.
  */
 @Keep
-@SuppressWarnings("unused") // Campos leídos por Gson al serializar el body de Retrofit.
+@SuppressWarnings({"unused", "ClassCanBeRecord"}) // Campos leídos por Gson al serializar el body de Retrofit.
 public final class LogoutRequestDto {
     @SerializedName("refresh_token") public final String refreshToken;
 

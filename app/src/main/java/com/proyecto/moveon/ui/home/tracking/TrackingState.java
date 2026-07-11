@@ -19,7 +19,7 @@ import java.util.List;
  * unidades simples para facilitar persistencia offline y recomputación.</p>
  */
 @Keep
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "ClassCanBeRecord", "Java9CollectionFactory"})
 public final class TrackingState {
 
     /**

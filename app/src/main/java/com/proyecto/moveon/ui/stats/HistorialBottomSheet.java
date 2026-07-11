@@ -89,7 +89,7 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         View root = inflater.inflate(R.layout.bottom_sheet_historial, container, false);
         View closeButton = root.findViewById(R.id.btnHistorialClose);
         if (closeButton != null) {
-            closeButton.setOnClickListener(v -> dismissAllowingStateLoss());
+            closeButton.setOnClickListener(_ -> dismissAllowingStateLoss());
         }
 
         if (savedInstanceState != null) {
@@ -98,7 +98,7 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
 
         MaterialButton showMoreButton = root.findViewById(R.id.btnHistorialShowMore);
         if (showMoreButton != null) {
-            showMoreButton.setOnClickListener(v -> {
+            showMoreButton.setOnClickListener(_ -> {
                 visibleMonthCount = Math.min(getTotalMonthCount(), visibleMonthCount + nextMonthBatchSize());
                 buildContent(root);
             });
@@ -149,7 +149,12 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         }
 
         int totalMonthCount = blocks.size();
-        int safeVisibleCount = Math.max(0, Math.min(visibleMonthCount, totalMonthCount));
+        int safeVisibleCount = visibleMonthCount;
+        if (safeVisibleCount < 0) {
+            safeVisibleCount = 0;
+        } else if (safeVisibleCount > totalMonthCount) {
+            safeVisibleCount = totalMonthCount;
+        }
         List<StatsResumen.MonthBlock> visibleBlocks = blocks.subList(0, safeVisibleCount);
 
         for (StatsResumen.MonthBlock block : visibleBlocks) {
@@ -460,7 +465,7 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
 
         binding.btnDelete.setEnabled(!pendiente);
         binding.btnDelete.setAlpha(pendiente ? 0.3f : 1.0f);
-        binding.btnDelete.setOnClickListener(v -> {
+        binding.btnDelete.setOnClickListener(_ -> {
             if (getParentFragment() instanceof StatsFragment) {
                 ((StatsFragment) getParentFragment()).onDeleteClickPublic(item);
             }
@@ -470,7 +475,7 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         binding.btnShareRoute.setVisibility(tienePolilinea ? View.VISIBLE : View.GONE);
         binding.viewShareDivider.setVisibility(tienePolilinea ? View.VISIBLE : View.GONE);
         if (tienePolilinea) {
-            binding.btnShareRoute.setOnClickListener(v -> {
+            binding.btnShareRoute.setOnClickListener(_ -> {
                 if (getParentFragment() instanceof StatsFragment) {
                     ((StatsFragment) getParentFragment()).onShareClickPublic(item);
                 }
@@ -480,7 +485,7 @@ public class HistorialBottomSheet extends BaseExpandedBottomSheetDialogFragment 
         }
 
         applyExpandState(binding, item.localId, false);
-        binding.layoutHeader.setOnClickListener(v -> toggleExpand(binding, item.localId));
+        binding.layoutHeader.setOnClickListener(_ -> toggleExpand(binding, item.localId));
     }
 
     /**

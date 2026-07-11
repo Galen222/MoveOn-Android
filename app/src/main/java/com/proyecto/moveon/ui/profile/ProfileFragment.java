@@ -110,7 +110,7 @@ public class ProfileFragment extends Fragment {
 
         trackingRequirementPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestMultiplePermissions(),
-                result -> {
+                _ -> {
                     if (trackingHelper != null) trackingHelper.updateTrackingRequirementsUi();
                 });
     }
@@ -306,8 +306,7 @@ public class ProfileFragment extends Fragment {
                 .error(R.drawable.default_profile)
                 .circleCrop();
 
-        if (photoSource instanceof File) {
-            File file = (File) photoSource;
+        if (photoSource instanceof File file) {
             request = request
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .skipMemoryCache(true)
@@ -338,7 +337,7 @@ public class ProfileFragment extends Fragment {
      * tracking, foto, logout, borrado de cuenta y edición de campos.
      */
     private void setupListeners() {
-        binding.toggleThemeMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+        binding.toggleThemeMode.addOnButtonCheckedListener((_, checkedId, isChecked) -> {
             if (!isChecked) return;
             final String newMode;
             if (checkedId == R.id.btn_theme_light)       newMode = ThemeManager.MODE_LIGHT;
@@ -353,34 +352,34 @@ public class ProfileFragment extends Fragment {
             });
         });
 
-        binding.tvTrackingLocationAction.setOnClickListener(v ->
+        binding.tvTrackingLocationAction.setOnClickListener(_ ->
                 trackingHelper.handleTrackingRequirementAction(
                         TrackingRequirementsManager.Requirement.LOCATION));
-        binding.tvTrackingActivityAction.setOnClickListener(v ->
+        binding.tvTrackingActivityAction.setOnClickListener(_ ->
                 trackingHelper.handleTrackingRequirementAction(
                         TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
-        binding.tvTrackingNotificationsAction.setOnClickListener(v ->
+        binding.tvTrackingNotificationsAction.setOnClickListener(_ ->
                 trackingHelper.handleTrackingRequirementAction(
                         TrackingRequirementsManager.Requirement.NOTIFICATIONS));
-        binding.tvTrackingDeviceLocationAction.setOnClickListener(v ->
+        binding.tvTrackingDeviceLocationAction.setOnClickListener(_ ->
                 trackingHelper.handleTrackingRequirementAction(
                         TrackingRequirementsManager.Requirement.GPS));
 
         // PickVisualMedia abre el picker del sistema limitado a imágenes.
-        binding.fabChangePhoto.setOnClickListener(v -> pickImageLauncher.launch(
+        binding.fabChangePhoto.setOnClickListener(_ -> pickImageLauncher.launch(
                 new PickVisualMediaRequest.Builder()
                         .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
                         .build()
         ));
 
-        binding.btnLogout.setOnClickListener(v -> viewModel.logout());
-        binding.tvDeleteAccount.setOnClickListener(v -> showDeleteAccountBottomSheet());
-        binding.itemLanguage.setOnClickListener(v -> dialogHelper.showLanguageDialog());
-        binding.itemAbout.setOnClickListener(v ->
+        binding.btnLogout.setOnClickListener(_ -> viewModel.logout());
+        binding.tvDeleteAccount.setOnClickListener(_ -> showDeleteAccountBottomSheet());
+        binding.itemLanguage.setOnClickListener(_ -> dialogHelper.showLanguageDialog());
+        binding.itemAbout.setOnClickListener(_ ->
                 AboutAppBottomSheet.newInstance()
                         .show(getChildFragmentManager(), AboutAppBottomSheet.TAG));
 
-        binding.itemFullName.setOnClickListener(v -> dialogHelper.showEditTextDialog(
+        binding.itemFullName.setOnClickListener(_ -> dialogHelper.showEditTextDialog(
                 getString(R.string.profile_label_fullname),
                 perfilActual != null ? perfilActual.nombreReal : null,
                 android.text.InputType.TYPE_CLASS_TEXT
@@ -402,7 +401,7 @@ public class ProfileFragment extends Fragment {
                     return true;
                 }));
 
-        binding.itemEmail.setOnClickListener(v -> dialogHelper.showEditTextDialog(
+        binding.itemEmail.setOnClickListener(_ -> dialogHelper.showEditTextDialog(
                 getString(R.string.profile_label_email),
                 perfilActual != null ? perfilActual.email : null,
                 android.text.InputType.TYPE_CLASS_TEXT
@@ -424,11 +423,11 @@ public class ProfileFragment extends Fragment {
                     return true;
                 }));
 
-        binding.itemBirthdate.setOnClickListener(v -> dialogHelper.showBirthDatePicker());
-        binding.itemProvincia.setOnClickListener(v -> dialogHelper.showEditProvinciaDialog());
-        binding.itemGenero.setOnClickListener(v -> dialogHelper.showGeneroDialog());
-        binding.itemAltura.setOnClickListener(v -> dialogHelper.showAlturaPickerDialog());
-        binding.itemPeso.setOnClickListener(v -> dialogHelper.showPesoPickerDialog());
+        binding.itemBirthdate.setOnClickListener(_ -> dialogHelper.showBirthDatePicker());
+        binding.itemProvincia.setOnClickListener(_ -> dialogHelper.showEditProvinciaDialog());
+        binding.itemGenero.setOnClickListener(_ -> dialogHelper.showGeneroDialog());
+        binding.itemAltura.setOnClickListener(_ -> dialogHelper.showAlturaPickerDialog());
+        binding.itemPeso.setOnClickListener(_ -> dialogHelper.showPesoPickerDialog());
     }
 
     // ── Observadores ──────────────────────────────────────────────────────────

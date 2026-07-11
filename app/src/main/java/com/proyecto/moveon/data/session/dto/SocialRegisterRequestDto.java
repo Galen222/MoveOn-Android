@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName;
  * DTO utilizado para enviar la solicitud de social register.
  */
 @Keep
+@SuppressWarnings("ClassCanBeRecord")
 public final class SocialRegisterRequestDto {
 
     @SerializedName("provider") public final String provider;

@@ -2,6 +2,7 @@ package com.proyecto.moveon.domain.auth;
 /**
  * Clase responsable de social register input.
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class SocialRegisterInput {
 
     public final String provider;

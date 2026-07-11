@@ -85,7 +85,7 @@ public abstract class BaseRepository {
      */
     protected final <T> void enqueueTracked(@NonNull Call<T> call, @NonNull Callback<T> delegate) {
         trackCall(call);
-        call.enqueue(new Callback<T>() {
+        call.enqueue(new Callback<>() {
             /**
              * Retira la llamada del registro activo antes de delegar el procesamiento de la respuesta real.
              *

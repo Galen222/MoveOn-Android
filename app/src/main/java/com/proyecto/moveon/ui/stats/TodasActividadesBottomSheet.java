@@ -68,8 +68,7 @@ public class TodasActividadesBottomSheet extends BottomSheetDialogFragment {
     public void onStart() {
         super.onStart();
         // Expandir el sheet al máximo al abrirse.
-        if (getDialog() instanceof BottomSheetDialog) {
-            BottomSheetDialog dialog = (BottomSheetDialog) getDialog();
+        if (getDialog() instanceof BottomSheetDialog dialog) {
             View sheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
             if (sheet != null) {
                 BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(sheet);

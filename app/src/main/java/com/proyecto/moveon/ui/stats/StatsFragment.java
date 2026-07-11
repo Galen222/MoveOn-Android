@@ -104,11 +104,11 @@ public class StatsFragment extends Fragment {
      * apertura del histórico y acceso al ranking.
      */
     private void setupListeners() {
-        binding.btnRetry.setOnClickListener(v -> viewModel.load());
-        binding.tvWeeklyGoalHeader.setOnClickListener(v -> showGoalDialog(true));
-        binding.tvMonthlyGoalHeader.setOnClickListener(v -> showGoalDialog(false));
-        binding.cardHistory.setOnClickListener(v -> openUnifiedHistory());
-        binding.cardRanking.setOnClickListener(v ->
+        binding.btnRetry.setOnClickListener(_ -> viewModel.load());
+        binding.tvWeeklyGoalHeader.setOnClickListener(_ -> showGoalDialog(true));
+        binding.tvMonthlyGoalHeader.setOnClickListener(_ -> showGoalDialog(false));
+        binding.cardHistory.setOnClickListener(_ -> openUnifiedHistory());
+        binding.cardRanking.setOnClickListener(_ ->
                 RankingFragment.newInstance(null)
                         .show(getChildFragmentManager(), RankingFragment.TAG));
     }
@@ -517,10 +517,19 @@ public class StatsFragment extends Fragment {
         final float valueTo = isWeekly ? 200f : 500f;
         final float stepSize = isWeekly ? 5f : 10f;
 
-        float currentKm = currentMeters / 1000f;
-        float clampedKm = Math.max(valueFrom, Math.min(valueTo, currentKm));
+        float clampedKm = currentMeters / 1000f;
+        if (clampedKm < valueFrom) {
+            clampedKm = valueFrom;
+        } else if (clampedKm > valueTo) {
+            clampedKm = valueTo;
+        }
+
         float initialValue = Math.round(clampedKm / stepSize) * stepSize;
-        initialValue = Math.max(valueFrom, Math.min(valueTo, initialValue));
+        if (initialValue < valueFrom) {
+            initialValue = valueFrom;
+        } else if (initialValue > valueTo) {
+            initialValue = valueTo;
+        }
 
         Context context = requireContext();
         View content = LayoutInflater.from(context).inflate(R.layout.dialog_goal_slider, null, false);
@@ -535,7 +544,7 @@ public class StatsFragment extends Fragment {
         slider.setStepSize(stepSize);
         slider.setValue(initialValue);
 
-        slider.addOnChangeListener((s, value, fromUser) ->
+        slider.addOnChangeListener((_, value, _) ->
                 tvValue.setText(getString(R.string.stats_format_km, value)));
 
         int titleRes = isWeekly
@@ -553,7 +562,7 @@ public class StatsFragment extends Fragment {
                 .setCustomTitle(titleView)
                 .setView(content)
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .setPositiveButton(R.string.dialog_btn_save, (dialog, which) -> {
+                .setPositiveButton(R.string.dialog_btn_save, (_, _) -> {
                     long selectedMeters = (long) slider.getValue() * 1_000L;
                     if (isWeekly) {
                         viewModel.setWeeklyGoal(selectedMeters);
@@ -619,7 +628,7 @@ public class StatsFragment extends Fragment {
                 .setMessage(R.string.stats_delete_message)
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
                 .setPositiveButton(R.string.stats_delete_confirm,
-                        (dialog, which) -> viewModel.borrarActividad(item.localId))
+                        (_, _) -> viewModel.borrarActividad(item.localId))
                 .show();
     }
 
@@ -628,7 +637,6 @@ public class StatsFragment extends Fragment {
      *
      * @param item actividad desde la que se obtienen polilínea, métricas y texto del share.
      */
-    @SuppressWarnings("resource")
     private void onShareClick(@NonNull ActividadItem item) {
         if (binding == null || isSharingInProgress) return;
 

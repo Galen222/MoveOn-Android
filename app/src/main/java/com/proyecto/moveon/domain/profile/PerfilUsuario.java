@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 /**
  * Clase responsable de perfil usuario.
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class PerfilUsuario {
     public final String nombreUsuario;
     public final String email;

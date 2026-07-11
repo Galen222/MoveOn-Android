@@ -2,6 +2,7 @@ package com.proyecto.moveon.domain.auth;
 /**
  * Clase responsable de login session.
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class LoginSession {
     public final String nombreUsuario;
     public final String tokenAcceso;

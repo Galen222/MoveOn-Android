@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName;
  * DTO utilizado para enviar la solicitud de social auth.
  */
 @Keep
+@SuppressWarnings("ClassCanBeRecord")
 public final class SocialAuthRequestDto {
 
     @SerializedName("provider") public final String provider;

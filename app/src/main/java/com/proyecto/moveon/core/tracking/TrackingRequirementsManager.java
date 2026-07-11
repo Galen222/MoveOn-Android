@@ -26,6 +26,9 @@ import java.util.List;
  */
 public final class TrackingRequirementsManager {
 
+    private static final String POST_NOTIFICATIONS_PERMISSION =
+            "android.permission.POST_NOTIFICATIONS";
+
     public enum Requirement {
         LOCATION,
         ACTIVITY_RECOGNITION,
@@ -79,7 +82,7 @@ public final class TrackingRequirementsManager {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             return enabledInSystem;
         }
-        boolean permissionGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+        boolean permissionGranted = ContextCompat.checkSelfPermission(context, POST_NOTIFICATIONS_PERMISSION)
                 == PackageManager.PERMISSION_GRANTED;
         return permissionGranted && enabledInSystem;
     }
@@ -199,7 +202,7 @@ public final class TrackingRequirementsManager {
             return !enabledInSystem;
         }
 
-        boolean permissionGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+        boolean permissionGranted = ContextCompat.checkSelfPermission(context, POST_NOTIFICATIONS_PERMISSION)
                 == PackageManager.PERMISSION_GRANTED;
 
         if (permissionGranted) {
@@ -210,7 +213,7 @@ public final class TrackingRequirementsManager {
             return false;
         }
 
-        return !fragment.shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS);
+        return !fragment.shouldShowRequestPermissionRationale(POST_NOTIFICATIONS_PERMISSION);
     }
 
     /**
@@ -271,20 +274,20 @@ public final class TrackingRequirementsManager {
         List<Requirement> missingRequirements = getRequestableMissingRequirements(fragment);
         for (Requirement requirement : missingRequirements) {
             switch (requirement) {
-                case LOCATION:
+                case LOCATION -> {
                     permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
                     permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-                    break;
-                case ACTIVITY_RECOGNITION:
-                    permissions.add(Manifest.permission.ACTIVITY_RECOGNITION);
-                    break;
-                case NOTIFICATIONS:
+                }
+                case ACTIVITY_RECOGNITION ->
+                        permissions.add(Manifest.permission.ACTIVITY_RECOGNITION);
+                case NOTIFICATIONS -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        permissions.add(Manifest.permission.POST_NOTIFICATIONS);
+                        permissions.add(POST_NOTIFICATIONS_PERMISSION);
                     }
-                    break;
-                case GPS:
-                    break;
+                }
+                case GPS -> {
+                    // No requiere permiso runtime.
+                }
             }
         }
         return permissions.toArray(new String[0]);
@@ -302,35 +305,33 @@ public final class TrackingRequirementsManager {
     public static String[] buildRequestablePermissionsForRequirement(@NonNull Fragment fragment,
                                                                       @NonNull Requirement requirement) {
         Context context = fragment.requireContext();
-        switch (requirement) {
-            case LOCATION:
+        return switch (requirement) {
+            case LOCATION -> {
                 if (hasLocationPermission(context) || isLocationPermissionBlocked(fragment)) {
-                    return new String[0];
+                    yield new String[0];
                 }
-                return new String[]{
+                yield new String[]{
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION
                 };
-
-            case ACTIVITY_RECOGNITION:
+            }
+            case ACTIVITY_RECOGNITION -> {
                 if (hasActivityRecognitionPermission(context)
                         || isActivityRecognitionPermissionBlocked(fragment)) {
-                    return new String[0];
+                    yield new String[0];
                 }
-                return new String[]{Manifest.permission.ACTIVITY_RECOGNITION};
-
-            case NOTIFICATIONS:
+                yield new String[]{Manifest.permission.ACTIVITY_RECOGNITION};
+            }
+            case NOTIFICATIONS -> {
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
                         || hasNotificationsRequirement(context)
                         || isNotificationsBlocked(fragment)) {
-                    return new String[0];
+                    yield new String[0];
                 }
-                return new String[]{Manifest.permission.POST_NOTIFICATIONS};
-
-            case GPS:
-            default:
-                return new String[0];
-        }
+                yield new String[]{POST_NOTIFICATIONS_PERMISSION};
+            }
+            case GPS -> new String[0];
+        };
     }
 
     /**
@@ -350,7 +351,7 @@ public final class TrackingRequirementsManager {
                 location = true;
             } else if (Manifest.permission.ACTIVITY_RECOGNITION.equals(permission)) {
                 activity = true;
-            } else if (Manifest.permission.POST_NOTIFICATIONS.equals(permission)) {
+            } else if (POST_NOTIFICATIONS_PERMISSION.equals(permission)) {
                 notifications = true;
             }
         }

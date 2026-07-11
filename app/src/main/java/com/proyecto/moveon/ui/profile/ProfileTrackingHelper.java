@@ -127,17 +127,13 @@ public final class ProfileTrackingHelper {
     private Integer getTrackingRequirementActionTextRes(
             @NonNull TrackingRequirementsManager.Requirement requirement,
             @NonNull TrackingRequirementsManager.Status status) {
-        switch (status) {
-            case ENABLED:
-                return null;
-            case NEEDS_ACTIVATION:
-                return requirement == TrackingRequirementsManager.Requirement.GPS
-                        ? R.string.profile_tracking_status_activate
-                        : R.string.profile_tracking_status_request;
-            case BLOCKED:
-            default:
-                return R.string.profile_tracking_status_open_settings;
-        }
+        return switch (status) {
+            case ENABLED -> null;
+            case NEEDS_ACTIVATION -> requirement == TrackingRequirementsManager.Requirement.GPS
+                    ? R.string.profile_tracking_status_activate
+                    : R.string.profile_tracking_status_request;
+            case BLOCKED -> R.string.profile_tracking_status_open_settings;
+        };
     }
 
     /**
@@ -151,17 +147,13 @@ public final class ProfileTrackingHelper {
     private String getTrackingRequirementStatusText(
             @NonNull TrackingRequirementsManager.Requirement requirement,
             @NonNull TrackingRequirementsManager.Status status) {
-        switch (status) {
-            case ENABLED:
-                return fragment.getString(R.string.profile_tracking_status_enabled);
-            case NEEDS_ACTIVATION:
-                return requirement == TrackingRequirementsManager.Requirement.GPS
-                        ? fragment.getString(R.string.profile_tracking_status_disabled)
-                        : fragment.getString(R.string.profile_tracking_status_needs_activation);
-            case BLOCKED:
-            default:
-                return fragment.getString(R.string.profile_tracking_status_blocked);
-        }
+        return switch (status) {
+            case ENABLED -> fragment.getString(R.string.profile_tracking_status_enabled);
+            case NEEDS_ACTIVATION -> requirement == TrackingRequirementsManager.Requirement.GPS
+                    ? fragment.getString(R.string.profile_tracking_status_disabled)
+                    : fragment.getString(R.string.profile_tracking_status_needs_activation);
+            case BLOCKED -> fragment.getString(R.string.profile_tracking_status_blocked);
+        };
     }
 
     /**
@@ -206,17 +198,12 @@ public final class ProfileTrackingHelper {
     @NonNull
     private TrackingRequirementsManager.Status getTrackingRequirementStatus(
             @NonNull TrackingRequirementsManager.Requirement requirement) {
-        switch (requirement) {
-            case LOCATION:
-                return TrackingRequirementsManager.getLocationStatus(fragment);
-            case ACTIVITY_RECOGNITION:
-                return TrackingRequirementsManager.getActivityRecognitionStatus(fragment);
-            case NOTIFICATIONS:
-                return TrackingRequirementsManager.getNotificationsStatus(fragment);
-            case GPS:
-            default:
-                return TrackingRequirementsManager.getDeviceLocationStatus(fragment.requireContext());
-        }
+        return switch (requirement) {
+            case LOCATION -> TrackingRequirementsManager.getLocationStatus(fragment);
+            case ACTIVITY_RECOGNITION -> TrackingRequirementsManager.getActivityRecognitionStatus(fragment);
+            case NOTIFICATIONS -> TrackingRequirementsManager.getNotificationsStatus(fragment);
+            case GPS -> TrackingRequirementsManager.getDeviceLocationStatus(fragment.requireContext());
+        };
     }
 
     /**
