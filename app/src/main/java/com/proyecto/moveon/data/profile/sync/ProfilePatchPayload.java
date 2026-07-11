@@ -119,6 +119,6 @@ public final class ProfilePatchPayload {
      * @return {@code true} cuando el payload no contiene cambios.
      */
     public boolean isEmpty() {
-        return json.size() == 0;
+        return json.isEmpty();
     }
 }

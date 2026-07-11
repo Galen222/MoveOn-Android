@@ -635,7 +635,7 @@ public class StatsFragment extends Fragment {
         isSharingInProgress = true;
 
         final Context localizedContext = AppLanguageManager.localizedContext(requireContext());
-        MoveOnExecutors.io().execute(() -> {
+        MoveOnExecutors.executeIo(() -> {
             try {
                 Uri uri = ShareRouteImageGenerator.generateShareImage(localizedContext, item);
                 String shareText = ShareRouteFormatter.buildShareText(localizedContext, item);

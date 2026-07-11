@@ -134,7 +134,7 @@ public final class ApiError {
             List<String> msgs = fieldErrors.get(k);
             if (msgs != null && !msgs.isEmpty()) {
                 String v = msgs.get(0);
-                if (v != null && v.trim().length() > 0) return v;
+                if (v != null && !v.trim().isEmpty()) return v;
             }
         }
         return null;

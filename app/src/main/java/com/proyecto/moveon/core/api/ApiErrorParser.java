@@ -208,14 +208,13 @@ public final class ApiErrorParser {
         }
 
         if (detail.isJsonPrimitive()) {
-            String primitiveMessage = resolveDisplayMessage(
+            result.firstDisplayMessage = resolveDisplayMessage(
                     context,
                     null,
                     detail.getAsString(),
                     retryAfter,
                     httpCode
             );
-            result.firstDisplayMessage = primitiveMessage;
             return result;
         }
 

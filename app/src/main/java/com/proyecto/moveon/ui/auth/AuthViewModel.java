@@ -122,7 +122,7 @@ public class AuthViewModel extends AndroidViewModel {
      * @return {@code true} cuando compensa intentar una recuperación silenciosa con Google.
      */
     public boolean shouldTrySilentGoogleSignIn() {
-        return !sessionManager.hasRecoverableSession()
+        return sessionManager.isSessionRecoveryUnavailable()
                 && SocialAuthProvider.GOOGLE.equals(sessionManager.getAuthProvider())
                 && AppSettingsManager.isGoogleSilentSignInEnabled(getApplication());
     }

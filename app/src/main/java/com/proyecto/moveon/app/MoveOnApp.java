@@ -40,7 +40,7 @@ public class MoveOnApp extends Application {
         ThemeManager.applySavedTheme(this);
 
         // Calentamiento de Room movido a hilo IO.
-        MoveOnExecutors.io().execute(() -> AppDatabase.getInstance(this));
+        MoveOnExecutors.executeIo(() -> AppDatabase.getInstance(this));
 
         // Observador de conectividad a nivel de proceso.
         // Registra el NetworkCallback y configura la acción de reconexión:

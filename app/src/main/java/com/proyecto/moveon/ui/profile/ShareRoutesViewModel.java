@@ -34,7 +34,6 @@ public class ShareRoutesViewModel extends AndroidViewModel {
     private final MediatorLiveData<UiState<List<ActividadItem>>> state = new MediatorLiveData<>();
 
     @Nullable private final String accountKey;
-    @Nullable private LiveData<List<ActividadItem>> actividadesSource;
 
     /**
      * Inicializa el ViewModel pidiendo una instancia propia del repositorio
@@ -108,7 +107,8 @@ public class ShareRoutesViewModel extends AndroidViewModel {
             return;
         }
 
-        actividadesSource = activityRepository.observeActividades(accountKey);
+        LiveData<List<ActividadItem>> actividadesSource =
+                activityRepository.observeActividades(accountKey);
         state.addSource(actividadesSource, items -> {
             List<ActividadItem> safeItems = items != null ? items : Collections.emptyList();
             state.setValue(UiState.success(safeItems));

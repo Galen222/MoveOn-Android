@@ -152,7 +152,7 @@ public class ShareRoutesBottomSheet extends BaseExpandedBottomSheetDialogFragmen
         setSharingInProgress(true);
 
         final Context localizedContext = AppLanguageManager.localizedContext(requireContext());
-        MoveOnExecutors.io().execute(() -> {
+        MoveOnExecutors.executeIo(() -> {
             try {
                 // Generamos la imagen fuera del hilo principal para no bloquear la UI.
                 // Generamos tanto el bitmap como el texto usando un contexto

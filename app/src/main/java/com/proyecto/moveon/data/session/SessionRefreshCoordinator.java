@@ -419,7 +419,7 @@ public final class SessionRefreshCoordinator {
      * por {@link #refreshBlocking(String, boolean)}.</p>
      */
     public void ensureFreshSessionAsync(@NonNull Callback callback) {
-        MoveOnExecutors.io().execute(() -> {
+        MoveOnExecutors.executeIo(() -> {
             RefreshOutcome outcome = refreshBlocking(null, false);
             callback.onComplete(outcome);
         });

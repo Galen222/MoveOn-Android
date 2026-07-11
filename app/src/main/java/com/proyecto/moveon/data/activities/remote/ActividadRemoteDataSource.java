@@ -93,7 +93,7 @@ public class ActividadRemoteDataSource {
      * con backends que devuelvan muchas páginas.</p>
      */
     public void fetchAllActividades(@NonNull Callback<List<ActividadResponseDto>> callback) {
-        MoveOnExecutors.io().execute(() -> {
+        MoveOnExecutors.executeIo(() -> {
             ApiResult<List<ActividadResponseDto>> result = fetchAllActividadesBlocking();
             mainHandler.post(() -> callback.onResult(result));
         });

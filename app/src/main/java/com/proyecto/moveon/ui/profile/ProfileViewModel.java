@@ -62,8 +62,7 @@ public class ProfileViewModel extends AndroidViewModel {
         // En instalación limpia, Room puede crear tablas en esta llamada y
         // ese trabajo no debe ejecutarse en la UI.
         if (accountKey != null) {
-            //noinspection resource
-            MoveOnExecutors.io().execute(() -> {
+            MoveOnExecutors.executeIo(() -> {
                 PerfilUsuario cached = perfilRepository.getCachedPerfilNow(accountKey);
                 if (cached != null) {
                     perfilState.postValue(UiState.success(cached));

@@ -41,10 +41,10 @@ public class MainViewModel extends AndroidViewModel {
      * recuperable aunque el access se renueve silenciosamente después.</p>
      *
      * @return {@code true} cuando el usuario ya no puede restaurar la sesión actual.
-     * @see SecureSessionManager#hasRecoverableSession()
+     * @see SecureSessionManager#isSessionRecoveryUnavailable()
      */
     public boolean isNotLoggedIn() {
-        return !sessionManager.hasRecoverableSession();
+        return sessionManager.isSessionRecoveryUnavailable();
     }
 
     /**
@@ -54,15 +54,15 @@ public class MainViewModel extends AndroidViewModel {
      * <p>Si el backend responde 401 (refresh token revocado o expirado), notifica a
      * {@link GlobalAuthManager} para cerrar sesión y volver a login.</p>
      *
-     * <p>No hace nada si no hay refresh token guardado ({@link SecureSessionManager#hasRefreshToken()}
-     * devuelve {@code false}) o si el coordinador considera con
+     * <p>No hace nada si falta el refresh token ({@link SecureSessionManager#isRefreshTokenMissing()}
+     * devuelve {@code true}) o si el coordinador considera con
      * {@link SessionRefreshCoordinator#shouldRefreshProactively()} que aún no es momento de refrescar.</p>
      *
      * @see SessionRefreshCoordinator#ensureFreshSessionAsync(SessionRefreshCoordinator.Callback)
      * @see GlobalAuthManager#notifySessionExpired()
      */
     public void ensureSessionFresh() {
-        if (!sessionManager.hasRefreshToken()) return;
+        if (sessionManager.isRefreshTokenMissing()) return;
         if (!sessionRefreshCoordinator.shouldRefreshProactively()) return;
 
         sessionRefreshCoordinator.ensureFreshSessionAsync(outcome -> {

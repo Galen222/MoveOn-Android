@@ -256,7 +256,7 @@ public final class ConnectivityObserver {
 
         // Ejecutamos en IO para no bloquear el callback del sistema.
         for (Runnable listener : reconnectListeners) {
-            MoveOnExecutors.io().execute(listener);
+            MoveOnExecutors.executeIo(listener);
         }
     }
 

@@ -73,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
     private int selectedItemId = R.id.nav_inicio;
     private MainViewModel viewModel;
     private boolean keepSystemSplashVisible = false;
-    private boolean pendingUiTransitionSplash = false;
 
     /**
      * Construye un intent listo para abrir la app en primer plano y pedir el flujo
@@ -111,8 +110,8 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        pendingUiTransitionSplash = AppSettingsManager.isUiTransitionSplashRequested(this);
-
+        final boolean pendingUiTransitionSplash =
+                AppSettingsManager.isUiTransitionSplashRequested(this);
 
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         if (pendingUiTransitionSplash) {

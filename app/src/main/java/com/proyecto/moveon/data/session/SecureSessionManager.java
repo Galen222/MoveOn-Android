@@ -285,20 +285,20 @@ public final class SecureSessionManager {
     }
 
     /**
-     * Indica si hay material mínimo para intentar una recuperación de sesión en segundo plano.
+     * Indica si no queda material suficiente para recuperar la sesión en segundo plano.
      */
-    public boolean hasRecoverableSession() {
+    public boolean isSessionRecoveryUnavailable() {
         synchronized (sessionLock) {
-            return readSessionSnapshotLocked().hasRecoverableSession();
+            return !readSessionSnapshotLocked().hasRecoverableSession();
         }
     }
 
     /**
-     * Comprueba si la sesión almacenada conserva refresh token.
+     * Comprueba si la sesión almacenada carece de refresh token.
      */
-    public boolean hasRefreshToken() {
+    public boolean isRefreshTokenMissing() {
         synchronized (sessionLock) {
-            return readSessionSnapshotLocked().hasRefreshToken();
+            return !readSessionSnapshotLocked().hasRefreshToken();
         }
     }
 

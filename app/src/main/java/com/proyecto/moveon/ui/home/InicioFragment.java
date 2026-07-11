@@ -475,7 +475,7 @@ public class InicioFragment extends Fragment
             TrackingAlert alert = event.getContentIfNotHandled();
             if (alert != null) {
                 if (alert.getType() == TrackingAlert.Type.STATIONARY_AUTO_PAUSE
-                        && !shouldShowStationaryAutoPauseSheet()) {
+                        && shouldSuppressStationaryAutoPauseSheet()) {
                     pendingTrackingAlertAfterStopDialog = null;
                     dismissTrackingSheetIfShowing();
                     return;
@@ -574,7 +574,7 @@ public class InicioFragment extends Fragment
 
         if (state.getStatus() == TrackingState.Status.AUTO_PAUSED) {
             if (state.getPauseReason() == TrackingState.PauseReason.STATIONARY) {
-                if (!shouldShowStationaryAutoPauseSheet()) {
+                if (shouldSuppressStationaryAutoPauseSheet()) {
                     return null;
                 }
                 return new TrackingAlert(TrackingAlert.Type.STATIONARY_AUTO_PAUSE);
@@ -855,16 +855,14 @@ public class InicioFragment extends Fragment
     }
 
     /**
-     * Decide si la alerta de auto-pausa por inactividad debe mostrarse otra vez
-     * para la actividad actual.
-     * 
-     * @return {@code true} si el usuario no la ha suprimido todavía en esta sesión.
+     * Decide si debe omitirse la alerta de auto-pausa por inactividad para la
+     * actividad actual.
+     *
+     * @return {@code true} si se suprimió para esta actividad o el ajuste global está desactivado.
      */
-    private boolean shouldShowStationaryAutoPauseSheet() {
-        if (suppressStationarySheetForCurrentActivity) {
-            return false;
-        }
-        return SecureSessionManager.getInstance(requireContext())
+    private boolean shouldSuppressStationaryAutoPauseSheet() {
+        return suppressStationarySheetForCurrentActivity
+                || !SecureSessionManager.getInstance(requireContext())
                 .shouldShowAutoPauseAlertsByDefault();
     }
 

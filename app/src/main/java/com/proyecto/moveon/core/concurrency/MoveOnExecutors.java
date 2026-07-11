@@ -54,6 +54,17 @@ public final class MoveOnExecutors {
         return IO;
     }
 
+    /**
+     * Encola una tarea en el executor global de I/O sin exponer su ciclo de vida
+     * al consumidor. El pool pertenece al proceso y no debe cerrarse desde una
+     * Activity, Fragment, ViewModel o repositorio individual.
+     *
+     * @param task tarea de I/O que se ejecutará en segundo plano.
+     */
+    public static void executeIo(@NonNull Runnable task) {
+        IO.execute(task);
+    }
+
     private static final class NamedThreadFactory implements ThreadFactory {
         private final String prefix;
         private final AtomicInteger counter = new AtomicInteger(1);

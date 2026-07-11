@@ -9,6 +9,7 @@ import com.proyecto.moveon.utils.StringUtils;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -169,22 +170,19 @@ public final class AppSessionProvider {
             }
         }
 
-        // Extrae el body solo en debug y garantiza el cierre del recurso.
+        // Extrae el body solo en debug y garantiza el cierre automático del recurso.
         String errorSnippet = "";
-        if (response.errorBody() != null) {
-            try {
-                if (BuildConfig.DEBUG) {
-                    String fullError = response.errorBody().string();
-                    // Recortamos a 200 caracteres para no saturar los logs si el servidor escupe un HTML gigante
-                    errorSnippet = " - Detalles: " + (fullError.length() > 200 ? fullError.substring(0, 200) + "..." : fullError);
-                }
-            } catch (Exception ignored) {
-            } finally {
-                // El finally garantiza que SIEMPRE se cierra el recurso, haya error de lectura o no
-                try {
-                    response.errorBody().close();
-                } catch (Exception ignored) {}
+        try (ResponseBody errorBody = response.errorBody()) {
+            if (errorBody != null && BuildConfig.DEBUG) {
+                String fullError = errorBody.string();
+                // Recortamos a 200 caracteres para no saturar los logs si el servidor devuelve un HTML gigante.
+                errorSnippet = " - Detalles: "
+                        + (fullError.length() > 200
+                        ? fullError.substring(0, 200) + "..."
+                        : fullError);
             }
+        } catch (Exception ignored) {
+            // El cuerpo de error es solo informativo; el código HTTP sigue siendo suficiente.
         }
 
         throw new Exception("Error Handshake: HTTP " + response.code() + errorSnippet);

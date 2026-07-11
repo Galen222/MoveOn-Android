@@ -215,13 +215,12 @@ public final class ShareRouteImageGenerator {
         float horizontalPadding = dp(context, 58);
         float cardWidth = (width - horizontalPadding - horizontalPadding - (cardGap * 3f)) / 4f;
         float cardHeight = dp(context, 250);
-        float firstCardX = horizontalPadding;
-        float secondCardX = firstCardX + cardWidth + cardGap;
+        float secondCardX = horizontalPadding + cardWidth + cardGap;
         float thirdCardX = secondCardX + cardWidth + cardGap;
         float fourthCardX = thirdCardX + cardWidth + cardGap;
 
         drawMetricCard(canvas,
-                new RectF(firstCardX, cardTop, firstCardX + cardWidth, cardTop + cardHeight),
+                new RectF(horizontalPadding, cardTop, horizontalPadding + cardWidth, cardTop + cardHeight),
                 context.getString(R.string.share_routes_metric_calories).toUpperCase(Locale.getDefault()),
                 context.getString(R.string.share_routes_kcal_value, item.caloriasQuemadas),
                 metricCardPaint, metricCardBorderPaint, metricCardLabelPaint, metricCardValuePaint, context);
