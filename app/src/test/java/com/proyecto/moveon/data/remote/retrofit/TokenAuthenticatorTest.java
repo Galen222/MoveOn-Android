@@ -39,7 +39,6 @@ public class TokenAuthenticatorTest {
 
         Request result = authenticator.authenticate(null, unauthorizedResponse(
                 HttpUrl.get("https://example.org/protected"),
-                "old-a",
                 null
         ));
 
@@ -57,8 +56,8 @@ public class TokenAuthenticatorTest {
         );
         TokenAuthenticator authenticator = new TokenAuthenticator(coordinator(backend));
         HttpUrl url = backendUrl("perfil");
-        Response first = unauthorizedResponse(url, "old-a", null);
-        Response second = unauthorizedResponse(url, "old-a", first);
+        Response first = unauthorizedResponse(url, null);
+        Response second = unauthorizedResponse(url, first);
 
         Request result = authenticator.authenticate(null, second);
 
@@ -76,7 +75,7 @@ public class TokenAuthenticatorTest {
         );
         TokenAuthenticator authenticator = new TokenAuthenticator(coordinator(backend));
 
-        Request result = authenticator.authenticate(null, unauthorizedResponse(backendUrl("ranking"), "old-a", null));
+        Request result = authenticator.authenticate(null, unauthorizedResponse(backendUrl("ranking"), null));
 
         assertNotNull(result);
         assertEquals("Bearer new-a", result.header("Authorization"));
@@ -94,15 +93,17 @@ public class TokenAuthenticatorTest {
         TokenAuthenticator authenticator = new TokenAuthenticator(coordinator(backend));
 
         try {
-            authenticator.authenticate(null, unauthorizedResponse(backendUrl("ranking"), "old-a", null));
+            authenticator.authenticate(null, unauthorizedResponse(backendUrl("ranking"), null));
             fail("Expected RefreshFailedException");
         } catch (TokenAuthenticator.RefreshFailedException e) {
             assertEquals(503, e.getCode());
             assertEquals("20", e.getRetryAfter());
             assertEquals("maintenance", e.getErrorCode());
             assertEquals("caído", e.getBackendMessage());
-            assertTrue(e.getMessage().contains("503"));
-            assertTrue(e.getMessage().contains("maintenance"));
+            String message = e.getMessage();
+            assertNotNull(message);
+            assertTrue(message.contains("503"));
+            assertTrue(message.contains("maintenance"));
         }
     }
 
@@ -112,13 +113,16 @@ public class TokenAuthenticatorTest {
     @Test
     public void authenticate_whenBackendThrowsIOException_wrapsAsRefreshFailedException() throws Exception {
         SessionRefreshCoordinator coordinator = SessionRefreshCoordinator.createForTests(
-                new FakeSessionStore("alice", "old-a", "old-r"),
-                refreshToken -> { throw new IOException("timeout"); }
+                new FakeSessionStore(),
+                refreshToken -> {
+                    java.util.Objects.requireNonNull(refreshToken, "refreshToken");
+                    throw new IOException("timeout");
+                }
         );
         TokenAuthenticator authenticator = new TokenAuthenticator(coordinator);
 
         try {
-            authenticator.authenticate(null, unauthorizedResponse(backendUrl("ranking"), "old-a", null));
+            authenticator.authenticate(null, unauthorizedResponse(backendUrl("ranking"), null));
             fail("Expected RefreshFailedException");
         } catch (TokenAuthenticator.RefreshFailedException e) {
             assertEquals(0, e.getCode());
@@ -146,7 +150,7 @@ public class TokenAuthenticatorTest {
      */
     private static SessionRefreshCoordinator coordinator(@NonNull CountingBackend backend) {
         return SessionRefreshCoordinator.createForTests(
-                new FakeSessionStore("alice", "old-a", "old-r"),
+                new FakeSessionStore(),
                 backend
         );
     }
@@ -165,12 +169,10 @@ public class TokenAuthenticatorTest {
      * Crea una respuesta 401 con cadena opcional de respuestas previas.
      */
     private static Response unauthorizedResponse(@NonNull HttpUrl url,
-                                                 @Nullable String accessToken,
                                                  @Nullable Response priorResponse) {
-        Request.Builder requestBuilder = new Request.Builder().url(url);
-        if (accessToken != null) {
-            requestBuilder.header("Authorization", "Bearer " + accessToken);
-        }
+        Request.Builder requestBuilder = new Request.Builder()
+                .url(url)
+                .header("Authorization", "Bearer old-a");
         Response.Builder responseBuilder = new Response.Builder()
                 .request(requestBuilder.build())
                 .protocol(Protocol.HTTP_1_1)
@@ -203,12 +205,10 @@ public class TokenAuthenticatorTest {
         @Nullable private String accessToken;
         @Nullable private String refreshToken;
 
-        private FakeSessionStore(@Nullable String username,
-                                 @Nullable String accessToken,
-                                 @Nullable String refreshToken) {
-            this.username = username;
-            this.accessToken = accessToken;
-            this.refreshToken = refreshToken;
+        private FakeSessionStore() {
+            this.username = "alice";
+            this.accessToken = "old-a";
+            this.refreshToken = "old-r";
         }
 
         @Override

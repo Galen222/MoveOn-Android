@@ -10,7 +10,7 @@ import org.junit.Test;
 
 /**
  * Tests unitarios para GlobalAuthManager.
- *
+ * <p>
  * Nota: Los tests de LiveData observación requieren InstantTaskExecutorRule
  * (dependencia testImplementation) o tests instrumentados. Aquí se
  * testea la lógica de deduplicación del AtomicBoolean.

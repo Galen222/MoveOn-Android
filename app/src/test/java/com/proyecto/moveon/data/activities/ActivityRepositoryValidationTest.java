@@ -47,9 +47,9 @@ public class ActivityRepositoryValidationTest {
      */
     @Before
     public void setUp() throws Exception {
-        repository = allocate(ActivityRepository.class);
+        repository = allocateRepository();
         Context ctx = ApplicationProvider.getApplicationContext();
-        setField(repository, "appContext", ctx);
+        setAppContext(repository, ctx);
     }
 
     /**
@@ -68,7 +68,7 @@ public class ActivityRepositoryValidationTest {
      */
     @Test
     public void validateRequest_invalidTipo_returnsValidationError() throws Exception {
-        GuardarActividadRequestDto req = builder().tipo("Nadar").build();
+        GuardarActividadRequestDto req = builder().invalidTipo().build();
 
         ApiError error = invokeValidate(req);
 
@@ -158,7 +158,7 @@ public class ActivityRepositoryValidationTest {
      */
     @Test
     public void validateRequest_negativeManualPause_returnsValidationError() throws Exception {
-        GuardarActividadRequestDto req = builder().duracionPausaManual(-1).build();
+        GuardarActividadRequestDto req = builder().negativeManualPause().build();
         assertValidationFailure(req);
     }
 
@@ -167,7 +167,7 @@ public class ActivityRepositoryValidationTest {
      */
     @Test
     public void validateRequest_zeroCalories_returnsValidationError() throws Exception {
-        GuardarActividadRequestDto req = builder().caloriasQuemadas(0).build();
+        GuardarActividadRequestDto req = builder().zeroCalories().build();
         assertValidationFailure(req);
     }
 
@@ -187,7 +187,7 @@ public class ActivityRepositoryValidationTest {
      */
     @Test
     public void validateRequest_zeroMovingPace_returnsValidationError() throws Exception {
-        GuardarActividadRequestDto req = builder().ritmoMedioMovimiento(0).build();
+        GuardarActividadRequestDto req = builder().zeroMovingPace().build();
         assertValidationFailure(req);
     }
 
@@ -196,7 +196,7 @@ public class ActivityRepositoryValidationTest {
      */
     @Test
     public void validateRequest_excessiveTotalPace_returnsValidationError() throws Exception {
-        GuardarActividadRequestDto req = builder().ritmoMedioTotal(3601).build();
+        GuardarActividadRequestDto req = builder().excessiveTotalPace().build();
         assertValidationFailure(req);
     }
 
@@ -205,7 +205,7 @@ public class ActivityRepositoryValidationTest {
      */
     @Test
     public void validateRequest_negativeMaxPace_returnsValidationError() throws Exception {
-        GuardarActividadRequestDto req = builder().ritmoMaximo(-1).build();
+        GuardarActividadRequestDto req = builder().negativeMaxPace().build();
         assertValidationFailure(req);
     }
 
@@ -246,7 +246,7 @@ public class ActivityRepositoryValidationTest {
      */
     @Test
     public void validateRequest_negativeAutoPauses_returnsValidationError() throws Exception {
-        GuardarActividadRequestDto req = builder().autoPausas(-1).build();
+        GuardarActividadRequestDto req = builder().negativeAutoPauses().build();
         assertValidationFailure(req);
     }
 
@@ -256,7 +256,7 @@ public class ActivityRepositoryValidationTest {
      */
     @Test
     public void validateRequest_excessiveManualPauses_returnsValidationError() throws Exception {
-        GuardarActividadRequestDto req = builder().pausasManuales(501).build();
+        GuardarActividadRequestDto req = builder().excessiveManualPauses().build();
         assertValidationFailure(req);
     }
 
@@ -266,7 +266,7 @@ public class ActivityRepositoryValidationTest {
      */
     @Test
     public void validateRequest_negativeSpeedAlerts_returnsValidationError() throws Exception {
-        GuardarActividadRequestDto req = builder().alertasVelocidad(-1).build();
+        GuardarActividadRequestDto req = builder().negativeSpeedAlerts().build();
         assertValidationFailure(req);
     }
 
@@ -419,22 +419,22 @@ public class ActivityRepositoryValidationTest {
                 .minusMinutes(30)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
-        Builder tipo(String v) { this.tipo = v; return this; }
+        Builder invalidTipo() { this.tipo = "Nadar"; return this; }
         Builder distancia(int v) { this.distancia = v; return this; }
         Builder duracionTotal(int v) { this.duracionTotal = v; return this; }
         Builder duracionMovimiento(int v) { this.duracionMovimiento = v; return this; }
         Builder duracionParado(int v) { this.duracionParado = v; return this; }
-        Builder duracionPausaManual(int v) { this.duracionPausaManual = v; return this; }
-        Builder caloriasQuemadas(int v) { this.caloriasQuemadas = v; return this; }
+        Builder negativeManualPause() { this.duracionPausaManual = -1; return this; }
+        Builder zeroCalories() { this.caloriasQuemadas = 0; return this; }
         Builder pasos(Integer v) { this.pasos = v; return this; }
-        Builder ritmoMedioMovimiento(int v) { this.ritmoMedioMovimiento = v; return this; }
-        Builder ritmoMedioTotal(int v) { this.ritmoMedioTotal = v; return this; }
-        Builder ritmoMaximo(int v) { this.ritmoMaximo = v; return this; }
+        Builder zeroMovingPace() { this.ritmoMedioMovimiento = 0; return this; }
+        Builder excessiveTotalPace() { this.ritmoMedioTotal = 3601; return this; }
+        Builder negativeMaxPace() { this.ritmoMaximo = -1; return this; }
         Builder velocidadMediaKmhX100(int v) { this.velocidadMediaKmhX100 = v; return this; }
         Builder velocidadMaxKmhX100(int v) { this.velocidadMaxKmhX100 = v; return this; }
-        Builder autoPausas(int v) { this.autoPausas = v; return this; }
-        Builder pausasManuales(int v) { this.pausasManuales = v; return this; }
-        Builder alertasVelocidad(int v) { this.alertasVelocidad = v; return this; }
+        Builder negativeAutoPauses() { this.autoPausas = -1; return this; }
+        Builder excessiveManualPauses() { this.pausasManuales = 501; return this; }
+        Builder negativeSpeedAlerts() { this.alertasVelocidad = -1; return this; }
         Builder rutaPolilinea(String v) { this.rutaPolilinea = v; return this; }
         Builder fechaRuta(String v) { this.fechaRuta = v; return this; }
 
@@ -453,29 +453,25 @@ public class ActivityRepositoryValidationTest {
      * Inyecta un valor en un campo declarado de {@link ActivityRepository} accesibilizándolo previamente.
      *
      * @param target instancia objetivo.
-     * @param name nombre del campo.
      * @param value valor a publicar.
      */
-    private static void setField(Object target, String name, Object value) throws Exception {
-        Field f = ActivityRepository.class.getDeclaredField(name);
-        f.setAccessible(true);
-        f.set(target, value);
+    private static void setAppContext(ActivityRepository target, Context value) throws Exception {
+        Field field = ActivityRepository.class.getDeclaredField("appContext");
+        field.setAccessible(true);
+        field.set(target, value);
     }
 
     /**
      * Crea una instancia de la clase indicada saltándose su constructor real,
      * útil para clases Android que tocarían base de datos o WorkManager.
      *
-     * @param type clase a instanciar.
-     * @param <T> tipo devuelto.
      * @return instancia recién creada sin invocar al constructor.
      */
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
-        Field f = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
-        f.setAccessible(true);
-        Object unsafe = f.get(null);
-        Method m = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) m.invoke(unsafe, type);
+    private static ActivityRepository allocateRepository() throws Exception {
+        Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
+        field.setAccessible(true);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
+        Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
+        return (ActivityRepository) method.invoke(unsafe, ActivityRepository.class);
     }
 }

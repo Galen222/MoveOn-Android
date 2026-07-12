@@ -15,9 +15,6 @@ public class SessionDtoSerializationTest {
 
     // ── LoginRequestDto ─────────────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #loginRequest_serialization()}.
-     */
     @Test
     public void loginRequest_serialization() {
         LoginRequestDto dto = new LoginRequestDto("alice", "Pass1234");
@@ -30,9 +27,6 @@ public class SessionDtoSerializationTest {
 
     // ── LogoutRequestDto ────────────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #logoutRequest_serialization()}.
-     */
     @Test
     public void logoutRequest_serialization() {
         LogoutRequestDto dto = new LogoutRequestDto("refresh_token_abc");
@@ -44,9 +38,6 @@ public class SessionDtoSerializationTest {
 
     // ── RefreshRequestDto ───────────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #refreshRequest_serialization()}.
-     */
     @Test
     public void refreshRequest_serialization() {
         RefreshRequestDto dto = new RefreshRequestDto("rt_xyz");
@@ -58,9 +49,6 @@ public class SessionDtoSerializationTest {
 
     // ── RecuperarPasswordRequestDto ─────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #recuperarPasswordRequest_serialization()}.
-     */
     @Test
     public void recuperarPasswordRequest_serialization() {
         RecuperarPasswordRequestDto dto =
@@ -74,9 +62,6 @@ public class SessionDtoSerializationTest {
 
     // ── ResetearPasswordRequestDto ──────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #resetearPasswordRequest_serialization()}.
-     */
     @Test
     public void resetearPasswordRequest_serialization() {
         ResetearPasswordRequestDto dto = new ResetearPasswordRequestDto(
@@ -91,9 +76,6 @@ public class SessionDtoSerializationTest {
 
     // ── RegisterRequestDto ──────────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #registerRequest_serialization()}.
-     */
     @Test
     public void registerRequest_serialization() {
         RegisterRequestDto dto = new RegisterRequestDto(
@@ -113,9 +95,6 @@ public class SessionDtoSerializationTest {
 
     // ── Deserialization tests ────────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #loginResponse_deserialization()}.
-     */
     @Test
     public void loginResponse_deserialization() {
         String json = "{\"nombre_usuario\":\"alice\",\"token_acceso\":\"jwt123\",\"refresh_token\":\"rt456\"}";
@@ -126,9 +105,6 @@ public class SessionDtoSerializationTest {
         assertEquals("rt456", dto.refreshToken);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #registerResponse_deserialization()}.
-     */
     @Test
     public void registerResponse_deserialization() {
         String json = "{\"mensaje\":\"Cuenta creada exitosamente\"}";
@@ -137,9 +113,6 @@ public class SessionDtoSerializationTest {
         assertEquals("Cuenta creada exitosamente", dto.mensaje);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #messageResponse_deserialization()}.
-     */
     @Test
     public void messageResponse_deserialization() {
         String json = "{\"mensaje\":\"Código enviado\"}";
@@ -148,9 +121,6 @@ public class SessionDtoSerializationTest {
         assertEquals("Código enviado", dto.mensaje);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #appSessionResponse_deserialization()}.
-     */
     @Test
     public void appSessionResponse_deserialization() {
         String json = "{\"app_session_token\":\"session_xyz\"}";

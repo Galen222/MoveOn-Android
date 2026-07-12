@@ -17,7 +17,7 @@ public class PerfilRemoteDataSourcePureTest {
      */
     @Test
     public void guessMimeType_recognizesPngAndWebpExtensionsCaseInsensitive() throws Exception {
-        PerfilRemoteDataSource dataSource = allocate(PerfilRemoteDataSource.class);
+        PerfilRemoteDataSource dataSource = allocateDataSource();
 
         assertEquals("image/png", invokeGuessMimeType(dataSource, "avatar.PNG"));
         assertEquals("image/webp", invokeGuessMimeType(dataSource, "avatar.WeBp"));
@@ -28,7 +28,7 @@ public class PerfilRemoteDataSourcePureTest {
      */
     @Test
     public void guessMimeType_usesJpegFallbackForOtherFileNames() throws Exception {
-        PerfilRemoteDataSource dataSource = allocate(PerfilRemoteDataSource.class);
+        PerfilRemoteDataSource dataSource = allocateDataSource();
 
         assertEquals("image/jpeg", invokeGuessMimeType(dataSource, "avatar.jpg"));
         assertEquals("image/jpeg", invokeGuessMimeType(dataSource, "avatar.jpeg"));
@@ -41,12 +41,11 @@ public class PerfilRemoteDataSourcePureTest {
         return (String) method.invoke(dataSource, fileName);
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
+    private static PerfilRemoteDataSource allocateDataSource() throws Exception {
         Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         field.setAccessible(true);
-        Object unsafe = field.get(null);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
         Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) method.invoke(unsafe, type);
+        return (PerfilRemoteDataSource) method.invoke(unsafe, PerfilRemoteDataSource.class);
     }
 }

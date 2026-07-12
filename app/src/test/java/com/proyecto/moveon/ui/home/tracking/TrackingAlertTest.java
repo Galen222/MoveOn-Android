@@ -4,10 +4,6 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.google.android.gms.maps.model.LatLng;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 /**
  * Tests del evento puntual {@link TrackingAlert}.
  */

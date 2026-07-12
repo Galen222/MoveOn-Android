@@ -1,7 +1,5 @@
 package com.proyecto.moveon.data.ranking.dto;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 import com.google.gson.Gson;
 

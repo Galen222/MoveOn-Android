@@ -4,8 +4,6 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.proyecto.moveon.core.api.ApiError;
-import com.proyecto.moveon.core.api.ApiErrorType;
 /**
  * Tests del modelo {@link GlobalSnackbarMessage}.
  */
@@ -29,11 +27,8 @@ public class GlobalSnackbarMessageTest {
      */
     @Test
     public void fullConstructor_setsActionFields() {
-        Runnable action = new Runnable() {
-            @Override
-            public void run() {
-                // No-op: solo interesa conservar la referencia.
-            }
+        Runnable action = () -> {
+            // No-op: solo interesa conservar la referencia.
         };
 
         GlobalSnackbarMessage message = new GlobalSnackbarMessage(
@@ -80,7 +75,9 @@ public class GlobalSnackbarMessageTest {
         assertEquals("Reintentar", message.actionLabel);
         assertSame(action, message.action);
 
-        message.action.run();
+        Runnable storedAction = message.action;
+        assertNotNull(storedAction);
+        storedAction.run();
         assertEquals(1, calls[0]);
     }
 

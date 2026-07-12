@@ -63,12 +63,11 @@ public class ApiResultTest {
         ApiResult<Integer> result = ApiResult.failure(error);
 
         assertFalse(result.isSuccess());
-        assertEquals(ApiErrorType.NETWORK, result.error.getType());
+        ApiError resultError = result.error;
+        assertNotNull(resultError);
+        assertEquals(ApiErrorType.NETWORK, resultError.getType());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #success_withComplexObject()}.
-     */
     @Test
     public void success_withComplexObject() {
         // Simula un DTO sencillo

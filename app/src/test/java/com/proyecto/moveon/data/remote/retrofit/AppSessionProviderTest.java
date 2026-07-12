@@ -49,7 +49,7 @@ public class AppSessionProviderTest {
         dto.appSession = "session-token";
         setStatic("handshakeApi", new FakeHandshakeApi(Response.success(dto)));
 
-        String token = (String) method("fetchNewSession").invoke(null);
+        String token = (String) fetchNewSessionMethod().invoke(null);
 
         assertEquals("session-token", token);
     }
@@ -64,11 +64,14 @@ public class AppSessionProviderTest {
         setStatic("handshakeApi", new FakeHandshakeApi(Response.success(dto)));
 
         try {
-            method("fetchNewSession").invoke(null);
+            fetchNewSessionMethod().invoke(null);
             fail("Debe fallar cuando el token de app-session está vacío");
         } catch (InvocationTargetException expected) {
-            assertTrue(expected.getCause() instanceof Exception);
-            assertTrue(expected.getCause().getMessage().contains("HTTP 200"));
+            Throwable cause = java.util.Objects.requireNonNull(expected.getCause(), "Causa ausente");
+            assertTrue(cause instanceof Exception);
+            String message = cause.getMessage();
+            assertNotNull(message);
+            assertTrue(message.contains("HTTP 200"));
         }
     }
 
@@ -82,11 +85,14 @@ public class AppSessionProviderTest {
         ));
 
         try {
-            method("fetchNewSession").invoke(null);
+            fetchNewSessionMethod().invoke(null);
             fail("Debe fallar cuando el backend responde error");
         } catch (InvocationTargetException expected) {
-            assertTrue(expected.getCause() instanceof Exception);
-            assertTrue(expected.getCause().getMessage().contains("HTTP 503"));
+            Throwable cause = java.util.Objects.requireNonNull(expected.getCause(), "Causa ausente");
+            assertTrue(cause instanceof Exception);
+            String message = cause.getMessage();
+            assertNotNull(message);
+            assertTrue(message.contains("HTTP 503"));
         }
     }
 
@@ -99,7 +105,7 @@ public class AppSessionProviderTest {
         setStatic("handshakeApi", new FakeHandshakeApi(io));
 
         try {
-            method("fetchNewSession").invoke(null);
+            fetchNewSessionMethod().invoke(null);
             fail("Debe propagar el fallo de red");
         } catch (InvocationTargetException expected) {
             assertSame(io, expected.getCause());
@@ -150,8 +156,8 @@ public class AppSessionProviderTest {
         assertEquals(0L, getStatic("lastFailureTime"));
     }
 
-    private static Method method(String name) throws Exception {
-        Method method = AppSessionProvider.class.getDeclaredMethod(name);
+    private static Method fetchNewSessionMethod() throws Exception {
+        Method method = AppSessionProvider.class.getDeclaredMethod("fetchNewSession");
         method.setAccessible(true);
         return method;
     }
@@ -198,6 +204,7 @@ public class AppSessionProviderTest {
             this.failure = failure;
         }
 
+        @NonNull
         @Override
         public Response<AppSessionResponseDto> execute() throws IOException {
             if (failure instanceof IOException) {
@@ -209,7 +216,7 @@ public class AppSessionProviderTest {
             if (failure instanceof Error) {
                 throw (Error) failure;
             }
-            return response;
+            return java.util.Objects.requireNonNull(response, "Respuesta no configurada");
         }
 
         @Override
@@ -217,7 +224,7 @@ public class AppSessionProviderTest {
             if (failure != null) {
                 callback.onFailure(this, failure);
             } else {
-                callback.onResponse(this, response);
+                callback.onResponse(this, java.util.Objects.requireNonNull(response, "Respuesta no configurada"));
             }
         }
 
@@ -236,16 +243,20 @@ public class AppSessionProviderTest {
             return canceled;
         }
 
+        @NonNull
         @Override
+        @SuppressWarnings("MethodDoesntCallSuperMethod")
         public Call<AppSessionResponseDto> clone() {
             return new FakeCall(response, failure);
         }
 
+        @NonNull
         @Override
         public Request request() {
             return new Request.Builder().url("http://localhost/handshake").build();
         }
 
+        @NonNull
         @Override
         public Timeout timeout() {
             return Timeout.NONE;

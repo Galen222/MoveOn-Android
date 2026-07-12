@@ -12,35 +12,9 @@ import com.proyecto.moveon.data.local.entity.ActividadEntity;
  */
 public class ActividadCreatePayloadTest {
 
-    /**
-     * Verifica el escenario cubierto por {@link #toJson_includesAllRequiredFields()}.
-     */
     @Test
     public void toJson_includesAllRequiredFields() {
-        ActividadCreatePayload payload = new ActividadCreatePayload(
-                "local-1",
-                "Correr",
-                5000,
-                1800,
-                1500,
-                240,
-                60,
-                350,
-                4_321,
-                330,
-                360,
-                280,
-                987,
-                1450,
-                2,
-                1,
-                3,
-                "encoded_poly",
-                "http://map.png",
-                "2025-03-19T10:00:00Z"
-        );
-
-        JsonObject json = payload.toJson();
+        JsonObject json = payloadWithAllRequiredFields().toJson();
 
         assertEquals("local-1", json.get("client_local_id").getAsString());
         assertEquals("Correr", json.get("tipo").getAsString());
@@ -64,9 +38,6 @@ public class ActividadCreatePayloadTest {
         assertEquals("2025-03-19T10:00:00Z", json.get("fecha_ruta").getAsString());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #toJson_nullRouteFields_sendJsonNull()}.
-     */
     @Test
     public void toJson_nullRouteFields_sendJsonNull() {
         ActividadCreatePayload payload = new ActividadCreatePayload(
@@ -99,35 +70,9 @@ public class ActividadCreatePayloadTest {
         assertTrue(json.get("pasos").isJsonNull());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #toJson_usesCurrentFieldNames()}.
-     */
     @Test
     public void toJson_usesCurrentFieldNames() {
-        ActividadCreatePayload payload = new ActividadCreatePayload(
-                "local-3",
-                "Correr",
-                3000,
-                900,
-                780,
-                90,
-                30,
-                200,
-                2_345,
-                300,
-                360,
-                1000,
-                1200,
-                1400,
-                1,
-                1,
-                2,
-                "poly",
-                "url",
-                "2025-01-01T00:00:00Z"
-        );
-
-        JsonObject json = payload.toJson();
+        JsonObject json = payloadWithCurrentFieldNames().toJson();
 
         assertTrue(json.has("client_local_id"));
         assertTrue(json.has("duracion_total"));
@@ -148,9 +93,6 @@ public class ActividadCreatePayloadTest {
         assertFalse(json.has("duracion"));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #toJson_zeroValues_areValid()}.
-     */
     @Test
     public void toJson_zeroValues_areValid() {
         ActividadCreatePayload payload = new ActividadCreatePayload(
@@ -193,30 +135,7 @@ public class ActividadCreatePayloadTest {
      */
     @Test
     public void toJson_serializesAllFields() {
-        ActividadCreatePayload payload = new ActividadCreatePayload(
-                "local-1",
-                "carrera",
-                5_000,
-                1_800,
-                1_700,
-                80,
-                20,
-                350,
-                4_321,
-                340,
-                360,
-                300,
-                1_000,
-                1_400,
-                2,
-                1,
-                3,
-                "poly",
-                "map.png",
-                "2026-04-25T10:00:00Z"
-        );
-
-        JsonObject json = payload.toJson();
+        JsonObject json = payloadWithAllSerializedFields().toJson();
 
         assertEquals("local-1", json.get("client_local_id").getAsString());
         assertEquals("carrera", json.get("tipo").getAsString());
@@ -280,29 +199,7 @@ public class ActividadCreatePayloadTest {
      */
     @Test
     public void fromEntity_copiesEntityFields() {
-        ActividadEntity entity = new ActividadEntity();
-        entity.localId = "local-3";
-        entity.tipo = "carrera";
-        entity.distancia = 100;
-        entity.duracionTotal = 200;
-        entity.duracionMovimiento = 180;
-        entity.duracionParado = 15;
-        entity.duracionPausaManual = 5;
-        entity.caloriasQuemadas = 30;
-        entity.pasos = 2_345;
-        entity.ritmoMedioMovimiento = 400;
-        entity.ritmoMedioTotal = 420;
-        entity.ritmoMaximo = 350;
-        entity.velocidadMediaKmhX100 = 900;
-        entity.velocidadMaxKmhX100 = 1_200;
-        entity.autoPausas = 1;
-        entity.pausasManuales = 2;
-        entity.alertasVelocidad = 3;
-        entity.rutaPolilinea = "poly";
-        entity.rutaMapaUrl = "map.png";
-        entity.fechaRuta = "2026-04-25T10:00:00Z";
-
-        JsonObject json = ActividadCreatePayload.fromEntity(entity).toJson();
+        JsonObject json = jsonFromRepresentativeEntity();
 
         assertEquals("local-3", json.get("client_local_id").getAsString());
         assertEquals("carrera", json.get("tipo").getAsString());
@@ -318,30 +215,7 @@ public class ActividadCreatePayloadTest {
      */
     @Test
     public void toJson_serializesEveryEnrichedTrackingField() {
-        ActividadCreatePayload payload = new ActividadCreatePayload(
-                "local-1",
-                "carrera",
-                5000,
-                1800,
-                1700,
-                80,
-                20,
-                350,
-                4_321,
-                340,
-                360,
-                300,
-                1000,
-                1500,
-                1,
-                2,
-                3,
-                "poly",
-                "map.png",
-                "2026-04-25T10:00:00Z"
-        );
-
-        JsonObject json = payload.toJson();
+        JsonObject json = enrichedTrackingPayload().toJson();
 
         assertEquals("local-1", json.get("client_local_id").getAsString());
         assertEquals("carrera", json.get("tipo").getAsString());
@@ -385,29 +259,7 @@ public class ActividadCreatePayloadTest {
      */
     @Test
     public void fromEntity_copiesAllEntityFieldsToPayloadJson() {
-        ActividadEntity entity = new ActividadEntity();
-        entity.localId = "local-entity";
-        entity.tipo = "caminata";
-        entity.distancia = 2500;
-        entity.duracionTotal = 900;
-        entity.duracionMovimiento = 850;
-        entity.duracionParado = 40;
-        entity.duracionPausaManual = 10;
-        entity.caloriasQuemadas = 120;
-        entity.pasos = 3_210;
-        entity.ritmoMedioMovimiento = 400;
-        entity.ritmoMedioTotal = 430;
-        entity.ritmoMaximo = 350;
-        entity.velocidadMediaKmhX100 = 800;
-        entity.velocidadMaxKmhX100 = 1000;
-        entity.autoPausas = 1;
-        entity.pausasManuales = 0;
-        entity.alertasVelocidad = 2;
-        entity.rutaPolilinea = "entity-poly";
-        entity.rutaMapaUrl = "entity-map";
-        entity.fechaRuta = "2026-04-25T12:00:00Z";
-
-        JsonObject json = ActividadCreatePayload.fromEntity(entity).toJson();
+        JsonObject json = ActividadCreatePayload.fromEntity(fullyPopulatedEntity()).toJson();
 
         assertEquals("local-entity", json.get("client_local_id").getAsString());
         assertEquals("caminata", json.get("tipo").getAsString());
@@ -430,4 +282,87 @@ public class ActividadCreatePayloadTest {
         assertEquals("entity-map", json.get("ruta_mapa_url").getAsString());
         assertEquals("2026-04-25T12:00:00Z", json.get("fecha_ruta").getAsString());
     }
+
+    private static JsonObject jsonFromRepresentativeEntity() {
+        ActividadEntity entity = new ActividadEntity();
+        entity.localId = "local-3";
+        entity.tipo = "carrera";
+        entity.distancia = 100;
+        entity.duracionTotal = 200;
+        entity.duracionMovimiento = 180;
+        entity.duracionParado = 15;
+        entity.duracionPausaManual = 5;
+        entity.caloriasQuemadas = 30;
+        entity.pasos = 2_345;
+        entity.ritmoMedioMovimiento = 400;
+        entity.ritmoMedioTotal = 420;
+        entity.ritmoMaximo = 350;
+        entity.velocidadMediaKmhX100 = 900;
+        entity.velocidadMaxKmhX100 = 1_200;
+        entity.autoPausas = 1;
+        entity.pausasManuales = 2;
+        entity.alertasVelocidad = 3;
+        entity.rutaPolilinea = "poly";
+        entity.rutaMapaUrl = "map.png";
+        entity.fechaRuta = "2026-04-25T10:00:00Z";
+        return ActividadCreatePayload.fromEntity(entity).toJson();
+    }
+
+    private static ActividadCreatePayload payloadWithAllRequiredFields() {
+        return new ActividadCreatePayload(
+                "local-1", "Correr", 5000, 1800, 1500, 240, 60, 350,
+                4_321, 330, 360, 280, 987, 1450, 2, 1, 3,
+                "encoded_poly", "http://map.png", "2025-03-19T10:00:00Z"
+        );
+    }
+
+    private static ActividadCreatePayload payloadWithCurrentFieldNames() {
+        return new ActividadCreatePayload(
+                "local-3", "Correr", 3000, 900, 780, 90, 30, 200,
+                2_345, 300, 360, 1000, 1200, 1400, 1, 1, 2,
+                "poly", "url", "2025-01-01T00:00:00Z"
+        );
+    }
+
+    private static ActividadCreatePayload payloadWithAllSerializedFields() {
+        return new ActividadCreatePayload(
+                "local-1", "carrera", 5_000, 1_800, 1_700, 80, 20, 350,
+                4_321, 340, 360, 300, 1_000, 1_400, 2, 1, 3,
+                "poly", "map.png", "2026-04-25T10:00:00Z"
+        );
+    }
+
+    private static ActividadCreatePayload enrichedTrackingPayload() {
+        return new ActividadCreatePayload(
+                "local-1", "carrera", 5000, 1800, 1700, 80, 20, 350,
+                4_321, 340, 360, 300, 1000, 1500, 1, 2, 3,
+                "poly", "map.png", "2026-04-25T10:00:00Z"
+        );
+    }
+
+    private static ActividadEntity fullyPopulatedEntity() {
+        ActividadEntity entity = new ActividadEntity();
+        entity.localId = "local-entity";
+        entity.tipo = "caminata";
+        entity.distancia = 2500;
+        entity.duracionTotal = 900;
+        entity.duracionMovimiento = 850;
+        entity.duracionParado = 40;
+        entity.duracionPausaManual = 10;
+        entity.caloriasQuemadas = 120;
+        entity.pasos = 3_210;
+        entity.ritmoMedioMovimiento = 400;
+        entity.ritmoMedioTotal = 430;
+        entity.ritmoMaximo = 350;
+        entity.velocidadMediaKmhX100 = 800;
+        entity.velocidadMaxKmhX100 = 1000;
+        entity.autoPausas = 1;
+        entity.pausasManuales = 0;
+        entity.alertasVelocidad = 2;
+        entity.rutaPolilinea = "entity-poly";
+        entity.rutaMapaUrl = "entity-map";
+        entity.fechaRuta = "2026-04-25T12:00:00Z";
+        return entity;
+    }
+
 }

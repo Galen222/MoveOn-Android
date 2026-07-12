@@ -20,7 +20,7 @@ import java.util.Base64;
 
 /**
  * Tests de las utilidades internas de {@link SocialAuthManager}.
- *
+ * <p>
  * Se instancia con Unsafe para no abrir Credential Manager: solo se ejercitan
  * métodos puros y deterministas que antes quedaban fuera de cobertura.
  */
@@ -29,7 +29,7 @@ public class SocialAuthManagerUtilityTest {
 
     @Test
     public void extractEmailFromIdToken_readsEmailFromJwtPayload() throws Exception {
-        SocialAuthManager manager = allocate(SocialAuthManager.class);
+        SocialAuthManager manager = allocateManager();
         String token = jwtWithPayload("{\"email\":\"alice@example.com\"}");
 
         String email = (String) invoke(
@@ -45,7 +45,7 @@ public class SocialAuthManagerUtilityTest {
     @Test
     public void extractEmailFromIdToken_returnsNullForBlankMalformedOrMissingEmailPayloads()
             throws Exception {
-        SocialAuthManager manager = allocate(SocialAuthManager.class);
+        SocialAuthManager manager = allocateManager();
 
         assertNull(invoke(manager, "extractEmailFromIdToken", new Class<?>[]{String.class}, (String) null));
         assertNull(invoke(manager, "extractEmailFromIdToken", new Class<?>[]{String.class}, "   "));
@@ -69,7 +69,7 @@ public class SocialAuthManagerUtilityTest {
     @Test
     public void sanitizeForLog_handlesEmptyTextNormalizesLineBreaksAndTruncatesLongValues()
             throws Exception {
-        SocialAuthManager manager = allocate(SocialAuthManager.class);
+        SocialAuthManager manager = allocateManager();
 
         assertEquals("<empty>", invoke(manager, "sanitizeForLog", new Class<?>[]{String.class}, (String) null));
         assertEquals("<empty>", invoke(manager, "sanitizeForLog", new Class<?>[]{String.class}, "   "));
@@ -108,24 +108,21 @@ public class SocialAuthManagerUtilityTest {
 
     @Test
     public void clientIdSuffix_returnsMissingOrLastTwelveCharacters() throws Exception {
-        SocialAuthManager manager = allocate(SocialAuthManager.class);
+        SocialAuthManager manager = allocateManager();
 
         String suffix = (String) invoke(manager, "clientIdSuffix", new Class<?>[]{});
 
         String clientId = BuildConfig.GOOGLE_WEB_CLIENT_ID;
-        if (!StringUtils.hasText(clientId)) {
-            assertEquals("<missing>", suffix);
-        } else if (clientId.length() <= 12) {
-            assertEquals(clientId, suffix);
-        } else {
-            assertEquals(clientId.substring(clientId.length() - 12), suffix);
-        }
+        String expectedSuffix = !StringUtils.hasText(clientId)
+                ? "<missing>"
+                : clientId.substring(Math.max(0, clientId.length() - 12));
+        assertEquals(expectedSuffix, suffix);
     }
 
     @Test
     public void generateNonce_returnsUrlSafeBase64WithoutPaddingAndChangesBetweenCalls()
             throws Exception {
-        SocialAuthManager manager = allocate(SocialAuthManager.class);
+        SocialAuthManager manager = allocateManager();
 
         String first = (String) invoke(manager, "generateNonce", new Class<?>[]{});
         String second = (String) invoke(manager, "generateNonce", new Class<?>[]{});
@@ -155,12 +152,11 @@ public class SocialAuthManagerUtilityTest {
         return method.invoke(target, args);
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
+    private static SocialAuthManager allocateManager() throws Exception {
         Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         field.setAccessible(true);
-        Object unsafe = field.get(null);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
         Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) method.invoke(unsafe, type);
+        return (SocialAuthManager) method.invoke(unsafe, SocialAuthManager.class);
     }
 }

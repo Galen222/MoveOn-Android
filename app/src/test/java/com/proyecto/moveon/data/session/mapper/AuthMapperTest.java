@@ -19,9 +19,6 @@ public class AuthMapperTest {
 
     // ── toLoginRequest ──────────────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #toLoginRequest_mapsFieldsCorrectly()}.
-     */
     @Test
     public void toLoginRequest_mapsFieldsCorrectly() {
         LoginRequestDto dto = AuthMapper.toLoginRequest("alice", "Pass1234");
@@ -32,9 +29,6 @@ public class AuthMapperTest {
 
     // ── toRegisterRequest ───────────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #toRegisterRequest_mapsAllFields()}.
-     */
     @Test
     public void toRegisterRequest_mapsAllFields() {
         RegisterInput input = new RegisterInput(
@@ -60,9 +54,6 @@ public class AuthMapperTest {
 
     // ── toDomain ────────────────────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #toDomain_mapsLoginResponse()}.
-     */
     @Test
     public void toDomain_mapsLoginResponse() {
         LoginResponseDto dto = new LoginResponseDto();
@@ -77,9 +68,6 @@ public class AuthMapperTest {
         assertEquals("refresh_456", session.refreshToken);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #toDomain_nullFields_defaultToEmptyString()}.
-     */
     @Test
     public void toDomain_nullFields_defaultToEmptyString() {
         LoginResponseDto dto = new LoginResponseDto();
@@ -94,9 +82,6 @@ public class AuthMapperTest {
         assertEquals("", session.refreshToken);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #toDomain_emptyFields_defaultToEmptyString()}.
-     */
     @Test
     public void toDomain_emptyFields_defaultToEmptyString() {
         LoginResponseDto dto = new LoginResponseDto();

@@ -1,6 +1,5 @@
 package com.proyecto.moveon.ui.auth;
 
-import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
@@ -14,9 +13,6 @@ import static org.junit.Assert.*;
  */
 public class SocialRegisterConflictResolverTest {
 
-    /**
-     * Verifica el escenario cubierto por {@link #resolve_googleCompletionWithUsernameConflict_blocksAndRequestsAnotherUsername()}.
-     */
     @Test
     public void resolve_googleCompletionWithUsernameConflict_blocksAndRequestsAnotherUsername() {
         SocialRegisterConflictResolver.Resolution resolution =
@@ -28,9 +24,6 @@ public class SocialRegisterConflictResolverTest {
         );
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #resolve_googleCompletionWithEmailConflict_blocksAndShowsExistingAccountMessage()}.
-     */
     @Test
     public void resolve_googleCompletionWithEmailConflict_blocksAndShowsExistingAccountMessage() {
         SocialRegisterConflictResolver.Resolution resolution =
@@ -42,9 +35,6 @@ public class SocialRegisterConflictResolverTest {
         );
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #resolve_nonSocialFlowDoesNotApplySpecialHandling()}.
-     */
     @Test
     public void resolve_nonSocialFlowDoesNotApplySpecialHandling() {
         SocialRegisterConflictResolver.Resolution resolution =
@@ -56,9 +46,6 @@ public class SocialRegisterConflictResolverTest {
         );
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #resolve_unknownErrorCodeFallsBackToGenericHandling()}.
-     */
     @Test
     public void resolve_unknownErrorCodeFallsBackToGenericHandling() {
         SocialRegisterConflictResolver.Resolution resolution =
@@ -70,9 +57,6 @@ public class SocialRegisterConflictResolverTest {
         );
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #resolve_nullErrorCodeFallsBackToGenericHandling()}.
-     */
     @Test
     public void resolve_nullErrorCodeFallsBackToGenericHandling() {
         SocialRegisterConflictResolver.Resolution resolution =

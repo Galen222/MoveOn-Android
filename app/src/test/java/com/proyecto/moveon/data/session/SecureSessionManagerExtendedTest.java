@@ -47,9 +47,9 @@ public class SecureSessionManagerExtendedTest {
      */
     @Before
     public void setUp() throws Exception {
-        manager = allocate(SecureSessionManager.class);
+        manager = allocateManager();
         context = new MemoryContext();
-        prefs = (MemorySharedPreferences) context.preferences("user_prefs_secure");
+        prefs = context.preferences("user_prefs_secure");
 
         setField(manager, "appContext", context);
         setField(manager, "prefs", prefs);
@@ -62,7 +62,7 @@ public class SecureSessionManagerExtendedTest {
      * con la sesión y limpia el provider y el flag de silent sign-in de Google.
      */
     @Test
-    public void logout_clearsAllSessionKeysAndSocialState() throws Exception {
+    public void logout_clearsAllSessionKeysAndSocialState() {
         // Pre-cargamos claves de sesión simuladas y estado de provider Google.
         prefs.edit()
                 .putString("username_ct", "x").putString("username_iv", "y")
@@ -465,16 +465,13 @@ public class SecureSessionManagerExtendedTest {
      * Crea una instancia de la clase indicada saltándose su constructor real,
      * útil para clases Android que tocarían Keystore o servicios reales.
      *
-     * @param type clase a instanciar.
-     * @param <T> tipo devuelto.
      * @return instancia recién creada sin invocar al constructor.
      */
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
-        Field f = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
-        f.setAccessible(true);
-        Object unsafe = f.get(null);
-        Method m = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) m.invoke(unsafe, type);
+    private static SecureSessionManager allocateManager() throws Exception {
+        Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
+        field.setAccessible(true);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
+        Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
+        return (SecureSessionManager) method.invoke(unsafe, SecureSessionManager.class);
     }
 }

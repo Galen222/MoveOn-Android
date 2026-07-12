@@ -10,6 +10,10 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -37,7 +41,9 @@ public class ProfilePhotoStorageTest {
         assertTrue(accountDir.isDirectory());
         assertEquals("profile_photos", root.getName());
         assertEquals("user_42__x", accountDir.getName());
-        assertEquals(root.getAbsolutePath(), accountDir.getParentFile().getAbsolutePath());
+        File parent = accountDir.getParentFile();
+        assertNotNull(parent);
+        assertEquals(root.getAbsolutePath(), parent.getAbsolutePath());
     }
 
     /**
@@ -53,7 +59,7 @@ public class ProfilePhotoStorageTest {
         File pending = new File(pendingPath);
         assertTrue(pending.isFile());
         assertEquals("avatar_pending.png", pending.getName());
-        assertEquals("avatar", new String(Files.readAllBytes(pending.toPath()), StandardCharsets.UTF_8));
+        assertEquals("avatar", readUtf8(pending));
     }
 
     /**
@@ -77,7 +83,7 @@ public class ProfilePhotoStorageTest {
         assertFalse(oldOne.exists());
         assertFalse(oldTwo.exists());
         assertTrue(unrelated.exists());
-        assertEquals("new", new String(Files.readAllBytes(current.toPath()), StandardCharsets.UTF_8));
+        assertEquals("new", readUtf8(current));
     }
 
     /**
@@ -91,7 +97,9 @@ public class ProfilePhotoStorageTest {
             ProfilePhotoStorage.promotePendingToCurrent(context, "uid_3", new File(context.getFilesDir(), "missing.jpg").getAbsolutePath(), 1);
             fail("Debe fallar si la foto pendiente no existe");
         } catch (IOException expected) {
-            assertTrue(expected.getMessage().contains("pendiente"));
+            String message = expected.getMessage();
+            assertNotNull(message);
+            assertTrue(message.contains("pendiente"));
         }
     }
 
@@ -163,6 +171,8 @@ public class ProfilePhotoStorageTest {
         HttpUrl sameOrigin = (HttpUrl) validate.invoke(null, BuildConfig.BASE_URL + "static/avatar.jpg", backendBase);
         HttpUrl cloudinary = (HttpUrl) validate.invoke(null, "https://res.cloudinary.com/demo/image/upload/avatar.jpg", backendBase);
 
+        assertNotNull(sameOrigin);
+        assertNotNull(cloudinary);
         assertEquals(backendBase.host(), sameOrigin.host());
         assertEquals("res.cloudinary.com", cloudinary.host());
 
@@ -196,7 +206,7 @@ public class ProfilePhotoStorageTest {
 
         copyWithLimit.invoke(null, new ByteArrayInputStream("abc".getBytes(StandardCharsets.UTF_8)), ok, 3L);
 
-        assertEquals("abc", ok.toString("UTF-8"));
+        assertEquals("abc", ok.toString(StandardCharsets.UTF_8));
         expectIOException(copyWithLimit, new ByteArrayInputStream("abcd".getBytes(StandardCharsets.UTF_8)), new ByteArrayOutputStream(), 3L);
     }
 
@@ -204,10 +214,28 @@ public class ProfilePhotoStorageTest {
         return new MemoryContext(Files.createTempDirectory("profile-photo-storage-test-").toFile());
     }
 
+    private static String readUtf8(File file) throws IOException {
+        StringBuilder content = new StringBuilder();
+        char[] buffer = new char[1024];
+        try (Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
+            int read;
+            while ((read = reader.read(buffer)) != -1) {
+                content.append(buffer, 0, read);
+            }
+        }
+        return content.toString();
+    }
+
     private static File writeFile(File dir, String name, byte[] content) throws IOException {
         File file = new File(dir, name);
-        Files.createDirectories(file.getParentFile().toPath());
-        Files.write(file.toPath(), content);
+        File parent = file.getParentFile();
+        if (parent == null) {
+            throw new IOException("El archivo de prueba no tiene directorio padre");
+        }
+        Files.createDirectories(parent.toPath());
+        try (FileOutputStream output = new FileOutputStream(file)) {
+            output.write(content);
+        }
         return file;
     }
 

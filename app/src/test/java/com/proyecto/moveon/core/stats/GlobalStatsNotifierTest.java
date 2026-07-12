@@ -44,9 +44,6 @@ public class GlobalStatsNotifierTest {
         resetSingleton();
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #getInstance_returnsSameInstance()}.
-     */
     @Test
     public void getInstance_returnsSameInstance() {
         GlobalStatsNotifier a = GlobalStatsNotifier.getInstance();
@@ -55,17 +52,11 @@ public class GlobalStatsNotifierTest {
         assertSame(a, b);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #getMessageEvent_isNotNull()}.
-     */
     @Test
     public void getMessageEvent_isNotNull() {
         assertNotNull(GlobalStatsNotifier.getInstance().getMessageEvent());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #notifyWarning_emitsWarningMessage()}.
-     */
     @Test
     public void notifyWarning_emitsWarningMessage() {
         GlobalStatsNotifier notifier = GlobalStatsNotifier.getInstance();
@@ -83,18 +74,15 @@ public class GlobalStatsNotifierTest {
             notifier.notifyWarning("No puedes borrar una actividad pendiente");
 
             assertEquals(1, consumed.size());
-            assertEquals(TopSnackbar.Type.WARNING, consumed.get(0).type);
-            assertEquals("No puedes borrar una actividad pendiente", consumed.get(0).message.toString());
-            assertNull(consumed.get(0).actionLabel);
-            assertNull(consumed.get(0).action);
+            assertEquals(TopSnackbar.Type.WARNING, consumed.getFirst().type);
+            assertEquals("No puedes borrar una actividad pendiente", consumed.getFirst().message.toString());
+            assertNull(consumed.getFirst().actionLabel);
+            assertNull(consumed.getFirst().action);
         } finally {
             notifier.getMessageEvent().removeObserver(observer);
         }
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #notifyError_withAction_emitsErrorMessageAndPreservesAction()}.
-     */
     @Test
     public void notifyError_withAction_emitsErrorMessageAndPreservesAction() {
         GlobalStatsNotifier notifier = GlobalStatsNotifier.getInstance();
@@ -114,7 +102,7 @@ public class GlobalStatsNotifierTest {
             notifier.notifyError("No se pudo abrir la preview", "Reintentar", action);
 
             assertEquals(1, consumed.size());
-            GlobalSnackbarMessage message = consumed.get(0);
+            GlobalSnackbarMessage message = consumed.getFirst();
             assertEquals(TopSnackbar.Type.ERROR, message.type);
             assertEquals("No se pudo abrir la preview", message.message.toString());
             assertEquals("Reintentar", message.actionLabel);
@@ -127,9 +115,6 @@ public class GlobalStatsNotifierTest {
         }
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #notifyMessage_withinDebounce_emitsOnlyOnce()}.
-     */
     @Test
     public void notifyMessage_withinDebounce_emitsOnlyOnce() {
         GlobalStatsNotifier notifier = GlobalStatsNotifier.getInstance();
@@ -149,16 +134,13 @@ public class GlobalStatsNotifierTest {
 
             // El segundo aviso entra en la ventana de debounce y no debe reemplazar al primero.
             assertEquals(1, consumed.size());
-            assertEquals(TopSnackbar.Type.SUCCESS, consumed.get(0).type);
-            assertEquals("Actividad borrada", consumed.get(0).message.toString());
+            assertEquals(TopSnackbar.Type.SUCCESS, consumed.getFirst().type);
+            assertEquals("Actividad borrada", consumed.getFirst().message.toString());
         } finally {
             notifier.getMessageEvent().removeObserver(observer);
         }
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #notifyMessage_afterResettingClock_emitsAgain()}.
-     */
     @Test
     public void notifyMessage_afterResettingClock_emitsAgain() throws Exception {
         GlobalStatsNotifier notifier = GlobalStatsNotifier.getInstance();
@@ -176,12 +158,12 @@ public class GlobalStatsNotifierTest {
             notifier.notifySuccess("Primer aviso stats");
 
             // Forzamos un nuevo hueco temporal para permitir otra emisión válida.
-            setLastDispatchMs(notifier, 0L);
+            resetLastDispatchMs(notifier);
             notifier.notifyWarning("Segundo aviso stats");
 
             assertEquals(2, consumed.size());
-            assertEquals(TopSnackbar.Type.SUCCESS, consumed.get(0).type);
-            assertEquals("Primer aviso stats", consumed.get(0).message.toString());
+            assertEquals(TopSnackbar.Type.SUCCESS, consumed.getFirst().type);
+            assertEquals("Primer aviso stats", consumed.getFirst().message.toString());
             assertEquals(TopSnackbar.Type.WARNING, consumed.get(1).type);
             assertEquals("Segundo aviso stats", consumed.get(1).message.toString());
         } finally {
@@ -195,9 +177,9 @@ public class GlobalStatsNotifierTest {
         instanceField.set(null, null);
     }
 
-    private static void setLastDispatchMs(GlobalStatsNotifier notifier, long value) throws Exception {
+    private static void resetLastDispatchMs(GlobalStatsNotifier notifier) throws Exception {
         Field lastDispatchField = GlobalStatsNotifier.class.getDeclaredField("lastDispatchMs");
         lastDispatchField.setAccessible(true);
-        lastDispatchField.setLong(notifier, value);
+        lastDispatchField.setLong(notifier, 0L);
     }
 }

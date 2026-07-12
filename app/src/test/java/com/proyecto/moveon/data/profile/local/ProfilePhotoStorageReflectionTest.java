@@ -113,7 +113,7 @@ public class ProfilePhotoStorageReflectionTest {
 
         invoke("copyWithLimit", new Class<?>[]{java.io.InputStream.class, java.io.OutputStream.class, long.class}, input, output, 3L);
 
-        assertEquals("abc", output.toString("UTF-8"));
+        assertEquals("abc", output.toString(StandardCharsets.UTF_8));
     }
 
     /**

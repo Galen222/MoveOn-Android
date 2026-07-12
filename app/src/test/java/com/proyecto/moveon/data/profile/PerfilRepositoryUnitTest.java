@@ -61,11 +61,11 @@ public class PerfilRepositoryUnitTest {
      */
     @Before
     public void setUp() throws Exception {
-        repository = allocate(PerfilRepository.class);
+        repository = allocateRepository();
         Context ctx = ApplicationProvider.getApplicationContext();
-        setField(repository, "appContext", ctx);
+        setAppContext(repository, ctx);
 
-        recordingRemote = allocate(RecordingRemote.class);
+        recordingRemote = allocateRecordingRemote();
         Field remoteField = PerfilRepository.class.getDeclaredField("remote");
         remoteField.setAccessible(true);
         remoteField.set(repository, recordingRemote);
@@ -198,7 +198,7 @@ public class PerfilRepositoryUnitTest {
      */
     @Test
     public void refreshPerfil_successWithNullData_propagatesLocalFallback() throws Exception {
-        recordingRemote.nextFetchResult = ApiResult.success(null);
+        recordingRemote.nextFetchResult = emptyApiResult();
 
         AtomicReference<ApiError> received = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
@@ -218,7 +218,7 @@ public class PerfilRepositoryUnitTest {
      */
     @Test
     public void refreshPerfil_failureWithoutExplicitError_usesLocalFallback() throws Exception {
-        recordingRemote.nextFetchResult = ApiResult.failure(null);
+        recordingRemote.nextFetchResult = emptyApiResult();
 
         AtomicReference<ApiError> received = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
@@ -275,7 +275,7 @@ public class PerfilRepositoryUnitTest {
      */
     @Test
     public void eliminarCuenta_successWithNullData_returnsOkFallback() throws Exception {
-        recordingRemote.nextDeleteResult = ApiResult.success(null);
+        recordingRemote.nextDeleteResult = emptyApiResult();
 
         AtomicReference<ApiResult<String>> received = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
@@ -400,29 +400,38 @@ public class PerfilRepositoryUnitTest {
      * Inyecta un valor en un campo declarado de {@link PerfilRepository}.
      *
      * @param target instancia objetivo.
-     * @param name nombre del campo.
      * @param value valor a publicar.
      */
-    private static void setField(Object target, String name, Object value) throws Exception {
-        Field f = PerfilRepository.class.getDeclaredField(name);
-        f.setAccessible(true);
-        f.set(target, value);
+    private static void setAppContext(PerfilRepository target, Context value) throws Exception {
+        Field field = PerfilRepository.class.getDeclaredField("appContext");
+        field.setAccessible(true);
+        field.set(target, value);
     }
 
     /**
      * Crea una instancia saltándose el constructor real para evitar tocar
      * Android Keystore, base de datos, red o WorkManager.
      *
-     * @param type clase a instanciar.
-     * @param <T> tipo devuelto.
      * @return instancia recién creada sin invocar al constructor.
      */
+    private static PerfilRepository allocateRepository() throws Exception {
+        return (PerfilRepository) allocateWithoutConstructor(PerfilRepository.class);
+    }
+
+    private static RecordingRemote allocateRecordingRemote() throws Exception {
+        return (RecordingRemote) allocateWithoutConstructor(RecordingRemote.class);
+    }
+
     @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
-        Field f = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
-        f.setAccessible(true);
-        Object unsafe = f.get(null);
-        Method m = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) m.invoke(unsafe, type);
+    private static <T> ApiResult<T> emptyApiResult() {
+        return (ApiResult<T>) ApiResult.successVoid();
+    }
+
+    private static Object allocateWithoutConstructor(Class<?> type) throws Exception {
+        Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
+        field.setAccessible(true);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
+        Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
+        return method.invoke(unsafe, type);
     }
 }

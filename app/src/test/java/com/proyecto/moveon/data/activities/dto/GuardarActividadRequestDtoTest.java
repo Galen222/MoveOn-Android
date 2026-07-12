@@ -94,9 +94,6 @@ public class GuardarActividadRequestDtoTest {
         assertNull(dto.rutaPolilinea);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #serialization_usesCurrentSerializedNames()}.
-     */
     @Test
     public void serialization_usesCurrentSerializedNames() {
         GuardarActividadRequestDto dto = new GuardarActividadRequestDto(
@@ -153,9 +150,6 @@ public class GuardarActividadRequestDtoTest {
         assertFalse(obj.has("fechaRuta"));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #serialization_valuesAreCorrect()}.
-     */
     @Test
     public void serialization_valuesAreCorrect() {
         GuardarActividadRequestDto dto = new GuardarActividadRequestDto(

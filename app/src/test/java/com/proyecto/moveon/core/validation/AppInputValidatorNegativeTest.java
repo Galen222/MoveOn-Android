@@ -64,8 +64,8 @@ public class AppInputValidatorNegativeTest {
      */
     @Test
     public void safeTrim_returnsEmptyForNullAndTrimsText() throws Exception {
-        assertEquals("", invokeString("safeTrim", new Class<?>[]{String.class}, new Object[]{null}));
-        assertEquals("MoveOn", invokeString("safeTrim", new Class<?>[]{String.class}, new Object[]{"  MoveOn  "}));
+        assertEquals("", invokeSafeTrim(null));
+        assertEquals("MoveOn", invokeSafeTrim("  MoveOn  "));
     }
 
     /**
@@ -135,8 +135,8 @@ public class AppInputValidatorNegativeTest {
         return (Boolean) invoke(methodName, new Class<?>[]{String.class}, new Object[]{value});
     }
 
-    private static String invokeString(String methodName, Class<?>[] parameterTypes, Object[] args) throws Exception {
-        return (String) invoke(methodName, parameterTypes, args);
+    private static String invokeSafeTrim(String value) throws Exception {
+        return (String) invoke("safeTrim", new Class<?>[]{String.class}, new Object[]{value});
     }
 
     private static Object invoke(String methodName, Class<?>[] parameterTypes, Object[] args) throws Exception {

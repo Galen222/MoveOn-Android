@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import android.app.Activity;
 import android.app.Application;
+import android.content.ComponentName;
 import android.content.Intent;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -12,6 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.android.controller.ActivityController;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowApplication;
@@ -24,26 +26,32 @@ public class NavigationUtilsFlowTest {
 
     @Test
     public void goToActivity_startsTargetWithoutFinishingCurrentActivity() {
-        Activity activity = Robolectric.buildActivity(SourceActivity.class).setup().get();
+        try (ActivityController<SourceActivity> controller =
+                     Robolectric.buildActivity(SourceActivity.class).setup()) {
+            Activity activity = controller.get();
 
-        NavigationUtils.goToActivity(activity, TargetActivity.class);
+            NavigationUtils.goToActivity(activity, TargetActivity.class);
 
-        ShadowActivity shadow = Shadows.shadowOf(activity);
-        Intent started = shadow.getNextStartedActivity();
-        assertEquals(TargetActivity.class.getName(), started.getComponent().getClassName());
-        assertFalse(activity.isFinishing());
+            ShadowActivity shadow = Shadows.shadowOf(activity);
+            Intent started = shadow.getNextStartedActivity();
+            assertTargetsTargetActivity(started);
+            assertFalse(activity.isFinishing());
+        }
     }
 
     @Test
     public void goToActivityAndFinish_startsTargetAndFinishesCurrentActivity() {
-        Activity activity = Robolectric.buildActivity(SourceActivity.class).setup().get();
+        try (ActivityController<SourceActivity> controller =
+                     Robolectric.buildActivity(SourceActivity.class).setup()) {
+            Activity activity = controller.get();
 
-        NavigationUtils.goToActivityAndFinish(activity, TargetActivity.class);
+            NavigationUtils.goToActivityAndFinish(activity, TargetActivity.class);
 
-        ShadowActivity shadow = Shadows.shadowOf(activity);
-        Intent started = shadow.getNextStartedActivity();
-        assertEquals(TargetActivity.class.getName(), started.getComponent().getClassName());
-        assertTrue(activity.isFinishing());
+            ShadowActivity shadow = Shadows.shadowOf(activity);
+            Intent started = shadow.getNextStartedActivity();
+            assertTargetsTargetActivity(started);
+            assertTrue(activity.isFinishing());
+        }
     }
 
     @Test
@@ -54,7 +62,7 @@ public class NavigationUtilsFlowTest {
 
         ShadowApplication shadow = Shadows.shadowOf(app);
         Intent started = shadow.getNextStartedActivity();
-        assertEquals(TargetActivity.class.getName(), started.getComponent().getClassName());
+        assertTargetsTargetActivity(started);
         assertEquals(
                 Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK,
                 started.getFlags() & (Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK)
@@ -63,18 +71,28 @@ public class NavigationUtilsFlowTest {
 
     @Test
     public void goToActivityAndClearTask_withActivityContextAlsoFinishesActivity() {
-        Activity activity = Robolectric.buildActivity(SourceActivity.class).setup().get();
+        try (ActivityController<SourceActivity> controller =
+                     Robolectric.buildActivity(SourceActivity.class).setup()) {
+            Activity activity = controller.get();
 
-        NavigationUtils.goToActivityAndClearTask(activity, TargetActivity.class);
+            NavigationUtils.goToActivityAndClearTask(activity, TargetActivity.class);
 
-        ShadowActivity shadow = Shadows.shadowOf(activity);
-        Intent started = shadow.getNextStartedActivity();
-        assertEquals(TargetActivity.class.getName(), started.getComponent().getClassName());
-        assertEquals(
-                Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK,
-                started.getFlags() & (Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        );
-        assertTrue(activity.isFinishing());
+            ShadowActivity shadow = Shadows.shadowOf(activity);
+            Intent started = shadow.getNextStartedActivity();
+            assertTargetsTargetActivity(started);
+            assertEquals(
+                    Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK,
+                    started.getFlags() & (Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            );
+            assertTrue(activity.isFinishing());
+        }
+    }
+
+    private static void assertTargetsTargetActivity(Intent intent) {
+        assertNotNull(intent);
+        ComponentName component = intent.getComponent();
+        assertNotNull(component);
+        assertEquals(TargetActivity.class.getName(), component.getClassName());
     }
 
     public static class SourceActivity extends Activity {}

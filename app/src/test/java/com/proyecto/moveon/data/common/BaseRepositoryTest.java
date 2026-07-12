@@ -3,6 +3,8 @@ package com.proyecto.moveon.data.common;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import androidx.annotation.NonNull;
+
 import org.junit.Test;
 
 import java.io.IOException;
@@ -17,9 +19,6 @@ import retrofit2.Response;
  */
 public class BaseRepositoryTest {
 
-    /**
-     * Verifica el escenario cubierto por {@link #enqueueTracked_removesCallOnResponse()}.
-     */
     @Test
     public void enqueueTracked_removesCallOnResponse() {
         InspectableRepository repo = new InspectableRepository();
@@ -28,13 +27,10 @@ public class BaseRepositoryTest {
         repo.enqueueForTest(call);
         assertEquals(1, repo.trackedCount());
 
-        call.triggerResponse("ok");
+        call.triggerResponse();
         assertEquals(0, repo.trackedCount());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #enqueueTracked_removesCallOnFailure()}.
-     */
     @Test
     public void enqueueTracked_removesCallOnFailure() {
         InspectableRepository repo = new InspectableRepository();
@@ -47,9 +43,6 @@ public class BaseRepositoryTest {
         assertEquals(0, repo.trackedCount());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #cancelAll_cancelsTrackedCalls()}.
-     */
     @Test
     public void cancelAll_cancelsTrackedCalls() {
         InspectableRepository repo = new InspectableRepository();
@@ -69,9 +62,9 @@ public class BaseRepositoryTest {
 
     private static final class InspectableRepository extends BaseRepository {
         void enqueueForTest(Call<String> call) {
-            enqueueTracked(call, new Callback<String>() {
-                @Override public void onResponse(Call<String> call, Response<String> response) {}
-                @Override public void onFailure(Call<String> call, Throwable t) {}
+            enqueueTracked(call, new Callback<>() {
+                @Override public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {}
+                @Override public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {}
             });
         }
 
@@ -94,6 +87,7 @@ public class BaseRepositoryTest {
             this.defaultBody = defaultBody;
         }
 
+        @NonNull
         @Override
         public Response<T> execute() {
             executed = true;
@@ -101,14 +95,14 @@ public class BaseRepositoryTest {
         }
 
         @Override
-        public void enqueue(Callback<T> callback) {
+        public void enqueue(@NonNull Callback<T> callback) {
             executed = true;
             this.callback = callback;
         }
 
-        void triggerResponse(T body) {
+        void triggerResponse() {
             if (callback != null) {
-                callback.onResponse(this, Response.success(body));
+                callback.onResponse(this, Response.success(defaultBody));
             }
         }
 
@@ -121,8 +115,11 @@ public class BaseRepositoryTest {
         @Override public boolean isExecuted() { return executed; }
         @Override public void cancel() { canceled = true; }
         @Override public boolean isCanceled() { return canceled; }
-        @Override public Call<T> clone() { return new FakeCall<>(defaultBody); }
-        @Override public Request request() { return new Request.Builder().url("https://example.com/").build(); }
-        @Override public Timeout timeout() { return Timeout.NONE; }
+        @NonNull
+        @Override
+        @SuppressWarnings("MethodDoesntCallSuperMethod")
+        public Call<T> clone() { return new FakeCall<>(defaultBody); }
+        @NonNull @Override public Request request() { return new Request.Builder().url("https://example.com/").build(); }
+        @NonNull @Override public Timeout timeout() { return Timeout.NONE; }
     }
 }

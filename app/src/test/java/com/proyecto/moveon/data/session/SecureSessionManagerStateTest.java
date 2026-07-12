@@ -89,7 +89,7 @@ public class SecureSessionManagerStateTest {
      */
     @Test
     public void persistEditor_persistsBothAsyncAndSyncModes() throws Exception {
-        SecureSessionManager manager = allocate(SecureSessionManager.class);
+        SecureSessionManager manager = allocateManager();
         MemorySharedPreferences prefs = new MemorySharedPreferences();
         Method persistEditor = method("persistEditor", SharedPreferences.Editor.class, boolean.class, String.class);
 
@@ -105,7 +105,7 @@ public class SecureSessionManagerStateTest {
      */
     @Test
     public void persistEditor_throwsWhenSynchronousCommitFails() throws Exception {
-        SecureSessionManager manager = allocate(SecureSessionManager.class);
+        SecureSessionManager manager = allocateManager();
         Method persistEditor = method("persistEditor", SharedPreferences.Editor.class, boolean.class, String.class);
 
         try {
@@ -122,7 +122,7 @@ public class SecureSessionManagerStateTest {
      */
     @Test
     public void getDecryptedValueLocked_returnsNullWhenCipherMaterialIsIncomplete() throws Exception {
-        SecureSessionManager manager = allocate(SecureSessionManager.class);
+        SecureSessionManager manager = allocateManager();
         MemorySharedPreferences prefs = new MemorySharedPreferences();
         setField(manager, "prefs", prefs);
 
@@ -138,7 +138,7 @@ public class SecureSessionManagerStateTest {
      */
     @Test
     public void persistAuthProvider_trimsAndRemovesProviderInAppSettingsPrefs() throws Exception {
-        SecureSessionManager manager = allocate(SecureSessionManager.class);
+        SecureSessionManager manager = allocateManager();
         MemoryContext context = new MemoryContext();
         setField(manager, "appContext", context);
 
@@ -156,7 +156,7 @@ public class SecureSessionManagerStateTest {
      */
     @Test
     public void clearSocialAuthStateLocked_removesProviderAndDisablesGoogleSilentSignIn() throws Exception {
-        SecureSessionManager manager = allocate(SecureSessionManager.class);
+        SecureSessionManager manager = allocateManager();
         MemoryContext context = new MemoryContext();
         context.preferences(AppSettingsManager.PREFS).edit()
                 .putString("auth_provider", "google")
@@ -205,13 +205,12 @@ public class SecureSessionManagerStateTest {
         field.set(target, value);
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
+    private static SecureSessionManager allocateManager() throws Exception {
         Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         field.setAccessible(true);
-        Object unsafe = field.get(null);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
         Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) method.invoke(unsafe, type);
+        return (SecureSessionManager) method.invoke(unsafe, SecureSessionManager.class);
     }
 
     private static final class FailingCommitEditor implements SharedPreferences.Editor {

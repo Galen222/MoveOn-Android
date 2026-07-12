@@ -46,7 +46,7 @@ public class ApiErrorParserPrivateBranchesTest {
         for (String generic : Arrays.asList(null, " ", "Not Found", "forbidden.", "UNAUTHORIZED", "bad request", "solicitud inválida")) {
             assertEquals("Debe considerarse genérico: " + generic,
                     Boolean.TRUE,
-                    invoke("isGenericFrameworkMessage", new Class<?>[]{String.class}, new Object[]{generic}));
+                    invoke("isGenericFrameworkMessage", new Class<?>[]{String.class}, (Object) generic));
         }
 
         assertEquals(Boolean.FALSE,
@@ -83,7 +83,7 @@ public class ApiErrorParserPrivateBranchesTest {
     @Test
     public void firstNonEmpty_returnsFirstUsefulValue() throws Exception {
         assertEquals("segundo", invoke("firstNonEmpty", new Class<?>[]{String[].class}, (Object) new String[]{null, " ", "segundo", "tercero"}));
-        assertNull(invoke("firstNonEmpty", new Class<?>[]{String[].class}, new Object[]{null}));
+        assertNull(invoke("firstNonEmpty", new Class<?>[]{String[].class}, (Object) null));
         assertNull(invoke("firstNonEmpty", new Class<?>[]{String[].class}, (Object) new String[]{" ", null}));
     }
 
@@ -91,7 +91,6 @@ public class ApiErrorParserPrivateBranchesTest {
      * Verifica que añadir errores por campo crea listas, acumula mensajes y descarta entradas vacías.
      */
     @Test
-    @SuppressWarnings("unchecked")
     public void addFieldError_accumulatesValidMessagesOnly() throws Exception {
         Map<String, List<String>> map = new HashMap<>();
 
@@ -108,7 +107,6 @@ public class ApiErrorParserPrivateBranchesTest {
      * Verifica que la fusión de errores preserva mensajes válidos y descarta listas nulas o textos vacíos.
      */
     @Test
-    @SuppressWarnings("unchecked")
     public void mergeFieldErrors_preservesOnlyUsefulMessages() throws Exception {
         Map<String, List<String>> target = new HashMap<>();
         Map<String, List<String>> source = new HashMap<>();
@@ -131,7 +129,7 @@ public class ApiErrorParserPrivateBranchesTest {
 
         assertEquals("email", invoke("lastLocAsFieldName", new Class<?>[]{JsonArray.class}, loc));
         assertNull(invoke("lastLocAsFieldName", new Class<?>[]{JsonArray.class}, blank));
-        assertNull(invoke("lastLocAsFieldName", new Class<?>[]{JsonArray.class}, new Object[]{null}));
+        assertNull(invoke("lastLocAsFieldName", new Class<?>[]{JsonArray.class}, (Object) null));
     }
 
 

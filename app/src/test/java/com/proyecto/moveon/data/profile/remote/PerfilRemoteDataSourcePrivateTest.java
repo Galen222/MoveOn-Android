@@ -18,29 +18,28 @@ public class PerfilRemoteDataSourcePrivateTest {
      */
     @Test
     public void guessMimeType_detectsSupportedImageExtensions() throws Exception {
-        PerfilRemoteDataSource dataSource = allocate(PerfilRemoteDataSource.class);
+        PerfilRemoteDataSource dataSource = allocateDataSource();
 
-        assertEquals("image/png", invoke(dataSource, "guessMimeType", new Class<?>[]{String.class}, "avatar.PNG"));
-        assertEquals("image/webp", invoke(dataSource, "guessMimeType", new Class<?>[]{String.class}, "avatar.webp"));
-        assertEquals("image/jpeg", invoke(dataSource, "guessMimeType", new Class<?>[]{String.class}, "avatar.jpg"));
-        assertEquals("image/jpeg", invoke(dataSource, "guessMimeType", new Class<?>[]{String.class}, "avatar.gif"));
-        assertEquals("image/jpeg", invoke(dataSource, "guessMimeType", new Class<?>[]{String.class}, "sin_extension"));
+        assertEquals("image/png", invokeGuessMimeType(dataSource, "avatar.PNG"));
+        assertEquals("image/webp", invokeGuessMimeType(dataSource, "avatar.webp"));
+        assertEquals("image/jpeg", invokeGuessMimeType(dataSource, "avatar.jpg"));
+        assertEquals("image/jpeg", invokeGuessMimeType(dataSource, "avatar.gif"));
+        assertEquals("image/jpeg", invokeGuessMimeType(dataSource, "sin_extension"));
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
+    private static PerfilRemoteDataSource allocateDataSource() throws Exception {
         Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         field.setAccessible(true);
-        Object unsafe = field.get(null);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
         Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) method.invoke(unsafe, type);
+        return (PerfilRemoteDataSource) method.invoke(unsafe, PerfilRemoteDataSource.class);
     }
 
-    private static Object invoke(Object target, String methodName, Class<?>[] parameterTypes, Object... args) throws Exception {
-        Method method = target.getClass().getDeclaredMethod(methodName, parameterTypes);
+    private static String invokeGuessMimeType(PerfilRemoteDataSource target, String fileName) throws Exception {
+        Method method = PerfilRemoteDataSource.class.getDeclaredMethod("guessMimeType", String.class);
         method.setAccessible(true);
         try {
-            return method.invoke(target, args);
+            return (String) method.invoke(target, fileName);
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
             if (cause instanceof Exception) {

@@ -8,6 +8,9 @@ import com.proyecto.moveon.data.local.entity.PerfilCacheEntity;
 import com.proyecto.moveon.data.profile.dto.ProfileInfoDto;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
@@ -25,8 +28,8 @@ public class PhotoSyncHelperStateTest {
      * Verifica que los errores transitorios y el error nulo se consideran reintentables.
      */
     @Test
-    public void isRetryableError_acceptsTransientTypesAndNull() {
-        assertTrue(PhotoSyncHelper.isRetryableError(null));
+    public void isRetryableError_acceptsTransientTypesAndNull() throws Exception {
+        assertTrue(invokeIsRetryableErrorWithNull());
         assertTrue(PhotoSyncHelper.isRetryableError(ApiError.typed(ApiErrorType.NETWORK, "red")));
         assertTrue(PhotoSyncHelper.isRetryableError(ApiError.typed(ApiErrorType.TIMEOUT, "timeout")));
         assertTrue(PhotoSyncHelper.isRetryableError(ApiError.typed(ApiErrorType.SERVER, 500, "server")));
@@ -50,7 +53,7 @@ public class PhotoSyncHelperStateTest {
      */
     @Test
     public void hasPendingPhoto_requiresPendingStateAndPath() throws Exception {
-        PhotoSyncHelper helper = allocate(PhotoSyncHelper.class);
+        PhotoSyncHelper helper = allocateHelper();
         PerfilCacheEntity pending = new PerfilCacheEntity();
         pending.photoSyncState = PhotoSyncHelper.STATE_PENDING;
         pending.pendingLocalPhotoPath = "/tmp/avatar.jpg";
@@ -73,7 +76,7 @@ public class PhotoSyncHelperStateTest {
      */
     @Test
     public void initDefaultPhotoState_clearsPhotoFieldsAndMarksSynced() throws Exception {
-        PhotoSyncHelper helper = allocate(PhotoSyncHelper.class);
+        PhotoSyncHelper helper = allocateHelper();
         PerfilCacheEntity entity = new PerfilCacheEntity();
         entity.localPhotoPath = "/tmp/current.jpg";
         entity.pendingLocalPhotoPath = "/tmp/pending.jpg";
@@ -94,9 +97,9 @@ public class PhotoSyncHelperStateTest {
      */
     @Test
     public void mergePhotoState_withoutRemotePhotoClearsCurrentPhoto() throws Exception {
-        PhotoSyncHelper helper = allocate(PhotoSyncHelper.class);
+        PhotoSyncHelper helper = allocateHelper();
         File current = Files.createTempFile("moveon-current", ".jpg").toFile();
-        Files.write(current.toPath(), "old".getBytes(StandardCharsets.UTF_8));
+        writeUtf8(current, "old");
         PerfilCacheEntity entity = new PerfilCacheEntity();
         entity.accountKey = "uid_1";
         entity.localPhotoPath = current.getAbsolutePath();
@@ -118,9 +121,9 @@ public class PhotoSyncHelperStateTest {
      */
     @Test
     public void mergePhotoState_reusesPreviousLocalPhotoWhenVersionMatches() throws Exception {
-        PhotoSyncHelper helper = allocate(PhotoSyncHelper.class);
+        PhotoSyncHelper helper = allocateHelper();
         File current = Files.createTempFile("moveon-current", ".png").toFile();
-        Files.write(current.toPath(), "avatar".getBytes(StandardCharsets.UTF_8));
+        writeUtf8(current, "avatar");
         PerfilCacheEntity previous = new PerfilCacheEntity();
         previous.localPhotoPath = current.getAbsolutePath();
         previous.fotoVersion = 7;
@@ -145,9 +148,9 @@ public class PhotoSyncHelperStateTest {
      */
     @Test
     public void mergePhotoState_keepsExistingPendingPhotoWhenUploadIsStillPending() throws Exception {
-        PhotoSyncHelper helper = allocate(PhotoSyncHelper.class);
+        PhotoSyncHelper helper = allocateHelper();
         File pending = Files.createTempFile("moveon-pending", ".webp").toFile();
-        Files.write(pending.toPath(), "pending".getBytes(StandardCharsets.UTF_8));
+        writeUtf8(pending, "pending");
         PerfilCacheEntity entity = new PerfilCacheEntity();
         entity.accountKey = "uid_3";
         entity.pendingLocalPhotoPath = pending.getAbsolutePath();
@@ -165,12 +168,23 @@ public class PhotoSyncHelperStateTest {
         assertEquals("retry", entity.photoLastError);
         assertTrue(pending.exists());
     }
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
+
+    private static boolean invokeIsRetryableErrorWithNull() throws Exception {
+        Method method = PhotoSyncHelper.class.getDeclaredMethod("isRetryableError", ApiError.class);
+        return Boolean.TRUE.equals(method.invoke(null, (Object) null));
+    }
+
+    private static void writeUtf8(File file, String content) throws Exception {
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
+            writer.write(content);
+        }
+    }
+
+    private static PhotoSyncHelper allocateHelper() throws Exception {
         Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         field.setAccessible(true);
-        Object unsafe = field.get(null);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
         Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) method.invoke(unsafe, type);
+        return (PhotoSyncHelper) method.invoke(unsafe, PhotoSyncHelper.class);
     }
 }

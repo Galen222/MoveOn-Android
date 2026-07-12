@@ -44,9 +44,6 @@ public class GlobalProfileNotifierTest {
         resetSingleton();
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #getInstance_returnsSameInstance()}.
-     */
     @Test
     public void getInstance_returnsSameInstance() {
         GlobalProfileNotifier a = GlobalProfileNotifier.getInstance();
@@ -55,17 +52,11 @@ public class GlobalProfileNotifierTest {
         assertSame(a, b);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #getMessageEvent_isNotNull()}.
-     */
     @Test
     public void getMessageEvent_isNotNull() {
         assertNotNull(GlobalProfileNotifier.getInstance().getMessageEvent());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #notifySuccess_emitsSuccessMessage()}.
-     */
     @Test
     public void notifySuccess_emitsSuccessMessage() {
         GlobalProfileNotifier notifier = GlobalProfileNotifier.getInstance();
@@ -83,18 +74,15 @@ public class GlobalProfileNotifierTest {
             notifier.notifySuccess("Perfil actualizado");
 
             assertEquals(1, consumed.size());
-            assertEquals(TopSnackbar.Type.SUCCESS, consumed.get(0).type);
-            assertEquals("Perfil actualizado", consumed.get(0).message.toString());
-            assertNull(consumed.get(0).actionLabel);
-            assertNull(consumed.get(0).action);
+            assertEquals(TopSnackbar.Type.SUCCESS, consumed.getFirst().type);
+            assertEquals("Perfil actualizado", consumed.getFirst().message.toString());
+            assertNull(consumed.getFirst().actionLabel);
+            assertNull(consumed.getFirst().action);
         } finally {
             notifier.getMessageEvent().removeObserver(observer);
         }
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #notifyError_withAction_emitsErrorMessageAndPreservesAction()}.
-     */
     @Test
     public void notifyError_withAction_emitsErrorMessageAndPreservesAction() {
         GlobalProfileNotifier notifier = GlobalProfileNotifier.getInstance();
@@ -114,7 +102,7 @@ public class GlobalProfileNotifierTest {
             notifier.notifyError("No se pudo actualizar", "Reintentar", action);
 
             assertEquals(1, consumed.size());
-            GlobalSnackbarMessage message = consumed.get(0);
+            GlobalSnackbarMessage message = consumed.getFirst();
             assertEquals(TopSnackbar.Type.ERROR, message.type);
             assertEquals("No se pudo actualizar", message.message.toString());
             assertEquals("Reintentar", message.actionLabel);
@@ -128,9 +116,6 @@ public class GlobalProfileNotifierTest {
         }
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #notifyMessage_withinDebounce_emitsOnlyOnce()}.
-     */
     @Test
     public void notifyMessage_withinDebounce_emitsOnlyOnce() {
         GlobalProfileNotifier notifier = GlobalProfileNotifier.getInstance();
@@ -149,16 +134,13 @@ public class GlobalProfileNotifierTest {
             notifier.notifyWarning("Campo actualizado otra vez");
 
             assertEquals(1, consumed.size());
-            assertEquals(TopSnackbar.Type.WARNING, consumed.get(0).type);
-            assertEquals("Campo actualizado", consumed.get(0).message.toString());
+            assertEquals(TopSnackbar.Type.WARNING, consumed.getFirst().type);
+            assertEquals("Campo actualizado", consumed.getFirst().message.toString());
         } finally {
             notifier.getMessageEvent().removeObserver(observer);
         }
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #notifyMessage_afterResettingClock_emitsAgain()}.
-     */
     @Test
     public void notifyMessage_afterResettingClock_emitsAgain() throws Exception {
         GlobalProfileNotifier notifier = GlobalProfileNotifier.getInstance();
@@ -176,12 +158,12 @@ public class GlobalProfileNotifierTest {
             notifier.notifySuccess("Primer aviso");
 
             // Simulamos el paso del tiempo sin sleeps para reabrir la ventana de emisión.
-            setLastDispatchMs(notifier, 0L);
+            resetLastDispatchMs(notifier);
             notifier.notifyError("Segundo aviso");
 
             assertEquals(2, consumed.size());
-            assertEquals(TopSnackbar.Type.SUCCESS, consumed.get(0).type);
-            assertEquals("Primer aviso", consumed.get(0).message.toString());
+            assertEquals(TopSnackbar.Type.SUCCESS, consumed.getFirst().type);
+            assertEquals("Primer aviso", consumed.getFirst().message.toString());
             assertEquals(TopSnackbar.Type.ERROR, consumed.get(1).type);
             assertEquals("Segundo aviso", consumed.get(1).message.toString());
         } finally {
@@ -195,9 +177,9 @@ public class GlobalProfileNotifierTest {
         instanceField.set(null, null);
     }
 
-    private static void setLastDispatchMs(GlobalProfileNotifier notifier, long value) throws Exception {
+    private static void resetLastDispatchMs(GlobalProfileNotifier notifier) throws Exception {
         Field lastDispatchField = GlobalProfileNotifier.class.getDeclaredField("lastDispatchMs");
         lastDispatchField.setAccessible(true);
-        lastDispatchField.setLong(notifier, value);
+        lastDispatchField.setLong(notifier, 0L);
     }
 }

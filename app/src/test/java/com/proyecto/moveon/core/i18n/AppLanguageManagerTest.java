@@ -15,58 +15,37 @@ import java.util.Locale;
  */
 public class AppLanguageManagerTest {
 
-    /**
-     * Verifica el escenario cubierto por {@link #sanitizeSelectableMode_spanishReturnsSpanish()}.
-     */
     @Test
     public void sanitizeSelectableMode_spanishReturnsSpanish() {
         assertEquals("es", AppLanguageManager.sanitizeSelectableMode("es"));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #sanitizeSelectableMode_englishReturnsEnglish()}.
-     */
     @Test
     public void sanitizeSelectableMode_englishReturnsEnglish() {
         assertEquals("en", AppLanguageManager.sanitizeSelectableMode("en"));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #sanitizeSelectableMode_unknownDefaultsToEnglish()}.
-     */
     @Test
     public void sanitizeSelectableMode_unknownDefaultsToEnglish() {
         assertEquals("en", AppLanguageManager.sanitizeSelectableMode("fr"));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #sanitizeSelectableMode_nullDefaultsToEnglish()}.
-     */
     @Test
     public void sanitizeSelectableMode_nullDefaultsToEnglish() {
         assertEquals("en", AppLanguageManager.sanitizeSelectableMode(null));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #sanitizeSelectableMode_emptyDefaultsToEnglish()}.
-     */
     @Test
     public void sanitizeSelectableMode_emptyDefaultsToEnglish() {
         assertEquals("en", AppLanguageManager.sanitizeSelectableMode(""));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #sanitizeSelectableMode_caseExactMatch()}.
-     */
     @Test
     public void sanitizeSelectableMode_caseExactMatch() {
         // "ES" no es igual a "es", debería defaultear a "en"
         assertEquals("en", AppLanguageManager.sanitizeSelectableMode("ES"));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #constants_haveExpectedValues()}.
-     */
     @Test
     public void constants_haveExpectedValues() {
         assertEquals("es", AppLanguageManager.MODE_SPANISH);

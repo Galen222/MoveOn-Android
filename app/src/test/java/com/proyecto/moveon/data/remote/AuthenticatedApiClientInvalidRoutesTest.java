@@ -17,7 +17,7 @@ public class AuthenticatedApiClientInvalidRoutesTest {
      */
     @Test
     public void isInvalidUrl_rejectsNullBlankAbsoluteAndProtocolRelativeRoutes() throws Exception {
-        AuthenticatedApiClient client = allocate(AuthenticatedApiClient.class);
+        AuthenticatedApiClient client = allocateClient();
 
         assertTrue(invokeIsInvalidUrl(client, null));
         assertTrue(invokeIsInvalidUrl(client, "   "));
@@ -32,7 +32,7 @@ public class AuthenticatedApiClientInvalidRoutesTest {
      */
     @Test
     public void isInvalidUrl_acceptsSafeRelativeRoutes() throws Exception {
-        AuthenticatedApiClient client = allocate(AuthenticatedApiClient.class);
+        AuthenticatedApiClient client = allocateClient();
 
         assertFalse(invokeIsInvalidUrl(client, "perfil/informacion"));
         assertFalse(invokeIsInvalidUrl(client, "/perfil/informacion"));
@@ -45,7 +45,7 @@ public class AuthenticatedApiClientInvalidRoutesTest {
      */
     @Test
     public void sanitizeUrl_trimsAndRemovesSingleLeadingSlash() throws Exception {
-        AuthenticatedApiClient client = allocate(AuthenticatedApiClient.class);
+        AuthenticatedApiClient client = allocateClient();
 
         assertEquals("perfil/informacion", invokeSanitizeUrl(client, "  /perfil/informacion  "));
         assertEquals("ranking/obtener", invokeSanitizeUrl(client, "ranking/obtener"));
@@ -57,24 +57,23 @@ public class AuthenticatedApiClientInvalidRoutesTest {
      */
     @Test
     public void sanitizeUrl_preservesSecondSlashForProtocolRelativeInputs() throws Exception {
-        AuthenticatedApiClient client = allocate(AuthenticatedApiClient.class);
+        AuthenticatedApiClient client = allocateClient();
 
         assertEquals("/evil.example/perfil", invokeSanitizeUrl(client, "//evil.example/perfil"));
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
+    private static AuthenticatedApiClient allocateClient() throws Exception {
         Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         field.setAccessible(true);
-        Object unsafe = field.get(null);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
         Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) method.invoke(unsafe, type);
+        return (AuthenticatedApiClient) method.invoke(unsafe, AuthenticatedApiClient.class);
     }
 
     private static boolean invokeIsInvalidUrl(AuthenticatedApiClient client, String url) throws Exception {
         Method method = AuthenticatedApiClient.class.getDeclaredMethod("isInvalidUrl", String.class);
         method.setAccessible(true);
-        return (Boolean) method.invoke(client, url);
+        return Boolean.TRUE.equals(method.invoke(client, url));
     }
 
     private static String invokeSanitizeUrl(AuthenticatedApiClient client, String url) throws Exception {

@@ -112,7 +112,7 @@ public class PerfilSyncManagerReflectionTest {
     @Test
     public void createEmptyCache_usesExpectedDefaults() throws Exception {
         PerfilSyncManager manager = allocate(PerfilSyncManager.class);
-        setField(manager, "photoHelper", allocate(PhotoSyncHelper.class));
+        setPhotoHelper(manager, allocate(PhotoSyncHelper.class));
 
         PerfilCacheEntity cache = (PerfilCacheEntity) invoke(manager, "createEmptyCache", new Class<?>[]{String.class}, "account-1");
 
@@ -264,13 +264,13 @@ public class PerfilSyncManagerReflectionTest {
     private static <T> T allocate(Class<T> type) throws Exception {
         Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         field.setAccessible(true);
-        Object unsafe = field.get(null);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
         Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
         return (T) method.invoke(unsafe, type);
     }
 
-    private static void setField(Object target, String fieldName, Object value) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
+    private static void setPhotoHelper(PerfilSyncManager target, PhotoSyncHelper value) throws Exception {
+        Field field = PerfilSyncManager.class.getDeclaredField("photoHelper");
         field.setAccessible(true);
         field.set(target, value);
     }

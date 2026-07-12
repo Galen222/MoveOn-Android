@@ -23,7 +23,7 @@ public class RankingRepositoryPrivateParsingTest {
      */
     @Test
     public void buildUrl_withoutProvinceReturnsBaseEndpoint() throws Exception {
-        RankingRepository repository = allocate(RankingRepository.class);
+        RankingRepository repository = allocateRepository();
 
         assertEquals("ranking/obtener", invoke(repository, "buildUrl", new Class<?>[]{String.class}, new Object[]{null}));
         assertEquals("ranking/obtener", invoke(repository, "buildUrl", new Class<?>[]{String.class}, "   "));
@@ -34,7 +34,7 @@ public class RankingRepositoryPrivateParsingTest {
      */
     @Test
     public void buildUrl_withProvinceTrimsAndEncodesUtf8() throws Exception {
-        RankingRepository repository = allocate(RankingRepository.class);
+        RankingRepository repository = allocateRepository();
 
         assertEquals("ranking/obtener?provincia=A+Coru%C3%B1a",
                 invoke(repository, "buildUrl", new Class<?>[]{String.class}, "  A Coruña  "));
@@ -48,15 +48,16 @@ public class RankingRepositoryPrivateParsingTest {
     @Test
     @SuppressWarnings("unchecked")
     public void parseRanking_acceptsArraysAndRejectsOtherPayloads() throws Exception {
-        RankingRepository repository = allocate(RankingRepository.class);
+        RankingRepository repository = allocateRepository();
         JsonElement array = JsonParser.parseString("[{\"posicion\":2,\"nombre_usuario\":\"ana\",\"foto_perfil\":null,\"foto_version\":0,\"total_puntos\":40,\"total_metros\":2000}]");
         JsonElement object = JsonParser.parseString("{\"mensaje\":\"no es array\"}");
 
         List<RankingItemDto> ranking = (List<RankingItemDto>) invoke(repository, "parseRanking", new Class<?>[]{JsonElement.class}, array);
 
+        assertNotNull(ranking);
         assertEquals(1, ranking.size());
-        assertEquals(2, ranking.get(0).posicion);
-        assertEquals("ana", ranking.get(0).nombreUsuario);
+        assertEquals(2, ranking.getFirst().posicion);
+        assertEquals("ana", ranking.getFirst().nombreUsuario);
         assertNull(invoke(repository, "parseRanking", new Class<?>[]{JsonElement.class}, object));
         assertNull(invoke(repository, "parseRanking", new Class<?>[]{JsonElement.class}, new Object[]{null}));
     }
@@ -66,7 +67,7 @@ public class RankingRepositoryPrivateParsingTest {
      */
     @Test
     public void parseMensaje_usesMensajeOrOkFallback() throws Exception {
-        RankingRepository repository = allocate(RankingRepository.class);
+        RankingRepository repository = allocateRepository();
         JsonElement withMessage = JsonParser.parseString("{\"mensaje\":\"Reporte recibido\"}");
         JsonElement nullMessage = JsonParser.parseString("{\"mensaje\":null}");
         JsonElement array = JsonParser.parseString("[]");
@@ -77,13 +78,12 @@ public class RankingRepositoryPrivateParsingTest {
         assertEquals("OK", invoke(repository, "parseMensaje", new Class<?>[]{JsonElement.class}, new Object[]{null}));
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
+    private static RankingRepository allocateRepository() throws Exception {
         Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         field.setAccessible(true);
-        Object unsafe = field.get(null);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
         Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) method.invoke(unsafe, type);
+        return (RankingRepository) method.invoke(unsafe, RankingRepository.class);
     }
 
     private static Object invoke(Object target, String methodName, Class<?>[] parameterTypes, Object... args) throws Exception {

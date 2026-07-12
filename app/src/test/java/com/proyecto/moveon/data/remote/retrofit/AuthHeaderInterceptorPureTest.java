@@ -21,7 +21,7 @@ public class AuthHeaderInterceptorPureTest {
      */
     @Test
     public void isPublicEndpoint_recognizesAuthenticationAndHandshakeRoutes() throws Exception {
-        AuthHeaderInterceptor interceptor = allocate(AuthHeaderInterceptor.class);
+        AuthHeaderInterceptor interceptor = allocateInterceptor();
 
         assertTrue(invokeIsPublicEndpoint(interceptor, request("handshake")));
         assertTrue(invokeIsPublicEndpoint(interceptor, request("auth/login")));
@@ -37,7 +37,7 @@ public class AuthHeaderInterceptorPureTest {
      */
     @Test
     public void isPublicEndpoint_ignoresTrailingSlashForPublicRoutes() throws Exception {
-        AuthHeaderInterceptor interceptor = allocate(AuthHeaderInterceptor.class);
+        AuthHeaderInterceptor interceptor = allocateInterceptor();
 
         assertTrue(invokeIsPublicEndpoint(interceptor, request("auth/login/")));
         assertTrue(invokeIsPublicEndpoint(interceptor, request("token/refresh/")));
@@ -48,7 +48,7 @@ public class AuthHeaderInterceptorPureTest {
      */
     @Test
     public void isPublicEndpoint_rejectsProtectedAndLookAlikeRoutes() throws Exception {
-        AuthHeaderInterceptor interceptor = allocate(AuthHeaderInterceptor.class);
+        AuthHeaderInterceptor interceptor = allocateInterceptor();
 
         assertFalse(invokeIsPublicEndpoint(interceptor, request("perfil/informacion")));
         assertFalse(invokeIsPublicEndpoint(interceptor, request("ranking/obtener")));
@@ -65,15 +65,14 @@ public class AuthHeaderInterceptorPureTest {
     private static boolean invokeIsPublicEndpoint(AuthHeaderInterceptor interceptor, Request request) throws Exception {
         Method method = AuthHeaderInterceptor.class.getDeclaredMethod("isPublicEndpoint", Request.class);
         method.setAccessible(true);
-        return (Boolean) method.invoke(interceptor, request);
+        return Boolean.TRUE.equals(method.invoke(interceptor, request));
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
+    private static AuthHeaderInterceptor allocateInterceptor() throws Exception {
         Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         field.setAccessible(true);
-        Object unsafe = field.get(null);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
         Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) method.invoke(unsafe, type);
+        return (AuthHeaderInterceptor) method.invoke(unsafe, AuthHeaderInterceptor.class);
     }
 }

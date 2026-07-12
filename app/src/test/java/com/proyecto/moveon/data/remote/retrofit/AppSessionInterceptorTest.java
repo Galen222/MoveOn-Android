@@ -173,6 +173,7 @@ public class AppSessionInterceptorTest {
 
         @Override
         @NonNull
+        @SuppressWarnings("MethodDoesntCallSuperMethod")
         public retrofit2.Call<AppSessionResponseDto> clone() {
             return new FakeCall(response);
         }

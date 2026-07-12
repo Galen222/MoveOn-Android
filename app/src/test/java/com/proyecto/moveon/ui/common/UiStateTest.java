@@ -11,9 +11,6 @@ import org.junit.Test;
  */
 public class UiStateTest {
 
-    /**
-     * Verifica el escenario cubierto por {@link #loading_hasCorrectFlags()}.
-     */
     @Test
     public void loading_hasCorrectFlags() {
         UiState<String> state = UiState.loading();
@@ -23,9 +20,6 @@ public class UiStateTest {
         assertNull(state.error);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #success_hasDataAndNotLoading()}.
-     */
     @Test
     public void success_hasDataAndNotLoading() {
         UiState<String> state = UiState.success("perfil cargado");
@@ -35,9 +29,6 @@ public class UiStateTest {
         assertNull(state.error);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #success_withNull_isValid()}.
-     */
     @Test
     public void success_withNull_isValid() {
         UiState<String> state = UiState.success(null);
@@ -47,9 +38,6 @@ public class UiStateTest {
         assertNull(state.error);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #error_hasErrorAndNotLoading()}.
-     */
     @Test
     public void error_hasErrorAndNotLoading() {
         ApiError apiError = ApiError.typed(ApiErrorType.NETWORK, "sin conexión");
@@ -62,18 +50,12 @@ public class UiStateTest {
         assertEquals("sin conexión", state.error.getMessage());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #genericType_worksWithIntegers()}.
-     */
     @Test
     public void genericType_worksWithIntegers() {
         UiState<Integer> state = UiState.success(42);
         assertEquals(Integer.valueOf(42), state.data);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #genericType_worksWithComplexObjects()}.
-     */
     @Test
     public void genericType_worksWithComplexObjects() {
         String[] data = {"a", "b"};

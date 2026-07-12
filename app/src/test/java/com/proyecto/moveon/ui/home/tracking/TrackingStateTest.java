@@ -17,9 +17,6 @@ public class TrackingStateTest {
 
     // ── Factory / estado inicial ────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #idle_returnsDefaultValues()}.
-     */
     @Test
     public void idle_returnsDefaultValues() {
         TrackingState state = TrackingState.idle();
@@ -39,9 +36,6 @@ public class TrackingStateTest {
 
     // ── Status helpers ──────────────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #isIdle_trueOnlyWhenIdle()}.
-     */
     @Test
     public void isIdle_trueOnlyWhenIdle() {
         TrackingState idle = TrackingState.idle();
@@ -52,9 +46,6 @@ public class TrackingStateTest {
         assertFalse(idle.isActive());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #isRunning_trueWhenRunning()}.
-     */
     @Test
     public void isRunning_trueWhenRunning() {
         TrackingState running = TrackingState.idle().toBuilder()
@@ -66,9 +57,6 @@ public class TrackingStateTest {
         assertTrue(running.isActive());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #isPaused_trueWhenPaused()}.
-     */
     @Test
     public void isPaused_trueWhenPaused() {
         TrackingState paused = TrackingState.idle().toBuilder()
@@ -79,9 +67,6 @@ public class TrackingStateTest {
         assertTrue(paused.isActive());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #isFinished_trueWhenFinished()}.
-     */
     @Test
     public void isFinished_trueWhenFinished() {
         TrackingState finished = TrackingState.idle().toBuilder()
@@ -94,9 +79,6 @@ public class TrackingStateTest {
 
     // ── Builder ─────────────────────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #builder_setsAllFields()}.
-     */
     @Test
     public void builder_setsAllFields() {
         List<LatLng> points = Arrays.asList(
@@ -137,9 +119,6 @@ public class TrackingStateTest {
         assertEquals("abc123", state.getEncodedPolyline());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #toBuilder_copiesAllFields()}.
-     */
     @Test
     public void toBuilder_copiesAllFields() {
         TrackingState original = new TrackingState.Builder()
@@ -171,9 +150,6 @@ public class TrackingStateTest {
         assertEquals(original.getPace(), copy.getPace());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #toBuilder_canModifySingleField()}.
-     */
     @Test
     public void toBuilder_canModifySingleField() {
         TrackingState running = TrackingState.idle().toBuilder()
@@ -193,9 +169,6 @@ public class TrackingStateTest {
 
     // ── Inmutabilidad de routePoints ────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #routePoints_isUnmodifiable()}.
-     */
     @Test(expected = UnsupportedOperationException.class)
     public void routePoints_isUnmodifiable() {
         TrackingState state = TrackingState.idle().toBuilder()
@@ -207,9 +180,6 @@ public class TrackingStateTest {
 
     // ── Ciclo de vida completo ──────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #lifecycle_idle_running_paused_running_finished()}.
-     */
     @Test
     public void lifecycle_idle_running_paused_running_finished() {
         TrackingState s1 = TrackingState.idle();
@@ -306,7 +276,7 @@ public class TrackingStateTest {
         assertEquals(222L, state.getServiceDestroyedAtEpochMs());
         assertEquals(5, state.getServiceRestartCount());
         assertEquals(1, state.getDiagnosticEvents().size());
-        assertSame(event, state.getDiagnosticEvents().get(0));
+        assertSame(event, state.getDiagnosticEvents().getFirst());
     }
 
     /**
@@ -503,10 +473,12 @@ public class TrackingStateTest {
         diagnostics.add(new TrackingState.DiagnosticEvent(2L, "late", null));
 
         assertEquals(1, state.getRoutePoints().size());
-        assertEquals(40.0, state.getRoutePoints().get(0).latitude, 0.0001);
-        assertEquals(41.0, state.getCurrentLocation().latitude, 0.0001);
+        assertEquals(40.0, state.getRoutePoints().getFirst().latitude, 0.0001);
+        LatLng currentLocation = state.getCurrentLocation();
+        assertNotNull(currentLocation);
+        assertEquals(41.0, currentLocation.latitude, 0.0001);
         assertEquals(1, state.getDiagnosticEvents().size());
-        assertEquals("start", state.getDiagnosticEvents().get(0).getType());
+        assertEquals("start", state.getDiagnosticEvents().getFirst().getType());
 
         assertListIsUnmodifiable(state.getRoutePoints());
         assertListIsUnmodifiable(state.getDiagnosticEvents());
@@ -521,7 +493,7 @@ public class TrackingStateTest {
                 .status(TrackingState.Status.RUNNING)
                 .distanceMeters(1000)
                 .calories(50)
-                .routePoints(Arrays.asList(new LatLng(40.1, -3.1)))
+                .routePoints(Collections.singletonList(new LatLng(40.1, -3.1)))
                 .build();
 
         TrackingState modified = original.toBuilder()

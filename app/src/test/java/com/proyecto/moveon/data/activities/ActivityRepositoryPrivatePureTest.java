@@ -40,7 +40,7 @@ public class ActivityRepositoryPrivatePureTest {
     @Test
     public void mapEntityToDomain_copiesAllActivityFields() throws Exception {
         ActividadEntity entity = sampleEntity();
-        ActivityRepository repository = allocate(ActivityRepository.class);
+        ActivityRepository repository = allocateRepository();
 
         ActividadItem item = invokeMapEntityToDomain(repository, entity);
 
@@ -81,7 +81,7 @@ public class ActivityRepositoryPrivatePureTest {
         entity.rutaMapaUrl = null;
         entity.lastError = null;
         entity.syncState = ActivitySyncState.SYNCED;
-        ActivityRepository repository = allocate(ActivityRepository.class);
+        ActivityRepository repository = allocateRepository();
 
         ActividadItem item = invokeMapEntityToDomain(repository, entity);
 
@@ -98,7 +98,7 @@ public class ActivityRepositoryPrivatePureTest {
      */
     @Test
     public void mapEntityToDomain_marksFailedAndDeleteStatesAsPending() throws Exception {
-        ActivityRepository repository = allocate(ActivityRepository.class);
+        ActivityRepository repository = allocateRepository();
         ActividadEntity failedCreate = sampleEntity();
         failedCreate.syncState = ActivitySyncState.FAILED_CREATE;
         ActividadEntity pendingDelete = sampleEntity();
@@ -116,7 +116,7 @@ public class ActivityRepositoryPrivatePureTest {
      */
     @Test
     public void validateRequest_validPayloadReturnsNull() throws Exception {
-        ActivityRepository repository = allocate(ActivityRepository.class);
+        ActivityRepository repository = allocateRepository();
         GuardarActividadRequestDto request = validRequest("Correr");
 
         Object error = invokeValidateRequest(repository, request);
@@ -129,7 +129,7 @@ public class ActivityRepositoryPrivatePureTest {
      */
     @Test
     public void validateRequest_acceptsWalkingAndRunningCanonicalTypes() throws Exception {
-        ActivityRepository repository = allocate(ActivityRepository.class);
+        ActivityRepository repository = allocateRepository();
         GuardarActividadRequestDto caminar = validRequest("Caminar");
         GuardarActividadRequestDto correr = validRequest("Correr");
 
@@ -142,7 +142,7 @@ public class ActivityRepositoryPrivatePureTest {
      */
     @Test
     public void validateRequest_acceptsMinimumValidBoundaries() throws Exception {
-        ActivityRepository repository = allocate(ActivityRepository.class);
+        ActivityRepository repository = allocateRepository();
         GuardarActividadRequestDto request = request("Caminar", 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, null, pastDate());
 
         assertNull(invokeValidateRequest(repository, request));
@@ -153,7 +153,7 @@ public class ActivityRepositoryPrivatePureTest {
      */
     @Test
     public void validateRequest_acceptsMaximumValidBoundaries() throws Exception {
-        ActivityRepository repository = allocate(ActivityRepository.class);
+        ActivityRepository repository = allocateRepository();
         GuardarActividadRequestDto request = request("Correr", 300000, 86400, 86400, 0, 86400, 10000, 3600, 3600, 3600, 5000, 10000, 500, 500, 500, "xy", pastDate());
 
         assertNull(invokeValidateRequest(repository, request));
@@ -164,7 +164,7 @@ public class ActivityRepositoryPrivatePureTest {
      */
     @Test
     public void validateRequest_acceptsNullableBlankAndMinimumPolylineValues() throws Exception {
-        ActivityRepository repository = allocate(ActivityRepository.class);
+        ActivityRepository repository = allocateRepository();
         GuardarActividadRequestDto nullPolyline = request("Correr", 5000, 1800, 1700, 100, 20, 350, 340, 360, 300, 1000, 1500, 1, 1, 0, null, pastDate());
         GuardarActividadRequestDto blankPolyline = request("Correr", 5000, 1800, 1700, 100, 20, 350, 340, 360, 300, 1000, 1500, 1, 1, 0, "   ", pastDate());
         GuardarActividadRequestDto twoCharsPolyline = request("Correr", 5000, 1800, 1700, 100, 20, 350, 340, 360, 300, 1000, 1500, 1, 1, 0, "ab", pastDate());
@@ -251,13 +251,12 @@ public class ActivityRepositoryPrivatePureTest {
         return OffsetDateTime.now().minusMinutes(5).toString();
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
+    private static ActivityRepository allocateRepository() throws Exception {
         Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         field.setAccessible(true);
-        Object unsafe = field.get(null);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
         Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) method.invoke(unsafe, type);
+        return (ActivityRepository) method.invoke(unsafe, ActivityRepository.class);
     }
 
     private static ActividadItem invokeMapEntityToDomain(ActivityRepository repository, ActividadEntity entity) throws Exception {

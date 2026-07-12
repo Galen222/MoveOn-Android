@@ -11,10 +11,10 @@ import org.junit.Test;
 import com.proyecto.moveon.data.local.db.AppDatabase;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 
 /**
  * Tests defensivos de {@link OfflineSessionCleaner}.
@@ -82,7 +82,6 @@ public class OfflineSessionCleanerTest {
         assertTrue(root.exists());
 
         OfflineSessionCleaner.clearSessionAndLocalDataAsync(context);
-        waitUntilDeleted(root);
 
         assertFalse(root.exists());
     }
@@ -104,14 +103,11 @@ public class OfflineSessionCleanerTest {
         File root = new File(context.getFilesDir(), "profile_photos");
         File accountDir = new File(root, accountKey);
         assertTrue(accountDir.mkdirs());
-        Files.write(new File(accountDir, "avatar_v1.jpg").toPath(), "img".getBytes(StandardCharsets.UTF_8));
+        File photo = new File(accountDir, "avatar_v1.jpg");
+        try (FileOutputStream output = new FileOutputStream(photo)) {
+            output.write("img".getBytes(StandardCharsets.UTF_8));
+        }
         return root;
     }
 
-    private static void waitUntilDeleted(File file) throws InterruptedException {
-        long deadline = System.currentTimeMillis() + 2_000L;
-        while (file.exists() && System.currentTimeMillis() < deadline) {
-            Thread.sleep(20L);
-        }
-    }
 }

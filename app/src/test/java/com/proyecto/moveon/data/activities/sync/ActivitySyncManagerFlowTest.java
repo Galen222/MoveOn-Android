@@ -35,7 +35,7 @@ import java.util.List;
 
 /**
  * Tests de flujo completo de {@link ActivitySyncManager} con DAO y remoto fake.
- *
+ * <p>
  * Cubre la clase real, no una copia de sus condiciones, y evita Room/red real para que
  * los escenarios sean rápidos y deterministas en unit tests JVM.
  */
@@ -67,7 +67,7 @@ public class ActivitySyncManagerFlowTest {
         assertTrue(result.completedPendingWork);
         assertEquals("local-1", remote.lastCreateBody.get("client_local_id").getAsString());
 
-        ActividadEntity saved = dao.saved.get(0);
+        ActividadEntity saved = dao.saved.getFirst();
         assertEquals(Integer.valueOf(77), saved.remoteId);
         assertEquals("Caminar", saved.tipo);
         assertEquals(12_345, saved.distancia);
@@ -107,7 +107,7 @@ public class ActivitySyncManagerFlowTest {
         assertTrue(result.retry);
         assertFalse(result.completedPendingWork);
         assertEquals(1, dao.saved.size());
-        assertSame(pending, dao.saved.get(0));
+        assertSame(pending, dao.saved.getFirst());
         assertEquals(ActivitySyncState.PENDING_CREATE, pending.syncState);
         assertEquals("sin conexión", pending.lastError);
         assertTrue(pending.updatedAtMs > 0);
@@ -202,7 +202,7 @@ public class ActivitySyncManagerFlowTest {
 
         assertEquals(2, dao.saved.size());
 
-        ActividadEntity updated = dao.saved.get(0);
+        ActividadEntity updated = dao.saved.getFirst();
         assertSame(existing, updated);
         assertEquals(Integer.valueOf(20), updated.remoteId);
         assertEquals("Correr", updated.tipo);
@@ -257,22 +257,21 @@ public class ActivitySyncManagerFlowTest {
     }
 
     private static ActividadLocalDataSource actividadDataSourceWith(FakeActividadDao dao) throws Exception {
-        ActividadLocalDataSource dataSource = allocate(ActividadLocalDataSource.class);
-        setField(dataSource, "dao", dao);
+        ActividadLocalDataSource dataSource = allocateLocalDataSource();
+        setDao(dataSource, dao);
         return dataSource;
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
+    private static ActividadLocalDataSource allocateLocalDataSource() throws Exception {
         Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         field.setAccessible(true);
-        Object unsafe = field.get(null);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
         Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) method.invoke(unsafe, type);
+        return (ActividadLocalDataSource) method.invoke(unsafe, ActividadLocalDataSource.class);
     }
 
-    private static void setField(Object target, String fieldName, Object value) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
+    private static void setDao(ActividadLocalDataSource target, ActividadDao value) throws Exception {
+        Field field = ActividadLocalDataSource.class.getDeclaredField("dao");
         field.setAccessible(true);
         field.set(target, value);
     }
@@ -371,7 +370,7 @@ public class ActivitySyncManagerFlowTest {
         final java.util.Map<Integer, ActividadEntity> byRemoteId = new java.util.HashMap<>();
         List<ActividadEntity> allNow = new ArrayList<>();
         List<ActividadEntity> pendingCreates = new ArrayList<>();
-        List<ActividadEntity> pendingDeletes = new ArrayList<>();
+        final List<ActividadEntity> pendingDeletes = new ArrayList<>();
         ActividadEntity byLocalId;
         int countVisible;
 

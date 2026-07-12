@@ -23,7 +23,7 @@ public class RankingRepositoryPureTest {
      */
     @Test
     public void buildUrl_nullOrBlankProvinceReturnsBaseEndpoint() throws Exception {
-        RankingRepository repository = allocate(RankingRepository.class);
+        RankingRepository repository = allocateRepository();
 
         assertEquals("ranking/obtener", invokeBuildUrl(repository, null));
         assertEquals("ranking/obtener", invokeBuildUrl(repository, "   "));
@@ -34,7 +34,7 @@ public class RankingRepositoryPureTest {
      */
     @Test
     public void buildUrl_nonBlankProvinceIsTrimmedAndUrlEncoded() throws Exception {
-        RankingRepository repository = allocate(RankingRepository.class);
+        RankingRepository repository = allocateRepository();
 
         String url = invokeBuildUrl(repository, " A Coruña ");
 
@@ -46,14 +46,14 @@ public class RankingRepositoryPureTest {
      */
     @Test
     public void parseRanking_validArrayReturnsDtoList() throws Exception {
-        RankingRepository repository = allocate(RankingRepository.class);
+        RankingRepository repository = allocateRepository();
         JsonElement json = JsonParser.parseString("[{\"posicion\":2,\"nombre_usuario\":\"ana\",\"foto_perfil\":\"https://cdn/f.jpg\",\"foto_version\":7,\"total_puntos\":91,\"total_metros\":12345}]");
 
         List<RankingItemDto> items = invokeParseRanking(repository, json);
 
         assertNotNull(items);
         assertEquals(1, items.size());
-        RankingItemDto item = items.get(0);
+        RankingItemDto item = items.getFirst();
         assertEquals(2, item.posicion);
         assertEquals("ana", item.nombreUsuario);
         assertEquals("https://cdn/f.jpg", item.fotoPerfil);
@@ -67,7 +67,7 @@ public class RankingRepositoryPureTest {
      */
     @Test
     public void parseRanking_nonArrayPayloadsReturnNull() throws Exception {
-        RankingRepository repository = allocate(RankingRepository.class);
+        RankingRepository repository = allocateRepository();
 
         assertNull(invokeParseRanking(repository, null));
         assertNull(invokeParseRanking(repository, JsonNull.INSTANCE));
@@ -79,7 +79,7 @@ public class RankingRepositoryPureTest {
      */
     @Test
     public void parseMensaje_readsMessageOrReturnsOkFallback() throws Exception {
-        RankingRepository repository = allocate(RankingRepository.class);
+        RankingRepository repository = allocateRepository();
 
         assertEquals("Reporte recibido",
                 invokeParseMensaje(repository, JsonParser.parseString("{\"mensaje\":\"Reporte recibido\"}")));
@@ -112,12 +112,11 @@ public class RankingRepositoryPureTest {
         return (String) method.invoke(repository, json);
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T allocate(Class<T> type) throws Exception {
+    private static RankingRepository allocateRepository() throws Exception {
         Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         field.setAccessible(true);
-        Object unsafe = field.get(null);
+        Object unsafe = java.util.Objects.requireNonNull(field.get(null), "Unsafe no disponible");
         Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
-        return (T) method.invoke(unsafe, type);
+        return (RankingRepository) method.invoke(unsafe, RankingRepository.class);
     }
 }

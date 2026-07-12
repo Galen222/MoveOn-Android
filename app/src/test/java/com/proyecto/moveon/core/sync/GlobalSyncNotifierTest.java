@@ -50,9 +50,6 @@ public class GlobalSyncNotifierTest {
         resetSingleton();
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #getInstance_returnsSameInstance()}.
-     */
     @Test
     public void getInstance_returnsSameInstance() {
         GlobalSyncNotifier a = GlobalSyncNotifier.getInstance();
@@ -61,17 +58,11 @@ public class GlobalSyncNotifierTest {
         assertSame(a, b);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #getMessageEvent_isNotNull()}.
-     */
     @Test
     public void getMessageEvent_isNotNull() {
         assertNotNull(GlobalSyncNotifier.getInstance().getMessageEvent());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #notifySyncCompleted_emitsExpectedSuccessMessage()}.
-     */
     @Test
     public void notifySyncCompleted_emitsExpectedSuccessMessage() {
         GlobalSyncNotifier notifier = GlobalSyncNotifier.getInstance();
@@ -89,18 +80,15 @@ public class GlobalSyncNotifierTest {
             notifier.notifySyncCompleted("Sincronización completada");
 
             assertEquals(1, consumed.size());
-            assertEquals(TopSnackbar.Type.SUCCESS, consumed.get(0).type);
-            assertEquals("Sincronización completada", consumed.get(0).message.toString());
-            assertNull(consumed.get(0).actionLabel);
-            assertNull(consumed.get(0).action);
+            assertEquals(TopSnackbar.Type.SUCCESS, consumed.getFirst().type);
+            assertEquals("Sincronización completada", consumed.getFirst().message.toString());
+            assertNull(consumed.getFirst().actionLabel);
+            assertNull(consumed.getFirst().action);
         } finally {
             notifier.getMessageEvent().removeObserver(observer);
         }
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #notifySyncCompleted_withinDebounce_emitsOnlyOnce()}.
-     */
     @Test
     public void notifySyncCompleted_withinDebounce_emitsOnlyOnce() {
         GlobalSyncNotifier notifier = GlobalSyncNotifier.getInstance();
@@ -120,16 +108,13 @@ public class GlobalSyncNotifierTest {
 
             // La segunda llamada cae dentro de la ventana de dedupe y no debe republicar.
             assertEquals(1, consumed.size());
-            assertEquals(TopSnackbar.Type.SUCCESS, consumed.get(0).type);
-            assertEquals("Sincronización completada", consumed.get(0).message.toString());
+            assertEquals(TopSnackbar.Type.SUCCESS, consumed.getFirst().type);
+            assertEquals("Sincronización completada", consumed.getFirst().message.toString());
         } finally {
             notifier.getMessageEvent().removeObserver(observer);
         }
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #notifySyncCompleted_afterResettingClock_emitsAgain()}.
-     */
     @Test
     public void notifySyncCompleted_afterResettingClock_emitsAgain() throws Exception {
         GlobalSyncNotifier notifier = GlobalSyncNotifier.getInstance();
@@ -148,12 +133,12 @@ public class GlobalSyncNotifierTest {
 
             // Forzamos el reloj interno hacia atrás para simular que ya pasó la ventana debounce
             // sin meter sleeps frágiles en la suite.
-            setLastDispatchMs(notifier, 0L);
+            resetLastDispatchMs(notifier);
             notifier.notifySyncCompleted("Segundo aviso");
 
             assertEquals(2, consumed.size());
-            assertEquals(TopSnackbar.Type.SUCCESS, consumed.get(0).type);
-            assertEquals("Primer aviso", consumed.get(0).message.toString());
+            assertEquals(TopSnackbar.Type.SUCCESS, consumed.getFirst().type);
+            assertEquals("Primer aviso", consumed.getFirst().message.toString());
             assertEquals(TopSnackbar.Type.SUCCESS, consumed.get(1).type);
             assertEquals("Segundo aviso", consumed.get(1).message.toString());
         } finally {
@@ -167,9 +152,9 @@ public class GlobalSyncNotifierTest {
         instanceField.set(null, null);
     }
 
-    private static void setLastDispatchMs(GlobalSyncNotifier notifier, long value) throws Exception {
+    private static void resetLastDispatchMs(GlobalSyncNotifier notifier) throws Exception {
         Field lastDispatchField = GlobalSyncNotifier.class.getDeclaredField("lastDispatchMs");
         lastDispatchField.setAccessible(true);
-        lastDispatchField.setLong(notifier, value);
+        lastDispatchField.setLong(notifier, 0L);
     }
 }

@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.android.controller.ActivityController;
 
 import java.util.Arrays;
 import java.util.List;
@@ -62,14 +63,18 @@ public class TrackingRequirementsManagerFragmentTest {
      */
     @Test
     public void getRequestableMissingRequirements_freshFragment_returnsRuntimeRequirements() {
-        Fragment fragment = attachedFragment();
+        try (ActivityController<FragmentActivity> controller =
+                     Robolectric.buildActivity(FragmentActivity.class).setup()) {
+            Fragment fragment = attachFragment(controller.get());
 
-        List<TrackingRequirementsManager.Requirement> requirements =
-                TrackingRequirementsManager.getRequestableMissingRequirements(fragment);
+            List<TrackingRequirementsManager.Requirement> requirements =
+                    TrackingRequirementsManager.getRequestableMissingRequirements(fragment);
 
-        assertTrue(requirements.contains(TrackingRequirementsManager.Requirement.LOCATION));
-        assertTrue(requirements.contains(TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
-        assertTrue(requirements.contains(TrackingRequirementsManager.Requirement.NOTIFICATIONS));
+            assertTrue(requirements.contains(TrackingRequirementsManager.Requirement.LOCATION));
+            assertTrue(requirements.contains(TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
+            assertTrue(requirements.contains(TrackingRequirementsManager.Requirement.NOTIFICATIONS));
+
+        }
     }
 
     /**
@@ -78,15 +83,19 @@ public class TrackingRequirementsManagerFragmentTest {
      */
     @Test
     public void buildRequestablePermissions_freshFragment_containsConcreteAndroidPermissions() {
-        Fragment fragment = attachedFragment();
+        try (ActivityController<FragmentActivity> controller =
+                     Robolectric.buildActivity(FragmentActivity.class).setup()) {
+            Fragment fragment = attachFragment(controller.get());
 
-        List<String> permissions = Arrays.asList(
-                TrackingRequirementsManager.buildRequestablePermissions(fragment));
+            List<String> permissions = Arrays.asList(
+                    TrackingRequirementsManager.buildRequestablePermissions(fragment));
 
-        assertTrue(permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION));
-        assertTrue(permissions.contains(Manifest.permission.ACCESS_COARSE_LOCATION));
-        assertTrue(permissions.contains(Manifest.permission.ACTIVITY_RECOGNITION));
-        assertTrue(permissions.contains(Manifest.permission.POST_NOTIFICATIONS));
+            assertTrue(permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION));
+            assertTrue(permissions.contains(Manifest.permission.ACCESS_COARSE_LOCATION));
+            assertTrue(permissions.contains(Manifest.permission.ACTIVITY_RECOGNITION));
+            assertTrue(permissions.contains(Manifest.permission.POST_NOTIFICATIONS));
+
+        }
     }
 
     /**
@@ -95,23 +104,27 @@ public class TrackingRequirementsManagerFragmentTest {
      */
     @Test
     public void buildRequestablePermissionsForRequirement_freshFragment_returnsExpectedArrays() {
-        Fragment fragment = attachedFragment();
+        try (ActivityController<FragmentActivity> controller =
+                     Robolectric.buildActivity(FragmentActivity.class).setup()) {
+            Fragment fragment = attachFragment(controller.get());
 
-        assertArrayEquals(new String[]{
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                },
-                TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
-                        fragment, TrackingRequirementsManager.Requirement.LOCATION));
-        assertArrayEquals(new String[]{Manifest.permission.ACTIVITY_RECOGNITION},
-                TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
-                        fragment, TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
-        assertArrayEquals(new String[]{Manifest.permission.POST_NOTIFICATIONS},
-                TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
-                        fragment, TrackingRequirementsManager.Requirement.NOTIFICATIONS));
-        assertArrayEquals(new String[0],
-                TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
-                        fragment, TrackingRequirementsManager.Requirement.GPS));
+            assertArrayEquals(new String[]{
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                    },
+                    TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
+                            fragment, TrackingRequirementsManager.Requirement.LOCATION));
+            assertArrayEquals(new String[]{Manifest.permission.ACTIVITY_RECOGNITION},
+                    TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
+                            fragment, TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
+            assertArrayEquals(new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                    TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
+                            fragment, TrackingRequirementsManager.Requirement.NOTIFICATIONS));
+            assertArrayEquals(new String[0],
+                    TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
+                            fragment, TrackingRequirementsManager.Requirement.GPS));
+
+        }
     }
 
     /**
@@ -120,44 +133,45 @@ public class TrackingRequirementsManagerFragmentTest {
      */
     @Test
     public void requestedPermissionsWithoutRationale_areReportedAsBlocked() {
-        Fragment fragment = attachedFragment();
-        Context context = fragment.requireContext();
-        TrackingRequirementsManager.markPermissionsRequested(context, new String[]{
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACTIVITY_RECOGNITION,
-                Manifest.permission.POST_NOTIFICATIONS
-        });
+        try (ActivityController<FragmentActivity> controller =
+                     Robolectric.buildActivity(FragmentActivity.class).setup()) {
+            Fragment fragment = attachFragment(controller.get());
+            Context context = fragment.requireContext();
+            TrackingRequirementsManager.markPermissionsRequested(context, new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACTIVITY_RECOGNITION,
+                    Manifest.permission.POST_NOTIFICATIONS
+            });
 
-        assertEquals(TrackingRequirementsManager.Status.BLOCKED,
-                TrackingRequirementsManager.getLocationStatus(fragment));
-        assertEquals(TrackingRequirementsManager.Status.BLOCKED,
-                TrackingRequirementsManager.getActivityRecognitionStatus(fragment));
-        assertEquals(TrackingRequirementsManager.Status.BLOCKED,
-                TrackingRequirementsManager.getNotificationsStatus(fragment));
+            assertEquals(TrackingRequirementsManager.Status.BLOCKED,
+                    TrackingRequirementsManager.getLocationStatus(fragment));
+            assertEquals(TrackingRequirementsManager.Status.BLOCKED,
+                    TrackingRequirementsManager.getActivityRecognitionStatus(fragment));
+            assertEquals(TrackingRequirementsManager.Status.BLOCKED,
+                    TrackingRequirementsManager.getNotificationsStatus(fragment));
 
-        List<TrackingRequirementsManager.Requirement> blocked =
-                TrackingRequirementsManager.getBlockedRuntimeRequirements(fragment);
-        assertTrue(blocked.contains(TrackingRequirementsManager.Requirement.LOCATION));
-        assertTrue(blocked.contains(TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
-        assertTrue(blocked.contains(TrackingRequirementsManager.Requirement.NOTIFICATIONS));
+            List<TrackingRequirementsManager.Requirement> blocked =
+                    TrackingRequirementsManager.getBlockedRuntimeRequirements(fragment);
+            assertTrue(blocked.contains(TrackingRequirementsManager.Requirement.LOCATION));
+            assertTrue(blocked.contains(TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
+            assertTrue(blocked.contains(TrackingRequirementsManager.Requirement.NOTIFICATIONS));
 
-        assertFalse(TrackingRequirementsManager.getRequestableMissingRequirements(fragment)
-                .contains(TrackingRequirementsManager.Requirement.LOCATION));
-        assertArrayEquals(new String[0],
-                TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
-                        fragment, TrackingRequirementsManager.Requirement.LOCATION));
-        assertArrayEquals(new String[0],
-                TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
-                        fragment, TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
-        assertArrayEquals(new String[0],
-                TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
-                        fragment, TrackingRequirementsManager.Requirement.NOTIFICATIONS));
+            assertFalse(TrackingRequirementsManager.getRequestableMissingRequirements(fragment)
+                    .contains(TrackingRequirementsManager.Requirement.LOCATION));
+            assertArrayEquals(new String[0],
+                    TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
+                            fragment, TrackingRequirementsManager.Requirement.LOCATION));
+            assertArrayEquals(new String[0],
+                    TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
+                            fragment, TrackingRequirementsManager.Requirement.ACTIVITY_RECOGNITION));
+            assertArrayEquals(new String[0],
+                    TrackingRequirementsManager.buildRequestablePermissionsForRequirement(
+                            fragment, TrackingRequirementsManager.Requirement.NOTIFICATIONS));
+
+        }
     }
 
-    private static Fragment attachedFragment() {
-        FragmentActivity activity = Robolectric.buildActivity(FragmentActivity.class)
-                .setup()
-                .get();
+    private static Fragment attachFragment(FragmentActivity activity) {
         AppSettingsManager.clearTrackingPermissionRequestFlags(activity);
         Fragment fragment = new Fragment();
         activity.getSupportFragmentManager()

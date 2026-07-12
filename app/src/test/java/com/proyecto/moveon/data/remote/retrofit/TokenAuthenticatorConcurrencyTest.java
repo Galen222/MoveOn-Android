@@ -41,24 +41,11 @@ public class TokenAuthenticatorConcurrencyTest {
 
     private static final MediaType JSON_MEDIA_TYPE = MediaType.get("application/json");
 
-    /**
-     * Verifica el escenario cubierto por {@link #authenticate_twoConcurrent401s_performSingleRefreshAndReuseNewAccessToken()}.
-     */
     @Test
     public void authenticate_twoConcurrent401s_performSingleRefreshAndReuseNewAccessToken()
             throws Exception {
-        InMemorySessionStore sessionStore = new InMemorySessionStore(
-                "alice",
-                "access_old",
-                "refresh_old",
-                "5"
-        );
-        DelayedRefreshBackend refreshBackend = new DelayedRefreshBackend(
-                "access_new",
-                "refresh_new",
-                "alice",
-                200L
-        );
+        InMemorySessionStore sessionStore = new InMemorySessionStore();
+        DelayedRefreshBackend refreshBackend = new DelayedRefreshBackend();
 
         SessionRefreshCoordinator coordinator = SessionRefreshCoordinator.createForTests(
                 sessionStore,
@@ -67,18 +54,17 @@ public class TokenAuthenticatorConcurrencyTest {
         TokenAuthenticator authenticator = new TokenAuthenticator(coordinator);
 
         CountDownLatch startGate = new CountDownLatch(1);
-        ExecutorService executor = Executors.newFixedThreadPool(2);
 
-        try {
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
             Future<Request> futureA = executor.submit(() -> authenticateAfterStart(
                     authenticator,
                     startGate,
-                    buildUnauthorizedResponse("access_old")
+                    buildUnauthorizedResponse()
             ));
             Future<Request> futureB = executor.submit(() -> authenticateAfterStart(
                     authenticator,
                     startGate,
-                    buildUnauthorizedResponse("access_old")
+                    buildUnauthorizedResponse()
             ));
 
             startGate.countDown();
@@ -93,8 +79,6 @@ public class TokenAuthenticatorConcurrencyTest {
             assertEquals(1, refreshBackend.getCallCount());
             assertEquals("access_new", sessionStore.getStoredSession().getAccessToken());
             assertEquals("refresh_new", sessionStore.getStoredSession().getRefreshToken());
-        } finally {
-            executor.shutdownNow();
         }
     }
 
@@ -103,12 +87,18 @@ public class TokenAuthenticatorConcurrencyTest {
                                            @NonNull CountDownLatch startGate,
                                            @NonNull Response response)
             throws InterruptedException, IOException {
-        startGate.await(2, TimeUnit.SECONDS);
-        return authenticator.authenticate(null, response);
+        if (!startGate.await(2, TimeUnit.SECONDS)) {
+            throw new AssertionError("Los hilos no recibieron la señal de inicio");
+        }
+        Request retried = authenticator.authenticate(null, response);
+        if (retried == null) {
+            throw new AssertionError("El autenticador no devolvió la petición reintentada");
+        }
+        return retried;
     }
 
     @NonNull
-    private Response buildUnauthorizedResponse(@NonNull String accessToken) {
+    private Response buildUnauthorizedResponse() {
         HttpUrl url = HttpUrl.get(BuildConfig.BASE_URL)
                 .newBuilder()
                 .addPathSegment("ranking")
@@ -117,7 +107,7 @@ public class TokenAuthenticatorConcurrencyTest {
 
         Request request = new Request.Builder()
                 .url(url)
-                .header("Authorization", "Bearer " + accessToken)
+                .header("Authorization", "Bearer access_old")
                 .build();
 
         return new Response.Builder()
@@ -139,16 +129,11 @@ public class TokenAuthenticatorConcurrencyTest {
         @Nullable private String username;
         @Nullable private String accessToken;
         @Nullable private String refreshToken;
-        @Nullable private String userId;
 
-        private InMemorySessionStore(@Nullable String username,
-                                     @Nullable String accessToken,
-                                     @Nullable String refreshToken,
-                                     @Nullable String userId) {
-            this.username = username;
-            this.accessToken = accessToken;
-            this.refreshToken = refreshToken;
-            this.userId = userId;
+        private InMemorySessionStore() {
+            this.username = "alice";
+            this.accessToken = "access_old";
+            this.refreshToken = "refresh_old";
         }
 
         @Override
@@ -163,8 +148,7 @@ public class TokenAuthenticatorConcurrencyTest {
                 return new SessionRefreshCoordinator.StoredSession(
                         username,
                         accessToken,
-                        refreshToken,
-                        userId
+                        refreshToken
                 );
             }
         }
@@ -186,7 +170,6 @@ public class TokenAuthenticatorConcurrencyTest {
                 username = null;
                 accessToken = null;
                 refreshToken = null;
-                userId = null;
             }
         }
     }
@@ -195,21 +178,7 @@ public class TokenAuthenticatorConcurrencyTest {
      * Backend falso que duerme lo suficiente para forzar solapamiento entre hilos.
      */
     private static final class DelayedRefreshBackend implements SessionRefreshCoordinator.RefreshBackend {
-        private final String nextAccessToken;
-        private final String nextRefreshToken;
-        @Nullable private final String username;
-        private final long delayMillis;
         private final AtomicInteger callCount = new AtomicInteger(0);
-
-        private DelayedRefreshBackend(@NonNull String nextAccessToken,
-                                      @NonNull String nextRefreshToken,
-                                      @Nullable String username,
-                                      long delayMillis) {
-            this.nextAccessToken = nextAccessToken;
-            this.nextRefreshToken = nextRefreshToken;
-            this.username = username;
-            this.delayMillis = delayMillis;
-        }
 
         @Override
         @NonNull
@@ -218,16 +187,16 @@ public class TokenAuthenticatorConcurrencyTest {
             callCount.incrementAndGet();
 
             try {
-                Thread.sleep(delayMillis);
+                Thread.sleep(200L);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new IOException("Interrupted while simulating refresh", e);
             }
 
             return SessionRefreshCoordinator.BackendRefreshResult.success(
-                    nextAccessToken,
-                    nextRefreshToken,
-                    username
+                    "access_new",
+                    "refresh_new",
+                    "alice"
             );
         }
 
