@@ -4,14 +4,19 @@ import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
+import androidx.core.graphics.Insets;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.DisplayCutoutCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.proyecto.moveon.R;
@@ -181,7 +186,15 @@ public final class TopSnackbar {
         // dependiendo del root del layout que invoca. Ambos soportan gravity.
         ViewGroup.LayoutParams rawParams = snackView.getLayoutParams();
         int topGravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-        int resolvedTopMargin = BASE_TOP_MARGIN_PX + Math.max(0, extraTopOffsetPx);
+
+        // Snackbar está pensado originalmente para mostrarse abajo y Material no
+        // compensa el inset superior cuando cambiamos su gravity a TOP. En layouts
+        // edge-to-edge (MainActivity) eso hacía que el aviso quedase detrás de la
+        // barra de estado. Calculamos cuánto invade el parent real del Snackbar la
+        // zona segura superior y usamos el mayor valor entre esa compensación y el
+        // offset explícito de bottom sheets, evitando sumar dos veces el mismo inset.
+        int automaticTopOffsetPx = calculateAutomaticTopOffsetPx(root);
+        int resolvedTopMargin = resolveTopMarginPx(automaticTopOffsetPx, extraTopOffsetPx);
 
         if (rawParams instanceof CoordinatorLayout.LayoutParams clp) {
             clp.gravity = topGravity;
@@ -232,4 +245,70 @@ public final class TopSnackbar {
         snackbar.setAnimationMode(Snackbar.ANIMATION_MODE_FADE);
         snackbar.show();
     }
+
+    /**
+     * Calcula el margen superior final sin permitir que el snackbar invada la zona
+     * segura del sistema ni duplique la compensación ya calculada por un diálogo.
+     */
+    static int resolveTopMarginPx(int automaticTopOffsetPx, int extraTopOffsetPx) {
+        int safeAutomaticOffset = Math.max(0, automaticTopOffsetPx);
+        int safeExplicitOffset = Math.max(0, extraTopOffsetPx);
+        return BASE_TOP_MARGIN_PX + Math.max(safeAutomaticOffset, safeExplicitOffset);
+    }
+
+    /**
+     * Devuelve la compensación necesaria para que el parent real elegido por
+     * {@link Snackbar} comience por debajo de la barra de estado o del display cutout.
+     */
+    private static int calculateAutomaticTopOffsetPx(@NonNull View root) {
+        ViewGroup snackbarParent = findSuitableSnackbarParent(root);
+        View insetView = snackbarParent != null ? snackbarParent : root;
+
+        WindowInsetsCompat windowInsets = ViewCompat.getRootWindowInsets(insetView);
+        if (windowInsets == null) {
+            return 0;
+        }
+
+        Insets statusBars = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
+        int safeTop = statusBars.top;
+
+        DisplayCutoutCompat cutout = windowInsets.getDisplayCutout();
+        if (cutout != null) {
+            safeTop = Math.max(safeTop, cutout.getSafeInsetTop());
+        }
+
+        int[] parentLocation = new int[2];
+        insetView.getLocationOnScreen(parentLocation);
+        return Math.max(0, safeTop - parentLocation[1]);
+    }
+
+    /**
+     * Replica la selección de parent de {@link Snackbar}: prioriza un
+     * {@link CoordinatorLayout}, después el contenido raíz y finalmente el último
+     * {@link FrameLayout} encontrado durante el ascenso por la jerarquía.
+     */
+    @Nullable
+    private static ViewGroup findSuitableSnackbarParent(@NonNull View start) {
+        View current = start;
+        ViewGroup fallback = null;
+
+        while (current != null) {
+            if (current instanceof CoordinatorLayout coordinatorLayout) {
+                return coordinatorLayout;
+            }
+
+            if (current instanceof FrameLayout frameLayout) {
+                if (current.getId() == android.R.id.content) {
+                    return frameLayout;
+                }
+                fallback = frameLayout;
+            }
+
+            ViewParent parent = current.getParent();
+            current = parent instanceof View ? (View) parent : null;
+        }
+
+        return fallback;
+    }
+
 }
