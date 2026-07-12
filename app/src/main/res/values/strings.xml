@@ -661,7 +661,7 @@
     <string name="registro_username_already_exists_choose_another">Ese nombre de usuario ya existe. Elige otro.</string>
     <string name="social_google_email_already_registered">Ese correo ya existe y no es posible continuar el registro.</string>
     <string name="social_google_loading_title">Continuando con Google</string>
-    <string name="social_google_loading_message_signin">Comprobando tu cuenta de Google para iniciar sesión.</string>
+    <string name="social_google_loading_message_sign_in">Comprobando tu cuenta de Google para iniciar sesión.</string>
     <string name="social_google_loading_message_register">Conectando con Google para preparar tu registro.</string>
     <string name="social_google_loading_message_register_switch">Cambiando la cuenta de Google que usarás para registrarte.</string>
     <string name="social_google_loading_message_finish">Creando tu cuenta y sincronizando tu perfil.</string>

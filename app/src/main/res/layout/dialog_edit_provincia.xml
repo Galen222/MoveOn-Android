@@ -18,7 +18,7 @@
         app:hintTextColor="@color/greenPrimary">
 
         <AutoCompleteTextView
-            android:id="@+id/actv_provincia"
+            android:id="@+id/autocomplete_provincia"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/profile_label_provincia"

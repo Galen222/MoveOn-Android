@@ -4,11 +4,12 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
+
 /**
  * Pruebas para validar el comportamiento de api error.
  */
@@ -16,9 +17,6 @@ public class ApiErrorTest {
 
     // ── Factory methods ─────────────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #local_createsUnknownTypeWithZeroCode()}.
-     */
     @Test
     public void local_createsUnknownTypeWithZeroCode() {
         ApiError error = ApiError.local("something broke");
@@ -31,9 +29,6 @@ public class ApiErrorTest {
         assertNull(error.getRaw());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #typed_twoArgs_setsTypeAndMessage()}.
-     */
     @Test
     public void typed_twoArgs_setsTypeAndMessage() {
         ApiError error = ApiError.typed(ApiErrorType.NETWORK, "sin conexión");
@@ -43,9 +38,6 @@ public class ApiErrorTest {
         assertEquals("sin conexión", error.getMessage());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #typed_threeArgs_setsTypeCodeMessage()}.
-     */
     @Test
     public void typed_threeArgs_setsTypeCodeMessage() {
         ApiError error = ApiError.typed(ApiErrorType.SERVER, 503, "servicio no disponible");
@@ -55,9 +47,6 @@ public class ApiErrorTest {
         assertEquals("servicio no disponible", error.getMessage());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #typed_fourArgs_includesErrorCode()}.
-     */
     @Test
     public void typed_fourArgs_includesErrorCode() {
         ApiError error = ApiError.typed(ApiErrorType.VALIDATION, 422, "campo inválido", "FIELD_INVALID");
@@ -70,9 +59,6 @@ public class ApiErrorTest {
 
     // ── Field errors ────────────────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #hasFieldErrors_falseWhenEmpty()}.
-     */
     @Test
     public void hasFieldErrors_falseWhenEmpty() {
         ApiError error = ApiError.local("test");
@@ -80,9 +66,6 @@ public class ApiErrorTest {
         assertTrue(error.getFieldErrors().isEmpty());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #withFieldError_returnsNewInstanceWithField()}.
-     */
     @Test
     public void withFieldError_returnsNewInstanceWithField() {
         ApiError original = ApiError.local("test");
@@ -93,29 +76,24 @@ public class ApiErrorTest {
 
         // Nueva instancia tiene el error
         assertTrue(withField.hasFieldErrors());
-        assertEquals(1, withField.getFieldErrors().get("email").size());
-        assertEquals("Email inválido", withField.getFieldErrors().get("email").get(0));
+        List<String> emailMessages = withField.getFieldErrors().get("email");
+        assertNotNull(emailMessages);
+        assertEquals(Collections.singletonList("Email inválido"), emailMessages);
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #withFieldError_accumulates_multipleForSameKey()}.
-     */
     @Test
     public void withFieldError_accumulates_multipleForSameKey() {
         ApiError error = ApiError.local("test")
                 .withFieldError("password", "Muy corta")
                 .withFieldError("password", "Falta mayúscula");
 
-        List<String> msgs = error.getFieldErrors().get("password");
-        assertNotNull(msgs);
-        assertEquals(2, msgs.size());
-        assertEquals("Muy corta", msgs.get(0));
-        assertEquals("Falta mayúscula", msgs.get(1));
+        List<String> messages = error.getFieldErrors().get("password");
+        assertNotNull(messages);
+        assertEquals(2, messages.size());
+        assertEquals("Muy corta", messages.get(0));
+        assertEquals("Falta mayúscula", messages.get(1));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #withFieldError_preservesOriginalTypeAndCode()}.
-     */
     @Test
     public void withFieldError_preservesOriginalTypeAndCode() {
         ApiError original = ApiError.typed(ApiErrorType.VALIDATION, 422, "error", "CODE");
@@ -129,27 +107,18 @@ public class ApiErrorTest {
 
     // ── firstFieldMessage ───────────────────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #firstFieldMessage_returnsNullWhenNoFieldErrors()}.
-     */
     @Test
     public void firstFieldMessage_returnsNullWhenNoFieldErrors() {
         ApiError error = ApiError.local("test");
         assertNull(error.firstFieldMessage("email"));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #firstFieldMessage_returnsNullForUnknownKey()}.
-     */
     @Test
     public void firstFieldMessage_returnsNullForUnknownKey() {
         ApiError error = ApiError.local("test").withFieldError("email", "bad");
         assertNull(error.firstFieldMessage("password"));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #firstFieldMessage_findsFirstMatchingKey()}.
-     */
     @Test
     public void firstFieldMessage_findsFirstMatchingKey() {
         ApiError error = ApiError.local("test")
@@ -159,9 +128,6 @@ public class ApiErrorTest {
         assertEquals("email inválido", error.firstFieldMessage("email", "password"));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #firstFieldMessage_skipsKeysWithEmptyMessages()}.
-     */
     @Test
     public void firstFieldMessage_skipsKeysWithEmptyMessages() {
         // Construir manualmente con mensaje vacío
@@ -175,18 +141,12 @@ public class ApiErrorTest {
         assertEquals("error real", error.firstFieldMessage("email", "password"));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #firstFieldMessage_returnsNullForEmptyKeys()}.
-     */
     @Test
     public void firstFieldMessage_returnsNullForEmptyKeys() {
         ApiError error = ApiError.local("test").withFieldError("email", "bad");
         assertNull(error.firstFieldMessage(/* vacío */));
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #firstFieldMessage_skipsNullKeys()}.
-     */
     @Test
     public void firstFieldMessage_skipsNullKeys() {
         ApiError error = ApiError.local("test").withFieldError("email", "bad");
@@ -195,9 +155,6 @@ public class ApiErrorTest {
 
     // ── Constructor directo con campo raw ────────────────────────────────────
 
-    /**
-     * Verifica el escenario cubierto por {@link #constructor_preservesRawBody()}.
-     */
     @Test
     public void constructor_preservesRawBody() {
         String rawJson = "{\"error\":\"test\"}";
@@ -207,9 +164,6 @@ public class ApiErrorTest {
         assertEquals(rawJson, error.getRaw());
     }
 
-    /**
-     * Verifica el escenario cubierto por {@link #constructor_nullFieldErrors_becomesEmptyMap()}.
-     */
     @Test
     public void constructor_nullFieldErrors_becomesEmptyMap() {
         ApiError error = new ApiError(ApiErrorType.UNKNOWN, 0, "msg", null, null, null);
@@ -292,7 +246,7 @@ public class ApiErrorTest {
     public void firstFieldMessage_usesPriorityAndSkipsBlankValues() {
         Map<String, List<String>> fieldErrors = new HashMap<>();
         fieldErrors.put("username", Arrays.asList("   ", "segundo ignorado"));
-        fieldErrors.put("email", Arrays.asList("Email inválido"));
+        fieldErrors.put("email", Collections.singletonList("Email inválido"));
         fieldErrors.put("password", Collections.singletonList("Password corta"));
         ApiError error = new ApiError(ApiErrorType.VALIDATION, 422, "form", null, fieldErrors, null);
 

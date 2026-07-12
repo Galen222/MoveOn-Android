@@ -52,7 +52,7 @@ public final class AppInputValidator {
     private static final boolean TEXT_MODERATION_ENABLED = true;
     private static final boolean TEXT_MODERATION_FAIL_OPEN = false;
     private static final String TEXT_MODERATION_DICTIONARY_DIR = "data/profanity/ldnoobwv2";
-    private static final String TEXT_MODERATION_DICTIONARY_LANGS = "es,en";
+    private static final String TEXT_MODERATION_DICTIONARY_LANGUAGES = "es,en";
     private static final String TEXT_MODERATION_RESERVED_USERNAME_TOKENS =
             "admin,administrator,administrador,support,soporte,moderator,moderador,staff,official,oficial," +
             "root,owner,system,sistema,help,ayuda,info,contact,contacto";
@@ -63,7 +63,7 @@ public final class AppInputValidator {
     private static final int USERNAME_MIN_TERM_LEN = 4;
     private static final int REAL_NAME_MIN_TERM_LEN = 4;
 
-    private static final Pattern MULTISPACE_RE = Pattern.compile("\\s+");
+    private static final Pattern MULTIPLE_WHITESPACE_PATTERN = Pattern.compile("\\s+");
     private static final Pattern REAL_NAME_TOKEN_SPLIT_RE = Pattern.compile("[^a-z]+");
 
     private static final Set<String> HIGH_RISK_RESERVED_TOKENS = Collections.unmodifiableSet(
@@ -730,7 +730,7 @@ public final class AppInputValidator {
             Set<String> phraseTerms = new LinkedHashSet<>();
             Set<String> usernameTerms = new LinkedHashSet<>();
 
-            String[] languages = parseCsv(TEXT_MODERATION_DICTIONARY_LANGS);
+            String[] languages = parseCsv(TEXT_MODERATION_DICTIONARY_LANGUAGES);
             if (languages.length == 0) {
                 throw new DictionaryLoadException();
             }
@@ -810,7 +810,7 @@ public final class AppInputValidator {
     private static String normalizePhrase(@Nullable String text) {
         String normalized = normalizeText(text).toLowerCase(Locale.ROOT);
         normalized = removeAccents(normalized);
-        normalized = MULTISPACE_RE.matcher(normalized).replaceAll(" ");
+        normalized = MULTIPLE_WHITESPACE_PATTERN.matcher(normalized).replaceAll(" ");
         return normalized.trim();
     }
 

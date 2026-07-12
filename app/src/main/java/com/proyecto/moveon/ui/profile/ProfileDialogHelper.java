@@ -105,7 +105,7 @@ public final class ProfileDialogHelper {
                 .setTitle(R.string.profile_label_altura)
                 .setView(picker)
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .setPositiveButton(R.string.dialog_btn_save, (dialog, which) -> {
+                .setPositiveButton(R.string.dialog_btn_save, (_, _) -> {
                     int altura = picker.getValue();
                     AppInputValidator.ValidationResult<Integer> validation =
                             AppInputValidator.validateHeight(fragment.requireContext(), altura);
@@ -158,7 +158,7 @@ public final class ProfileDialogHelper {
                 .setTitle(R.string.profile_label_peso)
                 .setView(picker)
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
-                .setPositiveButton(R.string.dialog_btn_save, (dialog, which) -> {
+                .setPositiveButton(R.string.dialog_btn_save, (_, _) -> {
                     double peso = pesoMin + picker.getValue() * pesoStep;
                     peso = Math.round(peso * 10.0) / 10.0;
                     AppInputValidator.ValidationResult<Double> validation =
@@ -203,7 +203,7 @@ public final class ProfileDialogHelper {
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
                 .create();
 
-        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+        dialog.setOnShowListener(_ -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(_ -> {
             String value = dialogBinding.etField.getText() != null
                     ? dialogBinding.etField.getText().toString().trim() : "";
             if (required && value.isEmpty()) {
@@ -283,21 +283,21 @@ public final class ProfileDialogHelper {
         String[] provincias = fragment.getResources().getStringArray(R.array.provincias_labels);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 fragment.requireContext(), android.R.layout.simple_dropdown_item_1line, provincias);
-        dialogBinding.actvProvincia.setAdapter(adapter);
+        dialogBinding.autocompleteProvincia.setAdapter(adapter);
         dialogBinding.tilProvincia.setHint(fragment.getString(R.string.profile_label_provincia));
 
         if (perfilSupplier.get() != null && StringUtils.hasText(perfilSupplier.get().provincia)) {
-            dialogBinding.actvProvincia.setText(
+            dialogBinding.autocompleteProvincia.setText(
                     ProfileValueLocalizer.displayProvincia(fragment.requireContext(), perfilSupplier.get().provincia),
                     false
             );
         }
 
-        dialogBinding.actvProvincia.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) dialogBinding.actvProvincia.showDropDown();
+        dialogBinding.autocompleteProvincia.setOnFocusChangeListener((_, hasFocus) -> {
+            if (hasFocus) dialogBinding.autocompleteProvincia.showDropDown();
         });
-        dialogBinding.actvProvincia.setOnClickListener(v ->
-                dialogBinding.actvProvincia.showDropDown());
+        dialogBinding.autocompleteProvincia.setOnClickListener(_ ->
+                dialogBinding.autocompleteProvincia.showDropDown());
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(fragment.requireContext())
                 .setTitle(R.string.profile_label_provincia)
@@ -306,15 +306,15 @@ public final class ProfileDialogHelper {
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
                 .create();
 
-        dialog.setOnShowListener(d -> {
-            dialogBinding.actvProvincia.post(() -> {
-                dialogBinding.actvProvincia.requestFocus();
-                dialogBinding.actvProvincia.showDropDown();
+        dialog.setOnShowListener(_ -> {
+            dialogBinding.autocompleteProvincia.post(() -> {
+                dialogBinding.autocompleteProvincia.requestFocus();
+                dialogBinding.autocompleteProvincia.showDropDown();
             });
 
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-                String value = dialogBinding.actvProvincia.getText() != null
-                        ? dialogBinding.actvProvincia.getText().toString().trim() : "";
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(_ -> {
+                String value = dialogBinding.autocompleteProvincia.getText() != null
+                        ? dialogBinding.autocompleteProvincia.getText().toString().trim() : "";
                 if (value.isEmpty()) {
                     dialogBinding.tilProvincia.setError(fragment.getString(R.string.dialog_error_required));
                     return;
@@ -338,7 +338,7 @@ public final class ProfileDialogHelper {
         String[] opciones = fragment.getResources().getStringArray(R.array.generos_labels);
         new MaterialAlertDialogBuilder(fragment.requireContext())
                 .setTitle(R.string.profile_label_genero)
-                .setItems(opciones, (d, which) ->
+                .setItems(opciones, (_, which) ->
                         viewModel.updatePerfil(new ProfilePatchPayload()
                                 .genero(ProfileValueLocalizer.canonicalGeneroFromLabel(fragment.requireContext(), opciones[which]))
                                 .toJson()))

@@ -96,12 +96,12 @@ public class ZoomableImageView extends AppCompatImageView {
      *
      * @param w nuevo ancho disponible.
      * @param h nuevo alto disponible.
-     * @param oldw ancho anterior.
-     * @param oldh alto anterior.
+     * @param oldWidth ancho anterior.
+     * @param oldHeight alto anterior.
      */
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
+    protected void onSizeChanged(int w, int h, int oldWidth, int oldHeight) {
+        super.onSizeChanged(w, h, oldWidth, oldHeight);
         isLaidOut = w > 0 && h > 0;
         fitImageToView();
     }

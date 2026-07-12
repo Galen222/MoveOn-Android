@@ -92,9 +92,9 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
      * Conecta todas las acciones de la pantalla con su flujo correspondiente.
      */
     private void setupListeners() {
-        binding.btnRegistrar.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
-        binding.btnLogin.setOnClickListener(v -> attemptLogin());
-        binding.btnGoogleLogin.setOnClickListener(v -> {
+        binding.btnRegistrar.setOnClickListener(_ -> startActivity(new Intent(this, RegisterActivity.class)));
+        binding.btnLogin.setOnClickListener(_ -> attemptLogin());
+        binding.btnGoogleLogin.setOnClickListener(_ -> {
             clearErrors();
             pendingSilentGoogleLogin = false;
             setLoading(true);
@@ -103,16 +103,16 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
                     false,
                     null,
                     R.string.social_google_loading_title,
-                    R.string.social_google_loading_message_signin
+                    R.string.social_google_loading_message_sign_in
             );
             socialAuthManager.signInWithGoogle();
         });
 
-        binding.etUsuarioCorreo.setOnFocusChangeListener((v, f) -> { if (f) binding.tilUsuarioCorreo.setError(null); });
-        binding.etPassword.setOnFocusChangeListener((v, f) -> { if (f) binding.tilPassword.setError(null); });
+        binding.etUsuarioCorreo.setOnFocusChangeListener((_, f) -> { if (f) binding.tilUsuarioCorreo.setError(null); });
+        binding.etPassword.setOnFocusChangeListener((_, f) -> { if (f) binding.tilPassword.setError(null); });
 
         binding.btnOlvidarPassword.setOnClickListener(
-                v -> NavigationUtils.goToActivity(this, ForgotPasswordActivity.class)
+                _ -> NavigationUtils.goToActivity(this, ForgotPasswordActivity.class)
         );
     }
 
@@ -323,7 +323,7 @@ public class LoginActivity extends AppCompatActivity implements SocialAuthManage
                     false,
                     account,
                     R.string.social_google_loading_title,
-                    R.string.social_google_loading_message_signin
+                    R.string.social_google_loading_message_sign_in
             );
         }
         viewModel.loginWithSocial(com.proyecto.moveon.domain.auth.SocialAuthProvider.GOOGLE, account.idToken);

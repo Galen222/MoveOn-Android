@@ -542,8 +542,8 @@ public final class ShareRouteImageGenerator {
                     result |= (b & 0x1f) << shift;
                     shift += 5;
                 } while (b >= 0x20);
-                int dlat = ((result & 1) != 0) ? ~(result >> 1) : (result >> 1);
-                lat += dlat;
+                int deltaLatitude = ((result & 1) != 0) ? ~(result >> 1) : (result >> 1);
+                lat += deltaLatitude;
 
                 result = 0;
                 shift = 0;
@@ -555,8 +555,8 @@ public final class ShareRouteImageGenerator {
                     result |= (b & 0x1f) << shift;
                     shift += 5;
                 } while (b >= 0x20);
-                int dlng = ((result & 1) != 0) ? ~(result >> 1) : (result >> 1);
-                lng += dlng;
+                int deltaLongitude = ((result & 1) != 0) ? ~(result >> 1) : (result >> 1);
+                lng += deltaLongitude;
 
                 poly.add(new GeoPoint(lat / 1E5, lng / 1E5));
             }

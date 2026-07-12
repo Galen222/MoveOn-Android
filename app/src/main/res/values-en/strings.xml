@@ -479,7 +479,7 @@
     <string name="registro_username_already_exists_choose_another">That username already exists. Choose another one.</string>
     <string name="social_google_email_already_registered">That email already exists and the registration cannot continue.</string>
     <string name="social_google_loading_title">Continuing with Google</string>
-    <string name="social_google_loading_message_signin">Checking your Google account to sign you in.</string>
+    <string name="social_google_loading_message_sign_in">Checking your Google account to sign you in.</string>
     <string name="social_google_loading_message_register">Connecting with Google to prepare your sign-up.</string>
     <string name="social_google_loading_message_register_switch">Switching the Google account you will use to sign up.</string>
     <string name="social_google_loading_message_finish">Creating your account and syncing your profile.</string>

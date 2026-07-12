@@ -291,7 +291,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:gravity="center"
-                    android:text="@string/social_google_loading_message_signin"
+                    android:text="@string/social_google_loading_message_sign_in"
                     android:textColor="@color/textSecondary"
                     android:textSize="14sp" />
 

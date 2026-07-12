@@ -131,9 +131,9 @@ public final class ApiError {
     public String firstFieldMessage(@NonNull String... keys) {
         for (String k : keys) {
             if (k == null) continue;
-            List<String> msgs = fieldErrors.get(k);
-            if (msgs != null && !msgs.isEmpty()) {
-                String v = msgs.iterator().next();
+            List<String> messages = fieldErrors.get(k);
+            if (messages != null && !messages.isEmpty()) {
+                String v = messages.iterator().next();
                 if (v != null && !v.trim().isEmpty()) return v;
             }
         }

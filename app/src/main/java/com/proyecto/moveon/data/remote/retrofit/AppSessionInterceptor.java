@@ -3,6 +3,7 @@ package com.proyecto.moveon.data.remote.retrofit;
 import androidx.annotation.NonNull;
 
 import java.io.IOException;
+import java.util.List;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.Request;
@@ -48,20 +49,8 @@ public final class AppSessionInterceptor implements Interceptor {
             return chain.proceed(original);
         }
 
-        java.util.List<String> segments = original.url().pathSegments();
-
-        // Obtenemos el último segmento REAL (ignorando la barra final '/' si la hubiera
-        String lastSegment = "";
-        if (!segments.isEmpty()) {
-            java.util.ListIterator<String> iterator = segments.listIterator(segments.size());
-            lastSegment = iterator.previous();
-            if (lastSegment.isEmpty() && iterator.hasPrevious()) {
-                lastSegment = iterator.previous();
-            }
-        }
-
         // En /handshake NO se manda x-app-session (inmune a prefijos y trailing slashes)
-        if ("handshake".equals(lastSegment)) {
+        if ("handshake".equals(getLastPathSegment(original.url()))) {
             return chain.proceed(original);
         }
 
@@ -90,4 +79,23 @@ public final class AppSessionInterceptor implements Interceptor {
             throw new IOException(e.getMessage(), e);
         }
     }
+
+    /**
+     * Obtiene el último segmento no vacío de la ruta, ignorando barras finales.
+     *
+     * @param url URL cuya ruta se inspecciona.
+     * @return último segmento real o una cadena vacía cuando no existe.
+     */
+    @NonNull
+    private static String getLastPathSegment(@NonNull HttpUrl url) {
+        List<String> segments = url.pathSegments();
+        for (int index = segments.size() - 1; index >= 0; index--) {
+            String segment = segments.get(index);
+            if (!segment.isEmpty()) {
+                return segment;
+            }
+        }
+        return "";
+    }
+
 }
