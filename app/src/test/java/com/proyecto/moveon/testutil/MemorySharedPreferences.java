@@ -4,7 +4,6 @@ import android.content.SharedPreferences;
 
 import androidx.annotation.Nullable;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -19,7 +18,7 @@ public final class MemorySharedPreferences implements SharedPreferences {
 
     @Override
     public synchronized Map<String, ?> getAll() {
-        return Collections.unmodifiableMap(new HashMap<>(values));
+        return Map.copyOf(values);
     }
 
     @Nullable

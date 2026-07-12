@@ -153,11 +153,17 @@ public class LocalDataSourcesDelegationTest {
         Field field = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         field.setAccessible(true);
         Object unsafe = field.get(null);
+        if (unsafe == null) {
+            throw new AssertionError("sun.misc.Unsafe no está disponible");
+        }
         Method method = unsafe.getClass().getMethod("allocateInstance", Class.class);
         return (T) method.invoke(unsafe, type);
     }
 
     private static void setField(Object target, String fieldName, Object value) throws Exception {
+        if (target == null) {
+            throw new AssertionError("La instancia objetivo no puede ser null");
+        }
         Field field = target.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(target, value);

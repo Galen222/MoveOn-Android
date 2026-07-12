@@ -30,7 +30,6 @@ import java.util.Set;
 public final class MemoryContext extends ContextWrapper {
 
     private final Map<String, MemorySharedPreferences> preferences = new HashMap<>();
-    private final Map<String, Object> services = new HashMap<>();
     private final Set<String> grantedPermissions = new HashSet<>();
     private final MemoryResources resources = MemoryResources.create();
     private final File filesDir;
@@ -46,44 +45,50 @@ public final class MemoryContext extends ContextWrapper {
         this.filesDir.mkdirs();
     }
 
+    @NonNull
     @Override
     public Context getApplicationContext() {
         return this;
     }
 
 
+    @NonNull
     @Override
     public File getFilesDir() {
         return filesDir;
     }
 
+    @NonNull
     @Override
-    public SharedPreferences getSharedPreferences(String name, int mode) {
+    public SharedPreferences getSharedPreferences(@NonNull String name, int mode) {
         return preferences(name);
     }
 
+    @NonNull
     @Override
     public Resources getResources() {
         return resources;
     }
 
+    @NonNull
     @Override
     public String getPackageName() {
         return "com.proyecto.moveon.test";
     }
 
+    @NonNull
     @Override
-    public Context createConfigurationContext(Configuration overrideConfiguration) {
+    public Context createConfigurationContext(@NonNull Configuration overrideConfiguration) {
         return this;
     }
 
     @Override
-    public Object getSystemService(String name) {
-        return services.get(name);
+    public Object getSystemService(@NonNull String name) {
+        return null;
     }
 
     @Override
-    public int checkPermission(String permission, int pid, int uid) {
+    public int checkPermission(@NonNull String permission, int pid, int uid) {
         return grantedPermissions.contains(permission)
                 ? PackageManager.PERMISSION_GRANTED
                 : PackageManager.PERMISSION_DENIED;
@@ -97,7 +102,7 @@ public final class MemoryContext extends ContextWrapper {
         }
     }
 
-    public MemorySharedPreferences preferences(String name) {
+    public MemorySharedPreferences preferences(@NonNull String name) {
         MemorySharedPreferences prefs = preferences.get(name);
         if (prefs == null) {
             prefs = new MemorySharedPreferences();
@@ -106,18 +111,8 @@ public final class MemoryContext extends ContextWrapper {
         return prefs;
     }
 
-    public MemoryContext putSystemService(@NonNull String name, Object service) {
-        services.put(name, service);
-        return this;
-    }
-
     public MemoryContext grantPermission(@NonNull String permission) {
         grantedPermissions.add(permission);
-        return this;
-    }
-
-    public MemoryContext revokePermission(@NonNull String permission) {
-        grantedPermissions.remove(permission);
         return this;
     }
 
@@ -159,6 +154,9 @@ public final class MemoryContext extends ContextWrapper {
                 Field unsafeField = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
                 unsafeField.setAccessible(true);
                 Object unsafe = unsafeField.get(null);
+                if (unsafe == null) {
+                    throw new AssertionError("sun.misc.Unsafe no está disponible");
+                }
                 return (MemoryResources) unsafe.getClass()
                         .getMethod("allocateInstance", Class.class)
                         .invoke(unsafe, MemoryResources.class);
@@ -175,21 +173,24 @@ public final class MemoryContext extends ContextWrapper {
             arrays.put(id, values.clone());
         }
 
+        @NonNull
         @Override
         public Configuration getConfiguration() {
             return configuration;
         }
 
+        @NonNull
         @Override
         public String getString(int id) {
             String value = strings.get(id);
             return value != null ? value : "res-" + id;
         }
 
+        @NonNull
         @Override
-        public String getString(int id, Object... formatArgs) {
+        public String getString(int id, @NonNull Object... formatArgs) {
             String template = getString(id);
-            if (formatArgs == null || formatArgs.length == 0) {
+            if (formatArgs.length == 0) {
                 return template;
             }
             try {
@@ -206,6 +207,7 @@ public final class MemoryContext extends ContextWrapper {
             }
         }
 
+        @NonNull
         @Override
         public String[] getStringArray(int id) {
             String[] values = arrays.get(id);

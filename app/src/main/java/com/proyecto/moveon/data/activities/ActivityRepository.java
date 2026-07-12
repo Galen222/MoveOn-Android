@@ -1,6 +1,7 @@
 package com.proyecto.moveon.data.activities;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -44,7 +45,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -54,6 +55,8 @@ import java.util.concurrent.TimeUnit;
  * actividades guardadas, pendientes o sincronizadas mediante una única fachada.</p>
  */
 public final class ActivityRepository {
+
+    private static final String TAG = "ActivityRepository";
 
     public interface Callback<T> {
         void onResult(ApiResult<T> result);
@@ -80,7 +83,7 @@ public final class ActivityRepository {
     private final ActividadLocalDataSource local;
     private final ActividadRemoteDataSource remote;
     private final ActivitySyncManager syncManager;
-    private final ExecutorService io = MoveOnExecutors.io();
+    private final Executor io = MoveOnExecutors.io();
 
     /**
      * Construye el repositorio de actividades resolviendo todas sus dependencias sobre el contexto de aplicación.
@@ -199,9 +202,13 @@ public final class ActivityRepository {
         apiClient.postJson(
                 ENDPOINT_ACTIVITY_DIAGNOSTICS,
                 new com.google.gson.Gson().toJsonTree(request),
-                json -> new JsonObject(),
+                json -> json != null && json.isJsonObject()
+                        ? json.getAsJsonObject()
+                        : new JsonObject(),
                 result -> {
-                    // Flujo deliberadamente silencioso. El diagnóstico no debe alterar la UX.
+                    if (result != null && !result.isSuccess() && BuildConfig.DEBUG) {
+                        Log.w(TAG, "No se pudo enviar el diagnóstico de tracking");
+                    }
                 }
         );
     }

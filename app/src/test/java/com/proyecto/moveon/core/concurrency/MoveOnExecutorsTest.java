@@ -27,13 +27,11 @@ public class MoveOnExecutorsTest {
     }
 
     @Test
-    @SuppressWarnings("resource")
     public void io_canExecuteTasks() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicInteger result = new AtomicInteger(0);
 
-        Executor executor = MoveOnExecutors.io();
-        executor.execute(() -> {
+        MoveOnExecutors.executeIo(() -> {
             result.set(42);
             latch.countDown();
         });
@@ -43,17 +41,34 @@ public class MoveOnExecutorsTest {
     }
 
     @Test
-    @SuppressWarnings("resource")
     public void io_supportsParallelExecution() throws InterruptedException {
         // El pool tiene 3 hilos; 3 tareas deben poder ejecutarse en paralelo
         int parallelTasks = 3;
         CountDownLatch allStarted = new CountDownLatch(parallelTasks);
         CountDownLatch release = new CountDownLatch(1);
-        CountDownLatch allDone = new CountDownLatch(parallelTasks);
+        CountDownLatch allDone = submitParallelTasks(
+                parallelTasks,
+                allStarted,
+                release
+        );
 
-        Executor executor = MoveOnExecutors.io();
-        for (int i = 0; i < parallelTasks; i++) {
-            executor.execute(() -> {
+        // Las 3 tareas deben arrancar sin esperarse entre sí
+        assertTrue("Las 3 tareas deberían arrancar en paralelo",
+                allStarted.await(2, TimeUnit.SECONDS));
+
+        release.countDown();
+        assertTrue(allDone.await(2, TimeUnit.SECONDS));
+    }
+
+
+    private static CountDownLatch submitParallelTasks(
+            int taskCount,
+            CountDownLatch allStarted,
+            CountDownLatch release
+    ) {
+        CountDownLatch allDone = new CountDownLatch(taskCount);
+        for (int i = 0; i < taskCount; i++) {
+            MoveOnExecutors.executeIo(() -> {
                 allStarted.countDown();
                 try {
                     if (release.await(2, TimeUnit.SECONDS)) {
@@ -64,23 +79,15 @@ public class MoveOnExecutorsTest {
                 }
             });
         }
-
-        // Las 3 tareas deben arrancar sin esperarse entre sí
-        assertTrue("Las 3 tareas deberían arrancar en paralelo",
-                allStarted.await(2, TimeUnit.SECONDS));
-
-        release.countDown();
-        assertTrue(allDone.await(2, TimeUnit.SECONDS));
+        return allDone;
     }
 
     @Test
-    @SuppressWarnings("resource")
     public void io_threadNaming() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         StringBuilder threadName = new StringBuilder();
 
-        Executor executor = MoveOnExecutors.io();
-        executor.execute(() -> {
+        MoveOnExecutors.executeIo(() -> {
             threadName.append(Thread.currentThread().getName());
             latch.countDown();
         });

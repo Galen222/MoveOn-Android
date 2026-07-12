@@ -14,7 +14,7 @@ public class ActividadCreatePayloadTest {
 
     @Test
     public void toJson_includesAllRequiredFields() {
-        JsonObject json = payloadWithAllRequiredFields().toJson();
+        JsonObject json = jsonWithAllRequiredFields();
 
         assertEquals("local-1", json.get("client_local_id").getAsString());
         assertEquals("Correr", json.get("tipo").getAsString());
@@ -40,30 +40,7 @@ public class ActividadCreatePayloadTest {
 
     @Test
     public void toJson_nullRouteFields_sendJsonNull() {
-        ActividadCreatePayload payload = new ActividadCreatePayload(
-                "local-2",
-                "Caminar",
-                1000,
-                600,
-                520,
-                50,
-                30,
-                50,
-                null,
-                720,
-                900,
-                420,
-                650,
-                800,
-                1,
-                1,
-                0,
-                null,
-                null,
-                "2025-03-19T10:00:00Z"
-        );
-
-        JsonObject json = payload.toJson();
+        JsonObject json = jsonWithNullRouteFields();
 
         assertTrue(json.get("ruta_polilinea").isJsonNull());
         assertTrue(json.get("ruta_mapa_url").isJsonNull());
@@ -72,7 +49,7 @@ public class ActividadCreatePayloadTest {
 
     @Test
     public void toJson_usesCurrentFieldNames() {
-        JsonObject json = payloadWithCurrentFieldNames().toJson();
+        JsonObject json = jsonWithCurrentFieldNames();
 
         assertTrue(json.has("client_local_id"));
         assertTrue(json.has("duracion_total"));
@@ -95,30 +72,8 @@ public class ActividadCreatePayloadTest {
 
     @Test
     public void toJson_zeroValues_areValid() {
-        ActividadCreatePayload payload = new ActividadCreatePayload(
-                "local-4",
-                "Caminar",
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                null,
-                null,
-                "2025-03-19T00:00:00Z"
-        );
+        JsonObject json = jsonWithZeroValues();
 
-        JsonObject json = payload.toJson();
         assertEquals(0, json.get("distancia").getAsInt());
         assertEquals(0, json.get("duracion_total").getAsInt());
         assertEquals(0, json.get("duracion_movimiento").getAsInt());
@@ -135,7 +90,7 @@ public class ActividadCreatePayloadTest {
      */
     @Test
     public void toJson_serializesAllFields() {
-        JsonObject json = payloadWithAllSerializedFields().toJson();
+        JsonObject json = jsonWithAllSerializedFields();
 
         assertEquals("local-1", json.get("client_local_id").getAsString());
         assertEquals("carrera", json.get("tipo").getAsString());
@@ -164,30 +119,7 @@ public class ActividadCreatePayloadTest {
      */
     @Test
     public void toJson_serializesNullableRouteFieldsAsJsonNull() {
-        ActividadCreatePayload payload = new ActividadCreatePayload(
-                "local-2",
-                "caminata",
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                null,
-                7,
-                8,
-                9,
-                10,
-                11,
-                12,
-                13,
-                14,
-                null,
-                null,
-                "2026-04-25T10:00:00Z"
-        );
-
-        JsonObject json = payload.toJson();
+        JsonObject json = jsonWithNullableSerializedRouteFields();
 
         assertTrue(json.get("ruta_polilinea").isJsonNull());
         assertTrue(json.get("ruta_mapa_url").isJsonNull());
@@ -215,7 +147,7 @@ public class ActividadCreatePayloadTest {
      */
     @Test
     public void toJson_serializesEveryEnrichedTrackingField() {
-        JsonObject json = enrichedTrackingPayload().toJson();
+        JsonObject json = jsonWithEnrichedTrackingFields();
 
         assertEquals("local-1", json.get("client_local_id").getAsString());
         assertEquals("carrera", json.get("tipo").getAsString());
@@ -244,11 +176,7 @@ public class ActividadCreatePayloadTest {
      */
     @Test
     public void toJson_withNullRouteFields_writesJsonNulls() {
-        JsonObject json = new ActividadCreatePayload(
-                "local-1", "carrera", 1, 2, 3, 4, 5,
-                6, null, 7, 8, 9, 10, 11, 12, 13, 14,
-                null, null, "2026-04-25T10:00:00Z"
-        ).toJson();
+        JsonObject json = jsonWithNullEnrichedRouteFields();
 
         assertTrue(json.get("ruta_polilinea").isJsonNull());
         assertTrue(json.get("ruta_mapa_url").isJsonNull());
@@ -259,7 +187,7 @@ public class ActividadCreatePayloadTest {
      */
     @Test
     public void fromEntity_copiesAllEntityFieldsToPayloadJson() {
-        JsonObject json = ActividadCreatePayload.fromEntity(fullyPopulatedEntity()).toJson();
+        JsonObject json = jsonFromFullyPopulatedEntity();
 
         assertEquals("local-entity", json.get("client_local_id").getAsString());
         assertEquals("caminata", json.get("tipo").getAsString());
@@ -308,36 +236,123 @@ public class ActividadCreatePayloadTest {
         return ActividadCreatePayload.fromEntity(entity).toJson();
     }
 
-    private static ActividadCreatePayload payloadWithAllRequiredFields() {
+    private static JsonObject jsonWithNullRouteFields() {
+        return new ActividadCreatePayload(
+                "local-2",
+                "Caminar",
+                1000,
+                600,
+                520,
+                50,
+                30,
+                50,
+                null,
+                720,
+                900,
+                420,
+                650,
+                800,
+                1,
+                1,
+                0,
+                null,
+                null,
+                "2025-03-19T10:00:00Z"
+        ).toJson();
+    }
+
+    private static JsonObject jsonWithZeroValues() {
+        return new ActividadCreatePayload(
+                "local-4",
+                "Caminar",
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                null,
+                null,
+                "2025-03-19T00:00:00Z"
+        ).toJson();
+    }
+
+    private static JsonObject jsonWithNullableSerializedRouteFields() {
+        return new ActividadCreatePayload(
+                "local-2",
+                "caminata",
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                null,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                null,
+                null,
+                "2026-04-25T10:00:00Z"
+        ).toJson();
+    }
+
+    private static JsonObject jsonWithNullEnrichedRouteFields() {
+        return new ActividadCreatePayload(
+                "local-1", "carrera", 1, 2, 3, 4, 5,
+                6, null, 7, 8, 9, 10, 11, 12, 13, 14,
+                null, null, "2026-04-25T10:00:00Z"
+        ).toJson();
+    }
+
+    private static JsonObject jsonWithAllRequiredFields() {
         return new ActividadCreatePayload(
                 "local-1", "Correr", 5000, 1800, 1500, 240, 60, 350,
                 4_321, 330, 360, 280, 987, 1450, 2, 1, 3,
                 "encoded_poly", "http://map.png", "2025-03-19T10:00:00Z"
-        );
+        ).toJson();
     }
 
-    private static ActividadCreatePayload payloadWithCurrentFieldNames() {
+    private static JsonObject jsonWithCurrentFieldNames() {
         return new ActividadCreatePayload(
                 "local-3", "Correr", 3000, 900, 780, 90, 30, 200,
                 2_345, 300, 360, 1000, 1200, 1400, 1, 1, 2,
                 "poly", "url", "2025-01-01T00:00:00Z"
-        );
+        ).toJson();
     }
 
-    private static ActividadCreatePayload payloadWithAllSerializedFields() {
+    private static JsonObject jsonWithAllSerializedFields() {
         return new ActividadCreatePayload(
                 "local-1", "carrera", 5_000, 1_800, 1_700, 80, 20, 350,
                 4_321, 340, 360, 300, 1_000, 1_400, 2, 1, 3,
                 "poly", "map.png", "2026-04-25T10:00:00Z"
-        );
+        ).toJson();
     }
 
-    private static ActividadCreatePayload enrichedTrackingPayload() {
+    private static JsonObject jsonWithEnrichedTrackingFields() {
         return new ActividadCreatePayload(
                 "local-1", "carrera", 5000, 1800, 1700, 80, 20, 350,
                 4_321, 340, 360, 300, 1000, 1500, 1, 2, 3,
                 "poly", "map.png", "2026-04-25T10:00:00Z"
-        );
+        ).toJson();
+    }
+
+    private static JsonObject jsonFromFullyPopulatedEntity() {
+        return ActividadCreatePayload.fromEntity(fullyPopulatedEntity()).toJson();
     }
 
     private static ActividadEntity fullyPopulatedEntity() {

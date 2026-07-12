@@ -261,6 +261,7 @@ public class AuthRepositoryNetworkTest {
         ApiResult<String> result = await(callback -> repository.register(input, callback));
 
         assertFalse(result.isSuccess());
+        assertNotNull(result.error);
         assertEquals(ApiErrorType.VALIDATION, result.error.getType());
         assertEquals(422, result.error.getHttpCode());
     }
@@ -283,6 +284,7 @@ public class AuthRepositoryNetworkTest {
         ApiResult<LoginSession> result = await(callback -> repository.registerSocial(input, callback));
 
         assertTrue(result.isSuccess());
+        assertNotNull(result.data);
         assertEquals("carla", result.data.nombreUsuario);
         assertEquals("a", result.data.tokenAcceso);
         assertEquals("r", result.data.refreshToken);
@@ -327,6 +329,7 @@ public class AuthRepositoryNetworkTest {
         ApiResult<LoginSession> result = await(callback -> repository.refreshSession("old-r", callback));
 
         assertTrue(result.isSuccess());
+        assertNotNull(result.data);
         assertEquals("new-a", result.data.tokenAcceso);
         assertEquals("new-r", result.data.refreshToken);
 
@@ -351,6 +354,7 @@ public class AuthRepositoryNetworkTest {
         ApiResult<LoginSession> result = await(callback -> repository.refreshSession("old-r", callback));
 
         assertFalse(result.isSuccess());
+        assertNotNull(result.error);
         assertEquals(ApiErrorType.UNAUTHORIZED, result.error.getType());
         assertEquals(401, result.error.getHttpCode());
     }
@@ -498,6 +502,7 @@ public class AuthRepositoryNetworkTest {
                 repository.resetearPassword("user@mail.com", "1", "newPass1", callback));
 
         assertFalse(result.isSuccess());
+        assertNotNull(result.error);
         assertEquals(ApiErrorType.VALIDATION, result.error.getType());
         assertEquals(400, result.error.getHttpCode());
     }

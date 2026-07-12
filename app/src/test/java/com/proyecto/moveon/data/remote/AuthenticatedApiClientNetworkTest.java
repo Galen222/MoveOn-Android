@@ -139,7 +139,7 @@ public class AuthenticatedApiClientNetworkTest {
                 .setBody("{\"value\":\"hola\"}"));
 
         ApiResult<String> result = await(callback ->
-                client.get("rompe", json -> { throw new IllegalStateException("no parseo"); }, callback));
+                client.get("rompe", json -> { throw new IllegalStateException("no parseo: " + json); }, callback));
 
         assertFalse(result.isSuccess());
         assertNotNull(result.error);
@@ -149,7 +149,7 @@ public class AuthenticatedApiClientNetworkTest {
      * Verifica que un GET bloqueante devuelve el modelo mapeado.
      */
     @Test
-    public void getBlocking_successfulResponse_returnsMappedValue() throws Exception {
+    public void getBlocking_successfulResponse_returnsMappedValue() {
         environment.getServer().enqueue(new MockResponse()
                 .setResponseCode(200)
                 .setHeader("Content-Type", "application/json")
@@ -185,6 +185,7 @@ public class AuthenticatedApiClientNetworkTest {
         ApiResult<String> result = client.getBlocking("ruta/error", AuthenticatedApiClientNetworkTest::extractValue);
 
         assertFalse(result.isSuccess());
+        assertNotNull(result.error);
         assertEquals(ApiErrorType.SERVER, result.error.getType());
         assertEquals(503, result.error.getHttpCode());
     }
@@ -358,6 +359,7 @@ public class AuthenticatedApiClientNetworkTest {
                 client.delete("recursos/no-existe", AuthenticatedApiClientNetworkTest::extractValue, callback));
 
         assertFalse(result.isSuccess());
+        assertNotNull(result.error);
         assertEquals(ApiErrorType.NOT_FOUND, result.error.getType());
         assertEquals(404, result.error.getHttpCode());
     }

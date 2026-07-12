@@ -2,6 +2,7 @@ package com.proyecto.moveon.core.concurrency;
 
 import androidx.annotation.NonNull;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -47,10 +48,10 @@ public final class MoveOnExecutors {
      * I/O (Room, red, disco). Reutilizarlo evita crear hilos a mano en
      * cada ViewModel y mantiene un pool con tamaño razonable.
      *
-     * @return el {@link ExecutorService} global para tareas de I/O.
+     * @return el {@link Executor} global para tareas de I/O.
      */
     @NonNull
-    public static ExecutorService io() {
+    public static Executor io() {
         return IO;
     }
 

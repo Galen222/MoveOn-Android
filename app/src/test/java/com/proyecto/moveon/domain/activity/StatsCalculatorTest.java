@@ -195,9 +195,9 @@ public class StatsCalculatorTest {
         StatsResumen resumen = StatsCalculator.calcular(items, 1L, 1L);
 
         assertEquals(2, resumen.monthBlocks.size());
-        assertEquals(today.getYear(), resumen.monthBlocks.get(0).year);
-        assertEquals(today.getMonthValue(), resumen.monthBlocks.get(0).month);
-        assertEquals(2_000L, resumen.monthBlocks.get(0).distanceMeters);
+        assertEquals(today.getYear(), resumen.monthBlocks.getFirst().year);
+        assertEquals(today.getMonthValue(), resumen.monthBlocks.getFirst().month);
+        assertEquals(2_000L, resumen.monthBlocks.getFirst().distanceMeters);
         assertEquals(previousMonth.getYear(), resumen.monthBlocks.get(1).year);
         assertEquals(previousMonth.getMonthValue(), resumen.monthBlocks.get(1).month);
         assertEquals(3_000L, resumen.monthBlocks.get(1).distanceMeters);
@@ -218,11 +218,11 @@ public class StatsCalculatorTest {
                 1L
         );
 
-        StatsResumen.MonthBlock month = resumen.monthBlocks.get(0);
+        StatsResumen.MonthBlock month = resumen.monthBlocks.getFirst();
 
         assertFalse(month.weeks.isEmpty());
-        assertEquals(1, month.weeks.get(0).startDay);
-        assertTrue(month.weeks.get(0).endDay >= 1);
+        assertEquals(1, month.weeks.getFirst().startDay);
+        assertTrue(month.weeks.getFirst().endDay >= 1);
         assertTrue(month.weeks.stream().anyMatch(w -> w.distanceMeters == 4_000L));
     }
 

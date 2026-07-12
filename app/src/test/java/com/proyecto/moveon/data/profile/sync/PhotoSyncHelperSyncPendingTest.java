@@ -9,6 +9,7 @@ import androidx.test.core.app.ApplicationProvider;
 import com.proyecto.moveon.core.api.ApiError;
 import com.proyecto.moveon.core.api.ApiErrorType;
 import com.proyecto.moveon.core.api.ApiResult;
+import com.proyecto.moveon.data.local.db.AppDatabase;
 import com.proyecto.moveon.data.local.entity.PerfilCacheEntity;
 import com.proyecto.moveon.data.profile.dto.ProfileInfoDto;
 import com.proyecto.moveon.data.profile.local.PerfilLocalDataSource;
@@ -20,6 +21,10 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
@@ -87,6 +92,9 @@ public class PhotoSyncHelperSyncPendingTest {
      * @param value valor a publicar.
      */
     private static void setRecordingField(Object target, String name, Object value) throws Exception {
+        if (target == null) {
+            throw new AssertionError("La instancia objetivo no puede ser null");
+        }
         Field f = target.getClass().getDeclaredField(name);
         f.setAccessible(true);
         f.set(target, value);
@@ -162,7 +170,7 @@ public class PhotoSyncHelperSyncPendingTest {
     @Test
     public void syncPendingIfNeeded_uploadSuccessWithFetch_delegatesToBridgeMerge() throws Exception {
         File pending = Files.createTempFile("photo-pending", ".jpg").toFile();
-        Files.write(pending.toPath(), "datos".getBytes(StandardCharsets.UTF_8));
+        writeTestData(pending);
 
         PerfilCacheEntity cache = new PerfilCacheEntity();
         cache.accountKey = "uid_42";
@@ -196,7 +204,7 @@ public class PhotoSyncHelperSyncPendingTest {
     @Test
     public void syncPendingIfNeeded_uploadSuccessFetchFailure_promotesLocallyWithoutMerge() throws Exception {
         File pending = Files.createTempFile("photo-pending", ".jpg").toFile();
-        Files.write(pending.toPath(), "datos".getBytes(StandardCharsets.UTF_8));
+        writeTestData(pending);
 
         PerfilCacheEntity cache = new PerfilCacheEntity();
         cache.accountKey = "uid_42";
@@ -227,7 +235,7 @@ public class PhotoSyncHelperSyncPendingTest {
     @Test
     public void syncPendingIfNeeded_retryableUploadError_marksDirtyAndReturnsTrue() throws Exception {
         File pending = Files.createTempFile("photo-pending", ".jpg").toFile();
-        Files.write(pending.toPath(), "datos".getBytes(StandardCharsets.UTF_8));
+        writeTestData(pending);
 
         PerfilCacheEntity cache = new PerfilCacheEntity();
         cache.accountKey = "uid_42";
@@ -260,7 +268,7 @@ public class PhotoSyncHelperSyncPendingTest {
     @Test
     public void syncPendingIfNeeded_permanentUploadError_revertsAndReturnsFalse() throws Exception {
         File pending = Files.createTempFile("photo-pending", ".jpg").toFile();
-        Files.write(pending.toPath(), "datos".getBytes(StandardCharsets.UTF_8));
+        writeTestData(pending);
 
         PerfilCacheEntity cache = new PerfilCacheEntity();
         cache.accountKey = "uid_42";
@@ -278,7 +286,7 @@ public class PhotoSyncHelperSyncPendingTest {
             assertEquals(1, remote.uploadCalls);
             // revertPendingPhoto borra el path pendiente y guarda
             assertEquals(1, local.savedEntities.size());
-            PerfilCacheEntity saved = local.savedEntities.get(0);
+            PerfilCacheEntity saved = local.savedEntities.getFirst();
             assertNull(saved.pendingLocalPhotoPath);
             assertEquals(PhotoSyncHelper.STATE_FAILED, saved.photoSyncState);
             assertEquals("tamaño invalido", saved.photoLastError);
@@ -286,6 +294,15 @@ public class PhotoSyncHelperSyncPendingTest {
             // Si el helper no borra el archivo, lo limpiamos nosotros.
             //noinspection ResultOfMethodCallIgnored
             pending.delete();
+        }
+    }
+
+    private static void writeTestData(File file) throws IOException {
+        try (Writer writer = new OutputStreamWriter(
+                new FileOutputStream(file),
+                StandardCharsets.UTF_8
+        )) {
+            writer.write("datos");
         }
     }
 
@@ -302,7 +319,7 @@ public class PhotoSyncHelperSyncPendingTest {
         final List<PerfilCacheEntity> savedEntities = new ArrayList<>();
 
         /** Constructor de utilidad NO usado: se instancia con {@code Unsafe}. */
-        public RecordingLocal() { super(null); }
+        public RecordingLocal(AppDatabase database) { super(database); }
 
         @Override
         public PerfilCacheEntity getCacheNow(String accountKey) {
@@ -404,6 +421,9 @@ public class PhotoSyncHelperSyncPendingTest {
         Field f = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
         f.setAccessible(true);
         Object unsafe = f.get(null);
+        if (unsafe == null) {
+            throw new AssertionError("sun.misc.Unsafe no está disponible");
+        }
         Method m = unsafe.getClass().getMethod("allocateInstance", Class.class);
         return (T) m.invoke(unsafe, type);
     }

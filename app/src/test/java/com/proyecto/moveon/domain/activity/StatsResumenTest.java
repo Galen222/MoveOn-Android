@@ -55,7 +55,7 @@ public class StatsResumenTest {
         assertEquals(130L, resumen.weeklyCalories);
         assertEquals(3, resumen.streakDays);
         assertEquals(4, resumen.totalActivities);
-        assertSame(month, resumen.monthBlocks.get(0));
+        assertSame(month, resumen.monthBlocks.getFirst());
     }
 
     /**

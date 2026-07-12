@@ -31,7 +31,7 @@ import com.proyecto.moveon.workers.SyncPerfilWorker;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -57,7 +57,7 @@ public class PerfilRepository {
     private final PerfilLocalDataSource local;
     private final PerfilRemoteDataSource remote;
     private final PerfilSyncManager syncManager;
-    private final ExecutorService io = MoveOnExecutors.io();
+    private final Executor io = MoveOnExecutors.io();
 
     /**
      * Crea el repositorio de perfil con sus dependencias explícitas.

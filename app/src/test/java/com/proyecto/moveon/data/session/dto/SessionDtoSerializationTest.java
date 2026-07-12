@@ -204,7 +204,7 @@ public class SessionDtoSerializationTest {
      * Verifica que LogoutRequestDto y RefreshRequestDto comparten el nombre refresh_token.
      */
     @Test
-    public void tokenRequestDtos_serializeRefreshTokenConsistently() {
+    public void tokenRequests_serializeRefreshTokenConsistently() {
         LogoutRequestDto logout = new LogoutRequestDto("refresh-a");
         RefreshRequestDto refresh = new RefreshRequestDto("refresh-b");
 

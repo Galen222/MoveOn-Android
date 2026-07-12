@@ -42,9 +42,11 @@ public class ShareRouteFormatterTest {
      */
     @Test
     public void formatPace_validValueUsesMinuteSecondPatternWithoutContextLookup() {
-        assertEquals("4'05\"", ShareRouteFormatter.formatPace(null, 245));
-        assertEquals("1'05\"", ShareRouteFormatter.formatPace(null, 65));
-        assertEquals("0'59\"", ShareRouteFormatter.formatPace(null, 59));
+        MemoryContext context = new MemoryContext();
+
+        assertEquals("4'05\"", ShareRouteFormatter.formatPace(context, 245));
+        assertEquals("1'05\"", ShareRouteFormatter.formatPace(context, 65));
+        assertEquals("0'59\"", ShareRouteFormatter.formatPace(context, 59));
     }
 
     /**
@@ -52,14 +54,17 @@ public class ShareRouteFormatterTest {
      */
     @Test
     public void formatOptionalPace_validValueDelegatesToFormatPace() {
-        assertEquals("3'30\"", ShareRouteFormatter.formatOptionalPace(null, 210));
-        assertEquals("10'00\"", ShareRouteFormatter.formatOptionalPace(null, 600));
+        MemoryContext context = new MemoryContext();
+
+        assertEquals("3'30\"", ShareRouteFormatter.formatOptionalPace(context, 210));
+        assertEquals("10'00\"", ShareRouteFormatter.formatOptionalPace(context, 600));
     }
 
     /**
      * Verifica que los ritmos no válidos necesitan contexto para resolver el placeholder localizado.
      */
     @Test
+    @SuppressWarnings("DataFlowIssue")
     public void formatPace_invalidValueRequiresContextPlaceholder() {
         assertThrows(NullPointerException.class, () -> ShareRouteFormatter.formatPace(null, 0));
         assertThrows(NullPointerException.class, () -> ShareRouteFormatter.formatPace(null, -1));
@@ -69,6 +74,7 @@ public class ShareRouteFormatterTest {
      * Verifica que el texto de compartir necesita contexto Android para resolver su recurso localizado.
      */
     @Test
+    @SuppressWarnings("DataFlowIssue")
     public void buildShareText_nullContextFailsFast() {
         assertThrows(NullPointerException.class, () -> ShareRouteFormatter.buildShareText(null));
     }

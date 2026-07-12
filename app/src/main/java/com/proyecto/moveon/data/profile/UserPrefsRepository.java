@@ -11,7 +11,7 @@ import com.proyecto.moveon.data.local.db.AppDatabase;
 import com.proyecto.moveon.data.local.entity.UserPrefsEntity;
 import com.proyecto.moveon.data.profile.remote.PerfilRemoteDataSource;
 
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 
 /**
  * Repositorio para las preferencias del usuario (objetivos semanal y mensual).
@@ -28,7 +28,7 @@ public class UserPrefsRepository {
 
     private final AppDatabase db;
     private final PerfilRemoteDataSource remote;
-    private final ExecutorService io;
+    private final Executor io;
 
     /**
      * Inicializa el repositorio a partir del contexto de aplicación:
@@ -55,7 +55,7 @@ public class UserPrefsRepository {
      */
     UserPrefsRepository(@NonNull AppDatabase db,
                         @NonNull PerfilRemoteDataSource remote,
-                        @NonNull ExecutorService io) {
+                        @NonNull Executor io) {
         this.db = db;
         this.remote = remote;
         this.io = io;

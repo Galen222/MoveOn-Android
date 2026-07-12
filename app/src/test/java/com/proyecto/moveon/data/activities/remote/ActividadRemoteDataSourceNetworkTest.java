@@ -119,6 +119,7 @@ public class ActividadRemoteDataSourceNetworkTest {
                 dataSource.createActividad(new JsonObject(), callback));
 
         assertTrue(result.isSuccess());
+        assertNotNull(result.data);
         assertEquals(7, result.data.id);
         assertEquals("Caminar", result.data.tipo);
 
@@ -140,6 +141,7 @@ public class ActividadRemoteDataSourceNetworkTest {
                 dataSource.deleteActividad(99, callback));
 
         assertTrue(result.isSuccess());
+        assertNotNull(result.data);
         assertEquals("ok", result.data.estatus);
         assertEquals("borrada", result.data.mensaje);
         assertEquals(5, result.data.nuevoTotalPuntos);

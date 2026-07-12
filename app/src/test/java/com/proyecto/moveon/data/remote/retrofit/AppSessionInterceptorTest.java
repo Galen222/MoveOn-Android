@@ -124,12 +124,9 @@ public class AppSessionInterceptorTest {
         field.set(null, value);
     }
 
-    private static final class FakeHandshakeApi implements HandshakeApi {
-        private final retrofit2.Response<AppSessionResponseDto> response;
-
-        FakeHandshakeApi(retrofit2.Response<AppSessionResponseDto> response) {
-            this.response = response;
-        }
+    private record FakeHandshakeApi(
+            retrofit2.Response<AppSessionResponseDto> response
+    ) implements HandshakeApi {
 
         @Override
         public retrofit2.Call<AppSessionResponseDto> getHandshake(String appId) {
