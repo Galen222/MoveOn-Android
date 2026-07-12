@@ -117,20 +117,24 @@ public class AppInputValidatorReflectionTest {
     }
 
     /**
-     * Verifica que el helper de conjuntos elimina duplicados y devuelve una vista inmutable.
+     * Verifica que la caché de diccionario protege sus conjuntos frente a modificaciones externas.
      */
     @Test
     @SuppressWarnings("unchecked")
-    public void unmodifiableSet_deduplicatesAndRejectsMutation() throws Exception {
-        Set<String> values = (Set<String>) invoke("unmodifiableSet", new Class<?>[]{String[].class}, (Object) new String[]{"a", "b", "a"});
+    public void dictionaryCache_wrapsSetsAsUnmodifiable() throws Exception {
+        Object dictionary = setDictionary(set("a", "b"), set(), set());
+        java.lang.reflect.Field singleTermsField = dictionary.getClass().getDeclaredField("singleTerms");
+        singleTermsField.setAccessible(true);
+        Set<String> values = (Set<String>) singleTermsField.get(dictionary);
 
+        assertNotNull(values);
         assertEquals(2, values.size());
         assertTrue(values.contains("a"));
         try {
             values.remove("a");
-            fail("El conjunto devuelto debe rechazar mutaciones");
+            fail("El conjunto de la caché debe rechazar mutaciones");
         } catch (UnsupportedOperationException expected) {
-            assertTrue(true);
+            // Comportamiento esperado.
         }
     }
 
