@@ -130,7 +130,7 @@ android {
 
     // Android 17 (API 37) sigue en beta. Se mantiene API 36 hasta completar
     // las pruebas de compatibilidad y los cambios de comportamiento de target 37.
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.proyecto.moveon"
