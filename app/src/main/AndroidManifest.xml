@@ -10,6 +10,11 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- Permite mostrar el diálogo de sistema para pedir exención de optimización de
+         batería. Sin la exención, varios fabricantes matan el proceso (y con él el
+         foreground service de tracking) al quitar la app de recientes. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <!-- ── Servicio en primer plano ── -->
     <uses-permission
         android:name="android.permission.FOREGROUND_SERVICE"

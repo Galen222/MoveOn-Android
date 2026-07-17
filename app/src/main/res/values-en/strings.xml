@@ -131,6 +131,10 @@
     <string name="tracking_requirements_blocked_title">Blocked requirements</string>
     <string name="tracking_requirements_blocked_message">These requirements are blocked by the system. You must enable them in settings to start an activity:\n%1$s</string>
     <string name="tracking_requirements_go_settings">Open settings</string>
+    <string name="tracking_battery_exemption_title">Keep tracking in the background</string>
+    <string name="tracking_battery_exemption_message">To keep recording while the screen is off or after swiping the app away, allow MoveOn to run without battery restrictions. This is only used during your activities.</string>
+    <string name="tracking_battery_exemption_allow">Allow</string>
+    <string name="tracking_battery_exemption_later">Not now</string>
     <string name="tracking_device_location_disabled_title">GPS is turned off</string>
     <string name="tracking_device_location_disabled_message">To start an activity you must enable GPS.</string>
     <string name="tracking_requirement_location_name">Location</string>
@@ -287,6 +291,7 @@
     <string name="profile_tracking_requirement_activity">Physical activity</string>
     <string name="profile_tracking_requirement_notifications">Notifications</string>
     <string name="profile_tracking_requirement_device_location">GPS</string>
+    <string name="profile_tracking_requirement_battery">Unrestricted battery</string>
     <string name="profile_tracking_status_enabled">Enabled</string>
     <string name="profile_tracking_status_needs_activation">Needs activation</string>
     <string name="profile_tracking_status_blocked">Blocked</string>

@@ -373,6 +373,18 @@ public final class TrackingService extends Service implements SensorEventListene
      * completamente el {@link Context} base.</p>
      */
     @Nullable private TrackingSessionStore sessionStore;
+
+    /**
+     * Indica si el servicio está realmente promocionado a foreground en este instante.
+     *
+     * <p>Es necesario porque el servicio puede recrearse solo mediante bind (por ejemplo,
+     * cuando la app se reabre tras una muerte de proceso y el controlador reconecta con
+     * {@code BIND_AUTO_CREATE}). En ese caso {@code onStartCommand()} no llega a ejecutarse
+     * y {@code startForeground()} nunca se invoca, así que confiar en {@code stopForeground()}
+     * para retirar la notificación deja de ser suficiente.</p>
+     */
+    private boolean foregroundActive = false;
+
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     @Nullable private ScheduledFuture<?> timerFuture = null;
 
@@ -471,12 +483,12 @@ public final class TrackingService extends Service implements SensorEventListene
 
         if (ACTION_RESTORE_NOTIFICATION.equals(action)) {
             if (currentStatus != TrackingState.Status.IDLE) {
-                startForeground(NOTIFICATION_ID, buildNotification());
+                promoteToForeground();
             }
             return START_STICKY;
         }
 
-        startForeground(NOTIFICATION_ID, buildNotification());
+        promoteToForeground();
         return START_STICKY;
     }
 
@@ -506,6 +518,98 @@ public final class TrackingService extends Service implements SensorEventListene
         } catch (Exception ignored) {
         }
         super.onDestroy();
+    }
+
+    /**
+     * El usuario ha quitado la tarea de la app de recientes.
+     *
+     * <p>En Android estándar el foreground service sobrevive a este gesto, pero algunos
+     * fabricantes matan el proceso igualmente. Persistimos el snapshot de inmediato y
+     * reafirmamos la notificación foreground para maximizar la probabilidad de que la
+     * sesión sobreviva o, en el peor caso, sea restaurable al reabrir la app.</p>
+     *
+     * @param rootIntent intent raíz de la tarea eliminada.
+     */
+    @Override
+    public void onTaskRemoved(@Nullable Intent rootIntent) {
+        logDiagnosticEvent("TASK_REMOVED", null);
+        persistSessionSnapshot();
+        if (isSessionAlive()) {
+            ensureForegroundForActiveSession();
+        }
+        super.onTaskRemoved(rootIntent);
+    }
+
+    /**
+     * Indica si existe una sesión viva (en marcha, en pausa manual o en auto-pausa).
+     *
+     * @return {@code true} cuando el estado actual describe una sesión aún abierta.
+     */
+    private boolean isSessionAlive() {
+        return currentStatus == TrackingState.Status.RUNNING
+                || currentStatus == TrackingState.Status.PAUSED
+                || currentStatus == TrackingState.Status.AUTO_PAUSED;
+    }
+
+    /**
+     * Promociona el servicio a foreground publicando la notificación de tracking.
+     *
+     * <p>Se envuelve defensivamente porque en API 31+ el sistema puede rechazar la
+     * promoción si el servicio arranca desde background
+     * ({@code ForegroundServiceStartNotAllowedException}); en ese caso preferimos
+     * degradar con log antes que tumbar el proceso y perder la sesión.</p>
+     */
+    private void promoteToForeground() {
+        try {
+            startForeground(NOTIFICATION_ID, buildNotification());
+            foregroundActive = true;
+        } catch (Exception e) {
+            Log.w(TAG, "No se pudo promocionar el servicio a foreground", e);
+            logDiagnosticEvent("FOREGROUND_PROMOTION_FAILED", e.getClass().getSimpleName());
+        }
+    }
+
+    /**
+     * Garantiza que una sesión viva corre dentro de un foreground service real.
+     *
+     * <p>Cubre el caso en que el servicio fue recreado únicamente mediante bind
+     * (reapertura de la app tras muerte del proceso): sin este paso el tracking queda
+     * en un servicio background normal, Android corta el GPS y los sensores al
+     * apagar la pantalla y toda la actividad acaba en auto-pausa sin registrar nada.</p>
+     *
+     * <p>Además de {@code startForeground()}, se auto-arranca con {@code startService()}
+     * para que el servicio pase a estado "started" y no muera al deshacerse el bind.</p>
+     */
+    private void ensureForegroundForActiveSession() {
+        if (foregroundActive || !isSessionAlive()) {
+            return;
+        }
+
+        try {
+            startService(new Intent(this, TrackingService.class));
+        } catch (Exception e) {
+            // En background estricto startService puede rechazarse; startForeground
+            // directo sigue siendo válido mientras exista el bind activo.
+            Log.w(TAG, "startService de auto-promoción rechazado", e);
+        }
+        promoteToForeground();
+    }
+
+    /**
+     * Retira la notificación de tracking de forma incondicional.
+     *
+     * <p>{@code stopForeground(STOP_FOREGROUND_REMOVE)} solo elimina la notificación si el
+     * servicio está realmente en foreground; como {@link #updateNotification()} también la
+     * publica vía {@link NotificationManager#notify}, aquí se cancela además explícitamente
+     * para que nunca quede una notificación huérfana tras finalizar o descartar.</p>
+     */
+    private void removeTrackingNotification() {
+        stopForeground(STOP_FOREGROUND_REMOVE);
+        foregroundActive = false;
+        NotificationManager manager = getSystemService(NotificationManager.class);
+        if (manager != null) {
+            manager.cancel(NOTIFICATION_ID);
+        }
     }
 
     /**
@@ -575,6 +679,10 @@ public final class TrackingService extends Service implements SensorEventListene
         recentMovingSpeeds.clear();
         armActivityTypeDowngradeGracePeriod();
 
+        // Garantía defensiva: si esta llamada llega vía binder con el servicio recreado
+        // solo por bind, la sesión debe correr igualmente dentro de un foreground service.
+        ensureForegroundForActiveSession();
+
         startLocationUpdates();
         startAccelerometer();
         startTimer();
@@ -637,7 +745,7 @@ public final class TrackingService extends Service implements SensorEventListene
         stopTrackingInternal();
         persistSessionSnapshot();
         publishState();
-        stopForeground(STOP_FOREGROUND_REMOVE);
+        removeTrackingNotification();
         stopSelf();
     }
 
@@ -658,7 +766,7 @@ public final class TrackingService extends Service implements SensorEventListene
         currentStatus = TrackingState.Status.IDLE;
         currentPauseReason = TrackingState.PauseReason.NONE;
         publishState();
-        stopForeground(STOP_FOREGROUND_REMOVE);
+        removeTrackingNotification();
         stopSelf();
     }
 
@@ -1957,6 +2065,13 @@ public final class TrackingService extends Service implements SensorEventListene
 
         logDiagnosticEvent("SERVICE_RESTORED", null);
 
+        // Corrección clave: si el servicio se ha recreado solo mediante bind (reapertura de
+        // la app tras muerte del proceso), onStartCommand() no se ejecuta y el tracking
+        // quedaría en un servicio background normal. Sin foreground de tipo "location",
+        // Android deja de entregar GPS y sensores en cuanto la app pasa a segundo plano,
+        // la sesión cae en auto-pausa y termina sin distancia ni tiempo en movimiento.
+        ensureForegroundForActiveSession();
+
         if (currentStatus == TrackingState.Status.RUNNING
                 || currentStatus == TrackingState.Status.AUTO_PAUSED) {
             startLocationUpdates();
@@ -2650,6 +2765,13 @@ private void openAppForStopConfirmation() {
      * Reemite la notificación foreground con el último contenido calculado si el sistema todavía expone un {@link NotificationManager}.
      */
     private void updateNotification() {
+        // Nunca re-publicar en IDLE/FINISHED: un tick rezagado del timer o cualquier
+        // actualización tardía podría resucitar la notificación después de que
+        // stopTracking()/resetTracking() la hayan retirado.
+        if (!isSessionAlive()) {
+            return;
+        }
+
         NotificationManager manager = getSystemService(NotificationManager.class);
         if (manager != null) {
             manager.notify(NOTIFICATION_ID, buildNotification());

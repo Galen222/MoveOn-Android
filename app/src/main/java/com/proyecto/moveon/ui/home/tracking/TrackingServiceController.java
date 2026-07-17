@@ -231,6 +231,27 @@ public final class TrackingServiceController {
         if (released || bound || bindRequested) return;
 
         Intent intent = new Intent(appContext, TrackingService.class);
+
+        // Si hay una sesión viva persistida (la app se reabre tras muerte del proceso
+        // con un tracking en marcha), no basta con el bind: BIND_AUTO_CREATE recrea el
+        // servicio sin pasar por onStartCommand(), así que nunca volvería a ser un
+        // foreground service y perdería GPS/sensores al apagar la pantalla. Arrancarlo
+        // explícitamente garantiza la promoción a foreground y que sobreviva al unbind.
+        boolean shouldStartAsForeground;
+        try {
+            shouldStartAsForeground = new TrackingSessionStore(appContext).hasAliveSession();
+        } catch (Exception e) {
+            shouldStartAsForeground = false;
+        }
+        if (shouldStartAsForeground) {
+            try {
+                ContextCompat.startForegroundService(appContext, intent);
+            } catch (Exception ignored) {
+                // Si el sistema rechaza el arranque (restricciones de background),
+                // el propio servicio intentará auto-promocionarse al restaurar sesión.
+            }
+        }
+
         bindRequested = true;
         boolean bindAccepted = appContext.bindService(intent, connection, Context.BIND_AUTO_CREATE);
         if (!bindAccepted) {

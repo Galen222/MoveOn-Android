@@ -29,6 +29,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.proyecto.moveon.R;
+import com.proyecto.moveon.core.settings.AppSettingsManager;
 import com.proyecto.moveon.core.settings.PaceDisplayUtils;
 import com.proyecto.moveon.core.tracking.TrackingRequirementsManager;
 import com.proyecto.moveon.data.session.SecureSessionManager;
@@ -971,6 +972,59 @@ public class InicioFragment extends Fragment
 
         enableMapMyLocation();
         viewModel.startTracking();
+        maybeOfferBatteryOptimizationExemption();
+    }
+
+    /**
+     * Ofrece, una única vez, la exención de optimización de batería justo después
+     * de iniciar la primera actividad.
+     *
+     * <p>Sin la exención, muchos fabricantes matan el proceso —incluido el foreground
+     * service— al quitar la app de recientes o tras un rato con la pantalla apagada,
+     * lo que interrumpe el tracking y deja la actividad sin métricas. El diálogo no
+     * bloquea el inicio: la actividad ya está en marcha cuando se muestra.</p>
+     */
+    private void maybeOfferBatteryOptimizationExemption() {
+        if (!isAdded()) {
+            return;
+        }
+
+        if (TrackingRequirementsManager.isIgnoringBatteryOptimizations(requireContext())
+                || AppSettingsManager.wasTrackingBatteryExemptionRequested(requireContext())) {
+            return;
+        }
+
+        AppSettingsManager.setTrackingBatteryExemptionRequested(requireContext(), true);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.tracking_battery_exemption_title)
+                .setMessage(R.string.tracking_battery_exemption_message)
+                .setPositiveButton(R.string.tracking_battery_exemption_allow,
+                        (_, _) -> launchBatteryOptimizationExemption())
+                .setNegativeButton(R.string.tracking_battery_exemption_later, null)
+                .show();
+    }
+
+    /**
+     * Lanza el diálogo de sistema de exención de batería con fallback a la
+     * pantalla general de ajustes cuando la ROM no expone el intent directo.
+     */
+    private void launchBatteryOptimizationExemption() {
+        if (!isAdded()) {
+            return;
+        }
+
+        try {
+            startActivity(TrackingRequirementsManager
+                    .buildBatteryOptimizationExemptionIntent(requireContext()));
+        } catch (Exception e) {
+            try {
+                startActivity(TrackingRequirementsManager
+                        .buildBatteryOptimizationSettingsFallbackIntent());
+            } catch (Exception ignored) {
+                // Si ni siquiera existe la pantalla de ajustes, no interrumpimos la actividad.
+            }
+        }
     }
 
     /**

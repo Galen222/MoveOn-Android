@@ -33,6 +33,8 @@ public final class AppSettingsManager {
             "tracking_location_permission_requested";
     private static final String KEY_TRACKING_ACTIVITY_PERMISSION_REQUESTED =
             "tracking_activity_permission_requested";
+    private static final String KEY_TRACKING_BATTERY_EXEMPTION_REQUESTED =
+            "tracking_battery_exemption_requested";
     private static final String KEY_TRACKING_NOTIFICATIONS_PERMISSION_REQUESTED =
             "tracking_notifications_permission_requested";
 
@@ -304,6 +306,29 @@ public final class AppSettingsManager {
 
 
     // ── Tracking: flags internos del flujo de permisos ─────────────────────
+
+    /**
+     * Indica si ya se mostró al usuario la propuesta de exención de optimización de batería.
+     *
+     * <p>Se usa para que el diálogo de "no matar la app durante una actividad" aparezca una
+     * sola vez al iniciar tracking y no se convierta en fricción recurrente.</p>
+     *
+     * @param context contexto desde el que leer la preferencia global.
+     * @return {@code true} cuando la propuesta ya se enseñó alguna vez.
+     */
+    public static boolean wasTrackingBatteryExemptionRequested(@NonNull Context context) {
+        return prefs(context).getBoolean(KEY_TRACKING_BATTERY_EXEMPTION_REQUESTED, false);
+    }
+
+    /**
+     * Persiste que la propuesta de exención de batería ya fue mostrada.
+     *
+     * @param context contexto desde el que guardar la preferencia.
+     * @param requested valor a persistir para el flag de exención de batería.
+     */
+    public static void setTrackingBatteryExemptionRequested(@NonNull Context context, boolean requested) {
+        prefs(context).edit().putBoolean(KEY_TRACKING_BATTERY_EXEMPTION_REQUESTED, requested).apply();
+    }
 
     /**
      * Indica si la app ya lanzó alguna vez la petición del permiso de ubicación para tracking.

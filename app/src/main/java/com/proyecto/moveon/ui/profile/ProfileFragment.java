@@ -364,6 +364,8 @@ public class ProfileFragment extends Fragment {
         binding.tvTrackingDeviceLocationAction.setOnClickListener(_ ->
                 trackingHelper.handleTrackingRequirementAction(
                         TrackingRequirementsManager.Requirement.GPS));
+        binding.tvTrackingBatteryAction.setOnClickListener(_ ->
+                trackingHelper.handleBatteryOptimizationAction());
 
         // PickVisualMedia abre el picker del sistema limitado a imágenes.
         binding.fabChangePhoto.setOnClickListener(_ -> pickImageLauncher.launch(

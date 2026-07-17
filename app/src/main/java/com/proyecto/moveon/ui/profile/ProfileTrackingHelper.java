@@ -90,6 +90,62 @@ public final class ProfileTrackingHelper {
                 TrackingRequirementsManager.Requirement.GPS,
                 TrackingRequirementsManager.getDeviceLocationStatus(fragment.requireContext())
         );
+
+        bindBatteryOptimizationRow();
+    }
+
+    /**
+     * Pinta la fila de exención de optimización de batería con el mismo patrón visual
+     * que el resto de requisitos.
+     *
+     * <p>No forma parte del enum {@link TrackingRequirementsManager.Requirement} a
+     * propósito: la exención es opcional (mejora la supervivencia del tracking en
+     * segundo plano frente a los "battery killers" de algunos fabricantes) y no debe
+     * bloquear el inicio de una actividad como sí hacen los permisos obligatorios.</p>
+     */
+    private void bindBatteryOptimizationRow() {
+        boolean exempt = TrackingRequirementsManager
+                .isIgnoringBatteryOptimizations(fragment.requireContext());
+
+        binding.tvTrackingBatteryStatus.setText(exempt
+                ? fragment.getString(R.string.profile_tracking_status_enabled)
+                : fragment.getString(R.string.profile_tracking_status_disabled));
+
+        if (exempt) {
+            binding.tvTrackingBatteryAction.setVisibility(View.GONE);
+        } else {
+            binding.tvTrackingBatteryAction.setVisibility(View.VISIBLE);
+            binding.tvTrackingBatteryAction.setText(R.string.profile_tracking_status_activate);
+        }
+    }
+
+    /**
+     * Lanza el diálogo de sistema para solicitar la exención de optimización de batería.
+     *
+     * <p>Si la ROM no expone el intent directo, cae a la pantalla general de ajustes de
+     * batería. La fila se refresca sola al volver al perfil gracias a la llamada a
+     * {@link #updateTrackingRequirementsUi()} en {@code onResume()} del fragment.</p>
+     */
+    public void handleBatteryOptimizationAction() {
+        if (!fragment.isAdded()) return;
+
+        if (TrackingRequirementsManager
+                .isIgnoringBatteryOptimizations(fragment.requireContext())) {
+            updateTrackingRequirementsUi();
+            return;
+        }
+
+        try {
+            fragment.startActivity(TrackingRequirementsManager
+                    .buildBatteryOptimizationExemptionIntent(fragment.requireContext()));
+        } catch (Exception e) {
+            try {
+                fragment.startActivity(TrackingRequirementsManager
+                        .buildBatteryOptimizationSettingsFallbackIntent());
+            } catch (Exception ignored) {
+                // Sin pantalla de batería disponible: no interrumpimos la UI de perfil.
+            }
+        }
     }
 
     /**

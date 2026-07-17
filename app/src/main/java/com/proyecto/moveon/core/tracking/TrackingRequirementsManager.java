@@ -335,6 +335,53 @@ public final class TrackingRequirementsManager {
     }
 
     /**
+     * Indica si la app ya está exenta de las optimizaciones de batería (Doze / app standby).
+     *
+     * <p>Sin esta exención, muchos fabricantes matan el proceso —incluido el foreground
+     * service de tracking— al quitar la app de recientes o tras un rato con la pantalla
+     * apagada, y además bloquean el reinicio automático de {@code START_STICKY}.</p>
+     *
+     * @param context contexto usado para consultar el {@link android.os.PowerManager}.
+     * @return {@code true} cuando la app está en la lista blanca de batería.
+     */
+    public static boolean isIgnoringBatteryOptimizations(@NonNull Context context) {
+        android.os.PowerManager powerManager =
+                (android.os.PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        return powerManager != null
+                && powerManager.isIgnoringBatteryOptimizations(context.getPackageName());
+    }
+
+    /**
+     * Construye el intent del diálogo de sistema que solicita la exención de batería para la app.
+     *
+     * <p>Requiere declarar {@code REQUEST_IGNORE_BATTERY_OPTIMIZATIONS} en el manifest.
+     * Si el dispositivo no resuelve ese intent (algunas ROMs lo capan), el llamante debe
+     * usar {@link #buildBatteryOptimizationSettingsFallbackIntent()} como alternativa.</p>
+     *
+     * @param context contexto usado para componer el URI del paquete.
+     * @return intent listo para lanzarse con {@code startActivity}.
+     */
+    @NonNull
+    public static android.content.Intent buildBatteryOptimizationExemptionIntent(
+            @NonNull Context context) {
+        android.content.Intent intent = new android.content.Intent(
+                android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+        intent.setData(android.net.Uri.parse("package:" + context.getPackageName()));
+        return intent;
+    }
+
+    /**
+     * Intent alternativo hacia la pantalla general de optimización de batería.
+     *
+     * @return intent del listado de ajustes de batería del sistema.
+     */
+    @NonNull
+    public static android.content.Intent buildBatteryOptimizationSettingsFallbackIntent() {
+        return new android.content.Intent(
+                android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+    }
+
+    /**
      * Marca en preferencias qué grupos de permisos ya fueron solicitados al usuario en el intento actual.
      *
      * @param context contexto usado para persistir las banderas en {@link AppSettingsManager}.

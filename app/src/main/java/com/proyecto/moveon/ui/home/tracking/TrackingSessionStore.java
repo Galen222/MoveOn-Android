@@ -64,6 +64,32 @@ public final class TrackingSessionStore {
     }
 
     /**
+     * Indica si hay un snapshot persistido de una sesión todavía viva
+     * (RUNNING, PAUSED o AUTO_PAUSED).
+     *
+     * <p>Lo usa la capa de conexión para decidir si, al reconectar con el servicio,
+     * debe arrancarlo explícitamente como foreground service en lugar de confiar
+     * solo en el bind. Deserializa de forma defensiva: un JSON corrupto se trata
+     * como ausencia de sesión.</p>
+     *
+     * @return {@code true} cuando existe una sesión restaurable aún abierta.
+     */
+    public boolean hasAliveSession() {
+        try {
+            Snapshot snapshot = restore();
+            if (snapshot == null) {
+                return false;
+            }
+            TrackingState.Status status = TrackingState.Status.valueOf(snapshot.status);
+            return status == TrackingState.Status.RUNNING
+                    || status == TrackingState.Status.PAUSED
+                    || status == TrackingState.Status.AUTO_PAUSED;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * Borra el snapshot guardado. Se llama al cerrar o descartar la
      * actividad para que un rearranque posterior empiece limpio en lugar
      * de ofrecer "continuar sesión".
